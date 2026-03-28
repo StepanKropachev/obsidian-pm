@@ -174,7 +174,7 @@ export function appendYaml(lines: string[], obj: Record<string, unknown>, indent
     } else if (typeof val === 'number') {
       lines.push(`${pad}${key}: ${val}`);
     } else if (typeof val === 'string') {
-      const escaped = val.replace(/"/g, '\\"');
+      const escaped = val.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
       lines.push(`${pad}${key}: "${escaped}"`);
     } else if (Array.isArray(val)) {
       if (val.length === 0) {
