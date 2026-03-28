@@ -3,7 +3,7 @@ import type PMPlugin from '../main';
 import { Project, ViewMode } from '../types';
 import { truncateTitle } from '../utils';
 import type { SubView } from './SubView';
-import { TableView } from './TableView';
+import { TableView } from './table/TableView';
 import { GanttView } from './GanttView';
 import { KanbanView } from './KanbanView';
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory';
