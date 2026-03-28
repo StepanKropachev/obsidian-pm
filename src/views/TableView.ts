@@ -7,6 +7,8 @@ import {
 } from '../types';
 import { TaskModal } from '../modals/TaskModal';
 import { stringToColor, formatDateLong, todayMidnight, isTaskOverdue } from '../utils';
+import { renderStatusBadge, renderPriorityBadge } from '../ui/StatusBadge';
+import { renderFilterDropdown } from '../ui/FilterDropdown';
 import type { SubView } from './SubView';
 
 type SortKey = 'title' | 'status' | 'priority' | 'due' | 'assignees' | 'progress';
@@ -159,19 +161,19 @@ export class TableView implements SubView {
     });
 
     // Status filter button
-    this.renderFilterDropdown(bar, 'Status', this.filter.statuses,
+    this.renderFilterDropdownBtn(bar, 'Status', this.filter.statuses,
       this.plugin.settings.statuses.map(s => ({ id: s.id, label: `${s.icon} ${s.label}` })),
       (selected) => { this.filter.statuses = selected as TaskStatus[]; this.refreshTable(); });
 
     // Priority filter button
-    this.renderFilterDropdown(bar, 'Priority', this.filter.priorities,
+    this.renderFilterDropdownBtn(bar, 'Priority', this.filter.priorities,
       this.plugin.settings.priorities.map(p => ({ id: p.id, label: `${p.icon} ${p.label}` })),
       (selected) => { this.filter.priorities = selected as TaskPriority[]; this.refreshTable(); });
 
     // Assignee filter button
     const allAssignees = this.getAllAssignees();
     if (allAssignees.length) {
-      this.renderFilterDropdown(bar, 'Assignee', this.filter.assignees,
+      this.renderFilterDropdownBtn(bar, 'Assignee', this.filter.assignees,
         allAssignees.map(a => ({ id: a, label: a })),
         (selected) => { this.filter.assignees = selected; this.refreshTable(); });
     }
@@ -179,7 +181,7 @@ export class TableView implements SubView {
     // Tag filter button
     const allTags = this.getAllTags();
     if (allTags.length) {
-      this.renderFilterDropdown(bar, 'Tag', this.filter.tags,
+      this.renderFilterDropdownBtn(bar, 'Tag', this.filter.tags,
         allTags.map(t => ({ id: t, label: t })),
         (selected) => { this.filter.tags = selected; this.refreshTable(); });
     }
@@ -199,42 +201,14 @@ export class TableView implements SubView {
     }
   }
 
-  private renderFilterDropdown(
+  private renderFilterDropdownBtn(
     parent: HTMLElement,
     label: string,
     selected: string[],
     options: { id: string; label: string }[],
     onChange: (selected: string[]) => void,
   ): void {
-    const hasSelection = selected.length > 0;
-    const btn = parent.createEl('button', {
-      text: hasSelection ? `${label}: ${selected.length}` : label,
-      cls: 'pm-filter-dropdown-btn',
-    });
-    if (hasSelection) btn.addClass('pm-filter-dropdown-btn--active');
-
-    btn.addEventListener('click', (e) => {
-      const menu = new Menu();
-      for (const opt of options) {
-        menu.addItem(item => item
-          .setTitle(opt.label)
-          .setChecked(selected.includes(opt.id))
-          .onClick(() => {
-            const idx = selected.indexOf(opt.id);
-            if (idx >= 0) selected.splice(idx, 1);
-            else selected.push(opt.id);
-            onChange(selected);
-          }));
-      }
-      if (selected.length) {
-        menu.addSeparator();
-        menu.addItem(item => item.setTitle('Clear').onClick(() => {
-          selected.length = 0;
-          onChange(selected);
-        }));
-      }
-      menu.showAtMouseEvent(e as MouseEvent);
-    });
+    renderFilterDropdown(parent, label, selected, options, onChange);
   }
 
   private renderDueDateFilter(parent: HTMLElement): void {
@@ -652,46 +626,18 @@ export class TableView implements SubView {
     // ── Status
     const statusCell = row.createEl('td', { cls: 'pm-table-cell' });
     if (statusConfig) {
-      const badge = statusCell.createEl('span', {
-        text: `${statusConfig.icon} ${statusConfig.label}`,
-        cls: 'pm-status-badge',
-      });
-      badge.style.setProperty('--badge-color', statusConfig.color);
-      badge.addEventListener('click', e => {
-        const menu = new Menu();
-        for (const s of this.plugin.settings.statuses) {
-          menu.addItem(item => item
-            .setTitle(`${s.icon} ${s.label}`)
-            .setChecked(s.id === task.status)
-            .onClick(async () => {
-              await this.plugin.store.updateTask(this.project, task.id, { status: s.id as TaskStatus });
-              await this.onRefresh();
-            }));
-        }
-        menu.showAtMouseEvent(e as MouseEvent);
+      renderStatusBadge(statusCell, task, this.plugin.settings.statuses, async (status) => {
+        await this.plugin.store.updateTask(this.project, task.id, { status });
+        await this.onRefresh();
       });
     }
 
     // ── Priority
     const prioCell = row.createEl('td', { cls: 'pm-table-cell' });
     if (priorityConfig) {
-      const badge = prioCell.createEl('span', {
-        text: `${priorityConfig.icon} ${priorityConfig.label}`,
-        cls: 'pm-priority-badge',
-      });
-      badge.style.setProperty('--badge-color', priorityConfig.color);
-      badge.addEventListener('click', e => {
-        const menu = new Menu();
-        for (const p of this.plugin.settings.priorities) {
-          menu.addItem(item => item
-            .setTitle(`${p.icon} ${p.label}`)
-            .setChecked(p.id === task.priority)
-            .onClick(async () => {
-              await this.plugin.store.updateTask(this.project, task.id, { priority: p.id as TaskPriority });
-              await this.onRefresh();
-            }));
-        }
-        menu.showAtMouseEvent(e as MouseEvent);
+      renderPriorityBadge(prioCell, task, this.plugin.settings.priorities, async (priority) => {
+        await this.plugin.store.updateTask(this.project, task.id, { priority });
+        await this.onRefresh();
       });
     }
 
