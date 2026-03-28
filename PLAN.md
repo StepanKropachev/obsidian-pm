@@ -1,244 +1,211 @@
-# Obsidian-PM: 12 Improvements Implementation Plan
+# Obsidian-PM: UX Overhaul — Task/Subtask/Project Creation
 
-## Context
-The obsidian-pm plugin is a production-ready Obsidian project management plugin. The user wants 12 improvements focused on usability, Gantt enhancements, and a major storage architecture change to make tasks first-class Obsidian pages. The changes are ordered so the storage migration (#10) happens early since it affects how most other features work.
+## Problem Statement
+The creation UX is fragmented and unintuitive:
+- Creating a subtask via command palette requires 3 modals (ProjectPicker → TaskPicker → TaskModal)
+- TaskModal is a 650-line monolith handling tasks, subtasks, milestones, creation, and editing
+- Key fields (status, priority, due date) are buried in a collapsed "Properties" section
+- Inline subtasks in the modal only support title + checkbox — no priority, dates, assignees
+- Quick-add only exists in Table view, not Kanban or Gantt
+- No way to convert between task types without opening the full modal
+- No keyboard-driven workflow for power users
 
 ---
 
-## Phase 1: Quick Wins (no storage changes)
+## Phase 1: Streamlined TaskModal — Split Creation vs Editing
 
-### 1.1 — #8: Start date defaults to today
-**File:** `src/types.ts` line 152
-- Change `start: ''` to `start: new Date().toISOString().slice(0, 10)` in `makeTask()`
-
-### 1.2 — #9: Remove emojis from task parameters
-**Files:** `src/modals/TaskModal.ts`, `src/views/TableView.ts`, `src/views/KanbanView.ts`, `src/views/GanttView.ts`, `src/store.ts`
-
-**TaskModal.ts** — Replace all emoji property labels with plain text:
-- `'◑ Status'` → `'Status'`
-- `'▲ Priority'` → `'Priority'`
-- `'💎 Type'` → `'Type'`; button text `'💎 Milestone'` → `'Milestone'`, `'☐ Task'` → `'Task'`
-- `'◎ Progress'` → `'Progress'`
-- `'▷ Start'` → `'Start'`
-- `'⏰ Due'` / `'💎 Date'` → `'Due'` / `'Date'`
-- `'🔁 Repeat'` → `'Repeat'`
-- `'👤 Assignees'` → `'Assignees'`
-- `'🏷 Tags'` → `'Tags'`
-- `'⛓ Depends on'` → `'Depends on'`
-- `'🗑 Delete'` → `'Delete'`
-- `'✏️ Type a name…'` → `'Type a name…'`
-- `'✓ Save Changes'` → `'Save Changes'`
-
-**TableView.ts** — Replace `💎` milestone and `🔁` recurrence emojis with CSS-styled text badges ("M", "R").
-
-**KanbanView.ts** — Replace `💎`, `🔁`, `⏱`, `📅`, `◫` with plain text equivalents.
-
-**GanttView.ts** — Replace `🔁` (line 643), `💎` (lines 788, 830) with text. Replace `⊙ Today`, `⊞ Expand All`, `⊟ Collapse All` (lines 91-99) with plain text labels.
-
-**store.ts** `appendMarkdownTasks()` — Replace `💎` → `[milestone]`, `🔁` → `[recurring]`, `📅` → `due:`, `👤` → `@`.
-
-**Note:** Leave status/priority `icon` fields in settings config alone — those are user-configurable.
-
-### 1.3 — #4: Shorten project name in tab
-**Files:** `src/utils.ts`, `src/views/ProjectView.ts`
-
-- Add `truncateTitle(title: string, maxLen = 20): string` to `utils.ts`
-- In `ProjectView.ts` line 37 `getDisplayText()`: return `truncateTitle(this.project?.title ?? 'Project Manager', 20)`
-- In `ProjectView.ts` line 194: use `truncateTitle(this.project.title, 20)` for tab header
-
-### 1.4 — #7: Task parameters hidden under toggle
+### 1.1 — Smart creation mode (minimal form)
 **Files:** `src/modals/TaskModal.ts`, `styles.css`
 
-- Move the description textarea **above** the properties section (currently at line 402, move it after the header)
-- Wrap the `pm-modal-props` div in a collapsible section with a "Properties ▶" toggle button
-- Default state: collapsed (showing title + description prominently)
-- Click toggle: expands to show all property rows with "Properties ▼"
-- Add CSS for `.pm-props-toggle-btn` and `.pm-modal-props-container`
+When creating a NEW task, show a **compact creation form** instead of the full edit modal:
 
----
-
-## Phase 2: Storage Architecture — Tasks as Obsidian Pages (#10)
-
-### File structure
 ```
-Projects/
-  MyProject.md                    # Project metadata only
-  MyProject/                      # Task folder per project
-  task-title-abc123.md          # Each task = own page
-  subtask-title-def456.md       # Subtasks too
+┌─────────────────────────────────────────┐
+│  Task title…                            │
+│                                         │
+│  ○ To Do  ▼    ◑ Medium ▼    📅 Due ▼  │
+│  Parent: (none) ▼                       │
+│                                         │
+│         [Cancel]  [Create Task]         │
+│         [▸ More options]                │
+└─────────────────────────────────────────┘
 ```
 
-### 2.1 — Data model changes
-**File:** `src/types.ts`
+- Title input (autofocused)
+- Single row of dropdowns: Status, Priority, Due date
+- Parent task selector (only if project has tasks; doubles as the subtask mechanism)
+- "More options" expands to full modal with description, tags, assignees, etc.
+- Enter key creates the task immediately
+- Keeps the full modal for editing existing tasks (unchanged)
 
-Add to Task interface:
-```typescript
-filePath?: string;   // vault path to this task's .md file
-```
+### 1.2 — Remove the "Type" property selector
+**Files:** `src/modals/TaskModal.ts`, `src/types.ts`
 
-### 2.2 — Store rewrite
-**File:** `src/store.ts`
+The Task/Subtask/Milestone 3-way type toggle is confusing. Instead:
+- **Subtask** is determined automatically by whether a Parent is set (parentId != null → subtask)
+- **Milestone** becomes a checkbox toggle `☐ Milestone` shown only in the full modal
+- Remove the type selector row entirely from the compact creation form
+- In full edit mode, show a simple "Milestone" checkbox instead of the 3-way toggle
 
-**Project .md frontmatter** changes from storing full `tasks:` array to storing `taskIds: string[]` (flat list of top-level task IDs).
-
-**Task .md file format:**
-```yaml
----
-pm-task: true
-projectId: "abc123"
-parentId: null          # or parent task ID for subtasks
-id: "id1"
-title: "My Task"
-type: "task"
-status: "in-progress"
-priority: "high"
-start: "2026-03-28"
-due: "2026-04-15"
-progress: 50
-assignees: ["Alice"]
-tags: ["frontend"]
-subtaskIds: ["id4", "id5"]
-dependencies: ["id2"]
-collapsed: false
-createdAt: "..."
-updatedAt: "..."
----
-Description goes here as markdown body.
-Supports [[wiki-links]] natively.
-```
-
-**New/changed store methods:**
-- `loadProject(file)`: Read project .md, then read all task .md files from project subfolder, rebuild tree from `parentId`/`subtaskIds` references
-- `saveProject(project)`: Save project metadata only (no tasks in YAML)
-- `addTask(project, parentId)`: Create new .md file in project folder, update parent's `subtaskIds` or project's `taskIds`
-- `updateTask(project, taskId, patch)`: Read+modify+write the task's .md file
-- `deleteTask(project, taskId)`: Delete task .md + recursively delete subtask .md files, update parent
-- `loadTaskFile(file)`: New — load single task from .md
-- `saveTaskFile(task, projectFolder)`: New — save single task to .md
-
-The in-memory `Project.tasks: Task[]` tree remains unchanged — store assembles it on load, views don't change.
-
-### 2.3 — Migration
-**New file:** `src/migration.ts`
-
-- On plugin load, detect old-format projects (frontmatter has `tasks:` array of objects)
-- For each: create subfolder, extract tasks into individual .md files, rewrite project .md
-- Show Obsidian notice with progress
-- Run automatically via `workspace.onLayoutReady()` in `main.ts`
-
-### 2.4 — File-open handler for task files
-**File:** `src/main.ts`
-
-- In file-open handler, detect `pm-task: true` frontmatter
-- When a task file is opened, open its parent project view and highlight/select that task
-
----
-
-## Phase 3: Gantt Enhancements (#2, #3, #5, #6)
-
-### 3.1 — #2: Click-to-create timeline in Gantt
-**File:** `src/views/GanttView.ts`
-
-- Add click handler on SVG background (filter out clicks on bars/handles/milestones)
-- Compute date from X position via `xToDate()`
-- Create new task with `start` = clicked date, `due` = start + 7 days
-- Open TaskModal for the new task
-
-### 3.2 — #3: Manual sort tasks in Gantt
-**Files:** `src/views/GanttView.ts`, `src/types.ts`
-
-- Make label rows in left panel draggable (HTML drag-and-drop)
-- On drop: remove task from current position, insert before/after target
-- Add `moveTaskInTree(tasks, taskId, targetId, 'before'|'after')` helper to `types.ts`
-- Save reordered project and refresh
-
-### 3.3 — #5: Add tasks/subtasks from Gantt sidebar
-**File:** `src/views/GanttView.ts`
-
-- On each task label row: add hover-visible "+" button → opens TaskModal with `parentId = task.id`
-- At bottom of left panel: "+" button → opens TaskModal as top-level task
-
-### 3.4 — #6: Timeline bar color
-Already working via per-status colors in settings (line 537-538). No changes needed — user confirmed current behavior is desired.
-
----
-
-## Phase 4: Subtask Type & Wiki Links (#1, #11)
-
-### 4.1 — #1: Subtask type with visual distinction
-**Files:** `src/types.ts`, `src/store.ts`, `src/modals/TaskModal.ts`, views, `styles.css`
-
-- Add `'subtask'` to `TaskType`: `'task' | 'milestone' | 'subtask'`
-- TaskModal: Replace binary task/milestone toggle with 3-way selector (Task / Subtask / Milestone)
-- When type is 'subtask': show "Parent Task" dropdown to select parent from flattenTasks()
-- Views: Show "Sub" CSS badge for subtask type (green-tinted, like milestone badge but distinct)
-- Gantt: Subtask bars slightly thinner or with dashed top border for visual distinction
-
-### 4.2 — #11: [[page]] links in task description
+### 1.3 — Parent task as the primary way to create subtasks
 **Files:** `src/modals/TaskModal.ts`
 
-After Phase 2, task descriptions are the markdown body of .md files, so Obsidian's native link resolution works when viewing the file directly.
-
-In TaskModal: add a rendered preview below the description textarea using Obsidian's `MarkdownRenderer.render()` to render wiki-links as clickable. The preview updates on input.
+- The "Parent task" dropdown is always visible in creation mode (not hidden in collapsed properties)
+- When opened from a context menu "Add subtask" on a task, parent is pre-filled
+- Typing in the parent field does fuzzy search (like Obsidian's link autocomplete)
+- This eliminates the need for the separate "New Subtask" command with its 3-modal flow
 
 ---
 
-## Phase 5: Project Baselines (#12)
+## Phase 2: Quick-Add Everywhere
 
-### 5.1 — Data model
-**File:** `src/types.ts`
+### 2.1 — Universal quick-add bar
+**Files:** `src/views/KanbanView.ts`, `src/views/GanttView.ts`, `src/views/ProjectView.ts`, `styles.css`
 
-```typescript
-interface BaselineTaskSnapshot {
-  taskId: string;
-  title: string;
-  start: string;
-  due: string;
-  progress: number;
-  status: TaskStatus;
-}
+Add the quick-add input bar (currently only in Table) to:
+- **Kanban**: Above the board, same as Table. Created task goes to the leftmost column (todo).
+- **Gantt**: In the left sidebar panel, below the task list.
+- **Keyboard shortcut**: `n` key (when not in an input) focuses the quick-add input from any view.
 
-interface Baseline {
-  id: string;
-  name: string;
-  createdAt: string;
-  tasks: BaselineTaskSnapshot[];
-}
+### 2.2 — Quick-add with inline modifiers
+**Files:** `src/views/TableView.ts` (extend existing), other views
+
+Support inline syntax in quick-add:
+- `Buy groceries !high` → sets priority to high
+- `Buy groceries @Alice` → assigns to Alice
+- `Buy groceries #shopping` → adds tag
+- `Buy groceries >2026-04-15` → sets due date
+- `Buy groceries /parent:Task Name` → creates as subtask under "Task Name"
+
+Parse modifiers from the input before creating the task. Show a subtle hint below the input: `Tip: !high @name #tag >date`
+
+### 2.3 — Kanban: Quick-add per column
+**Files:** `src/views/KanbanView.ts`, `styles.css`
+
+Replace the current "+ Add Task" button at bottom of each Kanban column with an inline text input:
+- Click the "+" → transforms into a text input
+- Enter creates the task in that column's status
+- Escape cancels
+- This is much faster than opening a full modal for each card
+
+---
+
+## Phase 3: Context-Aware Creation
+
+### 3.1 — Right-click "Add subtask" opens compact modal with parent pre-set
+**Files:** `src/views/TableView.ts`, `src/views/KanbanView.ts`, `src/views/GanttView.ts`
+
+In all views, right-clicking a task and selecting "Add subtask" opens the compact creation modal (Phase 1.1) with the parent pre-filled. No more navigating through the full modal's collapsed properties to find the parent selector.
+
+### 3.2 — Inline subtask creation in Table view
+**Files:** `src/views/TableView.ts`, `styles.css`
+
+When a task row is expanded (showing subtasks), add a subtle "+ Add subtask" row at the bottom of the subtask group:
+- Clicking it creates an inline editable row (like the quick-add but indented)
+- Enter saves, Escape cancels
+- Tab moves to next field (status, priority, due) for inline editing
+
+### 3.3 — Remove the "New Subtask" command
+**Files:** `src/main.ts`
+
+The 3-modal flow (ProjectPicker → TaskPicker → TaskModal) is replaced by:
+- Quick-add with `/parent:TaskName` modifier
+- Right-click → "Add subtask" in any view
+- Parent dropdown in the compact creation modal
+- Delete the `new-subtask` command and `TaskPickerModal` class
+
+### 3.4 — Simplify the "New Task" command
+**Files:** `src/main.ts`
+
+If only one project exists, skip the ProjectPicker and go straight to the compact creation modal. Only show the picker when there are multiple projects.
+
+---
+
+## Phase 4: Improved Subtask Experience in TaskModal
+
+### 4.1 — Rich inline subtasks
+**Files:** `src/modals/TaskModal.ts`, `styles.css`
+
+Replace the current bare-bones subtask list (title + checkbox + remove) with richer rows:
+
+```
+☐ ● Subtask title          Medium ▼   📅 Apr 15   ✕
+☑ ● Another subtask        Low ▼      📅 —         ✕
+   + Add subtask (Enter)
 ```
 
-Add `baselines: Baseline[]` to Project interface. Update `makeProject()`.
+Each subtask row shows:
+- Checkbox (status toggle)
+- Status dot (colored)
+- Editable title
+- Priority dropdown (compact)
+- Due date (compact picker)
+- Remove button
 
-### 5.2 — Storage
-**File:** `src/store.ts`
+This lets users set the most important fields without opening a separate modal for each subtask.
 
-Store baselines in project .md frontmatter. Add to serialization/hydration.
+### 4.2 — Open subtask as full modal
+**Files:** `src/modals/TaskModal.ts`
 
-### 5.3 — UI: Save baseline
-**File:** `src/views/ProjectView.ts`
-
-Add "Save Baseline" button in project toolbar (right section). Prompts for name, snapshots all tasks' dates/progress/status.
-
-### 5.4 — UI: Gantt baseline overlay
-**File:** `src/views/GanttView.ts`
-
-- Add baseline selector dropdown in granularity controls bar
-- When baseline is active: render semi-transparent "ghost bar" below each task bar showing baseline planned dates
-- Tooltip shows deviation from baseline
+Add a "↗" expand button on each subtask row that opens it in its own full TaskModal. This handles the case where users need to set description, tags, dependencies, etc. on a subtask.
 
 ---
 
-## Verification Plan
+## Phase 5: Project Creation Polish
 
-After each phase:
-1. Build: `npm run build` (esbuild)
-2. Copy `main.js` + `manifest.json` + `styles.css` to test vault's `.obsidian/plugins/obsidian-project-manager/`
-3. Reload Obsidian, open plugin
+### 5.1 — Simplified project creation
+**Files:** `src/modals/ProjectModal.ts`, `styles.css`
 
-**Phase 1:** Create new task → verify start date is today, no emojis in modal/views, tab title truncated, properties collapsed by default
-**Phase 2:** Open existing project → verify migration creates task .md files, tasks load correctly, graph view shows task nodes, search finds tasks
-**Phase 3:** Click empty Gantt area → new task at that date; drag labels to reorder; hover "+" buttons work
-**Phase 4:** Create subtask with parent dropdown; add [[link]] in description → preview renders clickable link
-**Phase 5:** Save baseline → switch to Gantt → select baseline → see ghost bars under task bars
+Split ProjectModal into two modes like TaskModal:
+- **Creation mode**: Title, color, icon only. Team members and custom fields can be added later.
+- **Settings mode** (existing behavior when editing): Full form with all fields.
+
+The current modal asks for team members and custom fields upfront, which is overwhelming for a new project.
+
+### 5.2 — Project templates
+**Files:** `src/modals/ProjectModal.ts`, `src/types.ts`
+
+Add 3-4 starter templates when creating a project:
+- **Blank** (default)
+- **Software Project** (pre-configured custom fields: Sprint, Story Points, Component)
+- **Content Calendar** (custom fields: Channel, Publish Date, Content Type)
+- **Personal** (minimal, no team members section)
+
+Show as selectable cards at the top of the creation modal.
+
+---
+
+## Phase 6: Keyboard & Power User Workflows
+
+### 6.1 — Keyboard shortcuts
+**Files:** `src/views/ProjectView.ts`, all view files
+
+| Key | Action |
+|-----|--------|
+| `n` | Focus quick-add input |
+| `Enter` (on selected task) | Open task for editing |
+| `Tab` (in quick-add) | Create task & keep focus for next |
+| `Escape` | Clear quick-add / close modal |
+
+### 6.2 — Command palette integration
+**Files:** `src/main.ts`
+
+- `PM: Quick add task` → Opens compact creation modal (skips project picker if only 1 project)
+- `PM: Open project` → Opens project picker → opens project view
+- Remove the confusing `PM: Create new subtask` command
+
+---
+
+## Implementation Order
+
+1. **Phase 1** (compact creation modal) — Highest impact, solves the core "mess"
+2. **Phase 3.3-3.4** (simplify commands) — Quick cleanup
+3. **Phase 2.1** (quick-add everywhere) — Consistency across views
+4. **Phase 4.1** (rich subtask rows) — Better subtask workflow
+5. **Phase 2.3** (kanban inline add) — Polish
+6. **Phase 2.2** (inline modifiers) — Power user feature
+7. **Phase 5** (project creation) — Lower priority
+8. **Phase 6** (keyboard shortcuts) — Polish
 
 ---
 
@@ -246,14 +213,12 @@ After each phase:
 
 | File | Phases |
 |------|--------|
-| `src/types.ts` | 1, 2, 3, 4, 5 |
-| `src/store.ts` | 1, 2, 5 |
 | `src/modals/TaskModal.ts` | 1, 4 |
-| `src/views/GanttView.ts` | 1, 3, 5 |
-| `src/views/ProjectView.ts` | 1, 5 |
-| `src/views/TableView.ts` | 1, 4 |
-| `src/views/KanbanView.ts` | 1, 4 |
-| `src/main.ts` | 2 |
-| `src/utils.ts` | 1 |
-| `styles.css` | 1, 3, 4, 5 |
-| `src/migration.ts` (new) | 2 |
+| `src/modals/ProjectModal.ts` | 5 |
+| `src/views/TableView.ts` | 2, 3 |
+| `src/views/KanbanView.ts` | 2, 3 |
+| `src/views/GanttView.ts` | 2, 3 |
+| `src/views/ProjectView.ts` | 2, 6 |
+| `src/main.ts` | 3, 6 |
+| `src/types.ts` | 1 |
+| `styles.css` | 1, 2, 3, 4, 5 |

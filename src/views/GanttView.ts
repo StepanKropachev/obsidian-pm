@@ -184,32 +184,6 @@ export class GanttView implements SubView {
     this.renderTaskRows(leftBody, totalRows);
     this.renderDependencyArrows();
     this.renderMilestoneLabels();
-    // Click-to-create on empty SVG background
-    this.svgEl.addEventListener('click', async (e: MouseEvent) => {
-      const target = e.target as SVGElement;
-      // Only handle clicks on background elements (grid, weekend shading, row hover)
-      if (target.closest('.pm-gantt-bar-group, .pm-gantt-milestone, .pm-gantt-drag-handle')) return;
-      if (target.classList.contains('pm-gantt-bar') || target.classList.contains('pm-gantt-milestone')) return;
-
-      const rect = this.svgEl.getBoundingClientRect();
-      const svgX = e.clientX - rect.left + this.scrollEl.scrollLeft;
-      const svgY = e.clientY - rect.top;
-
-      // Ignore clicks on header area
-      if (svgY < HEADER_HEIGHT) return;
-
-      const clickDate = this.xToDate(svgX);
-      const dueDate = new Date(clickDate.getTime() + 7 * DAY_MS);
-      const newTask = makeTask({
-        start: this.dateToIso(clickDate),
-        due: this.dateToIso(dueDate),
-      });
-
-      new TaskModal(this.plugin.app, this.plugin, this.project, newTask, null, async () => {
-        await this.onRefresh();
-      }).open();
-    });
-
     // Sync vertical scroll between left and right
     rightPanel.addEventListener('scroll', () => {
       leftBody.scrollTop = rightPanel.scrollTop;

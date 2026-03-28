@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, Menu } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, Menu, EventRef } from 'obsidian';
 import type PMPlugin from '../main';
 import { Project, ViewMode } from '../types';
 import { truncateTitle } from '../utils';
@@ -27,6 +27,7 @@ export class ProjectView extends ItemView {
   private contentEl2!: HTMLElement;
   private titleEl2!: HTMLElement;
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+  private fileModifyRef: EventRef | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf);
@@ -64,6 +65,26 @@ export class ProjectView extends ItemView {
     if (!this.containerEl.hasAttribute('tabindex')) {
       this.containerEl.setAttribute('tabindex', '-1');
     }
+
+    // Watch for task file modifications/deletions to keep the view in sync
+    const reloadIfRelevant = (filePath: string) => {
+      if (!this.project || !this.filePath) return false;
+      const taskFolder = this.filePath.replace(/\.md$/, '_tasks');
+      return filePath.startsWith(taskFolder) || filePath === this.filePath;
+    };
+    this.fileModifyRef = this.app.vault.on('modify', async (file) => {
+      if (file instanceof TFile && reloadIfRelevant(file.path)) {
+        await this.loadProject();
+      }
+    });
+    this.registerEvent(this.fileModifyRef);
+    this.registerEvent(
+      this.app.vault.on('delete', async (file) => {
+        if (reloadIfRelevant(file.path)) {
+          await this.loadProject();
+        }
+      }),
+    );
   }
 
   async onClose(): Promise<void> {
@@ -71,6 +92,7 @@ export class ProjectView extends ItemView {
       this.containerEl.removeEventListener('keydown', this.keydownHandler);
       this.keydownHandler = null;
     }
+    this.fileModifyRef = null;
     this.subview = null;
   }
 

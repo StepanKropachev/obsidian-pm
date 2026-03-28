@@ -537,7 +537,7 @@ export class TaskModal extends Modal {
       text: this.isNew ? '+ Create Task' : 'Save Changes',
       cls: 'pm-btn pm-btn-primary',
     });
-    saveBtn.addEventListener('click', async () => {
+    const doSave = async () => {
       if (!this.task.title.trim()) {
         titleInput.focus();
         titleInput.classList.add('pm-input-error');
@@ -553,6 +553,16 @@ export class TaskModal extends Modal {
       await this.plugin.store.saveProject(this.project);
       await this.onSave(this.task);
       this.close();
+    };
+
+    saveBtn.addEventListener('click', doSave);
+
+    // Save on Enter (except when typing in a textarea)
+    this.modalEl.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        doSave();
+      }
     });
   }
 
