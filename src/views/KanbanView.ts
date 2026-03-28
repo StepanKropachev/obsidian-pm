@@ -1,7 +1,7 @@
 import type PMPlugin from '../main';
 import { Project, Task, TaskStatus, flattenTasks, makeTask, totalLoggedHours } from '../types';
 import { TaskModal } from '../modals/TaskModal';
-import { stringToColor, formatDateShort, todayMidnight, isTaskOverdue } from '../utils';
+import { stringToColor, formatDateShort, isTaskOverdue } from '../utils';
 import type { SubView } from './SubView';
 
 export class KanbanView implements SubView {
@@ -153,19 +153,16 @@ export class KanbanView implements SubView {
       const av = avatars.createEl('span', { cls: 'pm-avatar pm-avatar--sm' });
       av.textContent = a.slice(0, 2).toUpperCase();
       av.title = a;
-      av.style.background = this.stringToColor(a);
+      av.style.background = stringToColor(a);
     }
 
     if (task.due) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dueDate = new Date(task.due);
-      const isOverdue = dueDate < today && task.status !== 'done';
+      const overdue = isTaskOverdue(task);
       const chip = footer.createEl('span', {
-        text: this.formatDate(task.due),
+        text: formatDateShort(task.due),
         cls: 'pm-kanban-due',
       });
-      if (isOverdue) chip.addClass('pm-kanban-due--overdue');
+      if (overdue) chip.addClass('pm-kanban-due--overdue');
     }
 
     // Progress mini bar
@@ -219,15 +216,4 @@ export class KanbanView implements SubView {
     return closest;
   }
 
-  private formatDate(iso: string): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  }
-
-  private stringToColor(s: string): string {
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
-    return `hsl(${Math.abs(hash) % 360}, 55%, 45%)`;
-  }
 }

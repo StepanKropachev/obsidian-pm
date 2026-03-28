@@ -812,16 +812,4 @@ export class TableView implements SubView {
     return { critical: 0, high: 1, medium: 2, low: 3 }[p] ?? 99;
   }
 
-  private formatDate(iso: string): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
-  }
-
-  private stringToColor(s: string): string {
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 55%, 45%)`;
-  }
 }

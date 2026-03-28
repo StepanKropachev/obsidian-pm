@@ -116,26 +116,26 @@ export class ProjectStore {
 
     // Load all task files
     const taskMap = new Map<string, Task>();
-    const childrenOf = new Map<string, string[]>(); // parentId -> subtaskIds[]
+    const subtaskIdsMap = new Map<string, string[]>(); // taskId -> subtaskIds
 
     const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(folderPath + '/'));
     for (const file of files) {
-      const task = await this.loadTaskFile(file);
+      const { task, subtaskIds } = await this.loadTaskFile(file);
       if (task) {
         taskMap.set(task.id, task);
+        if (subtaskIds.length) subtaskIdsMap.set(task.id, subtaskIds);
       }
     }
 
-    // Build tree from parentId/subtaskIds references
-    for (const task of taskMap.values()) {
-      // Rebuild subtasks array from subtaskIds stored in frontmatter
-      const subtaskIds = (task as unknown as { _subtaskIds?: string[] })._subtaskIds ?? [];
+    // Build tree from subtaskIds references
+    for (const [taskId, sids] of subtaskIdsMap) {
+      const task = taskMap.get(taskId);
+      if (!task) continue;
       task.subtasks = [];
-      for (const sid of subtaskIds) {
+      for (const sid of sids) {
         const sub = taskMap.get(sid);
         if (sub) task.subtasks.push(sub);
       }
-      delete (task as unknown as { _subtaskIds?: string[] })._subtaskIds;
     }
 
     // Return top-level tasks in order
@@ -158,11 +158,11 @@ export class ProjectStore {
   }
 
   /** Load a single task from its .md file */
-  async loadTaskFile(file: TFile): Promise<Task | null> {
+  async loadTaskFile(file: TFile): Promise<{ task: Task | null; subtaskIds: string[] }> {
     try {
       const content = await this.app.vault.read(file);
       const { frontmatter, body } = this.parseFrontmatter(content);
-      if (!frontmatter || frontmatter[TASK_FRONTMATTER_KEY] !== true) return null;
+      if (!frontmatter || frontmatter[TASK_FRONTMATTER_KEY] !== true) return { task: null, subtaskIds: [] };
 
       const task = makeTask({
         id: frontmatter.id as string,
@@ -196,13 +196,10 @@ export class ProjectStore {
         filePath: file.path,
       });
 
-      // Store subtaskIds temporarily for tree rebuilding
-      (task as unknown as { _subtaskIds?: string[] })._subtaskIds =
-        Array.isArray(frontmatter.subtaskIds) ? frontmatter.subtaskIds : [];
-
-      return task;
+      const subtaskIds = Array.isArray(frontmatter.subtaskIds) ? frontmatter.subtaskIds as string[] : [];
+      return { task, subtaskIds };
     } catch {
-      return null;
+      return { task: null, subtaskIds: [] };
     }
   }
 
