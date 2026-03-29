@@ -835,6 +835,7 @@
 
 .pm-kanban-cards {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 6px 10px;
   display: flex;
@@ -1365,14 +1366,17 @@
 /* ── Scrollbar polish ─────────────────────────────────────────────────────── */
 .pm-gantt-right::-webkit-scrollbar,
 .pm-kanban-board::-webkit-scrollbar,
+.pm-kanban-cards::-webkit-scrollbar,
 .pm-task-modal::-webkit-scrollbar,
 .pm-project-modal::-webkit-scrollbar { width: 6px; height: 6px; }
 
 .pm-gantt-right::-webkit-scrollbar-track,
-.pm-kanban-board::-webkit-scrollbar-track { background: transparent; }
+.pm-kanban-board::-webkit-scrollbar-track,
+.pm-kanban-cards::-webkit-scrollbar-track { background: transparent; }
 
 .pm-gantt-right::-webkit-scrollbar-thumb,
 .pm-kanban-board::-webkit-scrollbar-thumb,
+.pm-kanban-cards::-webkit-scrollbar-thumb,
 .pm-task-modal::-webkit-scrollbar-thumb,
 .pm-project-modal::-webkit-scrollbar-thumb {
   background: var(--pm-border);
