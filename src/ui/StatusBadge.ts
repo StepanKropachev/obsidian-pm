@@ -1,5 +1,6 @@
 import { Menu } from 'obsidian';
 import type { Task, TaskStatus, TaskPriority, StatusConfig, PriorityConfig } from '../types';
+import { COLOR_MUTED, COLOR_MUTED_ALT } from '../constants';
 
 /**
  * Render a clickable status badge that opens a menu to change the status.
@@ -15,7 +16,7 @@ export function renderStatusBadge(
     text: `${config?.icon ?? ''} ${config?.label ?? task.status}`,
     cls: 'pm-status-badge',
   });
-  badge.style.setProperty('--badge-color', config?.color ?? '#94a3b8');
+  badge.style.setProperty('--badge-color', config?.color ?? COLOR_MUTED);
   badge.addEventListener('click', e => {
     const menu = new Menu();
     for (const s of statuses) {
@@ -43,7 +44,7 @@ export function renderPriorityBadge(
     text: `${config?.icon ?? ''} ${config?.label ?? task.priority}`,
     cls: 'pm-priority-badge',
   });
-  badge.style.setProperty('--badge-color', config?.color ?? '#8a94a0');
+  badge.style.setProperty('--badge-color', config?.color ?? COLOR_MUTED_ALT);
   badge.addEventListener('click', e => {
     const menu = new Menu();
     for (const p of priorities) {
@@ -68,6 +69,6 @@ export function renderStatusDot(
 ): HTMLElement {
   const config = statuses.find(s => s.id === status);
   const dot = container.createEl('span', { cls });
-  dot.style.background = config?.color ?? '#94a3b8';
+  dot.style.background = config?.color ?? COLOR_MUTED;
   return dot;
 }

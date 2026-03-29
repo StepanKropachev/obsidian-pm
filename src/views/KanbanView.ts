@@ -3,6 +3,7 @@ import { Project, Task, TaskStatus } from '../types';
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps';
 import { stringToColor, formatDateShort, isTaskOverdue } from '../utils';
 import { openTaskModal } from '../ui/ModalFactory';
+import { COLOR_ACCENT } from '../constants';
 import type { SubView } from './SubView';
 
 export class KanbanView implements SubView {
@@ -177,7 +178,7 @@ export class KanbanView implements SubView {
       const pbar = body.createDiv('pm-kanban-card-pbar');
       const pfill = pbar.createDiv('pm-kanban-card-pbar-fill');
       pfill.style.width = `${task.progress}%`;
-      pfill.style.background = '#8b72be';
+      pfill.style.background = COLOR_ACCENT;
     }
 
     // Subtask count

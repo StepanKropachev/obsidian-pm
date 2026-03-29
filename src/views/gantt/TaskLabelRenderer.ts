@@ -2,6 +2,7 @@ import type PMPlugin from '../../main';
 import type { Project, Task } from '../../types';
 import { moveTaskInTree } from '../../store/TaskTreeOps';
 import { openTaskModal } from '../../ui/ModalFactory';
+import { COLOR_MUTED } from '../../constants';
 import { ROW_HEIGHT } from './TimelineConfig';
 
 export interface LabelContext {
@@ -65,7 +66,7 @@ export function renderTaskLabel(
   // Color dot
   const statusConfig = ctx.plugin.settings.statuses.find(s => s.id === task.status);
   const dot = el.createEl('span', { cls: 'pm-gantt-label-dot' });
-  dot.style.background = statusConfig?.color ?? '#94a3b8';
+  dot.style.background = statusConfig?.color ?? COLOR_MUTED;
 
   // Title
   const titleEl = el.createEl('span', { text: task.title, cls: 'pm-gantt-label-title' });

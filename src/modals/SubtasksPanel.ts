@@ -1,6 +1,7 @@
 import type PMPlugin from '../main';
 import type { Task } from '../types';
 import { makeTask } from '../types';
+import { COLOR_MUTED } from '../constants';
 
 /**
  * Renders the subtasks section (list + add button) into the given container.
@@ -27,7 +28,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
       });
 
       const dot = row.createEl('span', { cls: 'pm-subtask-dot' });
-      dot.style.background = subStatus?.color ?? '#94a3b8';
+      dot.style.background = subStatus?.color ?? COLOR_MUTED;
 
       const titleEl = row.createEl('span', { text: sub.title, cls: 'pm-subtask-title' });
       titleEl.contentEditable = 'true';

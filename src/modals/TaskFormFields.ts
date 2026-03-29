@@ -6,6 +6,7 @@ import {
 } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
 import { renderPropRow, renderProgressSlider } from '../ui/FormField';
+import { COLOR_MUTED } from '../constants';
 
 export interface TaskFormFieldsContext {
   task: Task;
@@ -27,7 +28,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Status', () => {
     const statusConfig = plugin.settings.statuses.find(s => s.id === task.status);
     const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' });
-    val.style.setProperty('--badge-color', statusConfig?.color ?? '#94a3b8');
+    val.style.setProperty('--badge-color', statusConfig?.color ?? COLOR_MUTED);
     val.setText(`${statusConfig?.icon ?? ''} ${statusConfig?.label ?? task.status}`);
     val.addEventListener('click', e => {
       const menu = new Menu();
@@ -46,7 +47,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Priority', () => {
     const prioConfig = plugin.settings.priorities.find(p => p.id === task.priority);
     const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' });
-    val.style.setProperty('--badge-color', prioConfig?.color ?? '#ca8a04');
+    val.style.setProperty('--badge-color', prioConfig?.color ?? COLOR_MUTED);
     val.setText(`${prioConfig?.icon ?? ''} ${prioConfig?.label ?? task.priority}`);
     val.addEventListener('click', e => {
       const menu = new Menu();

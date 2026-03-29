@@ -1,3 +1,5 @@
+import { COLOR_ACCENT } from './constants';
+
 export type TaskStatus = 'todo' | 'in-progress' | 'blocked' | 'review' | 'done' | 'cancelled';
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
 export type GanttGranularity = 'day' | 'week' | 'month' | 'quarter';
@@ -171,7 +173,7 @@ export function makeProject(title: string, filePath: string): Project {
     id: makeId(),
     title,
     description: '',
-    color: '#8b72be',
+    color: COLOR_ACCENT,
     icon: '📋',
     tasks: [],
     customFields: [],

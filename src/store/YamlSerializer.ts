@@ -1,6 +1,7 @@
 import type { Project, Task, SavedView, CustomFieldDef } from '../types';
 import { makeTask } from '../types';
 import { sanitizeFileName } from '../utils';
+import { COLOR_ACCENT } from '../constants';
 
 const FRONTMATTER_KEY = 'pm-project';
 const TASK_FRONTMATTER_KEY = 'pm-task';
@@ -149,7 +150,7 @@ export function hydrateProjectFromFrontmatter(
     id: (frontmatter.id as string) ?? basename,
     title: (frontmatter.title as string) ?? basename,
     description: (frontmatter.description as string) ?? body.trim(),
-    color: (frontmatter.color as string) ?? '#8b72be',
+    color: (frontmatter.color as string) ?? COLOR_ACCENT,
     icon: (frontmatter.icon as string) ?? '\u{1F4CB}',
     tasks: [],
     customFields: (frontmatter.customFields as CustomFieldDef[]) ?? [],

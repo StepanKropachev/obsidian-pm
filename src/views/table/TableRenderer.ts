@@ -3,6 +3,7 @@ import type PMPlugin from '../../main';
 import type { Project, Task, FilterState, TaskStatus, TaskPriority, DueDateFilter } from '../../types';
 import { type FlatTask, flattenTasks, findTask, totalLoggedHours, deleteTaskFromTree } from '../../store/TaskTreeOps';
 import { stringToColor, formatDateLong, todayMidnight, isTaskOverdue } from '../../utils';
+import { COLOR_ACCENT } from '../../constants';
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge';
 import { openTaskModal } from '../../ui/ModalFactory';
 import { focusQuickAdd } from './QuickAddBar';
@@ -344,7 +345,7 @@ function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _parentId:
   const progressBar = progressWrap.createDiv('pm-progress-bar');
   const progressFill = progressBar.createDiv('pm-progress-fill');
   progressFill.style.width = `${task.progress}%`;
-  progressFill.style.background = statusConfig?.color ?? '#8b72be';
+  progressFill.style.background = statusConfig?.color ?? COLOR_ACCENT;
   progressWrap.createEl('span', { text: `${task.progress}%`, cls: 'pm-progress-label' });
 
   // ── Time tracking
