@@ -109,11 +109,11 @@ export interface PMSettings {
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
-  { id: 'todo',        label: 'To Do',       color: '#94a3b8', icon: '○' },
-  { id: 'in-progress', label: 'In Progress', color: '#6366f1', icon: '◑' },
-  { id: 'blocked',     label: 'Blocked',     color: '#ef4444', icon: '⊘' },
-  { id: 'review',      label: 'In Review',   color: '#f59e0b', icon: '◎' },
-  { id: 'done',        label: 'Done',        color: '#22c55e', icon: '●' },
+  { id: 'todo',        label: 'To Do',       color: '#8a94a0', icon: '○' },
+  { id: 'in-progress', label: 'In Progress', color: '#69519a', icon: '◑' },
+  { id: 'blocked',     label: 'Blocked',     color: '#b83b3b', icon: '⊘' },
+  { id: 'review',      label: 'In Review',   color: '#b8862b', icon: '◎' },
+  { id: 'done',        label: 'Done',        color: '#306a48', icon: '●' },
   { id: 'cancelled',   label: 'Cancelled',   color: '#6b7280', icon: '✕' },
 ];
 
@@ -171,7 +171,7 @@ export function makeProject(title: string, filePath: string): Project {
     id: makeId(),
     title,
     description: '',
-    color: '#6366f1',
+    color: '#69519a',
     icon: '📋',
     tasks: [],
     customFields: [],
