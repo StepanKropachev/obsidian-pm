@@ -134,14 +134,6 @@ export class GanttView implements SubView {
     this.svgEl.setAttribute('class', 'pm-gantt-svg');
     svgContainer.appendChild(this.svgEl);
 
-    // Forward wheel events from SVG to scroll container so scrolling works
-    // when hovering over task bars (SVG elements with listeners can swallow wheel events)
-    this.svgEl.addEventListener('wheel', (e: WheelEvent) => {
-      this.scrollEl.scrollLeft += e.deltaX;
-      this.scrollEl.scrollTop += e.deltaY;
-      e.preventDefault();
-    }, { passive: false });
-
     const ctx = this.makeRendererContext();
     renderTimelineHeader(ctx);
     renderGridLines(ctx, totalRows);
