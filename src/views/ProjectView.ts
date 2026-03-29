@@ -225,7 +225,7 @@ export class ProjectView extends ItemView {
 
     // Left: icon, title, description
     const left = this.toolbarEl.createDiv('pm-toolbar-left');
-    const iconEl = left.createEl('span', { text: this.project.icon, cls: 'pm-toolbar-icon' });
+    const iconEl = left.createEl('span', { text: this.project.icon, cls: 'pm-toolbar-icon', attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' } });
     iconEl.addEventListener('click', async () => {
       openProjectModal(this.plugin, { project: this.project, onSave: async updated => {
         this.project = updated;
@@ -249,7 +249,7 @@ export class ProjectView extends ItemView {
       { mode: 'kanban', icon: '⊞', label: 'Board' },
     ];
     for (const v of views) {
-      const btn = switcher.createEl('button', { cls: 'pm-view-btn' });
+      const btn = switcher.createEl('button', { cls: 'pm-view-btn', attr: { 'aria-label': `Switch to ${v.label} view` } });
       btn.createEl('span', { text: v.icon, cls: 'pm-view-btn-icon' });
       btn.createEl('span', { text: v.label });
       if (v.mode === this.currentView) btn.addClass('pm-view-btn--active');

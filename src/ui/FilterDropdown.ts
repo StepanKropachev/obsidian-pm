@@ -15,6 +15,7 @@ export function renderFilterDropdown(
   const btn = parent.createEl('button', {
     text: hasSelection ? `${label}: ${selected.length}` : label,
     cls: 'pm-filter-dropdown-btn',
+    attr: { 'aria-label': `Filter by ${label}`, role: 'combobox' },
   });
   if (hasSelection) btn.addClass('pm-filter-dropdown-btn--active');
 

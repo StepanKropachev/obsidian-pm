@@ -83,7 +83,7 @@ export class TaskModal extends Modal {
 
     // ── Properties (collapsible) ────────────────────────────────────────────
     const propsContainer = contentEl.createDiv('pm-modal-props-container');
-    const propsToggle = propsContainer.createEl('button', { cls: 'pm-props-toggle-btn' });
+    const propsToggle = propsContainer.createEl('button', { cls: 'pm-props-toggle-btn', attr: { 'aria-expanded': 'false', 'aria-label': 'Toggle properties' } });
     propsToggle.setText('Properties \u25B6');
     const props = propsContainer.createDiv('pm-modal-props pm-modal-props--collapsed');
     propsToggle.addEventListener('click', () => {
@@ -91,9 +91,11 @@ export class TaskModal extends Modal {
       if (collapsed) {
         props.removeClass('pm-modal-props--collapsed');
         propsToggle.setText('Properties \u25BC');
+        propsToggle.setAttribute('aria-expanded', 'true');
       } else {
         props.addClass('pm-modal-props--collapsed');
         propsToggle.setText('Properties \u25B6');
+        propsToggle.setAttribute('aria-expanded', 'false');
       }
     });
 

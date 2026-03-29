@@ -51,6 +51,8 @@ export function renderTable(ctx: TableContext): void {
     if (col.width) th.style.width = col.width;
     if (col.key) {
       th.addClass('pm-table-th-sortable');
+      th.setAttribute('role', 'button');
+      th.setAttribute('aria-label', `Sort by ${col.label}`);
       th.createEl('span', { text: col.label });
       if (ctx.state.sortKey === col.key) {
         th.createEl('span', {
@@ -219,6 +221,7 @@ function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _parentId:
     const btn = expandCell.createEl('button', {
       text: task.collapsed ? '▶' : '▼',
       cls: 'pm-expand-btn',
+      attr: { 'aria-label': task.collapsed ? 'Expand subtasks' : 'Collapse subtasks' },
     });
     btn.addEventListener('click', async () => {
       await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed });
@@ -356,7 +359,7 @@ function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _parentId:
 
   // ── Actions
   const actionsCell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-actions' });
-  const actionsMenu = actionsCell.createEl('button', { text: '⋯', cls: 'pm-row-menu-btn' });
+  const actionsMenu = actionsCell.createEl('button', { text: '⋯', cls: 'pm-row-menu-btn', attr: { 'aria-label': 'Task actions' } });
   actionsMenu.addEventListener('click', e => {
     const menu = new Menu();
     menu.addItem(item => item.setTitle('Edit task').setIcon('pencil').onClick(async () => {
