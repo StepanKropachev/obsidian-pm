@@ -32,6 +32,7 @@ export class ProjectView extends ItemView {
     super(leaf);
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
+    this.navigation = false;
   }
 
   getViewType(): string { return PM_VIEW_TYPE; }
@@ -214,7 +215,8 @@ export class ProjectView extends ItemView {
       this.renderProjectList();
       return;
     }
-    (this.leaf as unknown as { tabHeaderEl?: { setText?: (t: string) => void } }).tabHeaderEl?.setText?.(truncateTitle(this.project.title, 10));
+    // Update tab header text and icon after project loads
+    (this.leaf as any).updateHeader?.();
     this.renderProjectToolbar();
     this.renderCurrentView();
   }
