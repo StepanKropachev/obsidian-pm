@@ -269,6 +269,14 @@ export class ProjectView extends ItemView {
       openTaskModal(this.plugin, this.project, { onSave: async () => { await this.refreshProject(); } });
     });
 
+    if (this.currentView === 'gantt') {
+      const milestoneBtn = right.createEl('button', { text: '+ Milestone', cls: 'pm-btn pm-btn-ghost' });
+      milestoneBtn.addEventListener('click', async () => {
+        if (!this.project) return;
+        openTaskModal(this.plugin, this.project, { defaults: { type: 'milestone' }, onSave: async () => { await this.refreshProject(); } });
+      });
+    }
+
     const settingsBtn = right.createEl('button', { cls: 'pm-btn pm-btn-icon', attr: { 'aria-label': 'Project settings' } });
     settingsBtn.createEl('span', { text: '⚙' });
     settingsBtn.addEventListener('click', async () => {
