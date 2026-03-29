@@ -35,7 +35,7 @@ export class ProjectView extends ItemView {
   }
 
   getViewType(): string { return PM_VIEW_TYPE; }
-  getDisplayText(): string { return truncateTitle(this.project?.title ?? 'Project Manager', 14); }
+  getDisplayText(): string { return truncateTitle(this.project?.title ?? 'PM', 10); }
   getIcon(): string { return 'layout-dashboard'; }
 
   async setState(state: ViewState, result: unknown): Promise<void> {
@@ -214,7 +214,7 @@ export class ProjectView extends ItemView {
       this.renderProjectList();
       return;
     }
-    (this.leaf as unknown as { tabHeaderEl?: { setText?: (t: string) => void } }).tabHeaderEl?.setText?.(truncateTitle(this.project.title, 14));
+    (this.leaf as unknown as { tabHeaderEl?: { setText?: (t: string) => void } }).tabHeaderEl?.setText?.(truncateTitle(this.project.title, 10));
     this.renderProjectToolbar();
     this.renderCurrentView();
   }
