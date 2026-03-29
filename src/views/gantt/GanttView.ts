@@ -142,10 +142,20 @@ export class GanttView implements SubView {
     renderDependencyArrows(ctx);
     renderMilestoneLabels(ctx);
 
-    // Sync vertical scroll
+    // Sync vertical scroll: right → left
     rightPanel.addEventListener('scroll', () => {
       leftBody.scrollTop = rightPanel.scrollTop;
     });
+
+    // Forward wheel events from left panel to the scroll container
+    // (left panel has overflow:hidden, so wheel events are swallowed otherwise)
+    const onLeftWheel = (e: WheelEvent) => {
+      rightPanel.scrollTop += e.deltaY;
+      rightPanel.scrollLeft += e.deltaX;
+      e.preventDefault();
+    };
+    leftPanel.addEventListener('wheel', onLeftWheel, { passive: false });
+    this.cleanupFns.push(() => leftPanel.removeEventListener('wheel', onLeftWheel));
 
     // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row');
