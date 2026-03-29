@@ -48,6 +48,20 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
   startDate = new Date(startDate.getTime() - 7 * DAY_MS);
   endDate   = new Date(endDate.getTime() + 14 * DAY_MS);
 
+  // Enforce minimum visible range based on granularity
+  const minDays: Record<GanttGranularity, number> = {
+    day: 30,
+    week: 90,
+    month: 365,
+    quarter: 365,
+  };
+  const currentSpan = (endDate.getTime() - startDate.getTime()) / DAY_MS;
+  if (currentSpan < minDays[granularity]) {
+    const extra = (minDays[granularity] - currentSpan) / 2;
+    startDate = new Date(startDate.getTime() - extra * DAY_MS);
+    endDate = new Date(endDate.getTime() + extra * DAY_MS);
+  }
+
   // Snap to month start for cleaner headers
   if (granularity === 'week' || granularity === 'month' || granularity === 'quarter') {
     startDate.setDate(1);
