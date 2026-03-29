@@ -4,9 +4,9 @@ import { Project, CustomFieldDef, makeId, makeProject } from '../types';
 import { sanitizeFileName } from '../utils';
 
 const PROJECT_COLORS = [
-  '#69519a', '#7c6b9a', '#b07d9e', '#b83b3b',
-  '#b8862b', '#306a48', '#4a8c7e', '#4a7eb8',
-  '#6b7280', '#6b8a3d',
+  '#8b72be', '#7c6b9a', '#b07d9e', '#c47070',
+  '#b8a06b', '#79b58d', '#6ba8a0', '#7a9ec4',
+  '#767491', '#8aab6b',
 ];
 
 const PROJECT_ICONS = ['📋', '🚀', '💡', '🎯', '🔬', '🏗', '📊', '🎨', '📱', '🛠', '📝', '⚡'];
@@ -15,10 +15,10 @@ const PROJECT_ICONS = ['📋', '🚀', '💡', '🎯', '🔬', '🏗', '📊', '
 const S = {
   label: `font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;display:block;`,
   input: `width:100%;padding:8px 12px;border:1px solid var(--background-modifier-border);border-radius:8px;background:var(--background-secondary);color:var(--text-normal);font-size:13px;box-sizing:border-box;outline:none;transition:border-color 0.2s,background 0.2s;`,
-  inputFocus: `border-color:#69519a;`,
+  inputFocus: `border-color:#8b72be;`,
   btnGhost: `padding:5px 12px;border-radius:0.25rem;border:1px solid var(--background-modifier-border);background:transparent;color:var(--text-normal);cursor:pointer;font-size:12px;transition:all 0.15s;`,
-  btnPrimary: `padding:8px 20px;border-radius:0.375rem;border:none;background:linear-gradient(180deg,#69519a,#5d458d);color:#fff;cursor:pointer;font-weight:600;font-size:13px;transition:all 0.15s;box-shadow:0 2px 8px rgba(105,81,154,0.2);`,
-  btnAdd: `padding:4px 0;border:none;background:transparent;color:#69519a;cursor:pointer;font-size:12px;font-weight:600;transition:color 0.15s;`,
+  btnPrimary: `padding:8px 20px;border-radius:0.375rem;border:none;background:linear-gradient(180deg,#8b72be,#7a63ad);color:#fff;cursor:pointer;font-weight:600;font-size:13px;transition:all 0.15s;box-shadow:0 2px 8px rgba(139,114,190,0.2);`,
+  btnAdd: `padding:4px 0;border:none;background:transparent;color:#8b72be;cursor:pointer;font-size:12px;font-weight:600;transition:color 0.15s;`,
   section: `display:flex;flex-direction:column;gap:6px;`,
   divider: `height:1px;background:var(--background-modifier-border);margin:4px 0;`,
 };
@@ -77,7 +77,7 @@ export class ProjectModal extends Modal {
     const header = el.createDiv();
     header.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:2px;';
     const headerIcon = header.createEl('span', { text: '✦' });
-    headerIcon.style.cssText = 'font-size:18px;color:#69519a;';
+    headerIcon.style.cssText = 'font-size:18px;color:#8b72be;';
     const h2 = header.createEl('h2', { text: this.isNew ? 'New Project' : 'Project Settings' });
     h2.style.cssText = 'margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em;';
 
@@ -216,7 +216,7 @@ export class ProjectModal extends Modal {
         });
         const rm = row.createEl('button', { text: '✕' });
         rm.style.cssText = 'border:none;background:transparent;color:var(--text-muted,#666);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;transition:all 0.15s;';
-        rm.addEventListener('mouseenter', () => { rm.style.color = '#b83b3b'; });
+        rm.addEventListener('mouseenter', () => { rm.style.color = '#c47070'; });
         rm.addEventListener('mouseleave', () => { rm.style.color = 'var(--text-muted,#666)'; });
         rm.addEventListener('click', () => {
           this.project.teamMembers.splice(i, 1);
@@ -226,7 +226,7 @@ export class ProjectModal extends Modal {
       const addBtn = memberWrap.createEl('button', { text: '+ Add member' });
       addBtn.style.cssText = S.btnAdd;
       addBtn.addEventListener('mouseenter', () => { addBtn.style.color = '#a5b4fc'; });
-      addBtn.addEventListener('mouseleave', () => { addBtn.style.color = '#69519a'; });
+      addBtn.addEventListener('mouseleave', () => { addBtn.style.color = '#8b72be'; });
       addBtn.addEventListener('click', () => {
         this.project.teamMembers.push('');
         renderMembers();
@@ -258,7 +258,7 @@ export class ProjectModal extends Modal {
       const addCFBtn = cfList.createEl('button', { text: '+ Add Custom Field' });
       addCFBtn.style.cssText = S.btnAdd;
       addCFBtn.addEventListener('mouseenter', () => { addCFBtn.style.color = '#a5b4fc'; });
-      addCFBtn.addEventListener('mouseleave', () => { addCFBtn.style.color = '#69519a'; });
+      addCFBtn.addEventListener('mouseleave', () => { addCFBtn.style.color = '#8b72be'; });
       addCFBtn.addEventListener('click', () => {
         this.project.customFields.push({ id: makeId(), name: 'New Field', type: 'text', options: [] });
         renderCFs();
@@ -278,12 +278,12 @@ export class ProjectModal extends Modal {
 
     const saveBtn = footer.createEl('button', { text: this.isNew ? '+ Create Project' : '✓ Save' });
     saveBtn.style.cssText = S.btnPrimary;
-    saveBtn.addEventListener('mouseenter', () => { saveBtn.style.boxShadow = '0 2px 12px rgba(105,81,154,0.2)'; });
-    saveBtn.addEventListener('mouseleave', () => { saveBtn.style.boxShadow = '0 2px 8px rgba(105,81,154,0.15)'; });
+    saveBtn.addEventListener('mouseenter', () => { saveBtn.style.boxShadow = '0 2px 12px rgba(139,114,190,0.2)'; });
+    saveBtn.addEventListener('mouseleave', () => { saveBtn.style.boxShadow = '0 2px 8px rgba(139,114,190,0.15)'; });
     saveBtn.addEventListener('click', async () => {
       const title = titleInput.value.trim();
       if (!title) {
-        titleInput.style.borderColor = '#b83b3b';
+        titleInput.style.borderColor = '#c47070';
         titleInput.focus();
         return;
       }
@@ -335,7 +335,7 @@ export class ProjectModal extends Modal {
 
     const rmBtn = row.createEl('button', { text: '✕' });
     rmBtn.style.cssText = 'border:none;background:transparent;color:var(--text-muted,#666);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;transition:all 0.15s;';
-    rmBtn.addEventListener('mouseenter', () => { rmBtn.style.color = '#b83b3b'; });
+    rmBtn.addEventListener('mouseenter', () => { rmBtn.style.color = '#c47070'; });
     rmBtn.addEventListener('mouseleave', () => { rmBtn.style.color = 'var(--text-muted,#666)'; });
     rmBtn.addEventListener('click', () => {
       this.project.customFields.splice(index, 1);

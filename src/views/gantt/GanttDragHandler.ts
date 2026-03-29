@@ -9,7 +9,6 @@ export interface DragState {
   dragTask: Task | null;
   dragStartX: number;
   dragBarEl: SVGRectElement | null;
-  dragSheenEl: SVGRectElement | null;
   dragInitialX: number;
   dragInitialW: number;
   dragMoved: boolean;
@@ -22,7 +21,6 @@ export function makeDragState(): DragState {
     dragTask: null,
     dragStartX: 0,
     dragBarEl: null,
-    dragSheenEl: null,
     dragInitialX: 0,
     dragInitialW: 0,
     dragMoved: false,
@@ -34,7 +32,6 @@ export function attachDragHandle(
   side: 'left' | 'right',
   task: Task,
   rect: SVGRectElement,
-  sheen: SVGRectElement,
   x: number,
   width: number,
   cfg: TimelineCfg,
@@ -51,7 +48,6 @@ export function attachDragHandle(
     drag.dragTask = task;
     drag.dragStartX = e.clientX;
     drag.dragBarEl = rect;
-    drag.dragSheenEl = sheen;
     drag.dragInitialX = x;
     drag.dragInitialW = width;
 
@@ -70,10 +66,6 @@ export function attachDragHandle(
       newW = Math.max(cfg.dayWidth, newW);
       drag.dragBarEl.setAttribute('x', String(newX));
       drag.dragBarEl.setAttribute('width', String(newW));
-      if (drag.dragSheenEl) {
-        drag.dragSheenEl.setAttribute('x', String(newX));
-        drag.dragSheenEl.setAttribute('width', String(newW));
-      }
     };
 
     const onUp = async () => {

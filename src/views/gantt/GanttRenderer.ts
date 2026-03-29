@@ -5,7 +5,7 @@ import { openTaskModal } from '../../ui/ModalFactory';
 import type { TimelineCfg } from './TimelineConfig';
 import {
   DAY_MS, ROW_HEIGHT, HEADER_HEIGHT, BAR_PADDING, BAR_BORDER_RADIUS,
-  dateToX, getWeekNumber, lighten, darken,
+  dateToX, getWeekNumber,
 } from './TimelineConfig';
 import type { DragState } from './GanttDragHandler';
 import { attachDragHandle } from './GanttDragHandler';
@@ -259,7 +259,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   if (!startDate && !endDate) return;
 
   const statusConfig  = ctx.plugin.settings.statuses.find(s => s.id === task.status);
-  const color = statusConfig?.color ?? '#69519a';
+  const color = statusConfig?.color ?? '#8b72be';
   const rowY   = HEADER_HEIGHT + row * ROW_HEIGHT;
   const y      = rowY + BAR_PADDING;
   const height = ROW_HEIGHT - BAR_PADDING * 2;
@@ -286,52 +286,19 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   const xEnd   = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, effectiveEnd));
   const width  = Math.max(8, xEnd - x);
 
-  // Defs: gradient + shadow
-  const defs = getOrCreateDefs(ctx.svgEl);
-  const gradId = `pm-grad-${task.id}`;
-  const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-  grad.setAttribute('id', gradId);
-  grad.setAttribute('x1', '0%'); grad.setAttribute('y1', '0%');
-  grad.setAttribute('x2', '100%'); grad.setAttribute('y2', '100%');
-  const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', lighten(color, 0.25));
-  const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', darken(color, 0.15));
-  grad.appendChild(stop1); grad.appendChild(stop2); defs.appendChild(grad);
-
-  const filterId = `pm-shadow-${task.id}`;
-  const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
-  filter.setAttribute('id', filterId);
-  filter.setAttribute('x', '-5%'); filter.setAttribute('y', '-20%');
-  filter.setAttribute('width', '110%'); filter.setAttribute('height', '160%');
-  const fds = document.createElementNS('http://www.w3.org/2000/svg', 'feDropShadow');
-  fds.setAttribute('dx', '0'); fds.setAttribute('dy', '2');
-  fds.setAttribute('stdDeviation', '5'); fds.setAttribute('flood-color', color);
-  fds.setAttribute('flood-opacity', '0.55');
-  filter.appendChild(fds); defs.appendChild(filter);
-
   // Group for bar + handles
   const barGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   barGroup.setAttribute('class', 'pm-gantt-bar-group');
   g.appendChild(barGroup);
 
-  // Main bar
+  // Main bar — flat fill, no gradient/shadow/sheen
   const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   rect.setAttribute('x', String(x)); rect.setAttribute('y', String(y));
   rect.setAttribute('width', String(width)); rect.setAttribute('height', String(height));
   rect.setAttribute('rx', String(BAR_BORDER_RADIUS)); rect.setAttribute('ry', String(BAR_BORDER_RADIUS));
-  rect.setAttribute('fill', `url(#${gradId})`); rect.setAttribute('filter', `url(#${filterId})`);
+  rect.setAttribute('fill', color); rect.setAttribute('opacity', '0.75');
   rect.setAttribute('class', 'pm-gantt-bar');
   barGroup.appendChild(rect);
-
-  // Sheen overlay
-  const sheen = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  sheen.setAttribute('x', String(x)); sheen.setAttribute('y', String(y));
-  sheen.setAttribute('width', String(width)); sheen.setAttribute('height', String(height / 2));
-  sheen.setAttribute('rx', String(BAR_BORDER_RADIUS)); sheen.setAttribute('ry', String(BAR_BORDER_RADIUS));
-  sheen.setAttribute('fill', 'rgba(255,255,255,0.25)');
-  sheen.setAttribute('class', 'pm-gantt-bar-sheen');
-  barGroup.appendChild(sheen);
 
   // Progress overlay
   if (task.progress > 0 && task.progress < 100) {
@@ -340,22 +307,18 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     progRect.setAttribute('x', String(x)); progRect.setAttribute('y', String(y));
     progRect.setAttribute('width', String(pw)); progRect.setAttribute('height', String(height));
     progRect.setAttribute('rx', String(BAR_BORDER_RADIUS)); progRect.setAttribute('ry', String(BAR_BORDER_RADIUS));
-    progRect.setAttribute('fill', 'rgba(0,0,0,0.15)');
+    progRect.setAttribute('fill', color); progRect.setAttribute('opacity', '0.35');
+    progRect.setAttribute('class', 'pm-gantt-bar-progress');
     barGroup.appendChild(progRect);
-    const pl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    pl.setAttribute('x1', String(x + pw)); pl.setAttribute('y1', String(y + 2));
-    pl.setAttribute('x2', String(x + pw)); pl.setAttribute('y2', String(y + height - 2));
-    pl.setAttribute('stroke', 'rgba(255,255,255,0.6)'); pl.setAttribute('stroke-width', '1.5');
-    barGroup.appendChild(pl);
   }
 
   // Subtask stripe
   if (task.subtasks.length > 0) {
     const stripe = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    stripe.setAttribute('x', String(x)); stripe.setAttribute('y', String(y + height - 4));
-    stripe.setAttribute('width', String(width)); stripe.setAttribute('height', '4');
-    stripe.setAttribute('rx', String(BAR_BORDER_RADIUS));
-    stripe.setAttribute('fill', darken(color, 0.3));
+    stripe.setAttribute('x', String(x)); stripe.setAttribute('y', String(y + height - 3));
+    stripe.setAttribute('width', String(width)); stripe.setAttribute('height', '3');
+    stripe.setAttribute('rx', '1.5');
+    stripe.setAttribute('fill', color); stripe.setAttribute('opacity', '0.5');
     barGroup.appendChild(stripe);
   }
 
@@ -392,7 +355,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     handle.setAttribute('rx', '3'); handle.setAttribute('ry', '3');
     handle.setAttribute('class', 'pm-gantt-drag-handle');
     handle.setAttribute('cursor', 'ew-resize');
-    attachDragHandle(handle, side, task, rect, sheen, x, width, ctx.cfg, ctx.drag, ctx.plugin, ctx.project, ctx.onRefresh);
+    attachDragHandle(handle, side, task, rect, x, width, ctx.cfg, ctx.drag, ctx.plugin, ctx.project, ctx.onRefresh);
     barGroup.appendChild(handle);
   }
 
@@ -414,33 +377,14 @@ function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: 
   const cy = HEADER_HEIGHT + row * ROW_HEIGHT + ROW_HEIGHT / 2;
   const size = 12;
 
-  const defs = getOrCreateDefs(ctx.svgEl);
-  const filterId = `pm-mshadow-${task.id}`;
-  const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
-  filter.setAttribute('id', filterId);
-  filter.setAttribute('x', '-50%'); filter.setAttribute('y', '-50%');
-  filter.setAttribute('width', '200%'); filter.setAttribute('height', '200%');
-  const fds = document.createElementNS('http://www.w3.org/2000/svg', 'feDropShadow');
-  fds.setAttribute('dx', '0'); fds.setAttribute('dy', '1');
-  fds.setAttribute('stdDeviation', '4'); fds.setAttribute('flood-color', color);
-  fds.setAttribute('flood-opacity', '0.6');
-  filter.appendChild(fds); defs.appendChild(filter);
-
   const pts = `${cx},${cy - size} ${cx + size},${cy} ${cx},${cy + size} ${cx - size},${cy}`;
   const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
   diamond.setAttribute('points', pts);
   diamond.setAttribute('fill', color);
-  diamond.setAttribute('filter', `url(#${filterId})`);
+  diamond.setAttribute('opacity', '0.8');
   diamond.setAttribute('class', 'pm-gantt-milestone');
   diamond.setAttribute('cursor', 'pointer');
   g.appendChild(diamond);
-
-  const innerPts = `${cx},${cy - size + 3} ${cx + size - 3},${cy} ${cx},${cy + size - 3} ${cx - size + 3},${cy}`;
-  const inner = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-  inner.setAttribute('points', innerPts);
-  inner.setAttribute('fill', 'rgba(255,255,255,0.2)');
-  inner.setAttribute('class', 'pm-gantt-milestone-sheen');
-  g.appendChild(inner);
 
   const tt = document.createElementNS('http://www.w3.org/2000/svg', 'title');
   tt.textContent = `${task.title} (milestone)\nDate: ${task.due || task.start || '—'}`;
@@ -465,7 +409,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
     const date = task.due ? new Date(task.due) : new Date(task.start);
     const x = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2;
     const statusConfig = ctx.plugin.settings.statuses.find(s => s.id === task.status);
-    const color = statusConfig?.color ?? '#69519a';
+    const color = statusConfig?.color ?? '#8b72be';
 
     const totalH = HEADER_HEIGHT + ctx.flatTasks.filter(f => f.visible || f.depth === 0).length * ROW_HEIGHT;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');

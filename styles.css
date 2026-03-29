@@ -18,12 +18,12 @@
   --pm-text-muted:   var(--text-muted);
   --pm-text-faint:   var(--text-faint);
 
-  --pm-accent:       #69519a;
-  --pm-accent-dim:   #5d458d;
-  --pm-accent-light: rgba(105,81,154,0.10);
-  --pm-danger:       #b83b3b;
-  --pm-success:      #306a48;
-  --pm-warning:      #b8862b;
+  --pm-accent:       #8b72be;
+  --pm-accent-dim:   #7a63ad;
+  --pm-accent-light: rgba(139,114,190,0.10);
+  --pm-danger:       #c47070;
+  --pm-success:      #79b58d;
+  --pm-warning:      #b8a06b;
 
   /* Surfaces — no glassmorphism, use tonal stacking */
   --pm-surface:         var(--background-primary);
@@ -133,14 +133,14 @@
   background: linear-gradient(180deg, var(--pm-accent), var(--pm-accent-dim));
   color: #fff;
 }
-.pm-btn-primary:hover { background: linear-gradient(180deg, var(--pm-accent-dim), var(--pm-accent-dim)); box-shadow: 0 2px 8px rgba(105,81,154,0.25); }
+.pm-btn-primary:hover { background: linear-gradient(180deg, var(--pm-accent-dim), var(--pm-accent-dim)); box-shadow: 0 2px 8px rgba(139,114,190,0.25); }
 .pm-btn-primary:active { box-shadow: none; }
 
 .pm-btn-ghost { background: transparent; color: var(--pm-text-muted); }
 .pm-btn-ghost:hover { background: var(--pm-bg3); color: var(--pm-text); }
 
 .pm-btn-danger { background: transparent; color: var(--pm-danger); }
-.pm-btn-danger:hover { background: rgba(184,59,59,0.1); }
+.pm-btn-danger:hover { background: rgba(196,112,112,0.1); }
 
 .pm-btn-icon { padding: 6px 8px; }
 .pm-btn-sm { padding: 3px 8px; font-size: 12px; }
@@ -248,7 +248,7 @@
   border-style: solid;
   border-color: var(--pm-accent);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(105,81,154,0.15);
+  box-shadow: 0 0 0 2px rgba(139,114,190,0.15);
 }
 .pm-quick-add-input::placeholder { color: var(--pm-text-faint); }
 
@@ -449,18 +449,20 @@
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--pm-radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--badge-color) 40%, transparent);
-  background: color-mix(in srgb, var(--badge-color) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--badge-color) 30%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 8%, transparent);
   color: var(--badge-color);
   white-space: nowrap;
   transition: background 0.15s;
 }
 .pm-status-badge:hover, .pm-priority-badge:hover {
-  background: color-mix(in srgb, var(--badge-color) 25%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 16%, transparent);
 }
 
 /* Avatar */
@@ -492,7 +494,7 @@
   white-space: nowrap;
 }
 .pm-due-chip--near { background: rgba(245,158,11,0.15); color: var(--pm-warning); }
-.pm-due-chip--overdue { background: rgba(184,59,59,0.15); color: var(--pm-danger); font-weight: 600; }
+.pm-due-chip--overdue { background: rgba(196,112,112,0.15); color: var(--pm-danger); font-weight: 600; }
 
 /* Progress */
 .pm-progress-wrap { display: flex; align-items: center; gap: 8px; }
@@ -731,32 +733,34 @@
 .theme-dark .pm-gantt-weekend { fill: rgba(255,255,255,0.025); }
 
 .pm-gantt-row-hover { fill: transparent; cursor: default; }
-.pm-gantt-row-hover:hover { fill: rgba(105,81,154,0.04); }
+.pm-gantt-row-hover:hover { fill: rgba(139,114,190,0.03); }
 
 /* Gantt bars */
 .pm-gantt-bar {
   cursor: pointer;
   transition: filter 0.15s;
 }
-.pm-gantt-bar:hover { filter: brightness(1.06) !important; }
+.pm-gantt-bar:hover { opacity: 0.9 !important; }
 .pm-gantt-bar-sheen { pointer-events: none; }
 .pm-gantt-bar-progress { pointer-events: none; }
 .pm-gantt-bar-label {
-  font-size: 11px;
-  fill: rgba(255,255,255,0.92);
+  font-size: 10px;
+  fill: rgba(255,255,255,0.85);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   pointer-events: none;
   dominant-baseline: central;
 }
 
 /* Today line */
 .pm-gantt-today-line {
-  stroke: rgba(184,59,59,0.65);
+  stroke: rgba(196,112,112,0.65);
   stroke-width: 1.5;
   stroke-dasharray: 5 4;
 }
 .pm-gantt-today-diamond {
-  fill: rgba(184,59,59,0.65);
+  fill: rgba(196,112,112,0.65);
 }
 
 /* Dependency arrows */
@@ -916,12 +920,12 @@
   --pm-text:         var(--text-normal);
   --pm-text-muted:   var(--text-muted);
   --pm-text-faint:   var(--text-faint);
-  --pm-accent:       #69519a;
-  --pm-accent-dim:   #5d458d;
-  --pm-accent-light: rgba(105,81,154,0.10);
-  --pm-danger:       #b83b3b;
-  --pm-success:      #306a48;
-  --pm-warning:      #b8862b;
+  --pm-accent:       #8b72be;
+  --pm-accent-dim:   #7a63ad;
+  --pm-accent-light: rgba(139,114,190,0.10);
+  --pm-danger:       #c47070;
+  --pm-success:      #79b58d;
+  --pm-warning:      #b8a06b;
   --pm-ghost-border: rgba(0, 0, 0, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
 
@@ -1025,7 +1029,7 @@
   border-radius: 50%;
   background: var(--pm-accent);
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(105,81,154,0.4);
+  box-shadow: 0 1px 4px rgba(139,114,190,0.4);
 }
 .pm-progress-slider-label {
   font-size: 12px;
@@ -1067,7 +1071,7 @@
   border-radius: 99px;
   font-size: 12px;
   color: var(--pm-accent);
-  border: 1px solid rgba(105,81,154,0.25);
+  border: 1px solid rgba(139,114,190,0.25);
 }
 .pm-assignee-chip-rm {
   background: transparent;
@@ -1345,7 +1349,7 @@
   padding: 3px 6px;
   border-radius: 4px;
 }
-.pm-settings-del:hover { background: rgba(184,59,59,0.1); color: var(--pm-danger); }
+.pm-settings-del:hover { background: rgba(196,112,112,0.1); color: var(--pm-danger); }
 .pm-settings-status-row input[type="text"] { flex: 1; }
 
 /* ── Scrollbar polish ─────────────────────────────────────────────────────── */
@@ -1384,14 +1388,14 @@
 }
 .pm-prop-type-btn:hover { background: var(--pm-bg3); }
 .pm-prop-type-btn--milestone {
-  background: rgba(105,81,154,0.15);
-  border-color: rgba(105,81,154,0.4);
+  background: rgba(139,114,190,0.15);
+  border-color: rgba(139,114,190,0.4);
   color: #69519a;
 }
 .pm-prop-type-btn--subtask {
-  background: rgba(48,106,72,0.15);
-  border-color: rgba(48,106,72,0.4);
-  color: #306a48;
+  background: rgba(121,181,141,0.15);
+  border-color: rgba(121,181,141,0.4);
+  color: #79b58d;
 }
 .pm-prop-type-btn--active {
   box-shadow: 0 0 0 2px var(--pm-accent);
@@ -1405,7 +1409,7 @@
 .pm-recur-end { display: flex; align-items: center; gap: 6px; }
 .pm-recur-label { font-size: 12px; color: var(--pm-text-muted); }
 .pm-recur-end-input { width: 130px !important; }
-.pm-recur-rm { color: var(--pm-danger) !important; border-color: rgba(184,59,59,0.3) !important; }
+.pm-recur-rm { color: var(--pm-danger) !important; border-color: rgba(196,112,112,0.3) !important; }
 
 /* ── Time tracking ─────────────────────────────────────────────────────── */
 .pm-time-est-row {
@@ -1436,7 +1440,7 @@
   font-size: 11px; background: var(--pm-bg3); color: var(--pm-text-muted);
 }
 .pm-time-chip--sm { font-size: 10px; padding: 1px 6px; }
-.pm-time-chip--over { background: rgba(184,59,59,0.15); color: var(--pm-danger); }
+.pm-time-chip--over { background: rgba(196,112,112,0.15); color: var(--pm-danger); }
 
 /* ── Task icon (milestone/recurrence indicators) ───────────────────────── */
 .pm-task-icon {
@@ -1462,7 +1466,7 @@
   color: var(--pm-text);
   font-size: 13px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(105,81,154,0.2);
+  box-shadow: 0 0 0 2px rgba(139,114,190,0.2);
   width: 100%;
 }
 
@@ -1543,9 +1547,9 @@
   line-height: 1;
 }
 .pm-task-badge--milestone {
-  background: rgba(105,81,154,0.15);
+  background: rgba(139,114,190,0.15);
   color: #69519a;
-  border: 1px solid rgba(105,81,154,0.3);
+  border: 1px solid rgba(139,114,190,0.3);
 }
 .pm-task-badge--recurrence {
   background: rgba(74,126,184,0.15);
@@ -1553,9 +1557,9 @@
   border: 1px solid rgba(74,126,184,0.3);
 }
 .pm-task-badge--subtask {
-  background: rgba(48,106,72,0.15);
-  color: #306a48;
-  border: 1px solid rgba(48,106,72,0.3);
+  background: rgba(121,181,141,0.15);
+  color: #79b58d;
+  border: 1px solid rgba(121,181,141,0.3);
   width: auto;
   padding: 1px 5px;
 }

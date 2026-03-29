@@ -149,7 +149,7 @@ export function hydrateProjectFromFrontmatter(
     id: (frontmatter.id as string) ?? basename,
     title: (frontmatter.title as string) ?? basename,
     description: (frontmatter.description as string) ?? body.trim(),
-    color: (frontmatter.color as string) ?? '#69519a',
+    color: (frontmatter.color as string) ?? '#8b72be',
     icon: (frontmatter.icon as string) ?? '\u{1F4CB}',
     tasks: [],
     customFields: (frontmatter.customFields as CustomFieldDef[]) ?? [],

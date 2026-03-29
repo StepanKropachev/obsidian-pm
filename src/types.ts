@@ -110,11 +110,11 @@ export interface PMSettings {
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
   { id: 'todo',        label: 'To Do',       color: '#8a94a0', icon: '○' },
-  { id: 'in-progress', label: 'In Progress', color: '#69519a', icon: '◑' },
-  { id: 'blocked',     label: 'Blocked',     color: '#b83b3b', icon: '⊘' },
-  { id: 'review',      label: 'In Review',   color: '#b8862b', icon: '◎' },
-  { id: 'done',        label: 'Done',        color: '#306a48', icon: '●' },
-  { id: 'cancelled',   label: 'Cancelled',   color: '#6b7280', icon: '✕' },
+  { id: 'in-progress', label: 'In Progress', color: '#8b72be', icon: '◑' },
+  { id: 'blocked',     label: 'Blocked',     color: '#c47070', icon: '⊘' },
+  { id: 'review',      label: 'In Review',   color: '#b8a06b', icon: '◎' },
+  { id: 'done',        label: 'Done',        color: '#79b58d', icon: '●' },
+  { id: 'cancelled',   label: 'Cancelled',   color: '#767491', icon: '✕' },
 ];
 
 export const DEFAULT_PRIORITIES: PriorityConfig[] = [
@@ -171,7 +171,7 @@ export function makeProject(title: string, filePath: string): Project {
     id: makeId(),
     title,
     description: '',
-    color: '#69519a',
+    color: '#8b72be',
     icon: '📋',
     tasks: [],
     customFields: [],

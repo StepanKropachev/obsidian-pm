@@ -341,7 +341,7 @@ function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _parentId:
   const progressBar = progressWrap.createDiv('pm-progress-bar');
   const progressFill = progressBar.createDiv('pm-progress-fill');
   progressFill.style.width = `${task.progress}%`;
-  progressFill.style.background = statusConfig?.color ?? '#69519a';
+  progressFill.style.background = statusConfig?.color ?? '#8b72be';
   progressWrap.createEl('span', { text: `${task.progress}%`, cls: 'pm-progress-label' });
 
   // ── Time tracking
