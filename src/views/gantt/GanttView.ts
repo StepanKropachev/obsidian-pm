@@ -154,6 +154,10 @@ export class GanttView implements SubView {
     addBtn.addEventListener('click', async () => {
       openTaskModal(this.plugin, this.project, { onSave: async () => { await this.onRefresh(); } });
     });
+    const addMilestoneBtn = addRow.createEl('button', { text: '+ Milestone', cls: 'pm-gantt-add-task-btn' });
+    addMilestoneBtn.addEventListener('click', async () => {
+      openTaskModal(this.plugin, this.project, { defaults: { type: 'milestone' }, onSave: async () => { await this.onRefresh(); } });
+    });
 
     requestAnimationFrame(() => this.scrollToToday());
   }
