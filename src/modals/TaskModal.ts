@@ -1,4 +1,4 @@
-import { App, Modal, MarkdownRenderer, Component } from 'obsidian';
+import { App, Modal } from 'obsidian';
 import type PMPlugin from '../main';
 import { Project, Task, makeTask } from '../types';
 import { addTaskToTree, updateTaskInTree } from '../store/TaskTreeOps';
@@ -9,6 +9,8 @@ import { renderSubtasksPanel } from './SubtasksPanel';
 export class TaskModal extends Modal {
   private task: Task;
   private isNew: boolean;
+  private cancelled = false;
+  private saved = false;
 
   constructor(
     app: App,
@@ -39,7 +41,16 @@ export class TaskModal extends Modal {
     this.render();
   }
 
-  onClose(): void {
+  async onClose(): Promise<void> {
+    if (!this.cancelled && !this.saved && this.task.title.trim()) {
+      if (this.isNew) {
+        addTaskToTree(this.project.tasks, this.task, this.parentId);
+      } else {
+        updateTaskInTree(this.project.tasks, this.task.id, this.task);
+      }
+      await this.plugin.store.saveProject(this.project);
+      await this.onSave(this.task);
+    }
     this.contentEl.empty();
   }
 
@@ -67,19 +78,8 @@ export class TaskModal extends Modal {
     const descArea = descSection.createEl('textarea', { cls: 'pm-modal-description' });
     descArea.placeholder = 'Add a description\u2026';
     descArea.value = this.task.description;
-    const previewEl = descSection.createDiv('pm-modal-desc-preview');
-    const renderPreview = () => {
-      previewEl.empty();
-      if (this.task.description.trim()) {
-        const component = new Component();
-        component.load();
-        MarkdownRenderer.render(this.app, this.task.description, previewEl, this.project.filePath, component);
-      }
-    };
-    renderPreview();
     descArea.addEventListener('input', () => {
       this.task.description = descArea.value;
-      renderPreview();
     });
 
     // ── Properties (collapsible) ────────────────────────────────────────────
@@ -122,6 +122,7 @@ export class TaskModal extends Modal {
         if (confirm(`Delete "${this.task.title}"?`)) {
           await this.plugin.store.deleteTask(this.project, this.task.id);
           await this.onSave(this.task);
+          this.cancelled = true;
           this.close();
         }
       });
@@ -130,7 +131,7 @@ export class TaskModal extends Modal {
     footer.createDiv('pm-footer-spacer');
 
     const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'pm-btn pm-btn-ghost' });
-    cancelBtn.addEventListener('click', () => this.close());
+    cancelBtn.addEventListener('click', () => { this.cancelled = true; this.close(); });
 
     const saveBtn = footer.createEl('button', {
       text: this.isNew ? '+ Create Task' : 'Save Changes',
@@ -149,6 +150,7 @@ export class TaskModal extends Modal {
       }
       await this.plugin.store.saveProject(this.project);
       await this.onSave(this.task);
+      this.saved = true;
       this.close();
     };
 
