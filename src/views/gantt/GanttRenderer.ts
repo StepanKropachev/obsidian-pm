@@ -71,7 +71,24 @@ function renderDayHeader(g: SVGGElement, ctx: RendererContext): void {
 function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
   const { startDate, totalDays, dayWidth } = ctx.cfg;
   renderMonthBands(g, 0, 24, ctx);
-  let i = 0;
+
+  // Align to actual Mondays so header ticks match grid lines
+  const dow = startDate.getDay(); // 0=Sun … 6=Sat
+  const offsetToMonday = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow;
+
+  // Partial first week (before the first Monday)
+  if (offsetToMonday > 0) {
+    const weekNum = getWeekNumber(startDate);
+    const w = offsetToMonday * dayWidth;
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', String(w / 2)); text.setAttribute('y', '44');
+    text.setAttribute('class', 'pm-gantt-header-week');
+    text.textContent = `W${weekNum}`;
+    g.appendChild(text);
+  }
+
+  // Full weeks from each Monday
+  let i = offsetToMonday;
   while (i < totalDays) {
     const d = new Date(startDate.getTime() + i * DAY_MS);
     const weekNum = getWeekNumber(d);
