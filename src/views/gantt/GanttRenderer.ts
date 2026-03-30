@@ -353,7 +353,8 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     label.setAttribute('x', String(x + 8)); label.setAttribute('y', String(y + height / 2 + 5));
     label.setAttribute('class', 'pm-gantt-bar-label');
-    label.textContent = task.title.length > 20 ? task.title.slice(0, 18) + '…' : task.title;
+    const maxChars = Math.max(4, Math.floor((width - 16) / 7.5));
+    label.textContent = task.title.length > maxChars ? task.title.slice(0, maxChars - 1) + '…' : task.title;
     barGroup.appendChild(label);
   }
 

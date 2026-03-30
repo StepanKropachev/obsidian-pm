@@ -224,7 +224,7 @@
 
 .pm-project-card-progress {
   height: 4px;
-  background: var(--pm-bg3);
+  background: var(--background-modifier-border);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -508,7 +508,7 @@
 
 /* Progress */
 .pm-progress-wrap { display: flex; align-items: center; gap: 8px; }
-.pm-progress-bar { flex: 1; height: 6px; background: var(--pm-bg3); border-radius: 99px; overflow: hidden; }
+.pm-progress-bar { flex: 1; height: 6px; background: var(--background-modifier-border); border-radius: 99px; overflow: hidden; }
 .pm-progress-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
 .pm-progress-label { font-size: 11px; color: var(--pm-text-muted); min-width: 28px; }
 
