@@ -12,6 +12,7 @@ export class TaskModal extends Modal {
   private isNew: boolean;
   private cancelled = false;
   private saved = false;
+  private propsExpanded = false;
 
   constructor(
     app: App,
@@ -81,21 +82,16 @@ export class TaskModal extends Modal {
 
     // ── Properties (collapsible) ────────────────────────────────────────────
     const propsContainer = contentEl.createDiv('pm-modal-props-container');
-    const propsToggle = propsContainer.createEl('button', { cls: 'pm-props-toggle-btn', attr: { 'aria-expanded': 'false', 'aria-label': 'Toggle properties' } });
-    propsToggle.setText('Properties \u25B6');
-    const props = propsContainer.createDiv('pm-modal-props pm-modal-props--collapsed');
-    propsToggle.addEventListener('click', () => {
-      const collapsed = props.hasClass('pm-modal-props--collapsed');
-      if (collapsed) {
-        props.removeClass('pm-modal-props--collapsed');
-        propsToggle.setText('Properties \u25BC');
-        propsToggle.setAttribute('aria-expanded', 'true');
-      } else {
-        props.addClass('pm-modal-props--collapsed');
-        propsToggle.setText('Properties \u25B6');
-        propsToggle.setAttribute('aria-expanded', 'false');
-      }
-    });
+    const propsToggle = propsContainer.createEl('button', { cls: 'pm-props-toggle-btn', attr: { 'aria-expanded': String(this.propsExpanded), 'aria-label': 'Toggle properties' } });
+    const props = propsContainer.createDiv('pm-modal-props');
+    const applyPropsState = (expanded: boolean) => {
+      this.propsExpanded = expanded;
+      propsToggle.setText(expanded ? 'Properties \u25BC' : 'Properties \u25B6');
+      propsToggle.setAttribute('aria-expanded', String(expanded));
+      props.toggleClass('pm-modal-props--collapsed', !expanded);
+    };
+    applyPropsState(this.propsExpanded);
+    propsToggle.addEventListener('click', () => applyPropsState(!this.propsExpanded));
 
     renderTaskFormFields(props, {
       task: this.task,

@@ -1014,7 +1014,27 @@
 }
 
 .pm-prop-value { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.pm-prop-value--badge { all: unset; cursor: pointer; }
+.pm-prop-value--badge {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--pm-radius-sm, 0.25rem);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid color-mix(in srgb, var(--badge-color) 30%, transparent);
+  background: color-mix(in srgb, var(--badge-color) 8%, transparent);
+  color: var(--badge-color);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.pm-prop-value--badge:hover {
+  background: color-mix(in srgb, var(--badge-color) 16%, transparent);
+}
 
 .pm-prop-progress-wrap {
   display: flex;
