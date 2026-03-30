@@ -37,8 +37,6 @@ export class TaskModal extends Modal {
     contentEl.empty();
     contentEl.addClass('pm-task-modal');
     this.modalEl.addClass('pm-modal');
-    this.modalEl.style.cssText = 'max-width:680px;width:90vw;max-height:88vh;background:var(--background-primary) !important;color:var(--text-normal);border:1px solid rgba(0,0,0,0.06) !important;border-radius:0.5rem !important;box-shadow:0 8px 24px rgba(0,0,0,0.06) !important;';
-    contentEl.style.cssText = 'display:flex;flex-direction:column;gap:0;overflow-y:auto;max-height:calc(88vh - 40px);padding:0;color:var(--text-normal);';
     this.render();
   }
 
