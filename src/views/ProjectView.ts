@@ -28,6 +28,7 @@ export class ProjectView extends ItemView {
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
   private fileModifyRef: EventRef | null = null;
   private renderToken = 0;
+  private reloadDebounceTimer: number | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf);
@@ -73,10 +74,13 @@ export class ProjectView extends ItemView {
       const taskFolder = this.filePath.replace(/\.md$/, '_tasks');
       return filePath.startsWith(taskFolder) || filePath === this.filePath;
     };
-    this.fileModifyRef = this.app.vault.on('modify', async (file) => {
-      if (file instanceof TFile && reloadIfRelevant(file.path)) {
+    this.fileModifyRef = this.app.vault.on('modify', (file) => {
+      if (!(file instanceof TFile) || !reloadIfRelevant(file.path)) return;
+      if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer);
+      this.reloadDebounceTimer = window.setTimeout(async () => {
+        this.reloadDebounceTimer = null;
         await this.loadProject();
-      }
+      }, 300);
     });
     this.registerEvent(this.fileModifyRef);
     this.registerEvent(
@@ -327,6 +331,11 @@ export class ProjectView extends ItemView {
 
   async refreshProject(): Promise<void> {
     if (!this.filePath) return;
+    // Cancel any pending file-modify reload — we're handling it here
+    if (this.reloadDebounceTimer !== null) {
+      window.clearTimeout(this.reloadDebounceTimer);
+      this.reloadDebounceTimer = null;
+    }
     const file = this.app.vault.getAbstractFileByPath(this.filePath);
     if (file instanceof TFile) {
       this.project = await this.plugin.store.loadProject(file);
