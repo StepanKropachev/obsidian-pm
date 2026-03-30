@@ -1,7 +1,7 @@
 import { App, Modal } from 'obsidian';
 import type PMPlugin from '../main';
 import { Project, Task, makeTask } from '../types';
-import { addTaskToTree, updateTaskInTree } from '../store/TaskTreeOps';
+import { addTaskToTree, updateTaskInTree, deleteTaskFromTree, flattenTasks } from '../store/TaskTreeOps';
 import { renderStatusDot } from '../ui/StatusBadge';
 import { renderTaskFormFields } from './TaskFormFields';
 import { renderTimeTrackingPanel } from './TimeTrackingPanel';
@@ -10,6 +10,7 @@ import { renderSubtasksPanel } from './SubtasksPanel';
 export class TaskModal extends Modal {
   private task: Task;
   private isNew: boolean;
+  private originalParentId: string | null;
   private cancelled = false;
   private saved = false;
   private propsExpanded = false;
@@ -27,10 +28,17 @@ export class TaskModal extends Modal {
     if (task) {
       this.task = JSON.parse(JSON.stringify(task));
       this.isNew = false;
+      // Compute current parentId from tree if not explicitly provided
+      if (parentId == null) {
+        const flat = flattenTasks(project.tasks);
+        const entry = flat.find(f => f.task.id === task.id);
+        this.parentId = entry?.parentId ?? null;
+      }
     } else {
       this.task = makeTask({ status: 'todo', priority: 'medium', ...defaults });
       this.isNew = true;
     }
+    this.originalParentId = this.parentId;
   }
 
   onOpen(): void {
@@ -44,6 +52,9 @@ export class TaskModal extends Modal {
   async onClose(): Promise<void> {
     if (!this.cancelled && !this.saved && this.task.title.trim()) {
       if (this.isNew) {
+        addTaskToTree(this.project.tasks, this.task, this.parentId);
+      } else if (this.parentId !== this.originalParentId) {
+        deleteTaskFromTree(this.project.tasks, this.task.id);
         addTaskToTree(this.project.tasks, this.task, this.parentId);
       } else {
         updateTaskInTree(this.project.tasks, this.task.id, this.task);
@@ -143,6 +154,9 @@ export class TaskModal extends Modal {
         return;
       }
       if (this.isNew) {
+        addTaskToTree(this.project.tasks, this.task, this.parentId);
+      } else if (this.parentId !== this.originalParentId) {
+        deleteTaskFromTree(this.project.tasks, this.task.id);
         addTaskToTree(this.project.tasks, this.task, this.parentId);
       } else {
         updateTaskInTree(this.project.tasks, this.task.id, this.task);

@@ -78,6 +78,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       btn.addEventListener('click', () => {
         task.type = t.id;
         if (t.id === 'milestone') { task.start = ''; task.progress = 0; }
+        if (t.id !== 'subtask') { ctx.setParentId(null); }
         rerender();
       });
     }
