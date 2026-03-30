@@ -135,7 +135,7 @@ export class GanttView implements SubView {
     svgContainer.style.width = `${this.cfg.totalWidth}px`;
 
     const totalRows = this.flatTasks.filter(f => f.visible || f.depth === 0).length;
-    const svgHeight = HEADER_HEIGHT + totalRows * ROW_HEIGHT;
+    const svgHeight = HEADER_HEIGHT + (totalRows + 1) * ROW_HEIGHT; // +1 for add-task row
 
     this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg') as SVGSVGElement;
     this.svgEl.setAttribute('width', String(this.cfg.totalWidth));
