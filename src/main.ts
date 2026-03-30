@@ -40,7 +40,7 @@ export default class PMPlugin extends Plugin {
     });
 
     // Ribbon icon
-    this.addRibbonIcon('layout-dashboard', 'Project Manager', async () => {
+    this.addRibbonIcon('chart-gantt', 'Project Manager', async () => {
       await this.openProjectsPane();
     });
 
