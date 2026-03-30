@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
   "description": "Full-featured project management: stunning Gantt charts, Kanban boards, Table views, customizable fields, due date notifications.",
-  "author": "Stepan",
+  "author": "Stepan Kropachev",
+  "authorUrl": "https://github.com/StepanKropachev",
   "isDesktopOnly": false
 }
