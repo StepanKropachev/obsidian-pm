@@ -1,6 +1,6 @@
 {
   "name": "project-manager",
-  "version": "1.0.0",
+  "version": "v1.0.0-beta",
   "description": "Obsidian Project Manager Plugin",
   "main": "main.js",
   "scripts": {
