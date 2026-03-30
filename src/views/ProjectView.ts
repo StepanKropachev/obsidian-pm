@@ -41,7 +41,7 @@ export class ProjectView extends ItemView {
 
   getViewType(): string { return PM_VIEW_TYPE; }
   getDisplayText(): string { return truncateTitle(this.project?.title ?? 'PM', 10); }
-  getIcon(): string { return 'layout-dashboard'; }
+  getIcon(): string { return 'chart-gantt'; }
 
   async setState(state: ViewState, result: unknown): Promise<void> {
     if (state.filePath) {
