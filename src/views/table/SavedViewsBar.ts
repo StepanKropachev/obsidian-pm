@@ -68,20 +68,44 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
   // "+ Save View" button
   if (hasActiveFilters(ctx.filter)) {
     const saveBtn = bar.createEl('button', { text: '+ Save View', cls: 'pm-saved-view-pill pm-saved-view-pill--save' });
-    saveBtn.addEventListener('click', async () => {
-      const name = prompt('View name:');
-      if (!name?.trim()) return;
-      const sv: SavedView = {
-        id: makeId(),
-        name: name.trim(),
-        filter: { ...ctx.filter },
-        sortKey: ctx.sortKey,
-        sortDir: ctx.sortDir,
+    saveBtn.addEventListener('click', () => {
+      // Replace button with inline input (prompt() doesn't work in Electron)
+      saveBtn.style.display = 'none';
+      const wrapper = bar.createDiv('pm-saved-view-inline-input');
+      const input = wrapper.createEl('input', { type: 'text', placeholder: 'View name…', cls: 'pm-saved-view-name-input' });
+      input.focus();
+
+      let committed = false;
+      const commit = async () => {
+        if (committed) return;
+        committed = true;
+        const name = input.value.trim();
+        if (!name) {
+          wrapper.remove();
+          saveBtn.style.display = '';
+          return;
+        }
+        const sv: SavedView = {
+          id: makeId(),
+          name,
+          filter: { ...ctx.filter },
+          sortKey: ctx.sortKey,
+          sortDir: ctx.sortDir,
+        };
+        ctx.project.savedViews.push(sv);
+        ctx.setActiveSavedViewId(sv.id);
+        await ctx.plugin.store.saveProject(ctx.project);
+        ctx.rerender();
       };
-      ctx.project.savedViews.push(sv);
-      ctx.setActiveSavedViewId(sv.id);
-      await ctx.plugin.store.saveProject(ctx.project);
-      ctx.rerender();
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { wrapper.remove(); saveBtn.style.display = ''; }
+      });
+      input.addEventListener('blur', () => {
+        if (input.value.trim()) commit();
+        else { wrapper.remove(); saveBtn.style.display = ''; }
+      });
     });
   }
 }

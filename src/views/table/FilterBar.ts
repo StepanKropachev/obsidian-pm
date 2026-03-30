@@ -33,19 +33,19 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   // Status filter
   renderFilterDropdown(bar, 'Status', ctx.filter.statuses,
     ctx.plugin.settings.statuses.map(s => ({ id: s.id, label: [s.icon, s.label].filter(Boolean).join(' ') })),
-    (selected) => { ctx.filter.statuses = selected as TaskStatus[]; ctx.refreshTable(); });
+    (selected) => { ctx.filter.statuses = selected as TaskStatus[]; ctx.rerender(); });
 
   // Priority filter
   renderFilterDropdown(bar, 'Priority', ctx.filter.priorities,
     ctx.plugin.settings.priorities.map(p => ({ id: p.id, label: [p.icon, p.label].filter(Boolean).join(' ') })),
-    (selected) => { ctx.filter.priorities = selected as TaskPriority[]; ctx.refreshTable(); });
+    (selected) => { ctx.filter.priorities = selected as TaskPriority[]; ctx.rerender(); });
 
   // Assignee filter
   const allAssignees = getAllAssignees(ctx.project);
   if (allAssignees.length) {
     renderFilterDropdown(bar, 'Assignee', ctx.filter.assignees,
       allAssignees.map(a => ({ id: a, label: a })),
-      (selected) => { ctx.filter.assignees = selected; ctx.refreshTable(); });
+      (selected) => { ctx.filter.assignees = selected; ctx.rerender(); });
   }
 
   // Tag filter
@@ -53,7 +53,7 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   if (allTags.length) {
     renderFilterDropdown(bar, 'Tag', ctx.filter.tags,
       allTags.map(t => ({ id: t, label: t })),
-      (selected) => { ctx.filter.tags = selected; ctx.refreshTable(); });
+      (selected) => { ctx.filter.tags = selected; ctx.rerender(); });
   }
 
   // Due date filter
@@ -95,7 +95,7 @@ function renderDueDateFilter(parent: HTMLElement, ctx: FilterBarContext): void {
         .setChecked(current === opt)
         .onClick(() => {
           ctx.filter.dueDateFilter = opt;
-          ctx.refreshTable();
+          ctx.rerender();
         }));
     }
     menu.showAtMouseEvent(e as MouseEvent);
