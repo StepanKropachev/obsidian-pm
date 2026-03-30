@@ -8,22 +8,42 @@ import { renderFilterBar } from './FilterBar';
 import { renderTable, refreshTableBody, handleTableKeyDown } from './TableRenderer';
 import type { SortKey, SortDir, TableState } from './TableRenderer';
 
+export interface TableViewState {
+  filter: FilterState;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  activeSavedViewId: string | null;
+}
+
 export class TableView implements SubView {
-  private state: TableState = {
-    sortKey: 'status' as SortKey,
-    sortDir: 'asc' as SortDir,
-    filter: makeDefaultFilter(),
-    selectedTaskId: null,
-    tableBody: null,
-  };
-  private activeSavedViewId: string | null = null;
+  private state: TableState;
+  private activeSavedViewId: string | null;
 
   constructor(
     private container: HTMLElement,
     private project: Project,
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
-  ) {}
+    initialState?: TableViewState,
+  ) {
+    this.state = {
+      sortKey: initialState?.sortKey ?? ('status' as SortKey),
+      sortDir: initialState?.sortDir ?? ('asc' as SortDir),
+      filter: initialState?.filter ?? makeDefaultFilter(),
+      selectedTaskId: null,
+      tableBody: null,
+    };
+    this.activeSavedViewId = initialState?.activeSavedViewId ?? null;
+  }
+
+  getViewState(): TableViewState {
+    return {
+      filter: this.state.filter,
+      sortKey: this.state.sortKey,
+      sortDir: this.state.sortDir,
+      activeSavedViewId: this.activeSavedViewId,
+    };
+  }
 
   render(): void {
     this.container.empty();

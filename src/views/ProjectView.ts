@@ -4,6 +4,7 @@ import { Project, ViewMode } from '../types';
 import { truncateTitle } from '../utils';
 import type { SubView } from './SubView';
 import { TableView } from './table/TableView';
+import type { TableViewState } from './table/TableView';
 import { GanttView } from './gantt/GanttView';
 import { KanbanView } from './KanbanView';
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory';
@@ -22,6 +23,7 @@ export class ProjectView extends ItemView {
   filePath = '';
   currentView: ViewMode;
   private subview: SubView | null = null;
+  private savedTableViewState: TableViewState | null = null;
   private toolbarEl!: HTMLElement;
   private contentEl2!: HTMLElement;
   private titleEl2!: HTMLElement;
@@ -308,13 +310,20 @@ export class ProjectView extends ItemView {
       savedGanttScroll = this.subview.getScrollPosition();
     }
 
+    // Save TableView filter/sort state so it survives project reloads
+    if (this.subview instanceof TableView) {
+      this.savedTableViewState = this.subview.getViewState();
+    } else if (this.currentView !== 'table') {
+      this.savedTableViewState = null;
+    }
+
     this.subview?.destroy?.();
     this.contentEl2.empty();
     this.subview = null;
 
     switch (this.currentView) {
       case 'table':
-        this.subview = new TableView(this.contentEl2, this.project, this.plugin, () => this.refreshProject());
+        this.subview = new TableView(this.contentEl2, this.project, this.plugin, () => this.refreshProject(), this.savedTableViewState ?? undefined);
         break;
       case 'gantt': {
         const gantt = new GanttView(this.contentEl2, this.project, this.plugin, () => this.refreshProject());
