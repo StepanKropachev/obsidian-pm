@@ -191,21 +191,23 @@ export class ProjectStore {
 
   private async saveTaskFile(task: Task, project: Project, parentTask: Task | null, folder: string): Promise<void> {
     const filePath = normalizePath(taskFilePath(task.title, task.id, folder));
-
-    if (task.filePath && task.filePath !== filePath) {
-      const oldFile = this.app.vault.getAbstractFileByPath(task.filePath);
-      if (oldFile instanceof TFile) {
-        await this.app.vault.delete(oldFile);
-      }
-    }
+    const oldFilePath = task.filePath && task.filePath !== filePath ? task.filePath : null;
     task.filePath = filePath;
 
+    // Write new file first, then delete old — prevents data loss if interrupted
     const content = serializeTask(task, project, parentTask);
     const existing = this.app.vault.getAbstractFileByPath(filePath);
     if (existing instanceof TFile) {
       await this.app.vault.modify(existing, content);
     } else {
       await this.app.vault.create(filePath, content);
+    }
+
+    if (oldFilePath) {
+      const oldFile = this.app.vault.getAbstractFileByPath(oldFilePath);
+      if (oldFile instanceof TFile) {
+        await this.app.vault.delete(oldFile);
+      }
     }
   }
 
