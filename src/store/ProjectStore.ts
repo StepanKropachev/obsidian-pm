@@ -31,6 +31,9 @@ import {
  * task files and remains unchanged for views.
  */
 export class ProjectStore {
+  /** Per-project promise chains to serialize concurrent saves */
+  private saveQueues = new Map<string, Promise<void>>();
+
   constructor(private app: App) {}
 
   // ─── Folder helpers ────────────────────────────────────────────────────────
@@ -153,6 +156,14 @@ export class ProjectStore {
   // ─── Save ──────────────────────────────────────────────────────────────────
 
   async saveProject(project: Project): Promise<void> {
+    const key = project.filePath;
+    const prev = this.saveQueues.get(key) ?? Promise.resolve();
+    const next = prev.then(() => this.doSaveProject(project));
+    this.saveQueues.set(key, next.catch(() => {}));
+    return next;
+  }
+
+  private async doSaveProject(project: Project): Promise<void> {
     project.updatedAt = new Date().toISOString();
 
     const taskFolder = this.projectTaskFolder(project);
