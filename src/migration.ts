@@ -1,5 +1,6 @@
 import { TFile, Notice } from 'obsidian';
 import type PMPlugin from './main';
+import type { PMSettings } from './types';
 import { flattenTasks } from './store/TaskTreeOps';
 
 /**
@@ -39,4 +40,40 @@ export async function migrateProjects(plugin: PMPlugin): Promise<void> {
   if (migrated > 0) {
     new Notice(`Project Manager: Migrated ${migrated} project(s) to new format.`);
   }
+}
+
+/**
+ * Migrates old emoji-based icons in statuses/priorities to empty strings,
+ * and remaps old priority colors to muted tones.
+ * Returns true if any changes were made.
+ */
+export function migrateSettingsIcons(settings: PMSettings): boolean {
+  const oldPrioIcons = ['🔴', '🟠', '🟡', '🟢', '●'];
+  const oldStatusIcons = ['○', '◑', '⊘', '◎', '●', '✕'];
+  let migrated = false;
+
+  if (settings.priorities.some(p => oldPrioIcons.includes(p.icon))) {
+    for (const p of settings.priorities) {
+      if (oldPrioIcons.includes(p.icon)) p.icon = '';
+    }
+    const colorMap: Record<string, string> = {
+      '#dc2626': '#c47070',
+      '#ea580c': '#b8a06b',
+      '#ca8a04': '#8a94a0',
+      '#16a34a': '#79b58d',
+    };
+    for (const p of settings.priorities) {
+      if (colorMap[p.color]) p.color = colorMap[p.color];
+    }
+    migrated = true;
+  }
+
+  if (settings.statuses.some(s => oldStatusIcons.includes(s.icon))) {
+    for (const s of settings.statuses) {
+      if (oldStatusIcons.includes(s.icon)) s.icon = '';
+    }
+    migrated = true;
+  }
+
+  return migrated;
 }
