@@ -26,18 +26,22 @@ export function renderChipList(
     chipCls: string;
     rmCls: string;
     onRemove: (item: string) => void;
+    labelFn?: (item: string) => string;
     onAdd?: (e: MouseEvent) => void;
     addLabel?: string;
+    renderAdd?: (container: HTMLElement) => void;
   },
 ): void {
   container.empty();
   for (const item of items) {
     const chip = container.createEl('span', { cls: opts.chipCls });
-    chip.setText(item);
+    chip.setText(opts.labelFn ? opts.labelFn(item) : item);
     const rm = chip.createEl('button', { text: '\u2715', cls: opts.rmCls });
     rm.addEventListener('click', () => opts.onRemove(item));
   }
-  if (opts.onAdd) {
+  if (opts.renderAdd) {
+    opts.renderAdd(container);
+  } else if (opts.onAdd) {
     const addBtn = container.createEl('button', { text: opts.addLabel ?? '+ Add', cls: 'pm-prop-add-btn' });
     addBtn.addEventListener('click', (e) => opts.onAdd!(e as MouseEvent));
   }

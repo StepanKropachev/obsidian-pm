@@ -4,7 +4,7 @@ import {
   Project, Task, TaskStatus, TaskPriority, TaskType, Recurrence,
 } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
-import { renderPropRow, renderProgressSlider } from '../ui/FormField';
+import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField';
 import { COLOR_MUTED } from '../constants';
 import { renderCustomFieldInput } from './CustomFieldInputs';
 
@@ -169,78 +169,67 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   // Assignees
   renderPropRow(container, 'Assignees', () => {
     const wrap = createDiv('pm-prop-value pm-prop-assignees');
-    const renderAvatars = () => {
-      wrap.empty();
-      for (const a of task.assignees) {
-        const chip = wrap.createEl('span', { cls: 'pm-assignee-chip' });
-        chip.setText(a);
-        const rm = chip.createEl('button', { text: '\u2715', cls: 'pm-assignee-chip-rm' });
-        rm.addEventListener('click', () => {
-          task.assignees = task.assignees.filter(x => x !== a);
-          renderAvatars();
-        });
-      }
+    const render = () => {
       const all = [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])];
       const remaining = all.filter(m => !task.assignees.includes(m));
-      const addBtn = wrap.createEl('button', { text: '+ Add', cls: 'pm-prop-add-btn' });
-      addBtn.addEventListener('click', e => {
-        if (remaining.length) {
-          const menu = new Menu();
-          for (const m of remaining) {
-            menu.addItem(item => item.setTitle(m).onClick(() => {
-              task.assignees.push(m);
-              renderAvatars();
-            }));
-          }
-          menu.addSeparator();
-          menu.addItem(item => item.setTitle('Type a name\u2026').onClick(() => showNameInput()));
-          menu.showAtMouseEvent(e as MouseEvent);
-        } else {
-          showNameInput();
-        }
+      renderChipList(wrap, task.assignees, {
+        chipCls: 'pm-assignee-chip',
+        rmCls: 'pm-assignee-chip-rm',
+        onRemove: (a) => { task.assignees = task.assignees.filter(x => x !== a); render(); },
+        renderAdd: (el) => {
+          const addBtn = el.createEl('button', { text: '+ Add', cls: 'pm-prop-add-btn' });
+          const showNameInput = () => {
+            addBtn.style.display = 'none';
+            const input = el.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: 'Name\u2026' });
+            input.focus();
+            const commit = () => {
+              const name = input.value.trim();
+              if (name && !task.assignees.includes(name)) task.assignees.push(name);
+              render();
+            };
+            input.addEventListener('keydown', ev => { if (ev.key === 'Enter') commit(); if (ev.key === 'Escape') render(); });
+            input.addEventListener('blur', commit);
+          };
+          addBtn.addEventListener('click', ev => {
+            if (remaining.length) {
+              const menu = new Menu();
+              for (const m of remaining) {
+                menu.addItem(item => item.setTitle(m).onClick(() => { task.assignees.push(m); render(); }));
+              }
+              menu.addSeparator();
+              menu.addItem(item => item.setTitle('Type a name\u2026').onClick(() => showNameInput()));
+              menu.showAtMouseEvent(ev as MouseEvent);
+            } else {
+              showNameInput();
+            }
+          });
+        },
       });
-      const showNameInput = () => {
-        addBtn.style.display = 'none';
-        const input = wrap.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: 'Name\u2026' });
-        input.focus();
-        const commit = () => {
-          const name = input.value.trim();
-          if (name && !task.assignees.includes(name)) {
-            task.assignees.push(name);
-          }
-          renderAvatars();
-        };
-        input.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') renderAvatars(); });
-        input.addEventListener('blur', commit);
-      };
     };
-    renderAvatars();
+    render();
     return wrap;
   });
 
   // Tags
   renderPropRow(container, 'Tags', () => {
     const wrap = createDiv('pm-prop-value pm-prop-tags');
-    const renderTags = () => {
-      wrap.empty();
-      for (const tag of task.tags) {
-        const chip = wrap.createEl('span', { cls: 'pm-tag pm-tag--removable' });
-        chip.setText(tag);
-        const rm = chip.createEl('button', { text: '\u2715', cls: 'pm-tag-rm' });
-        rm.addEventListener('click', () => {
-          task.tags = task.tags.filter(x => x !== tag);
-          renderTags();
-        });
-      }
-      const addInput = wrap.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: '+ tag' });
-      addInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && addInput.value.trim()) {
-          task.tags.push(addInput.value.trim().toLowerCase().replace(/\s+/g, '-'));
-          renderTags();
-        }
+    const render = () => {
+      renderChipList(wrap, task.tags, {
+        chipCls: 'pm-tag pm-tag--removable',
+        rmCls: 'pm-tag-rm',
+        onRemove: (tag) => { task.tags = task.tags.filter(x => x !== tag); render(); },
+        renderAdd: (el) => {
+          const input = el.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: '+ tag' });
+          input.addEventListener('keydown', ev => {
+            if (ev.key === 'Enter' && input.value.trim()) {
+              task.tags.push(input.value.trim().toLowerCase().replace(/\s+/g, '-'));
+              render();
+            }
+          });
+        },
       });
     };
-    renderTags();
+    render();
     return wrap;
   });
 
@@ -248,34 +237,25 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Depends on', () => {
     const wrap = createDiv('pm-prop-value pm-prop-deps');
     const allTasks = flattenTasks(project.tasks).map(f => f.task).filter(t => t.id !== task.id);
-    const renderDeps = () => {
-      wrap.empty();
-      for (const depId of task.dependencies) {
-        const dep = allTasks.find(t => t.id === depId);
-        if (!dep) continue;
-        const chip = wrap.createEl('span', { cls: 'pm-dep-chip' });
-        chip.setText(dep.title);
-        const rm = chip.createEl('button', { text: '\u2715', cls: 'pm-dep-chip-rm' });
-        rm.addEventListener('click', () => {
-          task.dependencies = task.dependencies.filter(x => x !== depId);
-          renderDeps();
-        });
-      }
-      const addBtn = wrap.createEl('button', { text: '+ Add dependency', cls: 'pm-prop-add-btn' });
-      addBtn.addEventListener('click', e => {
-        const menu = new Menu();
-        const available = allTasks.filter(t => !task.dependencies.includes(t.id));
-        for (const t of available) {
-          menu.addItem(item => item.setTitle(t.title).onClick(() => {
-            task.dependencies.push(t.id);
-            renderDeps();
-          }));
-        }
-        if (!available.length) menu.addItem(item => item.setTitle('No tasks available').setDisabled(true));
-        menu.showAtMouseEvent(e as MouseEvent);
+    const render = () => {
+      renderChipList(wrap, task.dependencies.filter(id => allTasks.some(t => t.id === id)), {
+        chipCls: 'pm-dep-chip',
+        rmCls: 'pm-dep-chip-rm',
+        labelFn: (depId) => allTasks.find(t => t.id === depId)?.title ?? depId,
+        onRemove: (depId) => { task.dependencies = task.dependencies.filter(x => x !== depId); render(); },
+        onAdd: (e) => {
+          const menu = new Menu();
+          const available = allTasks.filter(t => !task.dependencies.includes(t.id));
+          for (const t of available) {
+            menu.addItem(item => item.setTitle(t.title).onClick(() => { task.dependencies.push(t.id); render(); }));
+          }
+          if (!available.length) menu.addItem(item => item.setTitle('No tasks available').setDisabled(true));
+          menu.showAtMouseEvent(e);
+        },
+        addLabel: '+ Add dependency',
       });
     };
-    renderDeps();
+    render();
     return wrap;
   });
 
