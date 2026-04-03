@@ -123,11 +123,12 @@ export class ProjectView extends ItemView {
   // ─── Project list (when no file is open) ───────────────────────────────────
 
   private getProjectListCtx(): ProjectListContext {
+    const token = ++this.renderToken;
     return {
       plugin: this.plugin,
       toolbarEl: this.toolbarEl,
       contentEl: this.contentEl2,
-      renderToken: this.renderToken,
+      isStale: () => token !== this.renderToken,
       openProjectFile: (file: TFile) => this.plugin.openProjectFile(file),
     };
   }
@@ -137,8 +138,6 @@ export class ProjectView extends ItemView {
     renderProjectListToolbar(ctx);
     this.contentEl2.empty();
     this.contentEl2.addClass('pm-project-list-container');
-    ++this.renderToken;
-    ctx.renderToken = this.renderToken;
     renderProjectListContent(ctx);
   }
 

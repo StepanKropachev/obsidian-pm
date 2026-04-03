@@ -7,7 +7,7 @@ export interface ProjectListContext {
   plugin: PMPlugin;
   toolbarEl: HTMLElement;
   contentEl: HTMLElement;
-  renderToken: number;
+  isStale: () => boolean;
   openProjectFile: (file: TFile) => Promise<void>;
 }
 
@@ -27,7 +27,7 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
 export async function renderProjectListContent(ctx: ProjectListContext): Promise<void> {
   const projects = await ctx.plugin.store.loadAllProjects(ctx.plugin.settings.projectsFolder);
   // Abort if a project view has taken over since this async load started
-  if (ctx.renderToken !== ctx.renderToken) return;
+  if (ctx.isStale()) return;
   ctx.contentEl.empty();
 
   if (projects.length === 0) {
