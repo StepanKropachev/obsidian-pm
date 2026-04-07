@@ -66,8 +66,7 @@ export class ProjectStore {
   }
 
   private isTaskFile(file: TFile): boolean {
-    const parts = file.path.split('/');
-    return parts.length >= 3 && !file.path.endsWith('.md.md');
+    return /_tasks\//.test(file.path);
   }
 
   async loadProject(file: TFile): Promise<Project | null> {

@@ -138,6 +138,12 @@ export class TableView implements SubView {
           }
           new Notice(`Archived ${ids.length} task${ids.length > 1 ? 's' : ''}`);
           break;
+        case 'unarchive':
+          for (const id of ids) {
+            await this.plugin.store.unarchiveTask(this.project, id);
+          }
+          new Notice(`Unarchived ${ids.length} task${ids.length > 1 ? 's' : ''}`);
+          break;
         case 'delete':
           if (!confirm(`Delete ${ids.length} task${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
           await this.plugin.store.deleteTasks(this.project, ids);

@@ -1,5 +1,6 @@
 import { Menu } from 'obsidian';
 import type { Task, TaskStatus, TaskPriority } from '../../types';
+import { findTask } from '../../store/TaskTreeOps';
 import { formatBadgeText } from '../../utils';
 import type { TableContext } from './TableRenderer';
 import { updateSelectAllCheckbox } from './TableRow';
@@ -12,6 +13,7 @@ export type BulkAction =
   | { type: 'set-due-date'; due: string }
   | { type: 'set-progress'; progress: number }
   | { type: 'archive' }
+  | { type: 'unarchive' }
   | { type: 'delete' };
 
 export interface BulkActionBarOpts {
@@ -159,11 +161,20 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e as MouseEvent);
   });
 
-  // Archive button
-  const archiveBtn = left.createEl('button', { text: 'Archive', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
-  archiveBtn.addEventListener('click', () => {
-    onAction({ type: 'archive' });
-  });
+  // Archive / Unarchive button — show based on selected tasks' state
+  const selectedIds = [...ctx.state.selectedTaskIds];
+  const selectedTasks = selectedIds.map(id => findTask(ctx.project.tasks, id)).filter(Boolean) as Task[];
+  const hasArchived = selectedTasks.some(t => t.archived);
+  const hasNonArchived = selectedTasks.some(t => !t.archived);
+
+  if (hasNonArchived) {
+    const archiveBtn = left.createEl('button', { text: 'Archive', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+    archiveBtn.addEventListener('click', () => onAction({ type: 'archive' }));
+  }
+  if (hasArchived) {
+    const unarchiveBtn = left.createEl('button', { text: 'Unarchive', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+    unarchiveBtn.addEventListener('click', () => onAction({ type: 'unarchive' }));
+  }
 
   // Delete button
   const deleteBtn = left.createEl('button', { text: 'Delete', cls: 'pm-btn pm-btn-danger pm-btn-sm' });
