@@ -430,6 +430,7 @@
 }
 .pm-table-row:hover { background: color-mix(in srgb, var(--pm-accent) 5%, transparent); }
 .pm-table-row--done { opacity: 0.55; }
+.pm-table-row--archived { opacity: 0.45; font-style: italic; }
 
 .pm-table-cell {
   padding: 8px 10px;
@@ -1655,6 +1656,11 @@
   background: rgba(74,126,184,0.15);
   color: #4a7eb8;
   border: 1px solid rgba(74,126,184,0.3);
+}
+.pm-task-badge--archived {
+  background: rgba(138,148,160,0.15);
+  color: #8a94a0;
+  border: 1px solid rgba(138,148,160,0.3);
 }
 .pm-task-badge--subtask {
   background: rgba(121,181,141,0.15);

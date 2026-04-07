@@ -4,7 +4,7 @@ import type { TableState } from './TableRenderer';
 
 export function applyFilters(flat: FlatTask[], filter: FilterState): FlatTask[] {
   return flat.filter(({ task }) => {
-    if (task.archived) return false;
+    if (task.archived && !filter.showArchived) return false;
     if (filter.text) {
       const q = filter.text.toLowerCase();
       if (!(task.title.toLowerCase().includes(q) ||

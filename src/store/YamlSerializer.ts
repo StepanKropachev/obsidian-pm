@@ -54,6 +54,7 @@ export function hydrateSavedViews(raw: unknown[]): SavedView[] {
         assignees: Array.isArray(filter.assignees) ? filter.assignees : [],
         tags: Array.isArray(filter.tags) ? filter.tags : [],
         dueDateFilter: (filter.dueDateFilter as string as SavedView['filter']['dueDateFilter']) ?? 'any',
+        showArchived: (filter.showArchived as boolean) ?? false,
       },
       sortKey: (v.sortKey as string) ?? 'status',
       sortDir: (v.sortDir as 'asc' | 'desc') ?? 'asc',

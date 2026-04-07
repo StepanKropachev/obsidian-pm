@@ -74,6 +74,7 @@ export interface FilterState {
   assignees: string[];
   tags: string[];
   dueDateFilter: DueDateFilter;
+  showArchived: boolean;
 }
 
 export interface SavedView {
@@ -194,5 +195,6 @@ export function makeDefaultFilter(): FilterState {
     assignees: [],
     tags: [],
     dueDateFilter: 'any',
+    showArchived: false,
   };
 }

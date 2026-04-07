@@ -60,6 +60,17 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   // Due date filter
   renderDueDateFilter(bar, ctx);
 
+  // Show archived toggle
+  const archiveBtn = bar.createEl('button', {
+    text: ctx.filter.showArchived ? 'Archived ✓' : 'Archived',
+    cls: 'pm-filter-dropdown-btn',
+  });
+  if (ctx.filter.showArchived) archiveBtn.addClass('pm-filter-dropdown-btn--active');
+  archiveBtn.addEventListener('click', () => {
+    ctx.filter.showArchived = !ctx.filter.showArchived;
+    ctx.rerender();
+  });
+
   // Clear button
   const activeCount = countActiveFilters(ctx.filter);
   if (activeCount > 0) {
@@ -111,6 +122,7 @@ function countActiveFilters(f: FilterState): number {
   if (f.assignees.length) count++;
   if (f.tags.length) count++;
   if (f.dueDateFilter !== 'any') count++;
+  if (f.showArchived) count++;
   return count;
 }
 

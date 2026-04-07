@@ -119,6 +119,7 @@ function renderTitleCell(row: HTMLElement, task: Task, depth: number, ctx: Table
   if (task.type === 'milestone') cell.createEl('span', { text: 'M', cls: 'pm-task-badge pm-task-badge--milestone', attr: { title: 'Milestone' } });
   if (task.type === 'subtask') cell.createEl('span', { text: 'Sub', cls: 'pm-task-badge pm-task-badge--subtask', attr: { title: 'Subtask' } });
   if (task.recurrence) cell.createEl('span', { text: 'R', cls: 'pm-task-badge pm-task-badge--recurrence', attr: { title: 'Recurring' } });
+  if (task.archived) cell.createEl('span', { text: 'Archived', cls: 'pm-task-badge pm-task-badge--archived', attr: { title: 'Archived' } });
 
   // Tags
   if (task.tags.length) {
@@ -281,6 +282,7 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _pa
   const row = tbody.createEl('tr', { cls: 'pm-table-row' });
   row.dataset.taskId = task.id;
   if (isDone) row.addClass('pm-table-row--done');
+  if (task.archived) row.addClass('pm-table-row--archived');
   if (ctx.state.selectedTaskId === task.id) row.addClass('pm-table-row--selected');
   row.style.setProperty('--depth', String(depth));
 

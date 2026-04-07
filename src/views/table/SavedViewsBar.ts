@@ -18,7 +18,8 @@ export interface SavedViewsContext {
 
 export function hasActiveFilters(filter: FilterState): boolean {
   return !!(filter.text || filter.statuses.length || filter.priorities.length ||
-    filter.assignees.length || filter.tags.length || filter.dueDateFilter !== 'any');
+    filter.assignees.length || filter.tags.length || filter.dueDateFilter !== 'any' ||
+    filter.showArchived);
 }
 
 export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsContext): void {
