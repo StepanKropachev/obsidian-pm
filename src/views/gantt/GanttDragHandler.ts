@@ -2,7 +2,7 @@ import { Notice } from 'obsidian';
 import type PMPlugin from '../../main';
 import type { Project, Task } from '../../types';
 import type { TimelineCfg } from './TimelineConfig';
-import { xToDate, dateToIso } from './TimelineConfig';
+import { xToDate, dateToIso, getSnapPoints, snapX } from './TimelineConfig';
 
 export interface DragState {
   isDragging: boolean;
@@ -54,6 +54,9 @@ export function attachDragHandle(
     drag.dragInitialX = x;
     drag.dragInitialW = width;
 
+    const snapPoints = getSnapPoints(cfg);
+    const snapThreshold = cfg.dayWidth * 0.4;
+
     const onMove = (ev: MouseEvent) => {
       if (!drag.isDragging || !drag.dragBarEl) return;
       const dx = ev.clientX - drag.dragStartX;
@@ -62,9 +65,12 @@ export function attachDragHandle(
       let newW = drag.dragInitialW;
       if (drag.dragSide === 'left') {
         newX = Math.max(0, drag.dragInitialX + dx);
-        newW = drag.dragInitialW - dx;
+        newX = snapX(newX, snapPoints, snapThreshold);
+        newW = drag.dragInitialX + drag.dragInitialW - newX;
       } else {
         newW = drag.dragInitialW + dx;
+        const rightEdge = snapX(newX + newW, snapPoints, snapThreshold);
+        newW = rightEdge - newX;
       }
       newW = Math.max(cfg.dayWidth, newW);
       drag.dragBarEl.setAttribute('x', String(newX));

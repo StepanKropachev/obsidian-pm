@@ -96,6 +96,51 @@ export function dateToIso(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Returns snap-point X positions for the given granularity.
+ * - day: every day border
+ * - week: every Monday + mid-week (Thursday)
+ * - month: 1st, ~8th, ~15th, ~22nd of each month
+ * - quarter: 1st of each month
+ */
+export function getSnapPoints(cfg: TimelineCfg): number[] {
+  const points: number[] = [];
+  const { startDate, totalDays, dayWidth, granularity } = cfg;
+
+  for (let i = 0; i <= totalDays; i++) {
+    const d = new Date(startDate.getTime() + i * DAY_MS);
+    const x = i * dayWidth;
+
+    if (granularity === 'day') {
+      points.push(x);
+    } else if (granularity === 'week') {
+      const dow = d.getDay();
+      if (dow === 1 || dow === 4) points.push(x); // Monday, Thursday
+    } else if (granularity === 'month') {
+      const day = d.getDate();
+      if (day === 1 || day === 8 || day === 15 || day === 22) points.push(x);
+    } else if (granularity === 'quarter') {
+      if (d.getDate() === 1) points.push(x);
+    }
+  }
+  return points;
+}
+
+/** Snap an x position to the nearest snap point within a threshold. */
+export function snapX(x: number, snapPoints: number[], threshold: number): number {
+  let closest = x;
+  let minDist = Infinity;
+  for (const sp of snapPoints) {
+    const dist = Math.abs(x - sp);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = sp;
+    }
+    if (sp > x + threshold) break; // snap points are sorted, no need to continue
+  }
+  return minDist <= threshold ? closest : x;
+}
+
 export function getWeekNumber(d: Date): number {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
