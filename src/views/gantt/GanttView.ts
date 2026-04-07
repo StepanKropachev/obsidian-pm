@@ -79,9 +79,9 @@ export class GanttView implements SubView {
     todayBtn.addEventListener('click', () => this.scrollToToday());
 
     const expBtn = bar.createEl('button', { text: 'Expand All', cls: 'pm-btn pm-btn-ghost' });
-    expBtn.addEventListener('click', async () => { await this.setAllCollapsed(false); });
+    expBtn.addEventListener('click', () => this.setAllCollapsed(false));
     const colBtn = bar.createEl('button', { text: 'Collapse All', cls: 'pm-btn pm-btn-ghost' });
-    colBtn.addEventListener('click', async () => { await this.setAllCollapsed(true); });
+    colBtn.addEventListener('click', () => this.setAllCollapsed(true));
   }
 
   private renderGantt(): void {
@@ -226,13 +226,10 @@ export class GanttView implements SubView {
     this.scrollEl.scrollLeft = Math.max(0, center);
   }
 
-  private async setAllCollapsed(collapsed: boolean): Promise<void> {
-    const all = flattenTasks(this.project.tasks);
-    for (const { task } of all) {
-      if (task.subtasks.length > 0) {
-        await this.plugin.store.updateTask(this.project, task.id, { collapsed });
-      }
+  private setAllCollapsed(collapsed: boolean): void {
+    for (const { task } of flattenTasks(this.project.tasks)) {
+      if (task.subtasks.length > 0) task.collapsed = collapsed;
     }
-    await this.onRefresh();
+    this.render();
   }
 }
