@@ -1661,6 +1661,9 @@
   background: rgba(138,148,160,0.15);
   color: #8a94a0;
   border: 1px solid rgba(138,148,160,0.3);
+  width: auto;
+  height: auto;
+  padding: 1px 6px;
 }
 .pm-task-badge--subtask {
   background: rgba(121,181,141,0.15);
