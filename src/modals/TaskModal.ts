@@ -4,6 +4,7 @@ import { Project, Task, makeTask } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
 import { safeAsync } from '../utils';
 import { renderStatusDot } from '../ui/StatusBadge';
+import { confirmDialog } from '../ui/ModalFactory';
 import { renderTaskFormFields } from './TaskFormFields';
 import { renderTimeTrackingPanel } from './TimeTrackingPanel';
 import { renderSubtasksPanel } from './SubtasksPanel';
@@ -149,7 +150,7 @@ export class TaskModal extends Modal {
 
       const deleteBtn = footer.createEl('button', { text: 'Delete', cls: 'pm-btn pm-btn-danger' });
       deleteBtn.addEventListener('click', safeAsync(async () => {
-        if (confirm(`Delete "${this.task.title}"?`)) {
+        if (await confirmDialog(this.app, `Delete "${this.task.title}"?`)) {
           await this.plugin.store.deleteTask(this.project, this.task.id);
           await this.onSave(this.task);
           this.cancelled = true;

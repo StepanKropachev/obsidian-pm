@@ -1,4 +1,5 @@
 import { Notice } from 'obsidian';
+import { confirmDialog } from '../../ui/ModalFactory';
 import type PMPlugin from '../../main';
 import type { Project, Task, FilterState } from '../../types';
 import { makeDefaultFilter } from '../../types';
@@ -145,7 +146,7 @@ export class TableView implements SubView {
           new Notice(`Unarchived ${ids.length} task${ids.length > 1 ? 's' : ''}`);
           break;
         case 'delete':
-          if (!confirm(`Delete ${ids.length} task${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+          if (!await confirmDialog(this.plugin.app, `Delete ${ids.length} task${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
           await this.plugin.store.deleteTasks(this.project, ids);
           break;
       }

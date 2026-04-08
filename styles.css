@@ -1276,6 +1276,10 @@
 }
 .pm-footer-spacer { flex: 1; }
 
+/* Confirm dialog */
+.pm-confirm-modal .modal-content { padding: 1rem 1.25rem; }
+.pm-confirm-modal { max-width: 380px; }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PROJECT MODAL
    ═══════════════════════════════════════════════════════════════════════════ */

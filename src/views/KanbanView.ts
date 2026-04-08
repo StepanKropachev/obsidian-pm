@@ -3,7 +3,7 @@ import type PMPlugin from '../main';
 import { Project, Task, TaskStatus } from '../types';
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps';
 import { stringToColor, formatDateShort, isTaskOverdue, getPriorityConfig, formatBadgeText, safeAsync } from '../utils';
-import { openTaskModal } from '../ui/ModalFactory';
+import { openTaskModal, confirmDialog } from '../ui/ModalFactory';
 import { COLOR_ACCENT } from '../constants';
 import type { SubView } from './SubView';
 
@@ -221,7 +221,7 @@ export class KanbanView implements SubView {
         })));
       }
       menu.addItem(item => item.setTitle('Delete task').setIcon('trash').onClick(safeAsync(async () => {
-        if (confirm(`Delete "${task.title}"?`)) {
+        if (await confirmDialog(this.plugin.app, `Delete "${task.title}"?`)) {
           await this.plugin.store.deleteTask(this.project, task.id);
           await this.onRefresh();
         }
