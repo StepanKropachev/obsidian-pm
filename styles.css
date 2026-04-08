@@ -1731,8 +1731,10 @@
 
 /* ── Gantt label drag reorder ────────────────────────────────────────── */
 .pm-gantt-label-row--dragging { opacity: 0.4; }
-.pm-gantt-label-row--drop-target {
-  background: var(--pm-accent-light) !important;
+.pm-gantt-label-row--drop-before {
+  box-shadow: inset 0 2px 0 var(--pm-accent);
+}
+.pm-gantt-label-row--drop-after {
   box-shadow: inset 0 -2px 0 var(--pm-accent);
 }
 

@@ -33,19 +33,24 @@ export function renderTaskLabel(
   el.addEventListener('dragend', () => {
     el.removeClass('pm-gantt-label-row--dragging');
   });
+  let dropPosition: 'before' | 'after' = 'before';
   el.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault();
-    el.addClass('pm-gantt-label-row--drop-target');
+    const rect = el.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    dropPosition = e.clientY < midY ? 'before' : 'after';
+    el.removeClass('pm-gantt-label-row--drop-before', 'pm-gantt-label-row--drop-after');
+    el.addClass(dropPosition === 'before' ? 'pm-gantt-label-row--drop-before' : 'pm-gantt-label-row--drop-after');
   });
   el.addEventListener('dragleave', () => {
-    el.removeClass('pm-gantt-label-row--drop-target');
+    el.removeClass('pm-gantt-label-row--drop-before', 'pm-gantt-label-row--drop-after');
   });
   el.addEventListener('drop', async (e: DragEvent) => {
     e.preventDefault();
-    el.removeClass('pm-gantt-label-row--drop-target');
+    el.removeClass('pm-gantt-label-row--drop-before', 'pm-gantt-label-row--drop-after');
     const draggedId = e.dataTransfer?.getData('text/plain');
     if (!draggedId || draggedId === task.id) return;
-    moveTaskInTree(ctx.project.tasks, draggedId, task.id, 'before');
+    moveTaskInTree(ctx.project.tasks, draggedId, task.id, dropPosition);
     await ctx.plugin.store.saveProject(ctx.project);
     await ctx.onRefresh();
   });
