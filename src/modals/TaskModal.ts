@@ -51,9 +51,9 @@ export class TaskModal extends Modal {
     this.render();
   }
 
-  async onClose(): Promise<void> {
+  onClose(): void {
     if (!this.cancelled && !this.saved && this.task.title.trim()) {
-      await this.persistTask();
+      this.persistTask();
     }
     this.contentEl.empty();
   }

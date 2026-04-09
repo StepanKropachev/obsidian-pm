@@ -4,6 +4,7 @@ import type PMPlugin from '../../main';
 import type { Project, Task, FilterState } from '../../types';
 import { makeDefaultFilter } from '../../types';
 import { findTask } from '../../store/TaskTreeOps';
+import { safeAsync } from '../../utils';
 import type { SubView } from '../SubView';
 import { renderQuickAddBar, focusQuickAdd } from './QuickAddBar';
 import { renderSavedViewsBar } from './SavedViewsBar';
@@ -171,7 +172,7 @@ export class TableView implements SubView {
 
   private updateBulkBar(): void {
     const ctx = this.makeTableContext();
-    renderBulkActionBar({ ctx, onAction: (a) => this.handleBulkAction(a) });
+    renderBulkActionBar({ ctx, onAction: safeAsync((a) => this.handleBulkAction(a)) });
   }
 
   private makeTableContext() {
@@ -182,7 +183,7 @@ export class TableView implements SubView {
       state: this.state,
       onRefresh: this.onRefresh,
       onSelectionChange: () => this.updateBulkBar(),
-      onBulkDelete: () => this.handleBulkAction({ type: 'delete' }),
+      onBulkDelete: safeAsync(() => this.handleBulkAction({ type: 'delete' })),
     };
   }
 }
