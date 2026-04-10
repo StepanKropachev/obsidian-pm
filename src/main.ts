@@ -49,7 +49,7 @@ export default class PMPlugin extends Plugin {
     this.addCommand({
       id: 'open-projects',
       name: 'Open projects pane',
-      callback: () => this.openProjectsPane(),
+      callback: () => { void this.openProjectsPane(); },
     });
 
     this.addCommand({
@@ -66,13 +66,13 @@ export default class PMPlugin extends Plugin {
     this.addCommand({
       id: 'new-task',
       name: 'Create new task',
-      callback: () => this.pickProjectThenCreateTask(null),
+      callback: () => { void this.pickProjectThenCreateTask(null); },
     });
 
     this.addCommand({
       id: 'new-subtask',
       name: 'Create new subtask',
-      callback: () => this.pickProjectThenCreateTask('pick-parent'),
+      callback: () => { void this.pickProjectThenCreateTask('pick-parent'); },
     });
 
     // Settings tab

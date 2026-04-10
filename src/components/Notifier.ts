@@ -12,8 +12,8 @@ export class Notifier {
   constructor(private plugin: PMPlugin) {}
 
   start(): void {
-    this.check();
-    this.intervalId = window.setInterval(() => this.check(), CHECK_INTERVAL_MS);
+    void this.check();
+    this.intervalId = window.setInterval(() => { void this.check(); }, CHECK_INTERVAL_MS);
     this.plugin.registerInterval(this.intervalId);
   }
 

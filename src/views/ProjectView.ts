@@ -138,7 +138,7 @@ export class ProjectView extends ItemView {
     renderProjectListToolbar(ctx);
     this.contentEl2.empty();
     this.contentEl2.addClass('pm-project-list-container');
-    renderProjectListContent(ctx);
+    void renderProjectListContent(ctx);
   }
 
   // ─── Project view ──────────────────────────────────────────────────────────

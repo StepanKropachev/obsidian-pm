@@ -226,7 +226,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
       const currentIdx = rows.indexOf(id);
       const nextIdx = currentIdx < rows.length - 1 ? currentIdx + 1 : currentIdx - 1;
       ctx.state.selectedTaskId = nextIdx >= 0 ? rows[nextIdx] : null;
-      deleteTask(id, ctx);
+      void deleteTask(id, ctx);
       break;
     }
   }

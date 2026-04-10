@@ -103,7 +103,7 @@ export class PMSettingTab extends PluginSettingTab {
         .setCta()
         .onClick(() => {
           this.plugin.settings.globalTeamMembers.push('');
-          this.plugin.saveSettings();
+          void this.plugin.saveSettings();
           this.renderMembersList(membersContainer);
         }));
 
