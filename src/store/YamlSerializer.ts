@@ -177,7 +177,7 @@ export function appendYaml(lines: string[], obj: Record<string, unknown>, indent
         lines.push(`${pad}${key}: [${items}]`);
       }
     } else if (typeof val === 'object') {
-      const keys = Object.keys(val as object);
+      const keys = Object.keys(val);
       if (keys.length === 0) {
         lines.push(`${pad}${key}: {}`);
       } else {

@@ -55,7 +55,7 @@ export function renderDateInput(
   value: string,
   onChange: (value: string) => void,
 ): HTMLInputElement {
-  const input = createEl('input', { type: 'date', cls }) as HTMLInputElement;
+  const input = createEl('input', { type: 'date', cls });
   input.value = value;
   input.addEventListener('change', () => onChange(input.value));
   return input;

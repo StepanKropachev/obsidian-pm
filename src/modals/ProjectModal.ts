@@ -156,7 +156,7 @@ export class ProjectModal extends Modal {
         renderMembers();
         setTimeout(() => {
           const inputs = memberWrap.querySelectorAll('input');
-          (inputs[inputs.length - 1] as HTMLInputElement)?.focus();
+          inputs[inputs.length - 1]?.focus();
         }, 50);
       });
     };

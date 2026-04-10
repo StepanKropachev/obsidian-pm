@@ -139,7 +139,7 @@ export class GanttView implements SubView {
 
     this.svgEl = svgEl('svg', {
       width: this.cfg.totalWidth, height: svgHeight, class: 'pm-gantt-svg',
-    }) as SVGSVGElement;
+    });
     svgContainer.appendChild(this.svgEl);
 
     const ctx = this.makeRendererContext();

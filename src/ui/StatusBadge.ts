@@ -24,7 +24,7 @@ export function renderStatusBadge(
       menu.addItem(item => item
         .setTitle(formatBadgeText(s.icon, s.label))
         .setChecked(s.id === task.status)
-        .onClick(() => onChange(s.id as TaskStatus)));
+        .onClick(() => onChange(s.id)));
     }
     menu.showAtMouseEvent(e as MouseEvent);
   });
@@ -52,7 +52,7 @@ export function renderPriorityBadge(
       menu.addItem(item => item
         .setTitle(formatBadgeText(p.icon, p.label))
         .setChecked(p.id === task.priority)
-        .onClick(() => onChange(p.id as TaskPriority)));
+        .onClick(() => onChange(p.id)));
     }
     menu.showAtMouseEvent(e as MouseEvent);
   });

@@ -69,7 +69,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     for (const s of ctx.plugin.settings.statuses) {
       menu.addItem(item => item
         .setTitle(formatBadgeText(s.icon, s.label))
-        .onClick(() => onAction({ type: 'set-status', status: s.id as TaskStatus })));
+        .onClick(() => onAction({ type: 'set-status', status: s.id })));
     }
     menu.showAtMouseEvent(e as MouseEvent);
   });
@@ -81,7 +81,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     for (const p of ctx.plugin.settings.priorities) {
       menu.addItem(item => item
         .setTitle(formatBadgeText(p.icon, p.label))
-        .onClick(() => onAction({ type: 'set-priority', priority: p.id as TaskPriority })));
+        .onClick(() => onAction({ type: 'set-priority', priority: p.id })));
     }
     menu.showAtMouseEvent(e as MouseEvent);
   });

@@ -1,7 +1,7 @@
 import { Menu } from 'obsidian';
 import type PMPlugin from '../main';
 import {
-  Project, Task, TaskStatus, TaskPriority, TaskType, Recurrence,
+  Project, Task, TaskType, Recurrence,
 } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
 import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField';
@@ -37,7 +37,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         menu.addItem(item => item
           .setTitle(formatBadgeText(s.icon, s.label))
           .setChecked(s.id === task.status)
-          .onClick(() => { task.status = s.id as TaskStatus; rerender(); }));
+          .onClick(() => { task.status = s.id; rerender(); }));
       }
       menu.showAtMouseEvent(e as MouseEvent);
     });
@@ -56,7 +56,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         menu.addItem(item => item
           .setTitle(formatBadgeText(p.icon, p.label))
           .setChecked(p.id === task.priority)
-          .onClick(() => { task.priority = p.id as TaskPriority; rerender(); }));
+          .onClick(() => { task.priority = p.id; rerender(); }));
       }
       menu.showAtMouseEvent(e as MouseEvent);
     });

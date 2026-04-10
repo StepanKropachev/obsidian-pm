@@ -50,7 +50,7 @@ export class ProjectView extends ItemView {
       this.filePath = state.filePath;
       await this.loadProject();
     }
-    await super.setState(state, result as unknown as import('obsidian').ViewStateResult);
+    await super.setState(state, result as import('obsidian').ViewStateResult);
   }
 
   getState(): ViewState {

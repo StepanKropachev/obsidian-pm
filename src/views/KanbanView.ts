@@ -30,7 +30,7 @@ export class KanbanView implements SubView {
     const board = this.container.createDiv('pm-kanban-board');
 
     for (const status of this.plugin.settings.statuses) {
-      const tasks = this.getTasksForStatus(status.id as TaskStatus);
+      const tasks = this.getTasksForStatus(status.id);
       this.renderColumn(board, status, tasks);
     }
 
