@@ -155,7 +155,7 @@ export class ProjectView extends ItemView {
       return;
     }
     // Update tab header text and icon after project loads
-    (this.leaf as any).updateHeader?.();
+    (this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.();
     this.renderProjectToolbar();
     this.renderCurrentView();
   }

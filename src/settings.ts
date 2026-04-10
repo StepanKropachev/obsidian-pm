@@ -18,10 +18,10 @@ export class PMSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass('pm-settings');
 
-    containerEl.createEl('h2', { text: 'Project Manager' });
+    new Setting(containerEl).setName('Project Manager').setHeading();
 
     // ── General ──────────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'General' });
+    new Setting(containerEl).setName('General').setHeading();
 
     new Setting(containerEl)
       .setName('Projects folder')
@@ -61,7 +61,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     // ── Notifications ─────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'Due date notifications' });
+    new Setting(containerEl).setName('Due date notifications').setHeading();
 
     new Setting(containerEl)
       .setName('Enable notifications')
@@ -86,7 +86,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     // ── Team Members ──────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'Team members' });
+    new Setting(containerEl).setName('Team members').setHeading();
 
     const membersDesc = containerEl.createEl('p', {
       cls: 'pm-settings-desc',
@@ -108,7 +108,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     // ── Statuses ──────────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'Statuses' });
+    new Setting(containerEl).setName('Statuses').setHeading();
     containerEl.createEl('p', {
       cls: 'pm-settings-desc',
       text: 'Customize status labels, colors, and icons. Drag to reorder.',
