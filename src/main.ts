@@ -48,7 +48,7 @@ export default class PMPlugin extends Plugin {
     // Commands
     this.addCommand({
       id: 'open-projects',
-      name: 'Open Projects pane',
+      name: 'Open projects pane',
       callback: () => this.openProjectsPane(),
     });
 

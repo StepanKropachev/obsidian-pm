@@ -79,9 +79,9 @@ export class GanttView implements SubView {
     const todayBtn = bar.createEl('button', { text: 'Today', cls: 'pm-btn pm-btn-ghost pm-gantt-today-btn' });
     todayBtn.addEventListener('click', () => this.scrollToToday());
 
-    const expBtn = bar.createEl('button', { text: 'Expand All', cls: 'pm-btn pm-btn-ghost' });
+    const expBtn = bar.createEl('button', { text: 'Expand all', cls: 'pm-btn pm-btn-ghost' });
     expBtn.addEventListener('click', () => this.setAllCollapsed(false));
-    const colBtn = bar.createEl('button', { text: 'Collapse All', cls: 'pm-btn pm-btn-ghost' });
+    const colBtn = bar.createEl('button', { text: 'Collapse all', cls: 'pm-btn pm-btn-ghost' });
     colBtn.addEventListener('click', () => this.setAllCollapsed(true));
   }
 
@@ -163,7 +163,7 @@ export class GanttView implements SubView {
     // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row');
     addRow.style.height = `${ROW_HEIGHT}px`;
-    const addBtn = addRow.createEl('button', { text: '+ Add Task', cls: 'pm-gantt-add-task-btn' });
+    const addBtn = addRow.createEl('button', { text: '+ Add task', cls: 'pm-gantt-add-task-btn' });
     addBtn.addEventListener('click', () => {
       openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() });
     });

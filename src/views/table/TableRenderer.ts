@@ -134,7 +134,7 @@ function fillTableBody(ctx: TableContext): void {
   // "Add task" row
   const addRow = tbody.createEl('tr', { cls: 'pm-table-add-row' });
   const addCell = addRow.createEl('td', { attr: { colspan: String(10 + ctx.project.customFields.length) } });
-  const addBtn = addCell.createEl('button', { text: '+ Add Task', cls: 'pm-table-add-btn' });
+  const addBtn = addCell.createEl('button', { text: '+ Add task', cls: 'pm-table-add-btn' });
   addBtn.addEventListener('click', () => {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() });
   });

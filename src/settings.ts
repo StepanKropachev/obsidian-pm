@@ -61,7 +61,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     // ── Notifications ─────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'Due Date Notifications' });
+    containerEl.createEl('h3', { text: 'Due date notifications' });
 
     new Setting(containerEl)
       .setName('Enable notifications')
@@ -86,7 +86,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     // ── Team Members ──────────────────────────────────────────────────────────
-    containerEl.createEl('h3', { text: 'Team Members' });
+    containerEl.createEl('h3', { text: 'Team members' });
 
     const membersDesc = containerEl.createEl('p', {
       cls: 'pm-settings-desc',
@@ -99,7 +99,7 @@ export class PMSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .addButton(btn => btn
-        .setButtonText('+ Add Member')
+        .setButtonText('+ Add member')
         .setCta()
         .onClick(() => {
           this.plugin.settings.globalTeamMembers.push('');

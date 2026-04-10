@@ -204,7 +204,7 @@ export class ProjectView extends ItemView {
 
     // Right: actions
     const right = this.toolbarEl.createDiv('pm-toolbar-right');
-    const addBtn = right.createEl('button', { text: '+ Add Task', cls: 'pm-btn pm-btn-primary' });
+    const addBtn = right.createEl('button', { text: '+ Add task', cls: 'pm-btn pm-btn-primary' });
     addBtn.addEventListener('click', () => {
       if (!this.project) return;
       openTaskModal(this.plugin, this.project, { onSave: async () => { await this.refreshProject(); } });

@@ -86,14 +86,14 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
 function renderDueDateFilter(parent: HTMLElement, ctx: FilterBarContext): void {
   const current = ctx.filter.dueDateFilter;
   const labels: Record<DueDateFilter, string> = {
-    'any': 'Due Date',
+    'any': 'Due date',
     'overdue': 'Overdue',
-    'this-week': 'This Week',
-    'this-month': 'This Month',
-    'no-date': 'No Date',
+    'this-week': 'This week',
+    'this-month': 'This month',
+    'no-date': 'No date',
   };
   const btn = parent.createEl('button', {
-    text: current !== 'any' ? `Due: ${labels[current]}` : 'Due Date',
+    text: current !== 'any' ? `Due: ${labels[current]}` : 'Due date',
     cls: 'pm-filter-dropdown-btn',
   });
   if (current !== 'any') btn.addClass('pm-filter-dropdown-btn--active');

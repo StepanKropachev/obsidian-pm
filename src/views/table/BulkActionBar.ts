@@ -63,7 +63,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   left.createEl('span', { text: `${count} selected`, cls: 'pm-bulk-bar-count' });
 
   // Status button
-  const statusBtn = left.createEl('button', { text: 'Set Status', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const statusBtn = left.createEl('button', { text: 'Set status', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   statusBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     for (const s of ctx.plugin.settings.statuses) {
@@ -75,7 +75,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 
   // Priority button
-  const priorityBtn = left.createEl('button', { text: 'Set Priority', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const priorityBtn = left.createEl('button', { text: 'Set priority', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   priorityBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     for (const p of ctx.plugin.settings.priorities) {
@@ -87,7 +87,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 
   // Assignee button
-  const assigneeBtn = left.createEl('button', { text: 'Set Assignee', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const assigneeBtn = left.createEl('button', { text: 'Set assignee', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   assigneeBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     const allMembers = collectMembers(ctx);
@@ -105,7 +105,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 
   // Tag button
-  const tagBtn = left.createEl('button', { text: 'Set Tag', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const tagBtn = left.createEl('button', { text: 'Set tag', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   tagBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     const allTags = collectTags(ctx);
@@ -123,7 +123,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 
   // Due Date button
-  const dueBtn = left.createEl('button', { text: 'Set Due Date', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const dueBtn = left.createEl('button', { text: 'Set due date', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   dueBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     const today = new Date();
@@ -152,7 +152,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 
   // Progress button
-  const progressBtn = left.createEl('button', { text: 'Set Progress', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const progressBtn = left.createEl('button', { text: 'Set progress', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   progressBtn.addEventListener('click', (e) => {
     const menu = new Menu();
     for (const pct of [0, 25, 50, 75, 100]) {

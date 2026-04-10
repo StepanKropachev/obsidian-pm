@@ -16,7 +16,7 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
   ctx.toolbarEl.empty();
   ctx.toolbarEl.createEl('h2', { text: '\ud83d\udccb Project Manager', cls: 'pm-toolbar-title' });
 
-  const newBtn = ctx.toolbarEl.createEl('button', { text: '+ New Project', cls: 'pm-btn pm-btn-primary' });
+  const newBtn = ctx.toolbarEl.createEl('button', { text: '+ New project', cls: 'pm-btn pm-btn-primary' });
   newBtn.addEventListener('click', () => {
     openProjectModal(ctx.plugin, { onSave: async project => {
       const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath);
@@ -36,7 +36,7 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
     empty.createEl('div', { text: '\ud83d\udccb', cls: 'pm-empty-icon' });
     empty.createEl('h3', { text: 'No projects yet' });
     empty.createEl('p', { text: 'Create your first project to get started.' });
-    const btn = empty.createEl('button', { text: '+ New Project', cls: 'pm-btn pm-btn-primary' });
+    const btn = empty.createEl('button', { text: '+ New project', cls: 'pm-btn pm-btn-primary' });
     btn.addEventListener('click', () => {
       openProjectModal(ctx.plugin, { onSave: async project => {
         const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath);

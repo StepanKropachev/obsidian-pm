@@ -88,7 +88,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
 
   // Parent task selector (subtask type only)
   if (task.type === 'subtask') {
-    renderPropRow(container, 'Parent Task', () => {
+    renderPropRow(container, 'Parent task', () => {
       const wrap = createDiv('pm-prop-value');
       const allTasks = flattenTasks(project.tasks).map(f => f.task).filter(t => t.id !== task.id);
       const sel = wrap.createEl('select', { cls: 'pm-prop-select' });
@@ -263,7 +263,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   // Custom fields
   if (project.customFields.length > 0) {
     const cfSection = container.createDiv('pm-modal-section');
-    cfSection.createEl('h4', { text: 'Custom Fields', cls: 'pm-modal-section-title' });
+    cfSection.createEl('h4', { text: 'Custom fields', cls: 'pm-modal-section-title' });
     const cfProps = cfSection.createDiv('pm-modal-props');
     for (const cf of project.customFields) {
       renderPropRow(cfProps, cf.name, () => renderCustomFieldInput(cf, task, project, plugin));

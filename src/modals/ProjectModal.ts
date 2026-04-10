@@ -57,7 +57,7 @@ export class ProjectModal extends Modal {
     const header = el.createDiv('pm-project-modal-header');
     header.createEl('span', { text: '✦', cls: 'pm-project-modal-header-icon' });
     header.createEl('h2', {
-      text: this.isNew ? 'New Project' : 'Project Settings',
+      text: this.isNew ? 'New project' : 'Project settings',
       cls: 'pm-modal-heading',
     });
 
@@ -84,7 +84,7 @@ export class ProjectModal extends Modal {
 
     // Title
     const titleWrap = topRow.createDiv('pm-project-title-wrap');
-    titleWrap.createEl('label', { text: 'Project Name', cls: 'pm-label' });
+    titleWrap.createEl('label', { text: 'Project name', cls: 'pm-label' });
     const titleInput = titleWrap.createEl('input', {
       type: 'text', value: this.project.title, cls: 'pm-input pm-input--lg',
     });
@@ -126,7 +126,7 @@ export class ProjectModal extends Modal {
 
     // ── Team members ──────────────────────────────────────────────────────────
     const memberSection = el.createDiv('pm-modal-section');
-    memberSection.createEl('label', { text: 'Team Members', cls: 'pm-label' });
+    memberSection.createEl('label', { text: 'Team members', cls: 'pm-label' });
     const memberWrap = memberSection.createDiv('pm-member-list');
     const renderMembers = () => {
       memberWrap.empty();
@@ -165,7 +165,7 @@ export class ProjectModal extends Modal {
     // ── Custom fields ─────────────────────────────────────────────────────────
     const cfSection = el.createDiv('pm-modal-section');
     const cfHeader = cfSection.createDiv('pm-modal-section-header');
-    cfHeader.createEl('span', { text: 'Custom Fields', cls: 'pm-modal-subheading' });
+    cfHeader.createEl('span', { text: 'Custom fields', cls: 'pm-modal-subheading' });
     cfHeader.createEl('span', { text: 'extra properties for tasks', cls: 'pm-modal-hint' });
 
     const cfList = cfSection.createDiv('pm-cf-list');
@@ -174,7 +174,7 @@ export class ProjectModal extends Modal {
       for (let i = 0; i < this.project.customFields.length; i++) {
         this.renderCustomFieldEditor(cfList, this.project.customFields[i], i, renderCFs);
       }
-      const addCFBtn = cfList.createEl('button', { text: '+ Add Custom Field', cls: 'pm-prop-add-btn' });
+      const addCFBtn = cfList.createEl('button', { text: '+ Add custom field', cls: 'pm-prop-add-btn' });
       addCFBtn.addEventListener('click', () => {
         this.project.customFields.push({ id: makeId(), name: 'New Field', type: 'text', options: [] });
         renderCFs();
@@ -190,7 +190,7 @@ export class ProjectModal extends Modal {
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = footer.createEl('button', {
-      text: this.isNew ? '+ Create Project' : 'Save',
+      text: this.isNew ? '+ Create project' : 'Save',
       cls: 'pm-btn pm-btn-primary',
     });
     saveBtn.addEventListener('click', async () => {
