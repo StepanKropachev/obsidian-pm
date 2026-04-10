@@ -871,7 +871,7 @@
 }
 
 .pm-kanban-col-header { flex-shrink: 0; }
-.pm-kanban-col-topbar { height: 3px; }
+.pm-kanban-col-topbar { height: 3px; opacity: 0.5; }
 .pm-kanban-col-title-row {
   display: flex;
   align-items: center;
@@ -931,6 +931,7 @@
 .pm-kanban-card-priority-bar {
   height: 3px;
   flex-shrink: 0;
+  opacity: 0.5;
 }
 .pm-kanban-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
 .pm-kanban-card-title { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.45; }
@@ -956,7 +957,7 @@
   border-radius: 99px;
   overflow: hidden;
 }
-.pm-kanban-card-pbar-fill { height: 100%; border-radius: 99px; }
+.pm-kanban-card-pbar-fill { height: 100%; border-radius: 99px; background: var(--pm-accent); }
 
 .pm-kanban-card-subtasks { font-size: 11px; color: var(--pm-text-muted); }
 
@@ -1729,6 +1730,38 @@
   transition: all 0.15s;
 }
 .pm-gantt-add-task-btn:hover { background: var(--pm-bg3); color: var(--pm-accent); }
+
+/* ── Utility classes ─────────────────────────────────────────────────────── */
+.pm-hidden { display: none !important; }
+.pm-dragging { opacity: 0.5; }
+.pm-subtask-rm--visible { opacity: 1 !important; }
+.pm-offscreen { position: fixed; opacity: 0; pointer-events: none; }
+.pm-no-shrink { flex-shrink: 0; }
+body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; user-select: none !important; }
+
+/* Confirm button (modal) */
+.pm-btn-confirm-danger { background: var(--background-modifier-error); color: var(--text-on-accent); }
+
+/* Prompt / Confirm modal typography */
+.pm-prompt-text,
+.pm-confirm-text {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+}
+.pm-confirm-text { margin-bottom: 1rem; }
+.pm-prompt-input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  box-sizing: border-box;
+}
+.pm-modal-btn-row { display: flex; justify-content: flex-end; gap: 0.5rem; }
 
 /* ── Gantt label drag reorder ────────────────────────────────────────── */
 .pm-gantt-label-row--dragging { opacity: 0.4; }

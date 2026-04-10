@@ -107,8 +107,7 @@ export class GanttView implements SubView {
       resizing = true;
       startX = e.clientX;
       startWidth = this.labelWidth;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+      document.body.addClass('pm-resize-active');
     });
     const onMouseMove = (e: MouseEvent) => {
       if (!resizing) return;
@@ -120,8 +119,7 @@ export class GanttView implements SubView {
     const onMouseUp = () => {
       if (!resizing) return;
       resizing = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.body.removeClass('pm-resize-active');
     };
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
@@ -174,7 +172,7 @@ export class GanttView implements SubView {
     // The scrollbar reduces the right panel's viewport height, letting it
     // scroll further than the left body. Without this, rows desync at the bottom.
     const leftSpacer = leftBody.createDiv();
-    leftSpacer.style.flexShrink = '0';
+    leftSpacer.addClass('pm-no-shrink');
     const syncSpacer = () => {
       const hScrollbarH = rightPanel.offsetHeight - rightPanel.clientHeight;
       leftSpacer.style.height = `${hScrollbarH}px`;

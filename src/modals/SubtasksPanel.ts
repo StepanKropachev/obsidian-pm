@@ -29,7 +29,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
       });
 
       const dot = row.createEl('span', { cls: 'pm-subtask-dot' });
-      dot.style.background = subStatus?.color ?? COLOR_MUTED;
+      dot.setCssStyles({ background: subStatus?.color ?? COLOR_MUTED });
 
       const titleEl = row.createEl('span', { text: sub.title, cls: 'pm-subtask-title' });
       titleEl.contentEditable = 'true';

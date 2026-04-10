@@ -4,7 +4,6 @@ import { Project, Task, TaskStatus } from '../types';
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps';
 import { stringToColor, formatDateShort, isTaskOverdue, getPriorityConfig, formatBadgeText, safeAsync } from '../utils';
 import { openTaskModal, confirmDialog } from '../ui/ModalFactory';
-import { COLOR_ACCENT } from '../constants';
 import type { SubView } from './SubView';
 
 export class KanbanView implements SubView {
@@ -51,8 +50,7 @@ export class KanbanView implements SubView {
     header.style.setProperty('--col-color', status.color);
 
     const topBar = header.createDiv('pm-kanban-col-topbar');
-    topBar.style.background = status.color;
-    topBar.style.opacity = '0.5';
+    topBar.setCssStyles({ background: status.color });
 
     const titleRow = header.createDiv('pm-kanban-col-title-row');
     const badge = titleRow.createEl('span', {
@@ -116,8 +114,7 @@ export class KanbanView implements SubView {
     const priorityConfig = getPriorityConfig(this.plugin.settings.priorities, task.priority);
     if (priorityConfig && task.priority !== 'medium' && task.priority !== 'low') {
       const priorityBar = card.createDiv('pm-kanban-card-priority-bar');
-      priorityBar.style.background = priorityConfig.color;
-      priorityBar.style.opacity = '0.5';
+      priorityBar.setCssStyles({ background: priorityConfig.color });
     }
 
     const body = card.createDiv('pm-kanban-card-body');
@@ -170,8 +167,7 @@ export class KanbanView implements SubView {
     if (task.progress > 0) {
       const pbar = body.createDiv('pm-kanban-card-pbar');
       const pfill = pbar.createDiv('pm-kanban-card-pbar-fill');
-      pfill.style.width = `${task.progress}%`;
-      pfill.style.background = COLOR_ACCENT;
+      pfill.setCssStyles({ width: `${task.progress}%` });
     }
 
     // Subtask count
@@ -186,12 +182,12 @@ export class KanbanView implements SubView {
     card.addEventListener('dragstart', () => {
       this.dragTask = task;
       card.addClass('pm-kanban-card--dragging');
-      setTimeout(() => card.style.opacity = '0.5', 0);
+      setTimeout(() => card.addClass('pm-dragging'), 0);
     });
 
     card.addEventListener('dragend', () => {
       card.removeClass('pm-kanban-card--dragging');
-      card.style.opacity = '1';
+      card.removeClass('pm-dragging');
     });
 
     // Click to open

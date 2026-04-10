@@ -51,16 +51,16 @@ class TextPromptModal extends Modal {
 
     contentEl.createEl('p', {
       text: this.label,
-      attr: { style: 'margin: 0 0 0.75rem 0; color: var(--text-normal); font-size: var(--font-ui-medium);' },
+      cls: 'pm-prompt-text',
     });
 
     const input = contentEl.createEl('input', {
       type: 'text',
       placeholder: this.placeholder,
-      attr: { style: 'width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--background-modifier-border); border-radius: 4px; background: var(--background-primary); color: var(--text-normal); font-size: var(--font-ui-medium);' },
+      cls: 'pm-prompt-input',
     });
 
-    const btnRow = contentEl.createDiv({ attr: { style: 'display: flex; justify-content: flex-end; gap: 0.5rem;' } });
+    const btnRow = contentEl.createDiv('pm-modal-btn-row');
 
     const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' });
     cancelBtn.addEventListener('click', () => { this.finish(null); this.close(); });
@@ -110,17 +110,15 @@ class ConfirmModal extends Modal {
 
     contentEl.createEl('p', {
       text: this.message,
-      attr: { style: 'margin: 0 0 1rem 0; color: var(--text-normal); font-size: var(--font-ui-medium);' },
+      cls: 'pm-confirm-text',
     });
 
-    const btnRow = contentEl.createDiv({ attr: { style: 'display: flex; justify-content: flex-end; gap: 0.5rem;' } });
+    const btnRow = contentEl.createDiv('pm-modal-btn-row');
 
     const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' });
     cancelBtn.addEventListener('click', () => { this.finish(false); this.close(); });
 
-    const confirmBtn = btnRow.createEl('button', { text: this.confirmLabel, cls: 'mod-warning' });
-    confirmBtn.style.background = 'var(--background-modifier-error)';
-    confirmBtn.style.color = 'var(--text-on-accent)';
+    const confirmBtn = btnRow.createEl('button', { text: this.confirmLabel, cls: 'mod-warning pm-btn-confirm-danger' });
     confirmBtn.addEventListener('click', () => { this.finish(true); this.close(); });
   }
 

@@ -93,8 +93,8 @@ export class TaskModal extends Modal {
     descArea.placeholder = 'Add a description\u2026';
     descArea.value = this.task.description;
     const autoResize = () => {
-      descArea.style.height = 'auto';
-      descArea.style.height = descArea.scrollHeight + 'px';
+      descArea.setCssStyles({ height: 'auto' });
+      descArea.setCssStyles({ height: descArea.scrollHeight + 'px' });
     };
     descArea.addEventListener('input', () => {
       this.task.description = descArea.value;

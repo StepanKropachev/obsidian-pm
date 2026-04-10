@@ -69,17 +69,17 @@ export class ProjectModal extends Modal {
     const iconBtn = iconWrap.createEl('button', { text: this.project.icon, cls: 'pm-icon-btn' });
 
     const iconGrid = iconWrap.createDiv('pm-icon-grid');
-    iconGrid.style.display = 'none'; // dynamic toggle
+    iconGrid.addClass('pm-hidden');
     for (const emoji of PROJECT_ICONS) {
       const btn = iconGrid.createEl('button', { text: emoji, cls: 'pm-icon-option' });
       btn.addEventListener('click', () => {
         this.project.icon = emoji;
         iconBtn.textContent = emoji;
-        iconGrid.style.display = 'none';
+        iconGrid.addClass('pm-hidden');
       });
     }
     iconBtn.addEventListener('click', () => {
-      iconGrid.style.display = iconGrid.style.display === 'none' ? 'grid' : 'none';
+      iconGrid.toggleClass('pm-hidden', !iconGrid.hasClass('pm-hidden'));
     });
 
     // Title
@@ -98,7 +98,7 @@ export class ProjectModal extends Modal {
     const colorPalette = colorSection.createDiv('pm-color-palette');
     for (const color of PROJECT_COLORS) {
       const swatch = colorPalette.createEl('button', { cls: 'pm-color-swatch' });
-      swatch.style.background = color; // dynamic color
+      swatch.setCssStyles({ background: color });
       if (color === this.project.color) swatch.addClass('pm-color-swatch--selected');
       swatch.addEventListener('click', () => {
         this.project.color = color;
@@ -135,7 +135,7 @@ export class ProjectModal extends Modal {
         const name = this.project.teamMembers[i] || '?';
         const avatar = row.createEl('span', { cls: 'pm-avatar' });
         avatar.textContent = name.slice(0, 2).toUpperCase();
-        avatar.style.background = stringToColor(name); // dynamic computed color
+        avatar.setCssStyles({ background: stringToColor(name) });
         const input = row.createEl('input', {
           type: 'text', value: this.project.teamMembers[i], cls: 'pm-input pm-member-input',
         });

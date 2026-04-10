@@ -32,8 +32,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
     const pct = Math.min(100, Math.round((logged / est) * 100));
     const timeBar = timeSection.createDiv('pm-time-bar');
     const timeFill = timeBar.createDiv('pm-time-bar-fill');
-    timeFill.style.width = `${pct}%`;
-    timeFill.style.background = pct > 100 ? 'var(--pm-danger)' : 'var(--pm-accent)';
+    timeFill.setCssStyles({ width: `${pct}%`, background: pct > 100 ? 'var(--pm-danger)' : 'var(--pm-accent)' });
   }
 
   // Log entries
@@ -60,7 +59,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
       noteInput.addEventListener('change', () => { log.note = noteInput.value; });
 
       const rmBtn = row.createEl('button', { text: '\u2715', cls: 'pm-subtask-rm' });
-      rmBtn.style.opacity = '1';
+      rmBtn.addClass('pm-subtask-rm--visible');
       rmBtn.addEventListener('click', () => {
         task.timeLogs!.splice(i, 1);
         renderLogs();

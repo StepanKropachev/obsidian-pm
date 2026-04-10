@@ -137,8 +137,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.addItem(item => item.setTitle('Pick date...').onClick(() => {
       const input = document.createElement('input');
       input.type = 'date';
-      input.style.position = 'fixed';
-      input.style.opacity = '0';
+      input.addClass('pm-offscreen');
       document.body.appendChild(input);
       input.addEventListener('change', () => {
         if (input.value) onAction({ type: 'set-due-date', due: input.value });

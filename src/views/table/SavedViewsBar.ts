@@ -72,7 +72,7 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
     const saveBtn = bar.createEl('button', { text: '+ Save View', cls: 'pm-saved-view-pill pm-saved-view-pill--save' });
     saveBtn.addEventListener('click', () => {
       // Replace button with inline input (prompt() doesn't work in Electron)
-      saveBtn.style.display = 'none';
+      saveBtn.addClass('pm-hidden');
       const wrapper = bar.createDiv('pm-saved-view-inline-input');
       const input = wrapper.createEl('input', { type: 'text', placeholder: 'View name…', cls: 'pm-saved-view-name-input' });
       input.focus();
@@ -84,7 +84,7 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
         const name = input.value.trim();
         if (!name) {
           wrapper.remove();
-          saveBtn.style.display = '';
+          saveBtn.removeClass('pm-hidden');
           return;
         }
         const sv: SavedView = {
@@ -102,11 +102,11 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
 
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); commit(); }
-        if (e.key === 'Escape') { wrapper.remove(); saveBtn.style.display = ''; }
+        if (e.key === 'Escape') { wrapper.remove(); saveBtn.removeClass('pm-hidden'); }
       });
       input.addEventListener('blur', () => {
         if (input.value.trim()) commit();
-        else { wrapper.remove(); saveBtn.style.display = ''; }
+        else { wrapper.remove(); saveBtn.removeClass('pm-hidden'); }
       });
     });
   }

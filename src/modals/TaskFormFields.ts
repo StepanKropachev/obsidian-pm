@@ -29,7 +29,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Status', () => {
     const statusConfig = getStatusConfig(plugin.settings.statuses, task.status);
     const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' });
-    val.style.setProperty('--badge-color', statusConfig?.color ?? COLOR_MUTED);
+    val.setCssProps({ '--badge-color': statusConfig?.color ?? COLOR_MUTED });
     val.setText(formatBadgeText(statusConfig?.icon, statusConfig?.label ?? task.status));
     val.addEventListener('click', e => {
       const menu = new Menu();
@@ -48,7 +48,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Priority', () => {
     const prioConfig = getPriorityConfig(plugin.settings.priorities, task.priority);
     const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' });
-    val.style.setProperty('--badge-color', prioConfig?.color ?? COLOR_MUTED);
+    val.setCssProps({ '--badge-color': prioConfig?.color ?? COLOR_MUTED });
     val.setText(formatBadgeText(prioConfig?.icon, prioConfig?.label ?? task.priority));
     val.addEventListener('click', e => {
       const menu = new Menu();
@@ -180,7 +180,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         renderAdd: (el) => {
           const addBtn = el.createEl('button', { text: '+ Add', cls: 'pm-prop-add-btn' });
           const showNameInput = () => {
-            addBtn.style.display = 'none';
+            addBtn.addClass('pm-hidden');
             const input = el.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: 'Name\u2026' });
             input.focus();
             const commit = () => {
