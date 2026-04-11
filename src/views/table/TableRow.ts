@@ -303,8 +303,8 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, _pa
   renderDueDateCell(row, task, ctx);
   renderProgressCell(row, task, statusConfig?.color);
   renderTimeCell(row, task);
-  renderActionsCell(row, task, ctx);
   renderCustomFieldCells(row, task, ctx.project);
+  renderActionsCell(row, task, ctx);
 }
 
 // ─── Selection ─────────────────────────────────────────────────────────────────

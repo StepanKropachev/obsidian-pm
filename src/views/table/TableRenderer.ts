@@ -61,7 +61,6 @@ export function renderTable(ctx: TableContext): void {
     { key: 'due',       label: 'Due',       width: '110px' },
     { key: 'progress',  label: 'Progress',  width: '120px' },
     { key: null,        label: 'Time',      width: '90px'  },
-    { key: null,        label: '',          width: '40px'  },
   ];
   for (const col of cols) {
     const th = hrow.createEl('th');
@@ -95,6 +94,10 @@ export function renderTable(ctx: TableContext): void {
     const th = hrow.createEl('th', { text: cf.name });
     th.style.width = '120px';
   }
+
+  // Actions column header (must be last)
+  const actionsTh = hrow.createEl('th');
+  actionsTh.style.width = '40px';
 
   ctx.state.tableBody = table.createEl('tbody');
   fillTableBody(ctx);
