@@ -7,7 +7,7 @@ import { xToDate, dateToIso, getSnapPoints, snapX } from './TimelineConfig';
 
 export interface DragState {
   isDragging: boolean;
-  dragSide: 'left' | 'right' | null;
+  dragSide: 'left' | 'right' | 'move' | null;
   dragTask: Task | null;
   dragStartX: number;
   dragBarEl: SVGRectElement | null;
@@ -112,6 +112,92 @@ export function attachDragHandle(
       await onRefresh();
     });
 
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    activeCleanup = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  });
+
+  return () => {
+    if (activeCleanup) {
+      activeCleanup();
+      activeCleanup = null;
+    }
+  };
+}
+
+export function attachBarMove(
+  rect: SVGRectElement,
+  task: Task,
+  x: number,
+  width: number,
+  cfg: TimelineCfg,
+  drag: DragState,
+  plugin: PMPlugin,
+  project: Project,
+  onRefresh: () => Promise<void>,
+): () => void {
+  let activeCleanup: (() => void) | null = null;
+
+  rect.addEventListener('mousedown', (e: MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    drag.isDragging = true;
+    drag.dragMoved = false;
+    drag.dragSide = 'move';
+    drag.dragTask = task;
+    drag.dragStartX = e.clientX;
+    drag.dragBarEl = rect;
+    drag.dragInitialX = x;
+    drag.dragInitialW = width;
+
+    const snapPoints = getSnapPoints(cfg);
+    const snapThreshold = cfg.dayWidth * 0.4;
+
+    const onMove = (ev: MouseEvent) => {
+      if (!drag.isDragging || !drag.dragBarEl) return;
+      const dx = ev.clientX - drag.dragStartX;
+      if (Math.abs(dx) > 3) drag.dragMoved = true;
+      let newX = Math.max(0, drag.dragInitialX + dx);
+      newX = snapX(newX, snapPoints, snapThreshold);
+      drag.dragBarEl.setAttribute('x', String(newX));
+    };
+
+    const onUp = safeAsync(async () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      rect.classList.remove('pm-gantt-bar-grabbing');
+      activeCleanup = null;
+      if (!drag.isDragging || !drag.dragTask || !drag.dragBarEl) return;
+      drag.isDragging = false;
+      if (!drag.dragMoved) return;
+
+      const finalX = parseFloat(drag.dragBarEl.getAttribute('x') ?? '0');
+      const snappedX = snapX(finalX, snapPoints, snapThreshold);
+      const snappedRight = snapX(snappedX + drag.dragInitialW, snapPoints, snapThreshold);
+
+      const newStart = xToDate(cfg, snappedX);
+      const newEnd = xToDate(cfg, snappedRight);
+      newEnd.setDate(newEnd.getDate() - 1);
+
+      const patch: Partial<Task> = {
+        start: dateToIso(newStart),
+        due: dateToIso(newEnd),
+      };
+      try {
+        await plugin.store.updateTask(project, drag.dragTask.id, patch);
+      } catch (err) {
+        drag.dragBarEl.setAttribute('x', String(drag.dragInitialX));
+        new Notice('Failed to save date change. Please try again.');
+        console.error('GanttDragHandler: move save failed', err);
+        return;
+      }
+      await onRefresh();
+    });
+
+    rect.classList.add('pm-gantt-bar-grabbing');
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
     activeCleanup = () => {

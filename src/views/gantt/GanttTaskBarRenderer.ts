@@ -7,7 +7,7 @@ import {
   DAY_MS, ROW_HEIGHT, HEADER_HEIGHT, BAR_PADDING, BAR_BORDER_RADIUS,
   dateToX,
 } from './TimelineConfig';
-import { attachDragHandle } from './GanttDragHandler';
+import { attachDragHandle, attachBarMove } from './GanttDragHandler';
 import type { RendererContext } from './GanttRenderer';
 
 // ─── Task bars ─────────────────────────────────────────────────────────────
@@ -113,8 +113,16 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     barGroup.appendChild(handle);
   }
 
+  // Move whole bar by dragging (only when both dates exist)
+  if (task.start && task.due) {
+    const moveCleanup = attachBarMove(rect, task, x, width, ctx.cfg, ctx.drag, ctx.plugin, ctx.project, ctx.onRefresh);
+    ctx.cleanupFns.push(moveCleanup);
+    rect.setAttribute('cursor', 'grab');
+  } else {
+    rect.setAttribute('cursor', 'pointer');
+  }
+
   // Click to open modal (suppressed if drag occurred)
-  rect.setAttribute('cursor', 'pointer');
   rect.addEventListener('click', () => {
     if (ctx.drag.dragMoved) { ctx.drag.dragMoved = false; return; }
     openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() });

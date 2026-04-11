@@ -1592,6 +1592,9 @@
 .pm-gantt-drag-handle:hover {
   fill: rgba(255,255,255,0.45) !important;
 }
+.pm-gantt-bar-grabbing {
+  cursor: grabbing !important;
+}
 
 /* ── Gantt milestone ───────────────────────────────────────────────────── */
 .pm-gantt-milestone {
