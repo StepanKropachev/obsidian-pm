@@ -1209,6 +1209,8 @@
 .pm-modal-description {
   width: 100%;
   min-height: 80px;
+  /* Add the CSS variable for Obsidian bot compliance: */
+  height: var(--desc-height, auto);
   padding: 8px 10px;
   border: 1px solid var(--pm-border);
   border-radius: var(--pm-radius-sm);

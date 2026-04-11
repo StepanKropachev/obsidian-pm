@@ -100,8 +100,8 @@ export class TaskModal extends Modal {
         if (ancestor.scrollTop > 0) saved.push([ancestor, ancestor.scrollTop]);
         ancestor = ancestor.parentElement;
       }
-      descArea.style.height = 'auto';
-      descArea.style.height = descArea.scrollHeight + 'px';
+      descArea.setCssProps({ '--desc-height': 'auto' });
+      descArea.setCssProps({ '--desc-height': descArea.scrollHeight + 'px' });
       for (const [el, top] of saved) el.scrollTop = top;
     };
     descArea.addEventListener('input', () => {
