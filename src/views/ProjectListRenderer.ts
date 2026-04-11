@@ -14,7 +14,7 @@ export interface ProjectListContext {
 
 export function renderProjectListToolbar(ctx: ProjectListContext): void {
   ctx.toolbarEl.empty();
-  ctx.toolbarEl.createEl('h2', { text: '\ud83d\udccb Project manager', cls: 'pm-toolbar-title' });
+  ctx.toolbarEl.createEl('h2', { text: 'Project manager', cls: 'pm-toolbar-title' });
 
   const newBtn = ctx.toolbarEl.createEl('button', { text: '+ new project', cls: 'pm-btn pm-btn-primary' });
   newBtn.addEventListener('click', () => {
