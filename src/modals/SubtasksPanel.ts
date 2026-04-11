@@ -11,7 +11,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
   const subSection = container.createDiv('pm-modal-section');
   const subHeader = subSection.createDiv('pm-modal-section-header');
   subHeader.createEl('h4', { text: `Subtasks (${task.subtasks.length})`, cls: 'pm-modal-section-title' });
-  const addSubBtn = subHeader.createEl('button', { text: '+ Add', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const addSubBtn = subHeader.createEl('button', { text: '+ add', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
 
   const subList = subSection.createDiv('pm-modal-subtask-list');
   const renderSubtasks = () => {

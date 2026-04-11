@@ -20,7 +20,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   estRow.createEl('span', { text: 'Estimate:', cls: 'pm-time-label' });
   const estInput = estRow.createEl('input', { type: 'number', cls: 'pm-prop-text pm-time-est-input' });
   estInput.value = est > 0 ? String(est) : '';
-  estInput.placeholder = 'hours';
+  estInput.placeholder = 'Hours';
   estInput.min = '0'; estInput.step = '0.5';
   estInput.addEventListener('change', () => {
     const v = parseFloat(estInput.value);
@@ -50,7 +50,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
 
       const hoursInput = row.createEl('input', { type: 'number', cls: 'pm-prop-text pm-time-log-hours' });
       hoursInput.value = String(log.hours);
-      hoursInput.min = '0'; hoursInput.step = '0.25'; hoursInput.placeholder = 'h';
+      hoursInput.min = '0'; hoursInput.step = '0.25'; hoursInput.placeholder = 'Hours';
       hoursInput.addEventListener('change', () => { log.hours = parseFloat(hoursInput.value) || 0; });
 
       const noteInput = row.createEl('input', { type: 'text', cls: 'pm-prop-text pm-time-log-note' });
@@ -68,7 +68,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   };
   renderLogs();
 
-  const addLogBtn = timeSection.createEl('button', { text: '+ Log time', cls: 'pm-prop-add-btn' });
+  const addLogBtn = timeSection.createEl('button', { text: '+ log time', cls: 'pm-prop-add-btn' });
   addLogBtn.addEventListener('click', () => {
     if (!task.timeLogs) task.timeLogs = [];
     task.timeLogs.push({

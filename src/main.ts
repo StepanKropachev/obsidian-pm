@@ -41,7 +41,7 @@ export default class PMPlugin extends Plugin {
     }));
 
     // Ribbon icon
-    this.addRibbonIcon('chart-gantt', 'Project Manager', async () => {
+    this.addRibbonIcon('chart-gantt', 'Project manager', async () => {
       await this.openProjectsPane();
     });
 
@@ -103,12 +103,12 @@ export default class PMPlugin extends Plugin {
     // Open or reveal a project list view in the left sidebar
     const existing = this.app.workspace.getLeavesOfType(PM_VIEW_TYPE + '-list');
     if (existing.length) {
-      this.app.workspace.revealLeaf(existing[0]);
+      await this.app.workspace.revealLeaf(existing[0]);
       return;
     }
     const leaf = this.app.workspace.getLeaf('tab');
     await leaf.setViewState({ type: PM_VIEW_TYPE, state: { mode: 'list' } });
-    this.app.workspace.revealLeaf(leaf);
+    await this.app.workspace.revealLeaf(leaf);
   }
 
   async openProjectFile(file: TFile): Promise<void> {
@@ -116,7 +116,7 @@ export default class PMPlugin extends Plugin {
     for (const leaf of this.app.workspace.getLeavesOfType(PM_VIEW_TYPE)) {
       const view = leaf.view as unknown as ProjectView;
       if (view.filePath === file.path) {
-        this.app.workspace.revealLeaf(leaf);
+        await this.app.workspace.revealLeaf(leaf);
         return;
       }
     }
@@ -125,7 +125,7 @@ export default class PMPlugin extends Plugin {
       type: PM_VIEW_TYPE,
       state: { filePath: file.path },
     });
-    this.app.workspace.revealLeaf(leaf);
+    await this.app.workspace.revealLeaf(leaf);
   }
 
   showNotice(msg: string, duration = 3000): void {

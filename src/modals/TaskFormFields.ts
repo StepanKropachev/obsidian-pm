@@ -134,7 +134,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     const renderRecurrence = () => {
       wrap.empty();
       if (!task.recurrence) {
-        const addBtn = wrap.createEl('button', { text: '+ Set recurrence', cls: 'pm-prop-add-btn' });
+        const addBtn = wrap.createEl('button', { text: '+ set recurrence', cls: 'pm-prop-add-btn' });
         addBtn.addEventListener('click', () => {
           task.recurrence = { interval: 'weekly', every: 1 };
           renderRecurrence();
@@ -154,7 +154,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         sel.addEventListener('change', () => { rec.interval = sel.value as Recurrence['interval']; });
 
         const endWrap = wrap.createDiv('pm-recur-end');
-        endWrap.createEl('span', { text: 'until', cls: 'pm-recur-label' });
+        endWrap.createEl('span', { text: 'Until', cls: 'pm-recur-label' });
         const endInput = endWrap.createEl('input', { type: 'date', cls: 'pm-prop-date pm-recur-end-input' });
         endInput.value = rec.endDate ?? '';
         endInput.addEventListener('change', () => { rec.endDate = endInput.value || undefined; });
@@ -178,7 +178,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         rmCls: 'pm-assignee-chip-rm',
         onRemove: (a) => { task.assignees = task.assignees.filter(x => x !== a); render(); },
         renderAdd: (el) => {
-          const addBtn = el.createEl('button', { text: '+ Add', cls: 'pm-prop-add-btn' });
+          const addBtn = el.createEl('button', { text: '+ add', cls: 'pm-prop-add-btn' });
           const showNameInput = () => {
             addBtn.addClass('pm-hidden');
             const input = el.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: 'Name\u2026' });

@@ -64,7 +64,7 @@ export function renderTable(ctx: TableContext): void {
   ];
   for (const col of cols) {
     const th = hrow.createEl('th');
-    if (col.width) th.style.width = col.width;
+    if (col.width) th.setCssStyles({ width: col.width });
     if (col.key) {
       th.addClass('pm-table-th-sortable');
       th.setAttribute('role', 'button');
@@ -92,12 +92,12 @@ export function renderTable(ctx: TableContext): void {
 
   for (const cf of ctx.project.customFields) {
     const th = hrow.createEl('th', { text: cf.name });
-    th.style.width = '120px';
+    th.setCssStyles({ width: '120px' });
   }
 
   // Actions column header (must be last)
   const actionsTh = hrow.createEl('th');
-  actionsTh.style.width = '40px';
+  actionsTh.setCssStyles({ width: '40px' });
 
   ctx.state.tableBody = table.createEl('tbody');
   fillTableBody(ctx);
@@ -137,7 +137,7 @@ function fillTableBody(ctx: TableContext): void {
   // "Add task" row
   const addRow = tbody.createEl('tr', { cls: 'pm-table-add-row' });
   const addCell = addRow.createEl('td', { attr: { colspan: String(10 + ctx.project.customFields.length) } });
-  const addBtn = addCell.createEl('button', { text: '+ Add task', cls: 'pm-table-add-btn' });
+  const addBtn = addCell.createEl('button', { text: '+ add task', cls: 'pm-table-add-btn' });
   addBtn.addEventListener('click', () => {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() });
   });

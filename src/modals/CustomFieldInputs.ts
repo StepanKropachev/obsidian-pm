@@ -62,7 +62,7 @@ export function renderCustomFieldInput(
             renderMulti();
           });
         }
-        const addBtn = wrap.createEl('button', { text: '+ Add', cls: 'pm-prop-add-btn' });
+        const addBtn = wrap.createEl('button', { text: '+ add', cls: 'pm-prop-add-btn' });
         addBtn.addEventListener('click', e => {
           const menu = new Menu();
           for (const opt of cf.options ?? []) {

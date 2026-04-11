@@ -53,7 +53,7 @@ export class TaskModal extends Modal {
 
   onClose(): void {
     if (!this.cancelled && !this.saved && this.task.title.trim()) {
-      this.persistTask();
+      void this.persistTask();
     }
     this.contentEl.empty();
   }

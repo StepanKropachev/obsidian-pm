@@ -95,7 +95,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
       menu.addItem(item => item.setTitle(m).onClick(() => onAction({ type: 'set-assignee', assignee: m })));
     }
     menu.addSeparator();
-    menu.addItem(item => item.setTitle('+ New assignee...').onClick(async () => {
+    menu.addItem(item => item.setTitle('+ new assignee...').onClick(async () => {
       const name = await promptText(ctx.plugin.app, 'Enter assignee name:', 'Name');
       if (name) onAction({ type: 'set-assignee', assignee: name });
     }));
@@ -113,7 +113,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
       menu.addItem(item => item.setTitle(t).onClick(() => onAction({ type: 'set-tag', tag: t })));
     }
     menu.addSeparator();
-    menu.addItem(item => item.setTitle('+ New tag...').onClick(async () => {
+    menu.addItem(item => item.setTitle('+ new tag...').onClick(async () => {
       const tag = await promptText(ctx.plugin.app, 'Enter tag:', 'Tag');
       if (tag) onAction({ type: 'set-tag', tag: tag });
     }));

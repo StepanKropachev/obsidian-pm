@@ -69,7 +69,7 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
 
   // "+ Save View" button
   if (hasActiveFilters(ctx.filter)) {
-    const saveBtn = bar.createEl('button', { text: '+ Save view', cls: 'pm-saved-view-pill pm-saved-view-pill--save' });
+    const saveBtn = bar.createEl('button', { text: '+ save view', cls: 'pm-saved-view-pill pm-saved-view-pill--save' });
     saveBtn.addEventListener('click', () => {
       // Replace button with inline input (prompt() doesn't work in Electron)
       saveBtn.addClass('pm-hidden');

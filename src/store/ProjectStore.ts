@@ -229,7 +229,7 @@ export class ProjectStore {
       if (oldFilePath) {
         const oldFile = this.app.vault.getAbstractFileByPath(oldFilePath);
         if (oldFile instanceof TFile) {
-          await this.app.vault.delete(oldFile);
+          await this.app.fileManager.trashFile(oldFile);
         }
       }
     } catch (e) {
@@ -341,7 +341,7 @@ export class ProjectStore {
     }
     if (task.filePath) {
       const file = this.app.vault.getAbstractFileByPath(task.filePath);
-      if (file instanceof TFile) await this.app.vault.delete(file);
+      if (file instanceof TFile) await this.app.fileManager.trashFile(file);
     }
   }
 
@@ -352,18 +352,18 @@ export class ProjectStore {
       await this.deleteFolderRecursive(folder);
     }
     const file = this.app.vault.getAbstractFileByPath(project.filePath);
-    if (file instanceof TFile) await this.app.vault.trash(file, true);
+    if (file instanceof TFile) await this.app.fileManager.trashFile(file);
   }
 
   private async deleteFolderRecursive(folder: TFolder): Promise<void> {
     for (const child of [...folder.children]) {
       if (child instanceof TFile) {
-        await this.app.vault.delete(child);
+        await this.app.fileManager.trashFile(child);
       } else if (child instanceof TFolder) {
         await this.deleteFolderRecursive(child);
       }
     }
-    await this.app.vault.delete(folder);
+    await this.app.fileManager.trashFile(folder);
   }
 
   // ─── Migration helpers (public for migration.ts) ──────────────────────────

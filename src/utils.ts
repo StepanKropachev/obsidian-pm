@@ -50,9 +50,10 @@ export function isTaskDueSoon(task: Task, days: number): boolean {
  *  Arrays are joined with ", "; objects fall back to '' to avoid [object Object]. */
 export function stringifyCustomValue(val: unknown): string {
   if (val === undefined || val === null) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
   if (Array.isArray(val)) return val.map(v => String(v)).join(', ');
-  if (typeof val === 'object') return '';
-  return String(val);
+  return '';
 }
 
 /** Truncate a title for display (e.g. tab header) */

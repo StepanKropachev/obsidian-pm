@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { confirmDialog } from '../../ui/ModalFactory';
 import type PMPlugin from '../../main';
-import type { Project, Task, FilterState } from '../../types';
+import type { Project, FilterState } from '../../types';
 import { makeDefaultFilter } from '../../types';
 import { findTask } from '../../store/TaskTreeOps';
 import { safeAsync } from '../../utils';

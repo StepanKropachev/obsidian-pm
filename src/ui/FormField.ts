@@ -1,5 +1,3 @@
-import { Menu } from 'obsidian';
-
 /**
  * Render a labeled property row (label + value) used in modals.
  */

@@ -48,7 +48,7 @@ export class PMSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Default Gantt granularity')
+      .setName('Default gantt granularity')
       .addDropdown(dd => dd
         .addOption('day', 'Day')
         .addOption('week', 'Week')
@@ -88,7 +88,7 @@ export class PMSettingTab extends PluginSettingTab {
     // ── Team Members ──────────────────────────────────────────────────────────
     new Setting(containerEl).setName('Team members').setHeading();
 
-    const membersDesc = containerEl.createEl('p', {
+    containerEl.createEl('p', {
       cls: 'pm-settings-desc',
       text: 'Global list of people available as assignees across all projects.',
     });
@@ -99,7 +99,7 @@ export class PMSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .addButton(btn => btn
-        .setButtonText('+ Add member')
+        .setButtonText('+ add member')
         .setCta()
         .onClick(() => {
           this.plugin.settings.globalTeamMembers.push('');

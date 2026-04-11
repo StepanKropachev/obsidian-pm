@@ -96,7 +96,7 @@ export class ProjectView extends ItemView {
     );
   }
 
-  async onClose(): Promise<void> {
+  onClose(): Promise<void> {
     if (this.keydownHandler) {
       this.containerEl.removeEventListener('keydown', this.keydownHandler);
       this.keydownHandler = null;
@@ -104,6 +104,7 @@ export class ProjectView extends ItemView {
     this.fileModifyRef = null;
     this.subview?.destroy?.();
     this.subview = null;
+    return Promise.resolve();
   }
 
   // ─── Skeleton ──────────────────────────────────────────────────────────────
@@ -204,14 +205,14 @@ export class ProjectView extends ItemView {
 
     // Right: actions
     const right = this.toolbarEl.createDiv('pm-toolbar-right');
-    const addBtn = right.createEl('button', { text: '+ Add task', cls: 'pm-btn pm-btn-primary' });
+    const addBtn = right.createEl('button', { text: '+ add task', cls: 'pm-btn pm-btn-primary' });
     addBtn.addEventListener('click', () => {
       if (!this.project) return;
       openTaskModal(this.plugin, this.project, { onSave: async () => { await this.refreshProject(); } });
     });
 
     if (this.currentView === 'gantt') {
-      const milestoneBtn = right.createEl('button', { text: '+ Milestone', cls: 'pm-btn pm-btn-ghost' });
+      const milestoneBtn = right.createEl('button', { text: '+ milestone', cls: 'pm-btn pm-btn-ghost' });
       milestoneBtn.addEventListener('click', () => {
         if (!this.project) return;
         openTaskModal(this.plugin, this.project, { defaults: { type: 'milestone' }, onSave: async () => { await this.refreshProject(); } });

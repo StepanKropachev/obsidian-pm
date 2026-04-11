@@ -1,7 +1,7 @@
 import { Menu, Notice } from 'obsidian';
 import type PMPlugin from '../main';
 import { Project, Task, TaskStatus } from '../types';
-import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps';
+import { totalLoggedHours } from '../store/TaskTreeOps';
 import { stringToColor, formatDateShort, isTaskOverdue, getPriorityConfig, formatBadgeText, safeAsync } from '../utils';
 import { openTaskModal, confirmDialog } from '../ui/ModalFactory';
 import type { SubView } from './SubView';

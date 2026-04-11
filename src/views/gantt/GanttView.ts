@@ -75,7 +75,7 @@ export class GanttView implements SubView {
       });
     }
 
-    const sep = bar.createEl('span', { cls: 'pm-gantt-sep' });
+    bar.createEl('span', { cls: 'pm-gantt-sep' });
     const todayBtn = bar.createEl('button', { text: 'Today', cls: 'pm-btn pm-btn-ghost pm-gantt-today-btn' });
     todayBtn.addEventListener('click', () => this.scrollToToday());
 
@@ -163,7 +163,7 @@ export class GanttView implements SubView {
     // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row');
     addRow.style.height = `${ROW_HEIGHT}px`;
-    const addBtn = addRow.createEl('button', { text: '+ Add task', cls: 'pm-gantt-add-task-btn' });
+    const addBtn = addRow.createEl('button', { text: '+ add task', cls: 'pm-gantt-add-task-btn' });
     addBtn.addEventListener('click', () => {
       openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() });
     });

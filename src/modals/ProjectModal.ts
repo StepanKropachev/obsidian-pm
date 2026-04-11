@@ -88,7 +88,7 @@ export class ProjectModal extends Modal {
     const titleInput = titleWrap.createEl('input', {
       type: 'text', value: this.project.title, cls: 'pm-input pm-input--lg',
     });
-    titleInput.placeholder = 'My Awesome Project';
+    titleInput.placeholder = 'My awesome project';
     titleInput.addEventListener('input', () => { this.project.title = titleInput.value; });
     setTimeout(() => { titleInput.focus(); titleInput.select(); }, 50);
 
@@ -150,7 +150,7 @@ export class ProjectModal extends Modal {
           renderMembers();
         });
       }
-      const addBtn = memberWrap.createEl('button', { text: '+ Add member', cls: 'pm-prop-add-btn' });
+      const addBtn = memberWrap.createEl('button', { text: '+ add member', cls: 'pm-prop-add-btn' });
       addBtn.addEventListener('click', () => {
         this.project.teamMembers.push('');
         renderMembers();
@@ -166,7 +166,7 @@ export class ProjectModal extends Modal {
     const cfSection = el.createDiv('pm-modal-section');
     const cfHeader = cfSection.createDiv('pm-modal-section-header');
     cfHeader.createEl('span', { text: 'Custom fields', cls: 'pm-modal-subheading' });
-    cfHeader.createEl('span', { text: 'extra properties for tasks', cls: 'pm-modal-hint' });
+    cfHeader.createEl('span', { text: 'Extra properties for tasks', cls: 'pm-modal-hint' });
 
     const cfList = cfSection.createDiv('pm-cf-list');
     const renderCFs = () => {
@@ -174,7 +174,7 @@ export class ProjectModal extends Modal {
       for (let i = 0; i < this.project.customFields.length; i++) {
         this.renderCustomFieldEditor(cfList, this.project.customFields[i], i, renderCFs);
       }
-      const addCFBtn = cfList.createEl('button', { text: '+ Add custom field', cls: 'pm-prop-add-btn' });
+      const addCFBtn = cfList.createEl('button', { text: '+ add custom field', cls: 'pm-prop-add-btn' });
       addCFBtn.addEventListener('click', () => {
         this.project.customFields.push({ id: makeId(), name: 'New Field', type: 'text', options: [] });
         renderCFs();
@@ -254,7 +254,7 @@ export class ProjectModal extends Modal {
           const rmOptBtn = optRow.createEl('button', { text: '✕', cls: 'pm-settings-del' });
           rmOptBtn.addEventListener('click', () => { opts.splice(j, 1); cf.options = opts; renderOpts(); });
         }
-        const addOptBtn = optionsWrap.createEl('button', { text: '+ Option', cls: 'pm-prop-add-btn pm-prop-add-btn--sm' });
+        const addOptBtn = optionsWrap.createEl('button', { text: '+ option', cls: 'pm-prop-add-btn pm-prop-add-btn--sm' });
         addOptBtn.addEventListener('click', () => { opts.push(''); cf.options = opts; renderOpts(); });
       };
       renderOpts();
