@@ -796,6 +796,13 @@
 .pm-gantt-row-hover { fill: transparent; cursor: default; }
 .pm-gantt-row-hover:hover { fill: rgba(139,114,190,0.03); }
 
+/* Empty row click-to-set-dates */
+.pm-gantt-empty-row-hit:hover { fill: rgba(139,114,190,0.03); }
+.pm-gantt-empty-row-preview {
+  fill: var(--interactive-accent, #7b6ba8);
+  opacity: 0.25;
+}
+
 /* Gantt bars */
 .pm-gantt-bar {
   cursor: pointer;

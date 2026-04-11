@@ -1,11 +1,12 @@
+import { Notice } from 'obsidian';
 import type { Task } from '../../types';
 import { flattenTasks, filterArchived } from '../../store/TaskTreeOps';
 import { openTaskModal } from '../../ui/ModalFactory';
 import { COLOR_ACCENT } from '../../constants';
-import { svgEl, getStatusConfig } from '../../utils';
+import { svgEl, getStatusConfig, safeAsync } from '../../utils';
 import {
   DAY_MS, ROW_HEIGHT, HEADER_HEIGHT, BAR_PADDING, BAR_BORDER_RADIUS,
-  dateToX,
+  dateToX, xToDate, dateToIso, getSnapPoints, snapX,
 } from './TimelineConfig';
 import { attachDragHandle, attachBarMove } from './GanttDragHandler';
 import type { RendererContext } from './GanttRenderer';
@@ -15,7 +16,10 @@ import type { RendererContext } from './GanttRenderer';
 export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: number, ctx: RendererContext): void {
   const startDate = task.start ? new Date(task.start) : null;
   const endDate   = task.due   ? new Date(task.due)   : null;
-  if (!startDate && !endDate) return;
+  if (!startDate && !endDate) {
+    renderEmptyRowClickTarget(g, task, row, ctx);
+    return;
+  }
 
   const statusConfig  = getStatusConfig(ctx.plugin.settings.statuses, task.status);
   const color = statusConfig?.color ?? COLOR_ACCENT;
@@ -127,6 +131,72 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     if (ctx.drag.dragMoved) { ctx.drag.dragMoved = false; return; }
     openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() });
   });
+}
+
+// ─── Empty row click-to-set-dates ─────────────────────────────────────────
+
+function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx: RendererContext): void {
+  const rowY = HEADER_HEIGHT + row * ROW_HEIGHT;
+
+  // Invisible rect covering the full row — acts as click target
+  const hitArea = svgEl('rect', {
+    x: 0, y: rowY, width: ctx.cfg.totalWidth, height: ROW_HEIGHT,
+    fill: 'transparent', cursor: 'cell', class: 'pm-gantt-empty-row-hit',
+  });
+
+  // Hover preview bar (hidden until mouseover)
+  const previewY = rowY + BAR_PADDING;
+  const previewH = ROW_HEIGHT - BAR_PADDING * 2;
+  const previewW = Math.max(ctx.cfg.dayWidth, 8);
+  const preview = svgEl('rect', {
+    x: 0, y: previewY, width: previewW, height: previewH,
+    rx: BAR_BORDER_RADIUS, ry: BAR_BORDER_RADIUS,
+    class: 'pm-gantt-empty-row-preview',
+    'pointer-events': 'none',
+  });
+  preview.classList.add('pm-hidden');
+
+  g.appendChild(hitArea);
+  g.appendChild(preview);
+
+  const snapPoints = getSnapPoints(ctx.cfg);
+  const snapThreshold = ctx.cfg.dayWidth * 0.4;
+
+  // Track mouse to position the preview bar
+  hitArea.addEventListener('mousemove', (e: MouseEvent) => {
+    const svgRect = ctx.svgEl.getBoundingClientRect();
+    const rawX = e.clientX - svgRect.left;
+    const snapped = snapX(rawX, snapPoints, snapThreshold);
+    preview.setAttribute('x', String(snapped));
+    preview.classList.remove('pm-hidden');
+  });
+
+  hitArea.addEventListener('mouseleave', () => {
+    preview.classList.add('pm-hidden');
+  });
+
+  // Click to set start=due=clicked date and save
+  hitArea.addEventListener('click', safeAsync(async (e: MouseEvent) => {
+    const svgRect = ctx.svgEl.getBoundingClientRect();
+    const rawX = e.clientX - svgRect.left;
+    const snapped = snapX(rawX, snapPoints, snapThreshold);
+    const date = xToDate(ctx.cfg, snapped);
+    const iso = dateToIso(date);
+
+    try {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { start: iso, due: iso });
+    } catch (err) {
+      new Notice('Failed to set task dates. Please try again.');
+      console.error('GanttTaskBarRenderer: click-to-set-dates failed', err);
+      return;
+    }
+    await ctx.onRefresh();
+  }));
+
+  // Tooltip
+  const tt = svgEl('title', {});
+  tt.textContent = 'Click to set dates';
+  hitArea.appendChild(tt);
 }
 
 // ─── Milestone diamond ────────────────────────────────────────────────────
