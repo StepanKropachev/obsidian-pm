@@ -1,7 +1,7 @@
 {
   "id": "project-manager",
   "name": "Project Manager",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minAppVersion": "1.4.0",
   "description": "Full-featured project management: stunning Gantt charts, Kanban boards, Table views, customizable fields, due date notifications.",
   "author": "Stepan Kropachev",
