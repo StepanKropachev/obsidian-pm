@@ -7,6 +7,7 @@ import {
   addTaskToTree,
   findTask,
 } from './TaskTreeOps';
+import { computeSchedule } from './Scheduler';
 import {
   parseFrontmatter,
   hydrateProjectFromFrontmatter,
@@ -364,6 +365,24 @@ export class ProjectStore {
       }
     }
     await this.app.fileManager.trashFile(folder);
+  }
+
+  // ─── Scheduling ──────────────────────────────────────────────────────────
+
+  /**
+   * Run dependency-based scheduling on the project.
+   * Applies computed date patches and saves.
+   * Returns the number of tasks that were adjusted.
+   */
+  async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
+    const { patches } = computeSchedule(project.tasks, changedTaskId);
+    if (patches.length === 0) return 0;
+
+    for (const p of patches) {
+      updateTaskInTree(project.tasks, p.taskId, { start: p.start, due: p.due });
+    }
+    await this.saveProject(project);
+    return patches.length;
   }
 
   // ─── Migration helpers (public for migration.ts) ──────────────────────────

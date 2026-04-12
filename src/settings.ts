@@ -85,6 +85,19 @@ export class PMSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
+    // ── Scheduling ───────────────────────────────────────────────────────────
+    new Setting(containerEl).setName('Scheduling').setHeading();
+
+    new Setting(containerEl)
+      .setName('Auto-schedule')
+      .setDesc('Automatically adjust dependent task dates when a task changes.')
+      .addToggle(t => t
+        .setValue(this.plugin.settings.autoSchedule)
+        .onChange(async v => {
+          this.plugin.settings.autoSchedule = v;
+          await this.plugin.saveSettings();
+        }));
+
     // ── Team Members ──────────────────────────────────────────────────────────
     new Setting(containerEl).setName('Team members').setHeading();
 

@@ -108,6 +108,7 @@ export interface PMSettings {
   globalTeamMembers: string[];
   notificationsEnabled: boolean;
   notificationLeadDays: number;
+  autoSchedule: boolean;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -137,6 +138,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   globalTeamMembers: [],
   notificationsEnabled: true,
   notificationLeadDays: 2,
+  autoSchedule: true,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
