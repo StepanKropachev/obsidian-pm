@@ -190,6 +190,9 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
       console.error('GanttTaskBarRenderer: click-to-set-dates failed', err);
       return;
     }
+    if (ctx.plugin.settings.autoSchedule) {
+      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id);
+    }
     await ctx.onRefresh();
   }));
 
