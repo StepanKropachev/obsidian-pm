@@ -1716,6 +1716,7 @@
 }
 .pm-modal-desc-section {
   border-top: none;
+  position: relative;
 }
 .pm-modal-desc-preview {
   padding: 8px 10px;
@@ -1743,6 +1744,47 @@
   color: var(--pm-accent);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* ── Note link suggest dropdown ───────────────────────────────────── */
+.pm-note-suggest {
+  position: absolute;
+  z-index: 300;
+  width: 280px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--pm-bg);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  box-shadow: 0 4px 16px var(--pm-shadow-ambient);
+  padding: 4px;
+}
+.pm-note-suggest-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: var(--pm-radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pm-note-suggest-item:hover { background: var(--pm-bg3); }
+.pm-note-suggest-item--active {
+  background: var(--pm-accent-light);
+}
+.pm-note-suggest-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pm-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pm-note-suggest-path {
+  font-size: 11px;
+  color: var(--pm-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Gantt add task button ───────────────────────────────────────────── */

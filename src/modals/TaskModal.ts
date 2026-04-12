@@ -8,6 +8,7 @@ import { confirmDialog } from '../ui/ModalFactory';
 import { renderTaskFormFields } from './TaskFormFields';
 import { renderTimeTrackingPanel } from './TimeTrackingPanel';
 import { renderSubtasksPanel } from './SubtasksPanel';
+import { NoteLinkSuggest } from './NoteLinkSuggest';
 
 export class TaskModal extends Modal {
   private task: Task;
@@ -16,6 +17,7 @@ export class TaskModal extends Modal {
   private cancelled = false;
   private saved = false;
   private propsExpanded = false;
+  private noteSuggest: NoteLinkSuggest | null = null;
 
   constructor(
     app: App,
@@ -55,6 +57,8 @@ export class TaskModal extends Modal {
     if (!this.cancelled && !this.saved && this.task.title.trim()) {
       void this.persistTask();
     }
+    this.noteSuggest?.destroy();
+    this.noteSuggest = null;
     this.contentEl.empty();
   }
 
@@ -139,6 +143,14 @@ export class TaskModal extends Modal {
       autoResize();
     });
     descArea.addEventListener('blur', () => showPreview());
+
+    // Note link suggest (inline [[ autocomplete)
+    this.noteSuggest?.destroy();
+    this.noteSuggest = new NoteLinkSuggest(this.app, descArea, (newValue) => {
+      this.task.description = newValue;
+      autoResize();
+    });
+    this.noteSuggest.attach(descSection);
 
     descPreview.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
