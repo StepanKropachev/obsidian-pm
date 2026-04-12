@@ -109,6 +109,9 @@ export function attachDragHandle(
         console.error('GanttDragHandler: save failed', err);
         return;
       }
+      if (plugin.settings.autoSchedule) {
+        await plugin.store.scheduleAfterChange(project, drag.dragTask.id);
+      }
       await onRefresh();
     });
 
@@ -193,6 +196,9 @@ export function attachBarMove(
         new Notice('Failed to save date change. Please try again.');
         console.error('GanttDragHandler: move save failed', err);
         return;
+      }
+      if (plugin.settings.autoSchedule) {
+        await plugin.store.scheduleAfterChange(project, drag.dragTask.id);
       }
       await onRefresh();
     });
