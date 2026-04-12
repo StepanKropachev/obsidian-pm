@@ -71,6 +71,9 @@ export class TaskModal extends Modal {
     } else {
       await this.plugin.store.updateTask(this.project, this.task.id, this.task);
     }
+    if (this.plugin.settings.autoSchedule) {
+      await this.plugin.store.scheduleAfterChange(this.project, this.task.id);
+    }
     await this.onSave(this.task);
   }
 
