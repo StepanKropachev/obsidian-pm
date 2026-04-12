@@ -118,18 +118,19 @@ export class NoteLinkSuggest {
         .slice(0, 8);
     } else {
       const fuzzy = prepareFuzzySearch(this.query);
+      const queryLower = this.query.toLowerCase();
       const scored: { file: TFile; score: number }[] = [];
       for (const file of files) {
-        // Search against basename and full path
         const nameResult = fuzzy(file.basename);
-        const pathResult = fuzzy(file.path);
-        const score = Math.min(
-          nameResult?.score ?? Infinity,
-          pathResult?.score ?? Infinity,
-        );
-        if (score < Infinity) {
-          scored.push({ file, score });
-        }
+        if (!nameResult) continue;
+        // Boost exact substring matches and penalise long names
+        // so "Week 15" beats "gantt-week-label--date-display..."
+        let score = nameResult.score;
+        const nameLower = file.basename.toLowerCase();
+        if (nameLower.startsWith(queryLower)) score -= 10;
+        else if (nameLower.includes(queryLower)) score -= 5;
+        score += file.basename.length * 0.01; // prefer shorter names
+        scored.push({ file, score });
       }
       scored.sort((a, b) => a.score - b.score);
       this.items = scored.slice(0, 8).map(s => s.file);
