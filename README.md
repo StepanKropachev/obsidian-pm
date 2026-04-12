@@ -40,7 +40,7 @@ Projects support custom fields (text, number, date, select, multi-select, checkb
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from the Obsidian community store.
 2. Open BRAT settings → **Add Beta Plugin**.
-3. Enter: `StepanKropachev/obsidian-project-manager`
+3. Enter: `https://github.com/StepanKropachev/obsidian-pm`
 4. Enable the plugin in **Settings → Community plugins**.
 
 ### Manual
