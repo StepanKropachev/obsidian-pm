@@ -4,6 +4,7 @@ import {
   Project, Task, TaskType, Recurrence,
 } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
+import { wouldCreateCycle } from '../store/Scheduler';
 import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField';
 import { COLOR_MUTED } from '../constants';
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils';
@@ -246,7 +247,10 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         onRemove: (depId) => { task.dependencies = task.dependencies.filter(x => x !== depId); render(); },
         onAdd: (e) => {
           const menu = new Menu();
-          const available = allTasks.filter(t => !task.dependencies.includes(t.id));
+          const available = allTasks.filter(t =>
+            !task.dependencies.includes(t.id) &&
+            !wouldCreateCycle(project.tasks, task.id, t.id)
+          );
           for (const t of available) {
             menu.addItem(item => item.setTitle(t.title).onClick(() => { task.dependencies.push(t.id); render(); }));
           }
