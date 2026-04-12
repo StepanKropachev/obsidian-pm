@@ -197,6 +197,7 @@ function startDueDateEdit(cell: HTMLElement, display: HTMLElement, task: Task, c
     value: task.due,
     onSave: async (val) => {
       await ctx.plugin.store.updateTask(ctx.project, task.id, { due: val });
+      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id);
       await ctx.onRefresh();
     },
   });
