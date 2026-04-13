@@ -446,7 +446,17 @@
   min-width: 180px;
 }
 .pm-table-cell-select { width: 32px; text-align: center; padding: 0 4px; vertical-align: middle; }
-.pm-table-cell-select input[type="checkbox"] { margin: 0; cursor: pointer; }
+.pm-table-cell-select input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.pm-table-row:hover .pm-table-cell-select input[type="checkbox"] {
+  opacity: 1;
+  pointer-events: auto;
+}
 .pm-table-cell-expand { width: 32px; text-align: center; padding: 0; }
 .pm-table-cell-progress { min-width: 120px; }
 .pm-table-cell-actions { width: 40px; text-align: center; }
