@@ -211,6 +211,11 @@ export function computeSchedule(
         newStart = earliestStart;
         newDue = addDays(earliestStart, duration);
       }
+    } else if (!currentStart && currentDue) {
+      // Has only due: shift due if needed (treat as milestone)
+      if (currentDue < earliestStart) {
+        newDue = earliestStart;
+      }
     } else if (currentStart && !currentDue) {
       // Start only: shift start if needed
       if (currentStart < earliestStart) {
