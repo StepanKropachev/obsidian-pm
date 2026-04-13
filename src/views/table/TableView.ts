@@ -54,6 +54,7 @@ export class TableView implements SubView {
   }
 
   render(): void {
+    this.state.tableBody = null;
     this.container.empty();
     this.container.addClass('pm-table-view');
 
