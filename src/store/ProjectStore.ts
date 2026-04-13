@@ -9,17 +9,9 @@ import {
 } from './TaskTreeOps';
 import { computeSchedule } from './Scheduler';
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps';
-import {
-  parseFrontmatter,
-  hydrateProjectFromFrontmatter,
-  hydrateTaskFromFile,
-  hydrateTasks,
-  serializeProject,
-  serializeTask,
-  taskFilePath,
-  FRONTMATTER_KEY,
-  TASK_FRONTMATTER_KEY,
-} from './YamlSerializer';
+import { parseFrontmatter, FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser';
+import { hydrateProjectFromFrontmatter, hydrateTaskFromFile, hydrateTasks } from './YamlHydrator';
+import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer';
 
 /**
  * Handles all read/write operations against the Obsidian vault.

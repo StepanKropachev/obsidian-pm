@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 import type PMPlugin from './main';
-import { parseFrontmatter, isOldFormat } from './store/YamlSerializer';
+import { parseFrontmatter, isOldFormat } from './store/YamlParser';
 
 /**
  * Migrates old-format projects (tasks embedded in YAML frontmatter)
