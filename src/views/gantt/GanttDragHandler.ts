@@ -127,6 +127,8 @@ export function attachDragHandle(
     if (activeCleanup) {
       activeCleanup();
       activeCleanup = null;
+      drag.isDragging = false;
+      drag.dragBarEl = null;
     }
   };
 }
@@ -216,6 +218,8 @@ export function attachBarMove(
     if (activeCleanup) {
       activeCleanup();
       activeCleanup = null;
+      drag.isDragging = false;
+      drag.dragBarEl = null;
     }
   };
 }
