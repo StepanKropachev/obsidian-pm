@@ -1741,9 +1741,17 @@
   margin-bottom: 0;
 }
 .pm-modal-desc-preview a {
-  color: var(--pm-accent);
+  color: var(--interactive-accent, var(--pm-accent, #8b72be));
   text-decoration: underline;
   cursor: pointer;
+  transition: color 0.15s;
+}
+.pm-modal-desc-preview a:hover {
+  color: var(--interactive-accent-hover, var(--pm-accent-dim, #7a63ad));
+  text-decoration-thickness: 2px;
+}
+.pm-modal-desc-preview a.external-link {
+  color: var(--interactive-accent, var(--pm-accent, #8b72be));
 }
 
 /* ── Note link suggest dropdown ───────────────────────────────────── */

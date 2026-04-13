@@ -157,18 +157,25 @@ export class TaskModal extends Modal {
 
     descPreview.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      const link = target.closest('a.internal-link');
+      const link = target.closest('a');
+
       if (link) {
-        e.preventDefault();
-        e.stopPropagation();
-        const href = link.getAttribute('data-href') || link.getAttribute('href') || '';
-        this.saved = false;
-        this.cancelled = false;
-        this.close();
-        void this.app.workspace.openLinkText(href, sourcePath);
+        // Internal link (Obsidian note link)
+        if (link.classList.contains('internal-link')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const href = link.getAttribute('data-href') || link.getAttribute('href') || '';
+          this.saved = false;
+          this.cancelled = false;
+          this.close();
+          void this.app.workspace.openLinkText(href, sourcePath);
+          return;
+        }
+        // External link - let browser handle it
         return;
       }
-      if (target.closest('a')) return;
+
+      // Click on non-link text = edit
       showEdit();
     });
 
