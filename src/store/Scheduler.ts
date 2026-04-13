@@ -126,10 +126,11 @@ export function computeSchedule(
     ? [...scopeIds]
     : flat.map((t) => t.id);
 
+  const scope = scopeIds;
   for (const id of relevantIds) {
     const deps = predecessorsOf.get(id) ?? [];
-    const filtered = scopeIds
-      ? deps.filter((d) => scopeIds!.has(d))
+    const filtered = scope
+      ? deps.filter((d) => scope.has(d))
       : deps;
     inDegree.set(id, filtered.length);
   }
