@@ -336,6 +336,18 @@ export class ImportModal extends Modal {
     });
   }
 
+  private applyRowStyles(row: HTMLDivElement, isSelected: boolean): void {
+    if (isSelected) {
+      row.style.backgroundColor = 'var(--background-secondary, #2a2a2a)';
+      row.style.borderLeft = `3px solid var(--interactive-accent, #0066cc)`;
+      row.style.paddingLeft = 'calc(1rem - 3px)';
+    } else {
+      row.style.backgroundColor = 'transparent';
+      row.style.borderLeft = 'none';
+      row.style.paddingLeft = '0.75rem';
+    }
+  }
+
   private renderFileList(): void {
     if (!this.fileListContainer) return;
 
@@ -343,7 +355,7 @@ export class ImportModal extends Modal {
     const items = this.fileListContainer.querySelectorAll('.import-file-item');
     items.forEach(item => item.remove());
 
-    this.filteredFiles.forEach((item, index) => {
+    this.filteredFiles.forEach((item) => {
       const row = this.fileListContainer!.createDiv('import-file-item suggestion-item');
       row.style.padding = '0.75rem 1rem';
       row.style.display = 'flex';
@@ -352,7 +364,7 @@ export class ImportModal extends Modal {
       row.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
       row.style.cursor = 'pointer';
       row.style.transition = 'background-color 0.15s';
-      row.style.backgroundColor = item.selected ? 'rgba(100, 150, 255, 0.15)' : 'transparent';
+      this.applyRowStyles(row, item.selected);
 
       row.addEventListener('mouseenter', () => {
         if (!item.selected) {
@@ -360,7 +372,7 @@ export class ImportModal extends Modal {
         }
       });
       row.addEventListener('mouseleave', () => {
-        row.style.backgroundColor = item.selected ? 'rgba(100, 150, 255, 0.15)' : 'transparent';
+        this.applyRowStyles(row, item.selected);
       });
 
       const checkbox = row.createEl('input', { type: 'checkbox' });
@@ -373,8 +385,7 @@ export class ImportModal extends Modal {
         this.updateCounter();
         this.updateSelectAllCheckbox();
         this.updateNextButton();
-        // Update row background
-        row.style.backgroundColor = item.selected ? 'rgba(100, 150, 255, 0.15)' : 'transparent';
+        this.applyRowStyles(row, item.selected);
       });
 
       const nameEl = row.createEl('span', { text: item.file.basename });
