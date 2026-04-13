@@ -7,6 +7,8 @@ import type { TimelineCfg } from './TimelineConfig';
 import { buildTimelineConfig, dateToX, HEADER_HEIGHT, ROW_HEIGHT, LABEL_WIDTH } from './TimelineConfig';
 import { makeDragState } from './GanttDragHandler';
 import type { DragState } from './GanttDragHandler';
+import { makeLinkState, cancelLink } from './GanttLinkHandler';
+import type { LinkState } from './GanttLinkHandler';
 import { renderTimelineHeader, renderGridLines, renderTodayLine, renderTaskBar, renderDependencyArrows, renderMilestoneLabels } from './GanttRenderer';
 import { svgEl } from '../../utils';
 import type { RendererContext } from './GanttRenderer';
@@ -19,6 +21,7 @@ export class GanttView implements SubView {
   private flatTasks: FlatTask[] = [];
   private cfg!: TimelineCfg;
   private drag: DragState = makeDragState();
+  private link: LinkState = makeLinkState();
   private labelWidth: number = LABEL_WIDTH;
   private cleanupFns: (() => void)[] = [];
   private pendingScroll: { top: number; left: number } | null = null;
@@ -48,6 +51,7 @@ export class GanttView implements SubView {
   render(): void {
     this.cleanupFns.forEach(fn => fn());
     this.cleanupFns = [];
+    cancelLink(this.link);
     this.container.empty();
     this.container.addClass('pm-gantt-view');
 
@@ -142,6 +146,15 @@ export class GanttView implements SubView {
     });
     svgContainer.appendChild(this.svgEl);
 
+    // Escape to cancel linking mode
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && this.link.active) {
+        cancelLink(this.link);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    this.cleanupFns.push(() => document.removeEventListener('keydown', onKeyDown));
+
     const ctx = this.makeRendererContext();
     renderTimelineHeader(ctx);
     renderGridLines(ctx, totalRows);
@@ -224,6 +237,7 @@ export class GanttView implements SubView {
       project: this.project,
       flatTasks: this.flatTasks,
       drag: this.drag,
+      link: this.link,
       onRefresh: this.onRefresh,
       cleanupFns: this.cleanupFns,
     };

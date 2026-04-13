@@ -1615,6 +1615,29 @@
   cursor: grabbing !important;
 }
 
+/* ── Gantt link dots (dependency connectors) ──────────────────────────── */
+.pm-gantt-link-dot {
+  fill: transparent;
+  stroke: var(--pm-accent);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 0.15s, fill 0.15s;
+  pointer-events: all;
+}
+.pm-gantt-bar-group:hover .pm-gantt-link-dot {
+  opacity: 0.5;
+}
+.pm-gantt-link-dot:hover {
+  opacity: 1 !important;
+  fill: var(--pm-accent);
+}
+.pm-gantt-link-dot--active {
+  opacity: 1 !important;
+  fill: var(--pm-accent);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px var(--pm-accent));
+}
+
 /* ── Gantt milestone ───────────────────────────────────────────────────── */
 .pm-gantt-milestone {
   transition: transform 0.15s, filter 0.15s;

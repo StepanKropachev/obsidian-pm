@@ -9,6 +9,7 @@ import {
   dateToX, xToDate, dateToIso, getSnapPoints, snapX,
 } from './TimelineConfig';
 import { attachDragHandle, attachBarMove } from './GanttDragHandler';
+import { handleLinkDotClick } from './GanttLinkHandler';
 import type { RendererContext } from './GanttRenderer';
 
 // ─── Task bars ─────────────────────────────────────────────────────────────
@@ -115,6 +116,27 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     const cleanup = attachDragHandle(handle, side, task, rect, barGroup, x, width, ctx.cfg, ctx.drag, ctx.plugin, ctx.project, ctx.onRefresh);
     ctx.cleanupFns.push(cleanup);
     barGroup.appendChild(handle);
+  }
+
+  // Link dots (dependency connectors) — positioned outside bar edges
+  const DOT_R = 4;
+  const DOT_GAP = 4;
+  for (const side of ['left', 'right'] as const) {
+    const cx = side === 'left' ? x - DOT_GAP - DOT_R : x + width + DOT_GAP + DOT_R;
+    const cy = y + height / 2;
+    const dot = svgEl('circle', {
+      cx, cy, r: DOT_R,
+      class: 'pm-gantt-link-dot',
+      cursor: 'crosshair',
+    });
+    dot.addEventListener('mousedown', (e: MouseEvent) => {
+      e.stopPropagation();
+    });
+    dot.addEventListener('click', (e: MouseEvent) => {
+      e.stopPropagation();
+      handleLinkDotClick(dot, task.id, side, ctx.link, ctx.plugin, ctx.project, ctx.onRefresh);
+    });
+    barGroup.appendChild(dot);
   }
 
   // Move whole bar by dragging (only when both dates exist)

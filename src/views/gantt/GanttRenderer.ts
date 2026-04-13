@@ -8,6 +8,7 @@ import {
 } from './TimelineConfig';
 import { svgEl } from '../../utils';
 import type { DragState } from './GanttDragHandler';
+import type { LinkState } from './GanttLinkHandler';
 
 export { renderTimelineHeader } from './GanttHeaderRenderer';
 export { renderTaskBar, renderMilestoneLabels, renderDependencyArrows } from './GanttTaskBarRenderer';
@@ -19,6 +20,7 @@ export interface RendererContext {
   project: Project;
   flatTasks: FlatTask[];
   drag: DragState;
+  link: LinkState;
   onRefresh: () => Promise<void>;
   cleanupFns: (() => void)[];
 }
