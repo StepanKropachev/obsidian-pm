@@ -3,6 +3,7 @@ import { COLOR_ACCENT } from './constants';
 export type TaskStatus = 'todo' | 'in-progress' | 'blocked' | 'review' | 'done' | 'cancelled';
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
 export type GanttGranularity = 'day' | 'week' | 'month' | 'quarter';
+export type GanttWeekLabel = 'weekNumber' | 'dateRange' | 'both';
 export type ViewMode = 'table' | 'gantt' | 'kanban';
 export type DueDateFilter = 'any' | 'overdue' | 'this-week' | 'this-month' | 'no-date';
 export type TaskType = 'task' | 'milestone' | 'subtask';
@@ -103,6 +104,7 @@ export interface PMSettings {
   projectsFolder: string;
   defaultView: ViewMode;
   ganttGranularity: GanttGranularity;
+  ganttWeekLabel: GanttWeekLabel;
   statuses: StatusConfig[];
   priorities: PriorityConfig[];
   globalTeamMembers: string[];
@@ -133,6 +135,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   projectsFolder: 'Projects',
   defaultView: 'table',
   ganttGranularity: 'week',
+  ganttWeekLabel: 'weekNumber',
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],

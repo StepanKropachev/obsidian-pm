@@ -5,6 +5,29 @@ import {
 } from './TimelineConfig';
 import { svgEl } from '../../utils';
 
+import type { GanttWeekLabel } from '../../types';
+
+// ─── Week label formatting ────────────────────────────────────────────────
+
+function formatDateRange(weekStart: Date, days: number): string {
+  const end = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + days - 1);
+  const startDay = weekStart.getDate();
+  const endDay = end.getDate();
+  const startMonth = weekStart.toLocaleDateString(undefined, { month: 'short' });
+  if (weekStart.getMonth() === end.getMonth()) {
+    return `${startMonth} ${startDay}\u2013${endDay}`;
+  }
+  const endMonth = end.toLocaleDateString(undefined, { month: 'short' });
+  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}`;
+}
+
+function formatWeekLabel(weekStart: Date, days: number, weekNum: number, mode: GanttWeekLabel): string {
+  if (mode === 'weekNumber') return `W${weekNum}`;
+  const range = formatDateRange(weekStart, days);
+  if (mode === 'dateRange') return range;
+  return `W${weekNum}: ${range}`;
+}
+
 // ─── Timeline header ───────────────────────────────────────────────────────
 
 export function renderTimelineHeader(ctx: RendererContext): void {
@@ -55,6 +78,8 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
   const dow = startDate.getDay(); // 0=Sun … 6=Sat
   const offsetToMonday = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow;
 
+  const labelMode = ctx.plugin.settings.ganttWeekLabel;
+
   // Partial first week (before the first Monday)
   if (offsetToMonday > 0) {
     const weekNum = getWeekNumber(startDate);
@@ -62,7 +87,7 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
     const text = svgEl('text', {
       x: w / 2, y: 44, class: 'pm-gantt-header-week',
     });
-    text.textContent = `W${weekNum}`;
+    text.textContent = formatWeekLabel(startDate, offsetToMonday, weekNum, labelMode);
     g.appendChild(text);
   }
 
@@ -72,11 +97,12 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
     const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
     const weekNum = getWeekNumber(d);
     const x = i * dayWidth;
-    const w = Math.min(7, totalDays - i) * dayWidth;
+    const daysInWeek = Math.min(7, totalDays - i);
+    const w = daysInWeek * dayWidth;
     const text = svgEl('text', {
       x: x + w / 2, y: 44, class: 'pm-gantt-header-week',
     });
-    text.textContent = `W${weekNum}`;
+    text.textContent = formatWeekLabel(d, daysInWeek, weekNum, labelMode);
     g.appendChild(text);
     g.appendChild(svgEl('line', {
       x1: x, y1: 24, x2: x, y2: HEADER_HEIGHT,
