@@ -178,8 +178,11 @@ export function computeSchedule(
     if (deps.length === 0) continue;
 
     // Find latest due among predecessors that have a due date
+    // Skip archived predecessors — they are hidden from the UI
     let latestDue = '';
     for (const depId of deps) {
+      const dep = taskById.get(depId);
+      if (dep?.archived) continue;
       const depDue = dueOf.get(depId) ?? '';
       if (depDue && (!latestDue || depDue > latestDue)) {
         latestDue = depDue;
