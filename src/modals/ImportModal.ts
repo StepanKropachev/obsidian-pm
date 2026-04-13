@@ -470,9 +470,8 @@ export class ImportModal extends Modal {
     const imported: string[] = [];
 
     try {
-      // Determine task folder based on project structure
-      const projectFolder = this.project.filePath.replace(/\/[^/]*$/, '');
-      const tasksFolder = `${projectFolder}/_tasks`;
+      // Task folder mirrors ProjectStore.projectTaskFolder: <projectFile>_tasks
+      const tasksFolder = this.project.filePath.replace(/\.md$/, '_tasks');
 
       for (const file of selectedFiles) {
         try {
