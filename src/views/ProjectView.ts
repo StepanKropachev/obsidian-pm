@@ -97,6 +97,10 @@ export class ProjectView extends ItemView {
   }
 
   onClose(): Promise<void> {
+    if (this.reloadDebounceTimer !== null) {
+      window.clearTimeout(this.reloadDebounceTimer);
+      this.reloadDebounceTimer = null;
+    }
     if (this.keydownHandler) {
       this.containerEl.removeEventListener('keydown', this.keydownHandler);
       this.keydownHandler = null;
