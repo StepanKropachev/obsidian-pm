@@ -30,9 +30,10 @@ export class TaskPickerModal extends SuggestModal<Task> {
     app: App,
     private tasks: Task[],
     private onChoose: (task: Task) => void,
+    placeholder = 'Pick a parent task…',
   ) {
     super(app);
-    this.setPlaceholder('Pick a parent task…');
+    this.setPlaceholder(placeholder);
   }
 
   getSuggestions(query: string): Task[] {

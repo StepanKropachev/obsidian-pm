@@ -9,6 +9,7 @@ import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormF
 import { COLOR_MUTED } from '../constants';
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils';
 import { renderCustomFieldInput } from './CustomFieldInputs';
+import { TaskPickerModal } from './PickerModals';
 
 export interface TaskFormFieldsContext {
   task: Task;
@@ -245,17 +246,17 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         rmCls: 'pm-dep-chip-rm',
         labelFn: (depId) => allTasks.find(t => t.id === depId)?.title ?? depId,
         onRemove: (depId) => { task.dependencies = task.dependencies.filter(x => x !== depId); render(); },
-        onAdd: (e) => {
-          const menu = new Menu();
+        onAdd: () => {
           const available = allTasks.filter(t =>
             !task.dependencies.includes(t.id) &&
             !wouldCreateCycle(project.tasks, task.id, t.id)
           );
-          for (const t of available) {
-            menu.addItem(item => item.setTitle(t.title).onClick(() => { task.dependencies.push(t.id); render(); }));
-          }
-          if (!available.length) menu.addItem(item => item.setTitle('No tasks available').setDisabled(true));
-          menu.showAtMouseEvent(e);
+          new TaskPickerModal(
+            plugin.app,
+            available,
+            (t) => { task.dependencies.push(t.id); render(); },
+            'Search tasks to add as dependency…',
+          ).open();
         },
         addLabel: '+ Add dependency',
       });
