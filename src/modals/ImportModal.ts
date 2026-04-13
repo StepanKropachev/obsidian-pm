@@ -1,4 +1,8 @@
-import { App, Modal, TFile } from 'obsidian';
+import { App, Modal, TFile, Notice } from 'obsidian';
+import type { Project, TaskStatus, TaskPriority } from '../types';
+import { makeTask } from '../types';
+import { parseFrontmatter, TASK_FRONTMATTER_KEY } from '../store/YamlParser';
+import { serializeTask, taskFilePath } from '../store/YamlSerializer';
 
 interface FileItem {
   file: TFile;
@@ -16,6 +20,14 @@ export class ImportModal extends Modal {
   private fileListContainer: HTMLDivElement | null = null;
   private counterLabel: HTMLDivElement | null = null;
   private onConfirm: ((selectedFiles: TFile[]) => void) | null = null;
+
+  // Phase 2 state
+  private phase: 1 | 2 = 1;
+  private defaultStatus: TaskStatus = 'todo';
+  private defaultPriority: TaskPriority = 'medium';
+  private fileHandling: 'move' | 'copy' = 'move';
+  private project: Project | null = null;
+  private onImportComplete: (() => void) | null = null;
 
   constructor(app: App) {
     super(app);
@@ -54,6 +66,14 @@ export class ImportModal extends Modal {
   }
 
   private render(): void {
+    if (this.phase === 1) {
+      this.renderPhase1();
+    } else {
+      this.renderPhase2();
+    }
+  }
+
+  private renderPhase1(): void {
     const { contentEl } = this;
     contentEl.empty();
 
@@ -164,6 +184,158 @@ export class ImportModal extends Modal {
     this.nextButton.addEventListener('click', () => this.handleNext());
   }
 
+  private renderPhase2(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    // ── Header ──────────────────────────────────────────────────────────────
+    const header = contentEl.createDiv('import-modal-header');
+    header.style.padding = '1rem';
+    header.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
+
+    const title = header.createEl('h2', { text: 'Import Options' });
+    title.style.margin = '0';
+    title.style.fontSize = '1.125rem';
+    title.style.color = 'var(--text-normal, #2b3438)';
+
+    // ── Content ──────────────────────────────────────────────────────────────
+    const content = contentEl.createDiv('import-options-content');
+    content.style.padding = '1.5rem';
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+    content.style.gap = '1.5rem';
+
+    // Status dropdown
+    const statusGroup = content.createDiv('import-option-group');
+    const statusLabel = statusGroup.createEl('label', { text: 'Default Status' });
+    statusLabel.style.display = 'block';
+    statusLabel.style.marginBottom = '0.5rem';
+    statusLabel.style.fontWeight = '600';
+    statusLabel.style.color = 'var(--text-normal, #2b3438)';
+
+    const statusSelect = statusGroup.createEl('select');
+    statusSelect.style.padding = '0.5rem';
+    statusSelect.style.borderRadius = '0.25rem';
+    statusSelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
+    statusSelect.style.backgroundColor = 'var(--background-primary, #fff)';
+    statusSelect.style.color = 'var(--text-normal, #2b3438)';
+    statusSelect.style.cursor = 'pointer';
+    statusSelect.style.width = '100%';
+
+    (['todo', 'in-progress', 'blocked'] as const).forEach(status => {
+      const option = statusSelect.createEl('option', { text: status });
+      option.value = status;
+      if (status === this.defaultStatus) option.selected = true;
+    });
+
+    statusSelect.addEventListener('change', (e) => {
+      this.defaultStatus = (e.target as HTMLSelectElement).value as TaskStatus;
+    });
+
+    // Priority dropdown
+    const priorityGroup = content.createDiv('import-option-group');
+    const priorityLabel = priorityGroup.createEl('label', { text: 'Default Priority' });
+    priorityLabel.style.display = 'block';
+    priorityLabel.style.marginBottom = '0.5rem';
+    priorityLabel.style.fontWeight = '600';
+    priorityLabel.style.color = 'var(--text-normal, #2b3438)';
+
+    const prioritySelect = priorityGroup.createEl('select');
+    prioritySelect.style.padding = '0.5rem';
+    prioritySelect.style.borderRadius = '0.25rem';
+    prioritySelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
+    prioritySelect.style.backgroundColor = 'var(--background-primary, #fff)';
+    prioritySelect.style.color = 'var(--text-normal, #2b3438)';
+    prioritySelect.style.cursor = 'pointer';
+    prioritySelect.style.width = '100%';
+
+    (['critical', 'high', 'medium', 'low'] as const).forEach(priority => {
+      const option = prioritySelect.createEl('option', { text: priority });
+      option.value = priority;
+      if (priority === this.defaultPriority) option.selected = true;
+    });
+
+    prioritySelect.addEventListener('change', (e) => {
+      this.defaultPriority = (e.target as HTMLSelectElement).value as TaskPriority;
+    });
+
+    // File handling radio
+    const handlingGroup = content.createDiv('import-option-group');
+    const handlingLabel = handlingGroup.createEl('label', { text: 'File Handling' });
+    handlingLabel.style.display = 'block';
+    handlingLabel.style.marginBottom = '0.75rem';
+    handlingLabel.style.fontWeight = '600';
+    handlingLabel.style.color = 'var(--text-normal, #2b3438)';
+
+    const radioGroup = handlingGroup.createDiv();
+    radioGroup.style.display = 'flex';
+    radioGroup.style.flexDirection = 'column';
+    radioGroup.style.gap = '0.5rem';
+
+    // Move option
+    const moveLabel = radioGroup.createEl('label');
+    moveLabel.style.display = 'flex';
+    moveLabel.style.alignItems = 'center';
+    moveLabel.style.gap = '0.5rem';
+    moveLabel.style.cursor = 'pointer';
+    moveLabel.style.color = 'var(--text-normal, #2b3438)';
+
+    const moveRadio = moveLabel.createEl('input', { type: 'radio' });
+    moveRadio.name = 'file-handling';
+    moveRadio.value = 'move';
+    moveRadio.checked = this.fileHandling === 'move';
+    moveRadio.style.cursor = 'pointer';
+    moveRadio.addEventListener('change', () => {
+      this.fileHandling = 'move';
+    });
+
+    moveLabel.createEl('span', { text: 'Move to tasks folder (default)' });
+
+    // Copy option
+    const copyLabel = radioGroup.createEl('label');
+    copyLabel.style.display = 'flex';
+    copyLabel.style.alignItems = 'center';
+    copyLabel.style.gap = '0.5rem';
+    copyLabel.style.cursor = 'pointer';
+    copyLabel.style.color = 'var(--text-normal, #2b3438)';
+
+    const copyRadio = copyLabel.createEl('input', { type: 'radio' });
+    copyRadio.name = 'file-handling';
+    copyRadio.value = 'copy';
+    copyRadio.checked = this.fileHandling === 'copy';
+    copyRadio.style.cursor = 'pointer';
+    copyRadio.addEventListener('change', () => {
+      this.fileHandling = 'copy';
+    });
+
+    copyLabel.createEl('span', { text: 'Copy (keep original)' });
+
+    // ── Footer ───────────────────────────────────────────────────────────────
+    const footer = contentEl.createDiv('import-modal-footer');
+    footer.style.padding = '1rem';
+    footer.style.borderTop = `1px solid var(--background-modifier-border, #e0e0e0)`;
+    footer.style.display = 'flex';
+    footer.style.justifyContent = 'flex-end';
+    footer.style.gap = '0.75rem';
+
+    const backButton = footer.createEl('button', { text: '← Back' });
+    backButton.style.padding = '0.5rem 1rem';
+    backButton.style.borderRadius = '0.25rem';
+    backButton.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
+    backButton.style.backgroundColor = 'var(--background-primary, #fff)';
+    backButton.style.color = 'var(--text-normal, #2b3438)';
+    backButton.style.cursor = 'pointer';
+    backButton.addEventListener('click', () => this.handleBack());
+
+    const importButton = footer.createEl('button', { text: `Import (${this.selectedCount})`, cls: 'mod-cta' });
+    importButton.style.padding = '0.5rem 1rem';
+    importButton.style.borderRadius = '0.25rem';
+    importButton.style.cursor = 'pointer';
+    importButton.addEventListener('click', () => {
+      void this.handleImport();
+    });
+  }
+
   private renderFileList(): void {
     if (!this.fileListContainer) return;
 
@@ -267,14 +439,131 @@ export class ImportModal extends Modal {
 
   private handleNext(): void {
     if (this.selectedCount === 0) return;
-    const selectedFiles = this.files.filter(f => f.selected).map(f => f.file);
-    if (this.onConfirm) {
-      this.onConfirm(selectedFiles);
+    this.phase = 2;
+    this.render();
+  }
+
+  private handleBack(): void {
+    this.phase = 1;
+    this.render();
+  }
+
+  private async handleImport(): Promise<void> {
+    if (!this.project) {
+      new Notice('Error: Project not set for import', 5000);
+      return;
     }
-    this.close();
+
+    const selectedFiles = this.files.filter(f => f.selected).map(f => f.file);
+    const skipped: string[] = [];
+    const imported: string[] = [];
+
+    try {
+      // Determine task folder based on project structure
+      const projectFolder = this.project.filePath.replace(/\/[^/]*$/, '');
+      const tasksFolder = `${projectFolder}/_tasks`;
+
+      for (const file of selectedFiles) {
+        try {
+          // Read file content
+          const content = await this.app.vault.read(file);
+
+          // Parse frontmatter
+          const { frontmatter, body } = parseFrontmatter(content);
+
+          // Check if already imported
+          if (frontmatter && frontmatter[TASK_FRONTMATTER_KEY] === true) {
+            skipped.push(file.basename);
+            continue;
+          }
+
+          // Create task
+          const task = makeTask({
+            title: file.basename.replace(/\.md$/, ''),
+            description: body,
+            status: this.defaultStatus,
+            priority: this.defaultPriority,
+          });
+
+          // Generate file path for task
+          const newFilePath = taskFilePath(task.title, task.id, tasksFolder);
+
+          // Serialize task to file content
+          const newContent = serializeTask(task, this.project, null);
+
+          if (this.fileHandling === 'move') {
+            // Move: rename to new location, then update content
+            try {
+              // Ensure tasks folder exists
+              const tasksFolderExists = this.app.vault.getAbstractFileByPath(tasksFolder);
+              if (!tasksFolderExists) {
+                await this.app.vault.createFolder(tasksFolder);
+              }
+
+              // Rename file to new path
+              await this.app.fileManager.renameFile(file, newFilePath);
+
+              // Get the moved file and update its content
+              const movedFile = this.app.vault.getAbstractFileByPath(newFilePath);
+              if (movedFile instanceof TFile) {
+                await this.app.vault.modify(movedFile, newContent);
+              }
+
+              imported.push(file.basename);
+            } catch (err) {
+              console.error(`Failed to move ${file.basename}:`, err);
+              skipped.push(file.basename);
+            }
+          } else {
+            // Copy: create new file, keep original
+            try {
+              // Ensure tasks folder exists
+              const tasksFolderExists = this.app.vault.getAbstractFileByPath(tasksFolder);
+              if (!tasksFolderExists) {
+                await this.app.vault.createFolder(tasksFolder);
+              }
+
+              await this.app.vault.create(newFilePath, newContent);
+              imported.push(file.basename);
+            } catch (err) {
+              console.error(`Failed to copy ${file.basename}:`, err);
+              skipped.push(file.basename);
+            }
+          }
+        } catch (err) {
+          console.error(`Error processing ${file.basename}:`, err);
+          skipped.push(file.basename);
+        }
+      }
+
+      // Call project reload callback if provided
+      if (this.onImportComplete) {
+        this.onImportComplete();
+      }
+
+      // Show summary notification
+      let message = `Imported ${imported.length} task${imported.length !== 1 ? 's' : ''}`;
+      if (skipped.length > 0) {
+        message += ` (${skipped.length} skipped)`;
+      }
+      new Notice(message, 3000);
+
+      this.close();
+    } catch (err) {
+      console.error('Import error:', err);
+      new Notice('Error during import. Check console for details.', 5000);
+    }
   }
 
   setOnConfirm(callback: (selectedFiles: TFile[]) => void): void {
     this.onConfirm = callback;
+  }
+
+  setProject(project: Project): void {
+    this.project = project;
+  }
+
+  setOnImportComplete(callback: () => void): void {
+    this.onImportComplete = callback;
   }
 }
