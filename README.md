@@ -103,10 +103,6 @@ Each task is a `.md` file in your vault supporting:
 
 ### From community plugins
 
-1. Open **Settings > Community plugins > Browse**.
-2. Search for **Project Manager**.
-3. Click **Install**, then **Enable**.
-
 ### Via BRAT (beta releases)
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from the community store.
