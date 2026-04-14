@@ -8,7 +8,7 @@ Table views, Gantt charts, Kanban boards, custom fields, time tracking, smart sc
 
 ---
 
-## Why this plugin?
+## What's inside
 
 - **Plain-text data** — Projects and tasks live as `.md` files in your vault. Portable, searchable, version-controllable. No lock-in, ever.
 - **Three powerful views** — Table, Gantt, and Kanban. Switch freely; same data, different lenses.
