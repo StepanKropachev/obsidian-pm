@@ -1,6 +1,6 @@
 import { App, Modal, TFile, Notice } from 'obsidian';
 import type { Project, TaskStatus, TaskPriority } from '../types';
-import { makeTask } from '../types';
+import { makeTask, DEFAULT_STATUSES, DEFAULT_PRIORITIES } from '../types';
 import { parseFrontmatter, TASK_FRONTMATTER_KEY } from '../store/YamlParser';
 import { serializeTask, taskFilePath } from '../store/YamlSerializer';
 
@@ -224,10 +224,10 @@ export class ImportModal extends Modal {
     statusSelect.style.cursor = 'pointer';
     statusSelect.style.width = '100%';
 
-    (['todo', 'in-progress', 'blocked'] as const).forEach(status => {
-      const option = statusSelect.createEl('option', { text: status });
-      option.value = status;
-      if (status === this.defaultStatus) option.selected = true;
+    DEFAULT_STATUSES.forEach(s => {
+      const option = statusSelect.createEl('option', { text: s.label });
+      option.value = s.id;
+      if (s.id === this.defaultStatus) option.selected = true;
     });
 
     statusSelect.addEventListener('change', (e) => {
@@ -243,7 +243,9 @@ export class ImportModal extends Modal {
     priorityLabel.style.color = 'var(--text-normal, #2b3438)';
 
     const prioritySelect = priorityGroup.createEl('select');
-    prioritySelect.style.padding = '0.5rem';
+    prioritySelect.style.padding = '0.5rem 0.5rem';
+    prioritySelect.style.height = '2.25rem';
+    prioritySelect.style.lineHeight = '1.25rem';
     prioritySelect.style.borderRadius = '0.25rem';
     prioritySelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
     prioritySelect.style.backgroundColor = 'var(--background-primary, #fff)';
@@ -251,10 +253,10 @@ export class ImportModal extends Modal {
     prioritySelect.style.cursor = 'pointer';
     prioritySelect.style.width = '100%';
 
-    (['critical', 'high', 'medium', 'low'] as const).forEach(priority => {
-      const option = prioritySelect.createEl('option', { text: priority });
-      option.value = priority;
-      if (priority === this.defaultPriority) option.selected = true;
+    DEFAULT_PRIORITIES.forEach(p => {
+      const option = prioritySelect.createEl('option', { text: p.label });
+      option.value = p.id;
+      if (p.id === this.defaultPriority) option.selected = true;
     });
 
     prioritySelect.addEventListener('change', (e) => {
