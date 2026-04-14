@@ -1,10 +1,11 @@
-import { Menu, Notice } from 'obsidian';
+import { Menu } from 'obsidian';
 import type { Task, Project } from '../../types';
 import { totalLoggedHours } from '../../store/TaskTreeOps';
 import { stringToColor, formatDateLong, todayMidnight, isTaskOverdue, getStatusConfig, getPriorityConfig, safeAsync, stringifyCustomValue } from '../../utils';
 import { COLOR_ACCENT } from '../../constants';
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge';
 import { openTaskModal } from '../../ui/ModalFactory';
+import { buildTaskContextMenu } from '../../ui/TaskContextMenu';
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer';
 import type { TableContext } from './TableRenderer';
 
@@ -254,30 +255,7 @@ export function renderActionsCell(row: HTMLElement, task: Task, ctx: TableContex
   const btn = cell.createEl('button', { text: '\u22ef', cls: 'pm-row-menu-btn', attr: { 'aria-label': 'Task actions' } });
   btn.addEventListener('click', e => {
     const menu = new Menu();
-    menu.addItem(item => item.setTitle('Edit task').setIcon('pencil').onClick(() => {
-      openTaskModal(ctx.plugin, ctx.project, { task, onSave: async () => { await ctx.onRefresh(); } });
-    }));
-    menu.addItem(item => item.setTitle('Add subtask').setIcon('plus').onClick(() => {
-      openTaskModal(ctx.plugin, ctx.project, { parentId: task.id, onSave: async () => { await ctx.onRefresh(); } });
-    }));
-    menu.addSeparator();
-    if (task.archived) {
-      menu.addItem(item => item.setTitle('Unarchive').setIcon('archive-restore').onClick(safeAsync(async () => {
-        await ctx.plugin.store.unarchiveTask(ctx.project, task.id);
-        new Notice('Task unarchived');
-        await ctx.onRefresh();
-      })));
-    } else {
-      menu.addItem(item => item.setTitle('Archive').setIcon('archive').onClick(safeAsync(async () => {
-        await ctx.plugin.store.archiveTask(ctx.project, task.id);
-        new Notice('Task archived');
-        await ctx.onRefresh();
-      })));
-    }
-    menu.addItem(item => item.setTitle('Delete task').setIcon('trash').onClick(safeAsync(async () => {
-      await ctx.plugin.store.deleteTask(ctx.project, task.id);
-      await ctx.onRefresh();
-    })));
+    buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh });
     menu.showAtMouseEvent(e);
   });
 }
