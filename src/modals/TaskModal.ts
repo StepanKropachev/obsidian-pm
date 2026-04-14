@@ -256,7 +256,7 @@ export class TaskModal extends Modal {
     cancelBtn.addEventListener('click', () => { this.cancelled = true; this.close(); });
 
     const saveBtn = footer.createEl('button', {
-      text: this.isNew ? '+ Create task' : 'Save changes',
+      text: this.isNew ? 'Create (Shift+Enter)' : 'Save (Shift+Enter)',
       cls: 'pm-btn pm-btn-primary',
     });
     let saving = false;
