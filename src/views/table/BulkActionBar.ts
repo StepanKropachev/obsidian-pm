@@ -1,6 +1,6 @@
 import { Menu } from 'obsidian';
 import type { Task, TaskStatus, TaskPriority } from '../../types';
-import { findTask } from '../../store/TaskTreeOps';
+import { findTask, collectAllAssignees, collectAllTags } from '../../store';
 import { formatBadgeText } from '../../utils';
 import { promptText } from '../../ui/ModalFactory';
 import type { TableContext } from './TableRenderer';
@@ -90,7 +90,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   const assigneeBtn = left.createEl('button', { text: 'Set assignee', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   assigneeBtn.addEventListener('click', (e) => {
     const menu = new Menu();
-    const allMembers = collectMembers(ctx);
+    const allMembers = collectAllAssignees(ctx.project.tasks, [...ctx.project.teamMembers, ...ctx.plugin.settings.globalTeamMembers]);
     for (const m of allMembers) {
       menu.addItem(item => item.setTitle(m).onClick(() => onAction({ type: 'set-assignee', assignee: m })));
     }
@@ -108,7 +108,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   const tagBtn = left.createEl('button', { text: 'Set tag', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   tagBtn.addEventListener('click', (e) => {
     const menu = new Menu();
-    const allTags = collectTags(ctx);
+    const allTags = collectAllTags(ctx.project.tasks);
     for (const t of allTags) {
       menu.addItem(item => item.setTitle(t).onClick(() => onAction({ type: 'set-tag', tag: t })));
     }
@@ -198,28 +198,3 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   });
 }
 
-function collectMembers(ctx: TableContext): string[] {
-  const set = new Set<string>();
-  for (const m of ctx.project.teamMembers) set.add(m);
-  for (const m of ctx.plugin.settings.globalTeamMembers) set.add(m);
-  const collect = (tasks: Task[]) => {
-    for (const t of tasks) {
-      for (const a of t.assignees) set.add(a);
-      collect(t.subtasks);
-    }
-  };
-  collect(ctx.project.tasks);
-  return [...set].filter(Boolean).sort();
-}
-
-function collectTags(ctx: TableContext): string[] {
-  const set = new Set<string>();
-  const collect = (tasks: Task[]) => {
-    for (const t of tasks) {
-      for (const tag of t.tags) set.add(tag);
-      collect(t.subtasks);
-    }
-  };
-  collect(ctx.project.tasks);
-  return [...set].filter(Boolean).sort();
-}

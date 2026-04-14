@@ -102,6 +102,33 @@ export function filterArchived(tasks: Task[]): Task[] {
     .map(t => t.subtasks.length ? { ...t, subtasks: filterArchived(t.subtasks) } : t);
 }
 
+/** Collect all unique assignees from a task tree */
+export function collectAllAssignees(tasks: Task[], extra?: string[]): string[] {
+  const set = new Set<string>();
+  if (extra) for (const m of extra) set.add(m);
+  const walk = (list: Task[]) => {
+    for (const t of list) {
+      for (const a of t.assignees) set.add(a);
+      walk(t.subtasks);
+    }
+  };
+  walk(tasks);
+  return [...set].filter(Boolean).sort();
+}
+
+/** Collect all unique tags from a task tree */
+export function collectAllTags(tasks: Task[]): string[] {
+  const set = new Set<string>();
+  const walk = (list: Task[]) => {
+    for (const t of list) {
+      for (const tag of t.tags) set.add(tag);
+      walk(t.subtasks);
+    }
+  };
+  walk(tasks);
+  return [...set].filter(Boolean).sort();
+}
+
 /** Sum all logged hours for a task */
 export function totalLoggedHours(task: Task): number {
   if (!task.timeLogs?.length) return 0;

@@ -1,7 +1,8 @@
 import { Menu } from 'obsidian';
 import type PMPlugin from '../../main';
-import type { Project, Task, FilterState, TaskStatus, TaskPriority, DueDateFilter } from '../../types';
+import type { Project, FilterState, TaskStatus, TaskPriority, DueDateFilter } from '../../types';
 import { makeDefaultFilter } from '../../types';
+import { collectAllAssignees, collectAllTags } from '../../store';
 import { renderFilterDropdown } from '../../ui/FilterDropdown';
 import { formatBadgeText } from '../../utils';
 
@@ -42,7 +43,7 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
     (selected) => { ctx.filter.priorities = selected as TaskPriority[]; ctx.rerender(); });
 
   // Assignee filter
-  const allAssignees = getAllAssignees(ctx.project);
+  const allAssignees = collectAllAssignees(ctx.project.tasks);
   if (allAssignees.length) {
     renderFilterDropdown(bar, 'Assignee', ctx.filter.assignees,
       allAssignees.map(a => ({ id: a, label: a })),
@@ -50,7 +51,7 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   }
 
   // Tag filter
-  const allTags = getAllTags(ctx.project);
+  const allTags = collectAllTags(ctx.project.tasks);
   if (allTags.length) {
     renderFilterDropdown(bar, 'Tag', ctx.filter.tags,
       allTags.map(t => ({ id: t, label: t })),
@@ -126,26 +127,3 @@ function countActiveFilters(f: FilterState): number {
   return count;
 }
 
-function getAllAssignees(project: Project): string[] {
-  const set = new Set<string>();
-  const collect = (tasks: Task[]) => {
-    for (const t of tasks) {
-      for (const a of t.assignees) set.add(a);
-      collect(t.subtasks);
-    }
-  };
-  collect(project.tasks);
-  return [...set].sort();
-}
-
-function getAllTags(project: Project): string[] {
-  const set = new Set<string>();
-  const collect = (tasks: Task[]) => {
-    for (const t of tasks) {
-      for (const tag of t.tags) set.add(tag);
-      collect(t.subtasks);
-    }
-  };
-  collect(project.tasks);
-  return [...set].sort();
-}
