@@ -44,8 +44,7 @@ export default defineConfig([
 			// Not relevant — we're not based on the sample plugin
 			"obsidianmd/sample-names": "off",
 			"obsidianmd/no-sample-code": "off",
-			// We have our own design system casing conventions
-			"obsidianmd/ui/sentence-case": "off",
+			"obsidianmd/ui/sentence-case": "error",
 			// Pre-existing violations — downgraded to warn so --max-warnings
 			// can gate the build. Promote back to error as tickets are resolved.
 			"@typescript-eslint/no-floating-promises": "warn",
@@ -55,14 +54,7 @@ export default defineConfig([
 			"@typescript-eslint/no-base-to-string": "warn",
 		},
 	},
-	{
-		// Modals render outside .pm-root — inline styles are required there
-		files: ["src/modals/**/*.ts"],
-		rules: {
-			"obsidianmd/no-static-styles-assignment": "off",
-		},
-	},
-	{
+{
 		// Table columns need dynamic widths set via element.style
 		files: ["src/views/table/**/*.ts"],
 		rules: {

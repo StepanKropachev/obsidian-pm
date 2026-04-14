@@ -62,11 +62,11 @@ export class PMSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Gantt week label')
-      .setDesc('What to display in weekly Gantt header cells.')
+      .setDesc('What to display in weekly gantt header cells.')
       .addDropdown(dd => dd
-        .addOption('weekNumber', 'Week number (W15)')
-        .addOption('dateRange', 'Date range (Apr 7\u201313)')
-        .addOption('both', 'Both (W15: Apr 7\u201313)')
+        .addOption('weekNumber', 'Week number (w15)')
+        .addOption('dateRange', 'Date range (apr 7\u201313)')
+        .addOption('both', 'Both (w15: apr 7\u201313)')
         .setValue(this.plugin.settings.ganttWeekLabel)
         .onChange(async v => {
           this.plugin.settings.ganttWeekLabel = v as PMSettings['ganttWeekLabel'];

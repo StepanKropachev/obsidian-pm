@@ -187,8 +187,9 @@ export default class PMPlugin extends Plugin {
 
     // If a project is open, use it directly
     if (activeProject) {
+      const project = activeProject;
       const onImportComplete = async () => {
-        const pFile = this.app.vault.getAbstractFileByPath(activeProject!.filePath);
+        const pFile = this.app.vault.getAbstractFileByPath(project.filePath);
         if (pFile instanceof TFile) {
           await this.openProjectFile(pFile);
         }

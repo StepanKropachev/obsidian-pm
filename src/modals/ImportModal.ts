@@ -79,76 +79,36 @@ export class ImportModal extends Modal {
 
     // ── Header ──────────────────────────────────────────────────────────────
     const header = contentEl.createDiv('import-modal-header');
-    header.style.padding = '1rem';
-    header.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.style.gap = '1rem';
 
-    const title = header.createEl('h2', { text: 'Select notes to import' });
-    title.style.margin = '0';
-    title.style.fontSize = '1.125rem';
-    title.style.color = 'var(--text-normal, #2b3438)';
+    header.createEl('h2', { text: 'Select notes to import' });
 
     this.counterLabel = header.createDiv('import-counter');
-    this.counterLabel.style.color = 'var(--text-muted, #666)';
-    this.counterLabel.style.fontSize = '0.875rem';
     this.updateCounter();
 
     // ── Search input ────────────────────────────────────────────────────────
     const searchContainer = contentEl.createDiv('import-search-container');
-    searchContainer.style.padding = '1rem';
-    searchContainer.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
 
     this.searchInput = searchContainer.createEl('input', {
       type: 'text',
-      cls: 'prompt-input',
+      cls: 'prompt-input import-search-input',
       placeholder: 'Search files...',
     });
-    this.searchInput.style.width = '100%';
-    this.searchInput.style.padding = '0.5rem';
-    this.searchInput.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    this.searchInput.style.borderRadius = '0.25rem';
-    this.searchInput.style.backgroundColor = 'var(--background-primary, #fff)';
-    this.searchInput.style.color = 'var(--text-normal, #2b3438)';
     this.searchInput.addEventListener('input', () => this.handleSearch());
 
     // ── File list ───────────────────────────────────────────────────────────
     const listContainer = contentEl.createDiv('import-list-wrapper');
-    listContainer.style.flex = '1';
-    listContainer.style.overflowY = 'auto';
-    listContainer.style.overflowX = 'hidden';
-    listContainer.style.maxHeight = '300px';
-    listContainer.style.display = 'flex';
-    listContainer.style.flexDirection = 'column';
 
     this.fileListContainer = listContainer;
 
     // Select All row
     const selectAllRow = listContainer.createDiv('import-select-all-row');
-    selectAllRow.style.padding = '0.75rem 1rem';
-    selectAllRow.style.display = 'flex';
-    selectAllRow.style.alignItems = 'center';
-    selectAllRow.style.gap = '0.75rem';
-    selectAllRow.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    selectAllRow.style.backgroundColor = 'var(--background-secondary, #f5f5f5)';
-    selectAllRow.style.position = 'sticky';
-    selectAllRow.style.top = '0';
-    selectAllRow.style.zIndex = '1';
 
     this.selectAllCheckbox = selectAllRow.createEl('input', {
       type: 'checkbox',
     });
-    this.selectAllCheckbox.style.cursor = 'pointer';
-    this.selectAllCheckbox.style.accentColor = 'var(--interactive-accent, #0066cc)';
     this.selectAllCheckbox.addEventListener('change', () => this.handleSelectAll());
 
-    const selectAllLabel = selectAllRow.createEl('label', { text: 'Select All' });
-    selectAllLabel.style.cursor = 'pointer';
-    selectAllLabel.style.flex = '1';
-    selectAllLabel.style.color = 'var(--text-normal, #2b3438)';
-    selectAllLabel.style.marginBottom = '0';
+    const selectAllLabel = selectAllRow.createEl('label', { text: 'Select all' });
     selectAllLabel.addEventListener('click', () => {
       if (this.selectAllCheckbox) {
         this.selectAllCheckbox.checked = !this.selectAllCheckbox.checked;
@@ -161,25 +121,12 @@ export class ImportModal extends Modal {
 
     // ── Footer with Next button ────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer');
-    footer.style.padding = '1rem';
-    footer.style.borderTop = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    footer.style.display = 'flex';
-    footer.style.justifyContent = 'flex-end';
-    footer.style.gap = '0.75rem';
 
-    const cancelButton = footer.createEl('button', { text: 'Cancel' });
-    cancelButton.style.padding = '0.5rem 1rem';
-    cancelButton.style.borderRadius = '0.25rem';
-    cancelButton.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    cancelButton.style.backgroundColor = 'var(--background-primary, #fff)';
-    cancelButton.style.color = 'var(--text-normal, #2b3438)';
-    cancelButton.style.cursor = 'pointer';
+    const cancelButton = footer.createEl('button', { text: 'Cancel', cls: 'import-btn import-btn--secondary' });
     cancelButton.addEventListener('click', () => this.close());
 
-    this.nextButton = footer.createEl('button', { text: 'Next →', cls: 'mod-cta' });
-    this.nextButton.style.padding = '0.5rem 1rem';
-    this.nextButton.style.borderRadius = '0.25rem';
-    this.nextButton.style.cursor = this.selectedCount > 0 ? 'pointer' : 'not-allowed';
+    this.nextButton = footer.createEl('button', { text: 'Next', cls: 'mod-cta import-btn' });
+    this.nextButton.toggleClass('import-btn--disabled', this.selectedCount === 0);
     this.nextButton.disabled = this.selectedCount === 0;
     this.nextButton.addEventListener('click', () => this.handleNext());
   }
@@ -189,40 +136,17 @@ export class ImportModal extends Modal {
     contentEl.empty();
 
     // ── Header ──────────────────────────────────────────────────────────────
-    const header = contentEl.createDiv('import-modal-header');
-    header.style.padding = '1rem';
-    header.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
-
-    const title = header.createEl('h2', { text: 'Import Options' });
-    title.style.margin = '0';
-    title.style.fontSize = '1.125rem';
-    title.style.color = 'var(--text-normal, #2b3438)';
+    const header = contentEl.createDiv('import-options-header');
+    header.createEl('h2', { text: 'Import options' });
 
     // ── Content ──────────────────────────────────────────────────────────────
     const content = contentEl.createDiv('import-options-content');
-    content.style.padding = '1.5rem';
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-    content.style.gap = '1.5rem';
 
     // Status dropdown
     const statusGroup = content.createDiv('import-option-group');
-    const statusLabel = statusGroup.createEl('label', { text: 'Default Status' });
-    statusLabel.style.display = 'block';
-    statusLabel.style.marginBottom = '0.5rem';
-    statusLabel.style.fontWeight = '600';
-    statusLabel.style.color = 'var(--text-normal, #2b3438)';
+    statusGroup.createEl('label', { text: 'Default status' });
 
     const statusSelect = statusGroup.createEl('select');
-    statusSelect.style.padding = '0.5rem 0.5rem';
-    statusSelect.style.height = '2.25rem';
-    statusSelect.style.lineHeight = '1.25rem';
-    statusSelect.style.borderRadius = '0.25rem';
-    statusSelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    statusSelect.style.backgroundColor = 'var(--background-primary, #fff)';
-    statusSelect.style.color = 'var(--text-normal, #2b3438)';
-    statusSelect.style.cursor = 'pointer';
-    statusSelect.style.width = '100%';
 
     DEFAULT_STATUSES.forEach(s => {
       const option = statusSelect.createEl('option', { text: s.label });
@@ -236,22 +160,9 @@ export class ImportModal extends Modal {
 
     // Priority dropdown
     const priorityGroup = content.createDiv('import-option-group');
-    const priorityLabel = priorityGroup.createEl('label', { text: 'Default Priority' });
-    priorityLabel.style.display = 'block';
-    priorityLabel.style.marginBottom = '0.5rem';
-    priorityLabel.style.fontWeight = '600';
-    priorityLabel.style.color = 'var(--text-normal, #2b3438)';
+    priorityGroup.createEl('label', { text: 'Default priority' });
 
     const prioritySelect = priorityGroup.createEl('select');
-    prioritySelect.style.padding = '0.5rem 0.5rem';
-    prioritySelect.style.height = '2.25rem';
-    prioritySelect.style.lineHeight = '1.25rem';
-    prioritySelect.style.borderRadius = '0.25rem';
-    prioritySelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    prioritySelect.style.backgroundColor = 'var(--background-primary, #fff)';
-    prioritySelect.style.color = 'var(--text-normal, #2b3438)';
-    prioritySelect.style.cursor = 'pointer';
-    prioritySelect.style.width = '100%';
 
     DEFAULT_PRIORITIES.forEach(p => {
       const option = prioritySelect.createEl('option', { text: p.label });
@@ -265,30 +176,17 @@ export class ImportModal extends Modal {
 
     // File handling radio
     const handlingGroup = content.createDiv('import-option-group');
-    const handlingLabel = handlingGroup.createEl('label', { text: 'File Handling' });
-    handlingLabel.style.display = 'block';
-    handlingLabel.style.marginBottom = '0.75rem';
-    handlingLabel.style.fontWeight = '600';
-    handlingLabel.style.color = 'var(--text-normal, #2b3438)';
+    handlingGroup.createEl('label', { text: 'File handling' });
 
-    const radioGroup = handlingGroup.createDiv();
-    radioGroup.style.display = 'flex';
-    radioGroup.style.flexDirection = 'column';
-    radioGroup.style.gap = '0.5rem';
+    const radioGroup = handlingGroup.createDiv('import-radio-group');
 
     // Move option
     const moveLabel = radioGroup.createEl('label');
-    moveLabel.style.display = 'flex';
-    moveLabel.style.alignItems = 'center';
-    moveLabel.style.gap = '0.5rem';
-    moveLabel.style.cursor = 'pointer';
-    moveLabel.style.color = 'var(--text-normal, #2b3438)';
 
     const moveRadio = moveLabel.createEl('input', { type: 'radio' });
     moveRadio.name = 'file-handling';
     moveRadio.value = 'move';
     moveRadio.checked = this.fileHandling === 'move';
-    moveRadio.style.cursor = 'pointer';
     moveRadio.addEventListener('change', () => {
       this.fileHandling = 'move';
     });
@@ -297,17 +195,11 @@ export class ImportModal extends Modal {
 
     // Copy option
     const copyLabel = radioGroup.createEl('label');
-    copyLabel.style.display = 'flex';
-    copyLabel.style.alignItems = 'center';
-    copyLabel.style.gap = '0.5rem';
-    copyLabel.style.cursor = 'pointer';
-    copyLabel.style.color = 'var(--text-normal, #2b3438)';
 
     const copyRadio = copyLabel.createEl('input', { type: 'radio' });
     copyRadio.name = 'file-handling';
     copyRadio.value = 'copy';
     copyRadio.checked = this.fileHandling === 'copy';
-    copyRadio.style.cursor = 'pointer';
     copyRadio.addEventListener('change', () => {
       this.fileHandling = 'copy';
     });
@@ -316,40 +208,18 @@ export class ImportModal extends Modal {
 
     // ── Footer ───────────────────────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer');
-    footer.style.padding = '1rem';
-    footer.style.borderTop = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    footer.style.display = 'flex';
-    footer.style.justifyContent = 'flex-end';
-    footer.style.gap = '0.75rem';
 
-    const backButton = footer.createEl('button', { text: '← Back' });
-    backButton.style.padding = '0.5rem 1rem';
-    backButton.style.borderRadius = '0.25rem';
-    backButton.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
-    backButton.style.backgroundColor = 'var(--background-primary, #fff)';
-    backButton.style.color = 'var(--text-normal, #2b3438)';
-    backButton.style.cursor = 'pointer';
+    const backButton = footer.createEl('button', { text: 'Back', cls: 'import-btn import-btn--secondary' });
     backButton.addEventListener('click', () => this.handleBack());
 
-    const importButton = footer.createEl('button', { text: `Import (${this.selectedCount})`, cls: 'mod-cta' });
-    importButton.style.padding = '0.5rem 1rem';
-    importButton.style.borderRadius = '0.25rem';
-    importButton.style.cursor = 'pointer';
+    const importButton = footer.createEl('button', { text: `Import (${this.selectedCount})`, cls: 'mod-cta import-btn' });
     importButton.addEventListener('click', () => {
       void this.handleImport();
     });
   }
 
   private applyRowStyles(row: HTMLDivElement, isSelected: boolean): void {
-    if (isSelected) {
-      row.style.backgroundColor = 'var(--background-secondary, #2a2a2a)';
-      row.style.borderLeft = `3px solid var(--interactive-accent, #0066cc)`;
-      row.style.paddingLeft = 'calc(1rem - 3px)';
-    } else {
-      row.style.backgroundColor = 'transparent';
-      row.style.borderLeft = 'none';
-      row.style.paddingLeft = '0.75rem';
-    }
+    row.toggleClass('import-file-item--selected', isSelected);
   }
 
   private renderFileList(): void {
@@ -361,28 +231,10 @@ export class ImportModal extends Modal {
 
     this.filteredFiles.forEach((item) => {
       const row = this.fileListContainer!.createDiv('import-file-item suggestion-item');
-      row.style.padding = '0.75rem 1rem';
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.gap = '0.75rem';
-      row.style.borderBottom = `1px solid var(--background-modifier-border, #e0e0e0)`;
-      row.style.cursor = 'pointer';
-      row.style.transition = 'background-color 0.15s';
       this.applyRowStyles(row, item.selected);
-
-      row.addEventListener('mouseenter', () => {
-        if (!item.selected) {
-          row.style.backgroundColor = 'var(--background-secondary, #f5f5f5)';
-        }
-      });
-      row.addEventListener('mouseleave', () => {
-        this.applyRowStyles(row, item.selected);
-      });
 
       const checkbox = row.createEl('input', { type: 'checkbox' });
       checkbox.checked = item.selected;
-      checkbox.style.cursor = 'pointer';
-      checkbox.style.accentColor = 'var(--interactive-accent, #0066cc)';
       checkbox.addEventListener('change', (e) => {
         e.stopPropagation();
         item.selected = checkbox.checked;
@@ -392,14 +244,8 @@ export class ImportModal extends Modal {
         this.applyRowStyles(row, item.selected);
       });
 
-      const nameEl = row.createEl('span', { text: item.file.basename });
-      nameEl.style.flex = '1';
-      nameEl.style.color = 'var(--text-normal, #2b3438)';
-      nameEl.style.fontWeight = '500';
-
-      const folderEl = row.createEl('span', { text: item.folder });
-      folderEl.style.color = 'var(--text-muted, #666)';
-      folderEl.style.fontSize = '0.875rem';
+      row.createEl('span', { text: item.file.basename, cls: 'import-file-name' });
+      row.createEl('span', { text: item.folder, cls: 'import-file-folder' });
 
       row.addEventListener('click', (e) => {
         // Don't toggle if clicking the checkbox itself — let native change event handle it
@@ -448,8 +294,7 @@ export class ImportModal extends Modal {
   private updateNextButton(): void {
     if (!this.nextButton) return;
     this.nextButton.disabled = this.selectedCount === 0;
-    this.nextButton.style.cursor = this.selectedCount > 0 ? 'pointer' : 'not-allowed';
-    this.nextButton.style.opacity = this.selectedCount > 0 ? '1' : '0.5';
+    this.nextButton.toggleClass('import-btn--disabled', this.selectedCount === 0);
   }
 
   private handleNext(): void {
@@ -465,7 +310,7 @@ export class ImportModal extends Modal {
 
   private async handleImport(): Promise<void> {
     if (!this.project) {
-      new Notice('Error: Project not set for import', 5000);
+      new Notice('Error: project not set for import', 5000);
       return;
     }
 

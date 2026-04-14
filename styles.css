@@ -1932,3 +1932,177 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
 .pm-gantt-label-row:hover .pm-gantt-label-add-btn { opacity: 1; }
 .pm-gantt-label-add-btn:hover { background: var(--pm-bg3); color: var(--pm-accent); }
 
+/* ── Import Modal ─────────────────────────────────────────────────────────── */
+/* Note: modals render outside .pm-root, so use Obsidian native vars only.   */
+
+.import-modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.import-modal-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-normal, #2b3438);
+}
+.import-counter {
+  color: var(--text-muted, #666);
+  font-size: 0.875rem;
+}
+
+.import-search-container {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+}
+.import-search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-radius: 0.25rem;
+  background-color: var(--background-primary, #fff);
+  color: var(--text-normal, #2b3438);
+}
+
+.import-list-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.import-select-all-row {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  background-color: var(--background-secondary, #f5f5f5);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.import-select-all-row input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--interactive-accent, #0066cc);
+}
+.import-select-all-row label {
+  cursor: pointer;
+  flex: 1;
+  color: var(--text-normal, #2b3438);
+  margin-bottom: 0;
+}
+
+.import-modal-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--background-modifier-border, #e0e0e0);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.import-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.import-btn--secondary {
+  border: 1px solid var(--background-modifier-border, #e0e0e0);
+  background-color: var(--background-primary, #fff);
+  color: var(--text-normal, #2b3438);
+}
+.import-btn--disabled {
+  cursor: not-allowed;
+}
+
+.import-options-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.import-option-group > label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-normal, #2b3438);
+}
+.import-option-group select {
+  padding: 0.5rem;
+  height: 2.25rem;
+  line-height: 1.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--background-modifier-border, #e0e0e0);
+  background-color: var(--background-primary, #fff);
+  color: var(--text-normal, #2b3438);
+  cursor: pointer;
+  width: 100%;
+}
+.import-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.import-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-normal, #2b3438);
+}
+.import-radio-group input[type="radio"] {
+  cursor: pointer;
+}
+
+.import-file-item {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  padding-left: 0.75rem;
+  background-color: transparent;
+  border-left: none;
+}
+.import-file-item:hover {
+  background-color: var(--background-secondary, #f5f5f5);
+}
+.import-file-item--selected {
+  background-color: var(--background-secondary, #2a2a2a);
+  border-left: 3px solid var(--interactive-accent, #0066cc);
+  padding-left: calc(1rem - 3px);
+}
+.import-file-item--selected:hover {
+  background-color: var(--background-secondary, #2a2a2a);
+}
+.import-file-item input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--interactive-accent, #0066cc);
+}
+.import-file-name {
+  flex: 1;
+  color: var(--text-normal, #2b3438);
+  font-weight: 500;
+}
+.import-file-folder {
+  color: var(--text-muted, #666);
+  font-size: 0.875rem;
+}
+
+.import-options-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+}
+.import-options-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-normal, #2b3438);
+}
+
