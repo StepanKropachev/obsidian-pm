@@ -143,8 +143,12 @@ export class ProjectStore {
 
       return hydrateTaskFromFile(frontmatter, body, file.path);
     } catch (e) {
-      console.error(`[PM] Failed to load task ${file.path}:`, e);
-      new Notice(`Project Manager: Failed to load task "${file.basename}". Check console for details.`);
+      if (e instanceof Error && e.message.includes('ENOENT')) {
+        console.warn(`[PM] Task file no longer exists, skipping: ${file.path}`);
+      } else {
+        console.error(`[PM] Failed to load task ${file.path}:`, e);
+        new Notice(`Project Manager: Failed to load task "${file.basename}". Check console for details.`);
+      }
       return { task: null, subtaskIds: [] };
     }
   }

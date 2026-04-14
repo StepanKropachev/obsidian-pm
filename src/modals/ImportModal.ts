@@ -214,7 +214,9 @@ export class ImportModal extends Modal {
     statusLabel.style.color = 'var(--text-normal, #2b3438)';
 
     const statusSelect = statusGroup.createEl('select');
-    statusSelect.style.padding = '0.5rem';
+    statusSelect.style.padding = '0.5rem 0.5rem';
+    statusSelect.style.height = '2.25rem';
+    statusSelect.style.lineHeight = '1.25rem';
     statusSelect.style.borderRadius = '0.25rem';
     statusSelect.style.border = `1px solid var(--background-modifier-border, #e0e0e0)`;
     statusSelect.style.backgroundColor = 'var(--background-primary, #fff)';
