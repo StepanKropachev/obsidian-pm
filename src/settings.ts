@@ -240,7 +240,7 @@ export class PMSettingTab extends PluginSettingTab {
       // Icon input
       const icon = row.createEl('input', { type: 'text', value: s.icon });
       icon.addClass('pm-settings-status-icon');
-      icon.placeholder = '⚡';
+      icon.placeholder = '';
       icon.addEventListener('change', () => {
         this.plugin.settings.statuses[i].icon = icon.value;
         void this.plugin.saveSettings();
