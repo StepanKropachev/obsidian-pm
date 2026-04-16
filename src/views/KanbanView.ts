@@ -156,7 +156,7 @@ export class KanbanView implements SubView {
     }
 
     if (task.due) {
-      const overdue = isTaskOverdue(task);
+      const overdue = isTaskOverdue(task, this.plugin.settings.statuses);
       const chip = footer.createEl('span', {
         text: formatDateShort(task.due),
         cls: 'pm-kanban-due',

@@ -213,7 +213,7 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
 
   const dueDate = new Date(task.due);
   const today = todayMidnight();
-  const overdue = isTaskOverdue(task);
+  const overdue = isTaskOverdue(task, ctx.plugin.settings.statuses);
   const isNear = !overdue && (dueDate.getTime() - today.getTime()) < 3 * 86400_000;
 
   const chip = cell.createEl('span', {

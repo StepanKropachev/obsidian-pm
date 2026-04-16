@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import type { Task, StatusConfig, PriorityConfig, TaskStatus, TaskPriority } from './types';
+import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types';
 
 /** Deterministic HSL color from a string (e.g. assignee name) */
 export function stringToColor(s: string): string {
@@ -29,17 +29,40 @@ export function todayMidnight(): Date {
   return d;
 }
 
-/** Is a task overdue? (past due, not done/cancelled) */
-export function isTaskOverdue(task: Task): boolean {
-  if (!task.due) return false;
-  const dueDate = new Date(task.due);
-  return dueDate < todayMidnight() && task.status !== 'done' && task.status !== 'cancelled';
+/** Is a status marked as terminal (complete) in the config? */
+export function isTerminalStatus(status: string, statuses: StatusConfig[]): boolean {
+  const cfg = statuses.find(s => s.id === status);
+  return cfg ? cfg.complete : false;
 }
 
-/** Is a task due within `days` days from today? (not overdue) */
-export function isTaskDueSoon(task: Task, days: number): boolean {
+/** Returns the default status id (first in the list) */
+export function getDefaultStatusId(statuses: StatusConfig[]): string {
+  return statuses.length > 0 ? statuses[0].id : 'todo';
+}
+
+/** Returns the first status id marked as complete */
+export function getCompleteStatusId(statuses: StatusConfig[]): string {
+  const found = statuses.find(s => s.complete);
+  return found ? found.id : 'done';
+}
+
+/** Returns the sort index of a status in the config array (999 for unknown) */
+export function statusSortOrder(status: string, statuses: StatusConfig[]): number {
+  const idx = statuses.findIndex(s => s.id === status);
+  return idx >= 0 ? idx : 999;
+}
+
+/** Is a task overdue? (past due, not in a terminal status) */
+export function isTaskOverdue(task: Task, statuses: StatusConfig[]): boolean {
   if (!task.due) return false;
-  if (task.status === 'done' || task.status === 'cancelled') return false;
+  const dueDate = new Date(task.due);
+  return dueDate < todayMidnight() && !isTerminalStatus(task.status, statuses);
+}
+
+/** Is a task due within `days` days from today? (not overdue, not terminal) */
+export function isTaskDueSoon(task: Task, days: number, statuses: StatusConfig[]): boolean {
+  if (!task.due) return false;
+  if (isTerminalStatus(task.status, statuses)) return false;
   const today = todayMidnight();
   const dueDate = new Date(task.due);
   dueDate.setHours(0, 0, 0, 0);
@@ -68,7 +91,7 @@ export function sanitizeFileName(title: string): string {
 }
 
 /** Look up a status config by id */
-export function getStatusConfig(statuses: StatusConfig[], id: TaskStatus): StatusConfig | undefined {
+export function getStatusConfig(statuses: StatusConfig[], id: string): StatusConfig | undefined {
   return statuses.find(s => s.id === id);
 }
 
