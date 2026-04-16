@@ -1,6 +1,6 @@
 import { COLOR_ACCENT } from './constants';
 
-export type TaskStatus = 'todo' | 'in-progress' | 'blocked' | 'review' | 'done' | 'cancelled';
+export type TaskStatus = string;
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
 export type GanttGranularity = 'day' | 'week' | 'month' | 'quarter';
 export type GanttWeekLabel = 'weekNumber' | 'dateRange' | 'both';
@@ -87,10 +87,11 @@ export interface SavedView {
 }
 
 export interface StatusConfig {
-  id: TaskStatus;
+  id: string;
   label: string;
   color: string;
   icon: string;
+  complete: boolean;
 }
 
 export interface PriorityConfig {
@@ -117,12 +118,12 @@ export interface PMSettings {
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
-  { id: 'todo',        label: 'To Do',       color: '#8a94a0', icon: '' },
-  { id: 'in-progress', label: 'In Progress', color: '#8b72be', icon: '' },
-  { id: 'blocked',     label: 'Blocked',     color: '#c47070', icon: '' },
-  { id: 'review',      label: 'In Review',   color: '#b8a06b', icon: '' },
-  { id: 'done',        label: 'Done',        color: '#79b58d', icon: '' },
-  { id: 'cancelled',   label: 'Cancelled',   color: '#767491', icon: '' },
+  { id: 'todo',        label: 'To Do',       color: '#8a94a0', icon: '', complete: false },
+  { id: 'in-progress', label: 'In Progress', color: '#8b72be', icon: '', complete: false },
+  { id: 'blocked',     label: 'Blocked',     color: '#c47070', icon: '', complete: false },
+  { id: 'review',      label: 'In Review',   color: '#b8a06b', icon: '', complete: false },
+  { id: 'done',        label: 'Done',        color: '#79b58d', icon: '', complete: true },
+  { id: 'cancelled',   label: 'Cancelled',   color: '#767491', icon: '', complete: true },
 ];
 
 export const DEFAULT_PRIORITIES: PriorityConfig[] = [

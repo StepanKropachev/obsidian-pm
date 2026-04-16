@@ -1,6 +1,6 @@
 import { Menu } from 'obsidian';
 import type PMPlugin from '../../main';
-import type { Project, FilterState, TaskStatus, TaskPriority, DueDateFilter } from '../../types';
+import type { Project, FilterState, TaskPriority, DueDateFilter } from '../../types';
 import { makeDefaultFilter } from '../../types';
 import { collectAllAssignees, collectAllTags } from '../../store';
 import { renderFilterDropdown } from '../../ui/FilterDropdown';
@@ -35,7 +35,7 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   // Status filter
   renderFilterDropdown(bar, 'Status', ctx.filter.statuses,
     ctx.plugin.settings.statuses.map(s => ({ id: s.id, label: formatBadgeText(s.icon, s.label) })),
-    (selected) => { ctx.filter.statuses = selected as TaskStatus[]; ctx.rerender(); });
+    (selected) => { ctx.filter.statuses = selected; ctx.rerender(); });
 
   // Priority filter
   renderFilterDropdown(bar, 'Priority', ctx.filter.priorities,

@@ -155,7 +155,7 @@ export class ImportModal extends Modal {
     });
 
     statusSelect.addEventListener('change', (e) => {
-      this.defaultStatus = (e.target as HTMLSelectElement).value as TaskStatus;
+      this.defaultStatus = (e.target as HTMLSelectElement).value;
     });
 
     // Priority dropdown

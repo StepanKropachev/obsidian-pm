@@ -97,7 +97,7 @@ export class KanbanView implements SubView {
       e.preventDefault();
       cardsEl.removeClass('pm-kanban-drop-target');
       if (!this.dragTask) return;
-      const newStatus = status.id as TaskStatus;
+      const newStatus = status.id;
       if (newStatus !== this.dragTask.status) {
         await this.plugin.store.updateTask(this.project, this.dragTask.id, { status: newStatus });
         await this.onRefresh();
