@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type PMPlugin from './main';
 import { PMSettings, DEFAULT_SETTINGS, makeId } from './types';
+import { flattenTasks } from './store/TaskTreeOps';
 
 export type { PMSettings };
 export { DEFAULT_SETTINGS };
@@ -182,6 +183,33 @@ export class PMSettingTab extends PluginSettingTab {
     });
   }
 
+  private async remapOrphanTasks(deletedId: string, deletedLabel: string): Promise<void> {
+    const statuses = this.plugin.settings.statuses;
+    if (statuses.length === 0) return;
+    const defaultStatus = statuses[0];
+    const folder = this.plugin.settings.projectsFolder;
+    const projects = await this.plugin.store.loadAllProjects(folder);
+    let remapped = 0;
+    for (const project of projects) {
+      const flat = flattenTasks(project.tasks);
+      let modified = false;
+      for (const { task } of flat) {
+        if (task.status === deletedId) {
+          task.status = defaultStatus.id;
+          task.updatedAt = new Date().toISOString();
+          remapped++;
+          modified = true;
+        }
+      }
+      if (modified) {
+        await this.plugin.store.saveProject(project);
+      }
+    }
+    if (remapped > 0) {
+      new Notice(`Remapped ${remapped} task${remapped === 1 ? '' : 's'} from '${deletedLabel}' to '${defaultStatus.label}'.`);
+    }
+  }
+
   private renderStatusList(container: HTMLElement): void {
     container.empty();
     this.plugin.settings.statuses.forEach((s, i) => {
@@ -250,9 +278,11 @@ export class PMSettingTab extends PluginSettingTab {
           new Notice('You must have at least one status.');
           return;
         }
+        const deletedStatus = this.plugin.settings.statuses[i];
         this.plugin.settings.statuses.splice(i, 1);
         void this.plugin.saveSettings();
         this.renderStatusList(container);
+        void this.remapOrphanTasks(deletedStatus.id, deletedStatus.label);
       });
     });
   }
