@@ -1,6 +1,6 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type PMPlugin from './main';
-import { PMSettings, DEFAULT_SETTINGS } from './types';
+import { PMSettings, DEFAULT_SETTINGS, makeId } from './types';
 
 export type { PMSettings };
 export { DEFAULT_SETTINGS };
@@ -142,6 +142,23 @@ export class PMSettingTab extends PluginSettingTab {
 
     const statusContainer = containerEl.createDiv('pm-settings-statuses');
     this.renderStatusList(statusContainer);
+
+    new Setting(containerEl)
+      .addButton(btn => btn
+        .setButtonText('+ add status')
+        .setCta()
+        .onClick(() => {
+          const id = 'status-' + makeId().slice(0, 6);
+          this.plugin.settings.statuses.push({
+            id,
+            label: 'New status',
+            color: '#8a94a0',
+            icon: '',
+            complete: false,
+          });
+          void this.plugin.saveSettings();
+          this.renderStatusList(statusContainer);
+        }));
   }
 
   private renderMembersList(container: HTMLElement): void {
@@ -170,22 +187,72 @@ export class PMSettingTab extends PluginSettingTab {
     this.plugin.settings.statuses.forEach((s, i) => {
       const row = container.createDiv('pm-settings-status-row');
 
+      // Drag handle
+      row.createEl('span', { text: '⠿', cls: 'pm-settings-drag-handle' });
+      row.draggable = true;
+      row.addEventListener('dragstart', (e) => {
+        e.dataTransfer?.setData('text/plain', String(i));
+        row.addClass('pm-settings-row--dragging');
+      });
+      row.addEventListener('dragend', () => {
+        row.removeClass('pm-settings-row--dragging');
+      });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const fromIdx = parseInt(e.dataTransfer?.getData('text/plain') ?? '', 10);
+        if (isNaN(fromIdx) || fromIdx === i) return;
+        const statuses = this.plugin.settings.statuses;
+        const [moved] = statuses.splice(fromIdx, 1);
+        statuses.splice(i, 0, moved);
+        void this.plugin.saveSettings();
+        this.renderStatusList(container);
+      });
+
+      // Icon input
       const icon = row.createEl('input', { type: 'text', value: s.icon });
+      icon.addClass('pm-settings-status-icon');
+      icon.placeholder = '⚡';
       icon.addEventListener('change', () => {
         this.plugin.settings.statuses[i].icon = icon.value;
         void this.plugin.saveSettings();
       });
 
+      // Label input
       const label = row.createEl('input', { type: 'text', value: s.label });
+      label.addClass('pm-settings-status-label');
       label.addEventListener('change', () => {
         this.plugin.settings.statuses[i].label = label.value;
         void this.plugin.saveSettings();
       });
 
+      // Color picker
       const color = row.createEl('input', { type: 'color', value: s.color });
       color.addEventListener('change', () => {
         this.plugin.settings.statuses[i].color = color.value;
         void this.plugin.saveSettings();
+      });
+
+      // Complete toggle
+      const completeLabel = row.createEl('label', { cls: 'pm-settings-complete-toggle' });
+      const checkbox = completeLabel.createEl('input', { type: 'checkbox' });
+      checkbox.checked = s.complete;
+      completeLabel.createEl('span', { text: 'Done', cls: 'pm-settings-complete-text' });
+      checkbox.addEventListener('change', () => {
+        this.plugin.settings.statuses[i].complete = checkbox.checked;
+        void this.plugin.saveSettings();
+      });
+
+      // Delete button
+      const del = row.createEl('button', { text: '✕', cls: 'pm-settings-del' });
+      del.addEventListener('click', () => {
+        if (this.plugin.settings.statuses.length <= 1) {
+          new Notice('You must have at least one status.');
+          return;
+        }
+        this.plugin.settings.statuses.splice(i, 1);
+        void this.plugin.saveSettings();
+        this.renderStatusList(container);
       });
     });
   }

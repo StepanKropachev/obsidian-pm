@@ -1464,8 +1464,8 @@
   align-items: center;
 }
 .pm-settings-member-row input[type="text"] { flex: 1; }
-.pm-settings-status-row input[type="text"]:first-of-type { width: 40px; text-align: center; flex: 0 0 40px; }
-.pm-settings-status-row input[type="text"]:nth-of-type(2) { flex: 1; }
+.pm-settings-status-icon { width: 40px; text-align: center; flex: 0 0 40px; }
+.pm-settings-status-label { flex: 1; }
 .pm-settings-del {
   background: transparent;
   border: none;
@@ -1475,7 +1475,27 @@
   border-radius: 4px;
 }
 .pm-settings-del:hover { background: rgba(196,112,112,0.1); color: var(--pm-danger); }
-.pm-settings-status-row input[type="text"] { flex: 1; }
+.pm-settings-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: 14px;
+  flex: 0 0 16px;
+  text-align: center;
+}
+.pm-settings-row--dragging { opacity: 0.4; }
+.pm-settings-complete-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.pm-settings-complete-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 
 /* ── Scrollbar polish ─────────────────────────────────────────────────────── */
 .pm-gantt-right::-webkit-scrollbar,
