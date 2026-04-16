@@ -99,6 +99,15 @@ export default class PMPlugin extends Plugin {
     if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses;
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities;
 
+    // Migrate pre-v1.3 statuses: add `complete` flag if missing
+    let migrated = false;
+    for (const s of this.settings.statuses) {
+      if (s.complete === undefined) {
+        s.complete = s.id === 'done' || s.id === 'cancelled';
+        migrated = true;
+      }
+    }
+    if (migrated) await this.saveSettings();
   }
 
   async saveSettings(): Promise<void> {
