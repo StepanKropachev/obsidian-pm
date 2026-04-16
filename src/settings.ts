@@ -137,7 +137,7 @@ export class PMSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Statuses').setHeading();
     containerEl.createEl('p', {
       cls: 'pm-settings-desc',
-      text: 'Customize status labels, colors, and icons. Drag to reorder.',
+      text: 'Customize status labels, colors, and icons. The Done status will be used for completion of subtasks.', /*@JuniorKlump Refactored setting message to clarify current state of the system.*/
     });
 
     const statusContainer = containerEl.createDiv('pm-settings-statuses');
