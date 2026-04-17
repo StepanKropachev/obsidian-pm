@@ -87,6 +87,7 @@ export class TableView implements SubView {
 
     const ctx = this.makeTableContext();
     renderTable(ctx);
+    renderBulkActionBar({ ctx, onAction: safeAsync((a) => this.handleBulkAction(a)) });
   }
 
   focusQuickAdd(): void {

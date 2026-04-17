@@ -69,7 +69,9 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   if (ctx.filter.showArchived) archiveBtn.addClass('pm-filter-dropdown-btn--active');
   archiveBtn.addEventListener('click', () => {
     ctx.filter.showArchived = !ctx.filter.showArchived;
-    ctx.rerender();
+    archiveBtn.setText(ctx.filter.showArchived ? 'Archived ✓' : 'Archived');
+    archiveBtn.toggleClass('pm-filter-dropdown-btn--active', ctx.filter.showArchived);
+    ctx.refreshTable();
   });
 
   // Clear button
