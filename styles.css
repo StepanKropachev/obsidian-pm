@@ -403,7 +403,6 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  table-layout: fixed;
 }
 
 .pm-table thead th {

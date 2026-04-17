@@ -53,21 +53,19 @@ export function renderTable(ctx: TableContext): void {
     ctx.onSelectionChange();
   });
 
-  const cw = ctx.plugin.settings.tableColumnWidths;
-  const cols: { key: SortKey | null; label: string; widthKey?: string; width?: string }[] = [
+  const cols: { key: SortKey | null; label: string; width?: string }[] = [
     { key: null,        label: '',          width: '32px'  },
-    { key: 'title',     label: 'Task',      widthKey: 'title'     },
-    { key: 'status',    label: 'Status',    widthKey: 'status'    },
-    { key: 'priority',  label: 'Priority',  widthKey: 'priority'  },
-    { key: 'assignees', label: 'Assignees', widthKey: 'assignees' },
-    { key: 'due',       label: 'Due',       widthKey: 'due'       },
-    { key: 'progress',  label: 'Progress',  widthKey: 'progress'  },
-    { key: null,        label: 'Time',      widthKey: 'time'      },
+    { key: 'title',     label: 'Task',      width: 'auto'  },
+    { key: 'status',    label: 'Status',    width: '130px' },
+    { key: 'priority',  label: 'Priority',  width: '110px' },
+    { key: 'assignees', label: 'Assignees', width: '140px' },
+    { key: 'due',       label: 'Due',       width: '110px' },
+    { key: 'progress',  label: 'Progress',  width: '120px' },
+    { key: null,        label: 'Time',      width: '90px'  },
   ];
   for (const col of cols) {
     const th = hrow.createEl('th');
-    const w = col.width ?? (col.widthKey && cw[col.widthKey] ? `${cw[col.widthKey]}px` : undefined);
-    if (w) th.setCssStyles({ width: w });
+    if (col.width) th.setCssStyles({ width: col.width });
     if (col.key) {
       th.addClass('pm-table-th-sortable');
       th.setAttribute('role', 'button');

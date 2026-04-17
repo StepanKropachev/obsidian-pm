@@ -113,7 +113,6 @@ export interface PMSettings {
   notificationLeadDays: number;
   autoSchedule: boolean;
   ganttHideDone: boolean;
-  tableColumnWidths: Record<string, number>;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -146,15 +145,6 @@ export const DEFAULT_SETTINGS: PMSettings = {
   notificationsEnabled: true,
   notificationLeadDays: 2,
   autoSchedule: true,
-  tableColumnWidths: {
-    title: 300,
-    status: 130,
-    priority: 110,
-    assignees: 140,
-    due: 110,
-    progress: 120,
-    time: 90,
-  },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
