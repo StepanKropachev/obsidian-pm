@@ -74,6 +74,16 @@ export class PMSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
+    new Setting(containerEl)
+      .setName('Show subtasks on board')
+      .setDesc('Display subtasks as individual cards on the kanban board.')
+      .addToggle(t => t
+        .setValue(this.plugin.settings.kanbanShowSubtasks)
+        .onChange(async v => {
+          this.plugin.settings.kanbanShowSubtasks = v;
+          await this.plugin.saveSettings();
+        }));
+
     // ── Notifications ─────────────────────────────────────────────────────────
     new Setting(containerEl).setName('Due date notifications').setHeading();
 

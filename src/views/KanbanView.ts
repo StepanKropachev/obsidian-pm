@@ -1,7 +1,7 @@
 import { Menu } from 'obsidian';
 import type PMPlugin from '../main';
 import { Project, Task, TaskStatus } from '../types';
-import { totalLoggedHours } from '../store/TaskTreeOps';
+import { totalLoggedHours, flattenTasks } from '../store/TaskTreeOps';
 import { stringToColor, formatDateShort, isTaskOverdue, isTerminalStatus, getPriorityConfig, formatBadgeText, safeAsync } from '../utils';
 import { openTaskModal } from '../ui/ModalFactory';
 import { buildTaskContextMenu } from '../ui/TaskContextMenu';
@@ -38,7 +38,11 @@ export class KanbanView implements SubView {
   }
 
   private getTasksForStatus(status: TaskStatus): Task[] {
-    // Flatten, filter by status (only top-level for kanban), exclude archived
+    if (this.plugin.settings.kanbanShowSubtasks) {
+      return flattenTasks(this.project.tasks)
+        .map(ft => ft.task)
+        .filter(t => t.status === status && !t.archived);
+    }
     return this.project.tasks.filter(t => t.status === status && !t.archived);
   }
 
@@ -107,6 +111,14 @@ export class KanbanView implements SubView {
 
   }
 
+  private findParentTask(taskId: string): Task | null {
+    for (const ft of flattenTasks(this.project.tasks)) {
+      const parent = ft.task;
+      if (parent.subtasks.some(s => s.id === taskId)) return parent;
+    }
+    return null;
+  }
+
   private renderCard(container: HTMLElement, task: Task, columnColor: string): void {
     const card = container.createDiv('pm-kanban-card');
     card.draggable = true;
@@ -119,6 +131,14 @@ export class KanbanView implements SubView {
     }
 
     const body = card.createDiv('pm-kanban-card-body');
+
+    // Parent label for subtasks shown in flat mode
+    if (this.plugin.settings.kanbanShowSubtasks && task.type === 'subtask') {
+      const parent = this.findParentTask(task.id);
+      if (parent) {
+        body.createEl('span', { text: parent.title, cls: 'pm-kanban-card-parent' });
+      }
+    }
 
     // Title + type badges
     const titleRow = body.createDiv('pm-kanban-card-title-row');
