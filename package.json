@@ -5,8 +5,10 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "npx tsc -noEmit -skipLibCheck && npx eslint --max-warnings 26 src/ && node esbuild.config.mjs production",
-    "lint": "npx eslint src/"
+    "typecheck": "tsc",
+    "lint": "eslint --max-warnings 26 src/",
+    "bundle": "node esbuild.config.mjs production",
+    "build": "npm run typecheck && npm run lint && npm run bundle"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
