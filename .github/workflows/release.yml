@@ -3,35 +3,28 @@ name: Release Obsidian Plugin
 on:
   push:
     tags:
-      - "*"
-
-permissions:
-  contents: write
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20.x"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build plugin
         run: npm run build
 
-      - name: Create release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag="${GITHUB_REF#refs/tags/}"
-          gh release create "$tag" \
-            --title "$tag" \
-            --generate-notes \
-            main.js manifest.json styles.css
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            main.js
+            manifest.json
+            styles.css
