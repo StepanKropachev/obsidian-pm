@@ -1,24 +1,43 @@
 {
   "name": "project-manager",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Obsidian Project Manager Plugin",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "typecheck": "tsc",
-    "lint": "eslint --max-warnings 0 src/",
-    "bundle": "node esbuild.config.mjs production",
-    "build": "npm run typecheck && npm run lint && npm run bundle"
+    "build": "tsc -noEmit -skipLibCheck && oxlint ./src && node esbuild.config.mjs production",
+    "check": "run-p check:**",
+    "check:code": "oxlint ./src",
+    "check:format": "oxfmt --check ./src",
+    "check:types": "tsc -noEmit -skipLibCheck",
+    "fix": "run-p fix:**",
+    "fix:code": "oxlint --fix ./src",
+    "fix:format": "oxfmt ./src"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "@typescript-eslint/parser": "^8.58.1",
+    "@2bad/axiom": "2.0.0",
+    "@2bad/tsconfig": "3.0.2",
+    "@types/node": "25.6.0",
     "builtin-modules": "3.3.0",
     "esbuild": "0.25.0",
-    "eslint": "^9.39.4",
-    "eslint-plugin-obsidianmd": "^0.1.9",
+    "npm-run-all2": "8.0.4",
     "obsidian": "latest",
-    "tslib": "2.6.0",
-    "typescript": "5.3.3"
+    "oxfmt": "0.46.0",
+    "oxlint": "1.61.0",
+    "typescript": "6.0.2"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "volta": {
+    "node": "24.15.0",
+    "pnpm": "10.33.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

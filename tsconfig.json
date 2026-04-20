@@ -1,18 +1,20 @@
 {
+  "extends": "@2bad/tsconfig",
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "baseUrl": ".",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
     "inlineSourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
-    "target": "ES2018",
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "bundler",
-    "importHelpers": true,
     "isolatedModules": true,
-    "strictNullChecks": true,
     "noEmit": true,
-    "skipLibCheck": true,
-    "lib": ["ES2018", "DOM"]
-  },
-  "include": ["src/**/*.ts"]
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitOverride": false
+  }
 }
