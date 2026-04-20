@@ -1,255 +1,266 @@
-import type PMPlugin from '../../main';
-import type { Project, Task, GanttGranularity } from '../../types';
-import { type FlatTask, flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps';
-import { openTaskModal } from '../../ui/ModalFactory';
-import type { SubView } from '../SubView';
-import type { TimelineCfg } from './TimelineConfig';
-import { buildTimelineConfig, dateToX, xToDate, HEADER_HEIGHT, ROW_HEIGHT, LABEL_WIDTH } from './TimelineConfig';
-import { makeDragState } from './GanttDragHandler';
-import type { DragState } from './GanttDragHandler';
-import { makeLinkState, cancelLink } from './GanttLinkHandler';
-import type { LinkState } from './GanttLinkHandler';
-import { renderTimelineHeader, renderGridLines, renderTodayLine, renderTaskBar, renderDependencyArrows, renderMilestoneLabels } from './GanttRenderer';
-import { svgEl } from '../../utils';
-import type { RendererContext } from './GanttRenderer';
-import { renderTaskLabel } from './TaskLabelRenderer';
+import type PMPlugin from '../../main'
+import type { Project, Task, GanttGranularity } from '../../types'
+import { type FlatTask, flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps'
+import { openTaskModal } from '../../ui/ModalFactory'
+import type { SubView } from '../SubView'
+import type { TimelineCfg } from './TimelineConfig'
+import { buildTimelineConfig, dateToX, xToDate, HEADER_HEIGHT, ROW_HEIGHT, LABEL_WIDTH } from './TimelineConfig'
+import { makeDragState } from './GanttDragHandler'
+import type { DragState } from './GanttDragHandler'
+import { makeLinkState, cancelLink } from './GanttLinkHandler'
+import type { LinkState } from './GanttLinkHandler'
+import {
+  renderTimelineHeader,
+  renderGridLines,
+  renderTodayLine,
+  renderTaskBar,
+  renderDependencyArrows,
+  renderMilestoneLabels
+} from './GanttRenderer'
+import { svgEl } from '../../utils'
+import type { RendererContext } from './GanttRenderer'
+import { renderTaskLabel } from './TaskLabelRenderer'
 
 export class GanttView implements SubView {
-  private granularity: GanttGranularity;
-  private scrollEl!: HTMLElement;
-  private svgEl!: SVGSVGElement;
-  private flatTasks: FlatTask[] = [];
-  private cfg!: TimelineCfg;
-  private drag: DragState = makeDragState();
-  private link: LinkState = makeLinkState();
-  private labelWidth: number = LABEL_WIDTH;
+  private granularity: GanttGranularity
+  private scrollEl!: HTMLElement
+  private svgEl!: SVGSVGElement
+  private flatTasks: FlatTask[] = []
+  private cfg!: TimelineCfg
+  private drag: DragState = makeDragState()
+  private link: LinkState = makeLinkState()
+  private labelWidth: number = LABEL_WIDTH
 
-  getLabelWidth(): number { return this.labelWidth; }
-  setLabelWidth(w: number): void { this.labelWidth = w; }
-  private cleanupFns: (() => void)[] = [];
-  private pendingScroll: { top: number; anchorDate: Date } | null = null;
+  getLabelWidth(): number {
+    return this.labelWidth
+  }
+  setLabelWidth(w: number): void {
+    this.labelWidth = w
+  }
+  private cleanupFns: (() => void)[] = []
+  private pendingScroll: { top: number; anchorDate: Date } | null = null
 
   constructor(
     private container: HTMLElement,
     private project: Project,
     private plugin: PMPlugin,
-    private onRefresh: () => Promise<void>,
+    private onRefresh: () => Promise<void>
   ) {
-    this.granularity = plugin.settings.ganttGranularity;
+    this.granularity = plugin.settings.ganttGranularity
   }
 
   destroy(): void {
-    for (const fn of this.cleanupFns) fn();
-    this.cleanupFns = [];
+    for (const fn of this.cleanupFns) fn()
+    this.cleanupFns = []
   }
 
   getScrollPosition(): { top: number; anchorDate: Date } {
-    const top = this.scrollEl?.scrollTop ?? 0;
-    const anchorDate = this.scrollEl
-      ? xToDate(this.cfg, this.scrollEl.scrollLeft)
-      : new Date();
-    return { top, anchorDate };
+    const top = this.scrollEl?.scrollTop ?? 0
+    const anchorDate = this.scrollEl ? xToDate(this.cfg, this.scrollEl.scrollLeft) : new Date()
+    return { top, anchorDate }
   }
 
   setPendingScroll(pos: { top: number; anchorDate: Date }): void {
-    this.pendingScroll = pos;
+    this.pendingScroll = pos
   }
 
   render(): void {
-    this.cleanupFns.forEach(fn => fn());
-    this.cleanupFns = [];
-    cancelLink(this.link);
-    this.container.empty();
-    this.container.addClass('pm-gantt-view');
+    this.cleanupFns.forEach((fn) => fn())
+    this.cleanupFns = []
+    cancelLink(this.link)
+    this.container.empty()
+    this.container.addClass('pm-gantt-view')
 
-    const activeTasks = this.getVisibleTasks();
-    this.flatTasks = flattenTasks(activeTasks).filter(f => f.visible || f.depth === 0);
-    this.cfg = buildTimelineConfig(activeTasks, this.granularity);
+    const activeTasks = this.getVisibleTasks()
+    this.flatTasks = flattenTasks(activeTasks).filter((f) => f.visible || f.depth === 0)
+    this.cfg = buildTimelineConfig(activeTasks, this.granularity)
 
-    this.renderGranularityControls();
-    this.renderGantt();
+    this.renderGranularityControls()
+    this.renderGantt()
   }
 
   private renderGranularityControls(): void {
-    const bar = this.container.createDiv('pm-gantt-controls');
-    const levels: GanttGranularity[] = ['day', 'week', 'month', 'quarter'];
-    const labels: Record<GanttGranularity, string> = { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' };
+    const bar = this.container.createDiv('pm-gantt-controls')
+    const levels: GanttGranularity[] = ['day', 'week', 'month', 'quarter']
+    const labels: Record<GanttGranularity, string> = { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' }
 
     for (const level of levels) {
-      const btn = bar.createEl('button', { text: labels[level], cls: 'pm-gantt-zoom-btn' });
-      if (level === this.granularity) btn.addClass('pm-gantt-zoom-btn--active');
+      const btn = bar.createEl('button', { text: labels[level], cls: 'pm-gantt-zoom-btn' })
+      if (level === this.granularity) btn.addClass('pm-gantt-zoom-btn--active')
       btn.addEventListener('click', () => {
-        this.granularity = level;
-        this.plugin.settings.ganttGranularity = level;
-        void this.plugin.saveSettings();
-        this.render();
-      });
+        this.granularity = level
+        this.plugin.settings.ganttGranularity = level
+        void this.plugin.saveSettings()
+        this.render()
+      })
     }
 
-    bar.createEl('span', { cls: 'pm-gantt-sep' });
-    const todayBtn = bar.createEl('button', { text: 'Today', cls: 'pm-btn pm-btn-ghost pm-gantt-today-btn' });
-    todayBtn.addEventListener('click', () => this.scrollToToday());
+    bar.createEl('span', { cls: 'pm-gantt-sep' })
+    const todayBtn = bar.createEl('button', { text: 'Today', cls: 'pm-btn pm-btn-ghost pm-gantt-today-btn' })
+    todayBtn.addEventListener('click', () => this.scrollToToday())
 
-    const expBtn = bar.createEl('button', { text: 'Expand all', cls: 'pm-btn pm-btn-ghost' });
-    expBtn.addEventListener('click', () => this.setAllCollapsed(false));
-    const colBtn = bar.createEl('button', { text: 'Collapse all', cls: 'pm-btn pm-btn-ghost' });
-    colBtn.addEventListener('click', () => this.setAllCollapsed(true));
+    const expBtn = bar.createEl('button', { text: 'Expand all', cls: 'pm-btn pm-btn-ghost' })
+    expBtn.addEventListener('click', () => this.setAllCollapsed(false))
+    const colBtn = bar.createEl('button', { text: 'Collapse all', cls: 'pm-btn pm-btn-ghost' })
+    colBtn.addEventListener('click', () => this.setAllCollapsed(true))
 
-    bar.createEl('span', { cls: 'pm-gantt-sep' });
-    const hideDone = this.plugin.settings.ganttHideDone;
+    bar.createEl('span', { cls: 'pm-gantt-sep' })
+    const hideDone = this.plugin.settings.ganttHideDone
     const toggleBtn = bar.createEl('button', {
       text: hideDone ? 'Show completed' : 'Hide completed',
-      cls: 'pm-btn pm-btn-ghost',
-    });
-    if (hideDone) toggleBtn.addClass('pm-gantt-toggle-active');
+      cls: 'pm-btn pm-btn-ghost'
+    })
+    if (hideDone) toggleBtn.addClass('pm-gantt-toggle-active')
     toggleBtn.addEventListener('click', () => {
-      this.plugin.settings.ganttHideDone = !this.plugin.settings.ganttHideDone;
-      void this.plugin.saveSettings();
-      this.render();
-    });
+      this.plugin.settings.ganttHideDone = !this.plugin.settings.ganttHideDone
+      void this.plugin.saveSettings()
+      this.render()
+    })
   }
 
   private renderGantt(): void {
-    const wrapper = this.container.createDiv('pm-gantt-wrapper');
+    const wrapper = this.container.createDiv('pm-gantt-wrapper')
 
     // Left panel: task labels
-    const leftPanel = wrapper.createDiv('pm-gantt-left');
-    leftPanel.style.width = `${this.labelWidth}px`;
-    leftPanel.style.minWidth = `${this.labelWidth}px`;
-    const leftHeader = leftPanel.createDiv('pm-gantt-left-header');
-    leftHeader.style.height = `${HEADER_HEIGHT}px`;
-    leftHeader.createEl('span', { text: 'Task', cls: 'pm-gantt-left-header-label' });
-    const leftBody = leftPanel.createDiv('pm-gantt-left-body');
+    const leftPanel = wrapper.createDiv('pm-gantt-left')
+    leftPanel.style.width = `${this.labelWidth}px`
+    leftPanel.style.minWidth = `${this.labelWidth}px`
+    const leftHeader = leftPanel.createDiv('pm-gantt-left-header')
+    leftHeader.style.height = `${HEADER_HEIGHT}px`
+    leftHeader.createEl('span', { text: 'Task', cls: 'pm-gantt-left-header-label' })
+    const leftBody = leftPanel.createDiv('pm-gantt-left-body')
 
     // Resize handle
-    const resizeHandle = wrapper.createDiv('pm-gantt-resize-handle');
-    let resizing = false;
-    let startX = 0;
-    let startWidth = 0;
+    const resizeHandle = wrapper.createDiv('pm-gantt-resize-handle')
+    let resizing = false
+    let startX = 0
+    let startWidth = 0
     resizeHandle.addEventListener('mousedown', (e: MouseEvent) => {
-      e.preventDefault();
-      resizing = true;
-      startX = e.clientX;
-      startWidth = this.labelWidth;
-      document.body.addClass('pm-resize-active');
-    });
+      e.preventDefault()
+      resizing = true
+      startX = e.clientX
+      startWidth = this.labelWidth
+      document.body.addClass('pm-resize-active')
+    })
     const onMouseMove = (e: MouseEvent) => {
-      if (!resizing) return;
-      const newWidth = Math.max(150, Math.min(600, startWidth + (e.clientX - startX)));
-      this.labelWidth = newWidth;
-      leftPanel.style.width = `${newWidth}px`;
-      leftPanel.style.minWidth = `${newWidth}px`;
-    };
+      if (!resizing) return
+      const newWidth = Math.max(150, Math.min(600, startWidth + (e.clientX - startX)))
+      this.labelWidth = newWidth
+      leftPanel.style.width = `${newWidth}px`
+      leftPanel.style.minWidth = `${newWidth}px`
+    }
     const onMouseUp = () => {
-      if (!resizing) return;
-      resizing = false;
-      document.body.removeClass('pm-resize-active');
-    };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+      if (!resizing) return
+      resizing = false
+      document.body.removeClass('pm-resize-active')
+    }
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
     this.cleanupFns.push(() => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    });
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    })
 
     // Right panel: timeline
-    const rightPanel = wrapper.createDiv('pm-gantt-right');
-    this.scrollEl = rightPanel;
-    const svgContainer = this.scrollEl.createDiv('pm-gantt-svg-container');
-    svgContainer.style.width = `${this.cfg.totalWidth}px`;
+    const rightPanel = wrapper.createDiv('pm-gantt-right')
+    this.scrollEl = rightPanel
+    const svgContainer = this.scrollEl.createDiv('pm-gantt-svg-container')
+    svgContainer.style.width = `${this.cfg.totalWidth}px`
 
-    const totalRows = this.flatTasks.filter(f => f.visible || f.depth === 0).length;
-    const svgHeight = HEADER_HEIGHT + (totalRows + 1) * ROW_HEIGHT; // +1 for add-task row
+    const totalRows = this.flatTasks.filter((f) => f.visible || f.depth === 0).length
+    const svgHeight = HEADER_HEIGHT + (totalRows + 1) * ROW_HEIGHT // +1 for add-task row
 
     this.svgEl = svgEl('svg', {
-      width: this.cfg.totalWidth, height: svgHeight, class: 'pm-gantt-svg',
-    });
-    svgContainer.appendChild(this.svgEl);
+      width: this.cfg.totalWidth,
+      height: svgHeight,
+      class: 'pm-gantt-svg'
+    })
+    svgContainer.appendChild(this.svgEl)
 
     // Escape to cancel linking mode; Ctrl/Cmd+Z to undo last drag
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && this.link.active) {
-        cancelLink(this.link);
+        cancelLink(this.link)
       }
       if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && !this.drag.isDragging) {
-        e.preventDefault();
-        void this.plugin.undoLastAction();
+        e.preventDefault()
+        void this.plugin.undoLastAction()
       }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    this.cleanupFns.push(() => document.removeEventListener('keydown', onKeyDown));
+    }
+    document.addEventListener('keydown', onKeyDown)
+    this.cleanupFns.push(() => document.removeEventListener('keydown', onKeyDown))
 
-    const ctx = this.makeRendererContext();
-    renderTimelineHeader(ctx);
-    renderGridLines(ctx, totalRows);
-    renderTodayLine(ctx, svgHeight);
-    this.renderTaskRows(leftBody, ctx);
-    renderDependencyArrows(ctx);
-    renderMilestoneLabels(ctx);
+    const ctx = this.makeRendererContext()
+    renderTimelineHeader(ctx)
+    renderGridLines(ctx, totalRows)
+    renderTodayLine(ctx, svgHeight)
+    this.renderTaskRows(leftBody, ctx)
+    renderDependencyArrows(ctx)
+    renderMilestoneLabels(ctx)
 
     // Forward wheel events from left panel to the scroll container
     // (left panel has overflow:hidden, so wheel events are swallowed otherwise)
     const onLeftWheel = (e: WheelEvent) => {
-      rightPanel.scrollTop += e.deltaY;
-      rightPanel.scrollLeft += e.deltaX;
-      e.preventDefault();
-    };
-    leftPanel.addEventListener('wheel', onLeftWheel, { passive: false });
-    this.cleanupFns.push(() => leftPanel.removeEventListener('wheel', onLeftWheel));
+      rightPanel.scrollTop += e.deltaY
+      rightPanel.scrollLeft += e.deltaX
+      e.preventDefault()
+    }
+    leftPanel.addEventListener('wheel', onLeftWheel, { passive: false })
+    this.cleanupFns.push(() => leftPanel.removeEventListener('wheel', onLeftWheel))
 
     // Add task button
-    const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row');
-    addRow.style.height = `${ROW_HEIGHT}px`;
-    const addBtn = addRow.createEl('button', { text: '+ add task', cls: 'pm-gantt-add-task-btn' });
+    const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row')
+    addRow.style.height = `${ROW_HEIGHT}px`
+    const addBtn = addRow.createEl('button', { text: '+ add task', cls: 'pm-gantt-add-task-btn' })
     addBtn.addEventListener('click', () => {
-      openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() });
-    });
+      openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() })
+    })
 
     // Spacer compensates for horizontal scrollbar in the right panel.
     // The scrollbar reduces the right panel's viewport height, letting it
     // scroll further than the left body. Without this, rows desync at the bottom.
-    const leftSpacer = leftBody.createDiv();
-    leftSpacer.addClass('pm-no-shrink');
+    const leftSpacer = leftBody.createDiv()
+    leftSpacer.addClass('pm-no-shrink')
     const syncSpacer = () => {
-      const hScrollbarH = rightPanel.offsetHeight - rightPanel.clientHeight;
-      leftSpacer.style.height = `${hScrollbarH}px`;
-    };
+      const hScrollbarH = rightPanel.offsetHeight - rightPanel.clientHeight
+      leftSpacer.style.height = `${hScrollbarH}px`
+    }
 
     // Sync vertical scroll: right → left
     rightPanel.addEventListener('scroll', () => {
-      syncSpacer();
-      leftBody.scrollTop = rightPanel.scrollTop;
-    });
+      syncSpacer()
+      leftBody.scrollTop = rightPanel.scrollTop
+    })
 
     requestAnimationFrame(() => {
-      syncSpacer();
+      syncSpacer()
       if (this.pendingScroll) {
-        this.scrollEl.scrollTop = this.pendingScroll.top;
-        this.scrollEl.scrollLeft = Math.max(0, dateToX(this.cfg, this.pendingScroll.anchorDate));
-        this.pendingScroll = null;
+        this.scrollEl.scrollTop = this.pendingScroll.top
+        this.scrollEl.scrollLeft = Math.max(0, dateToX(this.cfg, this.pendingScroll.anchorDate))
+        this.pendingScroll = null
       } else {
-        this.scrollToToday();
+        this.scrollToToday()
       }
-    });
+    })
   }
 
   private renderTaskRows(leftBody: HTMLElement, ctx: RendererContext): void {
-    const barsGroup = svgEl('g', { class: 'pm-gantt-bars' });
-    this.svgEl.appendChild(barsGroup);
+    const barsGroup = svgEl('g', { class: 'pm-gantt-bars' })
+    this.svgEl.appendChild(barsGroup)
 
-    const labelCtx = { plugin: this.plugin, project: this.project, onRefresh: this.onRefresh };
-    let rowIndex = 0;
+    const labelCtx = { plugin: this.plugin, project: this.project, onRefresh: this.onRefresh }
+    let rowIndex = 0
     const renderFlatList = (tasks: Task[], depth: number) => {
       for (const task of tasks) {
-        renderTaskLabel(leftBody, task, depth, rowIndex, labelCtx);
-        renderTaskBar(barsGroup, task, rowIndex, depth, ctx);
-        rowIndex++;
+        renderTaskLabel(leftBody, task, depth, rowIndex, labelCtx)
+        renderTaskBar(barsGroup, task, rowIndex, depth, ctx)
+        rowIndex++
         if (!task.collapsed && task.subtasks.length) {
-          renderFlatList(task.subtasks, depth + 1);
+          renderFlatList(task.subtasks, depth + 1)
         }
       }
-    };
-    renderFlatList(this.getVisibleTasks(), 0);
+    }
+    renderFlatList(this.getVisibleTasks(), 0)
   }
 
   private makeRendererContext(): RendererContext {
@@ -262,28 +273,28 @@ export class GanttView implements SubView {
       drag: this.drag,
       link: this.link,
       onRefresh: this.onRefresh,
-      cleanupFns: this.cleanupFns,
-    };
+      cleanupFns: this.cleanupFns
+    }
   }
 
   private getVisibleTasks(): Task[] {
-    const tasks = filterArchived(this.project.tasks);
-    return this.plugin.settings.ganttHideDone ? filterDone(tasks, this.plugin.settings.statuses) : tasks;
+    const tasks = filterArchived(this.project.tasks)
+    return this.plugin.settings.ganttHideDone ? filterDone(tasks, this.plugin.settings.statuses) : tasks
   }
 
   private scrollToToday(): void {
-    if (!this.scrollEl) return;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const x = dateToX(this.cfg, today);
-    const center = x - this.scrollEl.clientWidth / 2;
-    this.scrollEl.scrollLeft = Math.max(0, center);
+    if (!this.scrollEl) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const x = dateToX(this.cfg, today)
+    const center = x - this.scrollEl.clientWidth / 2
+    this.scrollEl.scrollLeft = Math.max(0, center)
   }
 
   private setAllCollapsed(collapsed: boolean): void {
     for (const { task } of flattenTasks(this.project.tasks)) {
-      if (task.subtasks.length > 0) task.collapsed = collapsed;
+      if (task.subtasks.length > 0) task.collapsed = collapsed
     }
-    this.render();
+    this.render()
   }
 }

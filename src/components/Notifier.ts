@@ -1,8 +1,8 @@
-import { Notice } from 'obsidian';
-import type PMPlugin from '../main';
-import type { Project } from '../types';
-import { flattenTasks } from '../store/TaskTreeOps';
-import { isTerminalStatus } from '../utils';
+import { Notice } from "obsidian";
+import type PMPlugin from "../main";
+import type { Project } from "../types";
+import { flattenTasks } from "../store/TaskTreeOps";
+import { isTerminalStatus } from "../utils";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // check every hour
 
@@ -14,7 +14,9 @@ export class Notifier {
 
   start(): void {
     void this.check();
-    this.intervalId = window.setInterval(() => { void this.check(); }, CHECK_INTERVAL_MS);
+    this.intervalId = window.setInterval(() => {
+      void this.check();
+    }, CHECK_INTERVAL_MS);
     this.plugin.registerInterval(this.intervalId);
   }
 
@@ -54,19 +56,20 @@ export class Notifier {
 
         const notifKey = `${task.id}-${task.due}`;
 
-        if (isOverdue && !this.notifiedIds.has(notifKey + '-overdue')) {
-          this.notifiedIds.add(notifKey + '-overdue');
+        if (isOverdue && !this.notifiedIds.has(notifKey + "-overdue")) {
+          this.notifiedIds.add(notifKey + "-overdue");
           const daysAgo = Math.round((today.getTime() - dueDate.getTime()) / 86400_000);
           new Notice(
             `⚠️ Overdue: "${task.title}" in ${project.title} was due ${daysAgo}d ago`,
             8000,
           );
-        } else if (isDueSoon && !this.notifiedIds.has(notifKey + '-soon')) {
-          this.notifiedIds.add(notifKey + '-soon');
+        } else if (isDueSoon && !this.notifiedIds.has(notifKey + "-soon")) {
+          this.notifiedIds.add(notifKey + "-soon");
           const daysLeft = Math.round((dueDate.getTime() - today.getTime()) / 86400_000);
-          const msg = daysLeft === 0
-            ? `📅 Due today: "${task.title}" in ${project.title}`
-            : `📅 Due in ${daysLeft}d: "${task.title}" in ${project.title}`;
+          const msg =
+            daysLeft === 0
+              ? `📅 Due today: "${task.title}" in ${project.title}`
+              : `📅 Due in ${daysLeft}d: "${task.title}" in ${project.title}`;
           new Notice(msg, 6000);
         }
       }
