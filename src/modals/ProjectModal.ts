@@ -32,7 +32,7 @@ export class ProjectModal extends Modal {
   ) {
     super(app);
     if (existingProject) {
-      this.project = JSON.parse(JSON.stringify(existingProject));
+      this.project = JSON.parse(JSON.stringify(existingProject)) as Project;
       this.isNew = false;
     } else {
       this.project = makeProject('New Project', '');

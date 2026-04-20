@@ -1,5 +1,6 @@
 import { Notice } from 'obsidian';
 import type PMPlugin from '../main';
+import type { Project } from '../types';
 import { flattenTasks } from '../store/TaskTreeOps';
 import { isTerminalStatus } from '../utils';
 
@@ -32,7 +33,7 @@ export class Notifier {
     today.setHours(0, 0, 0, 0);
     const thresholdMs = today.getTime() + leadDays * 86400_000;
 
-    let projects;
+    let projects: Project[];
     try {
       projects = await this.plugin.store.loadAllProjects(this.plugin.settings.projectsFolder);
     } catch {

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "typecheck": "tsc",
-    "lint": "eslint --max-warnings 26 src/",
+    "lint": "eslint --max-warnings 0 src/",
     "bundle": "node esbuild.config.mjs production",
     "build": "npm run typecheck && npm run lint && npm run bundle"
   },

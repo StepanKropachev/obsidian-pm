@@ -29,7 +29,7 @@ export class TaskModal extends Modal {
   ) {
     super(app);
     if (task) {
-      this.task = JSON.parse(JSON.stringify(task));
+      this.task = JSON.parse(JSON.stringify(task)) as Task;
       this.isNew = false;
       // Compute current parentId from tree if not explicitly provided
       if (parentId == null) {
