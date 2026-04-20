@@ -1,4 +1,4 @@
-import { App, Modal, TFile, Notice } from 'obsidian';
+import { Modal, TFile, Notice } from 'obsidian';
 import type { Project, TaskStatus, TaskPriority } from '../types';
 import { makeTask, DEFAULT_STATUSES, DEFAULT_PRIORITIES } from '../types';
 import { parseFrontmatter, TASK_FRONTMATTER_KEY } from '../store/YamlParser';
@@ -28,10 +28,6 @@ export class ImportModal extends Modal {
   private fileHandling: 'move' | 'copy' = 'move';
   private project: Project | null = null;
   private onImportComplete: (() => void) | null = null;
-
-  constructor(app: App) {
-    super(app);
-  }
 
   onOpen(): void {
     const { contentEl } = this;

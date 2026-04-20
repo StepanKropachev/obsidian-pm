@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 import type PMPlugin from '../../main';
-import type { Project } from '../../types';
+import type { Project, Task } from '../../types';
 import { safeAsync } from '../../utils';
 
 export interface LinkState {
@@ -100,7 +100,6 @@ export function handleLinkDotClick(
 }
 
 // Simple flatten helper (avoids circular import with TaskTreeOps)
-import type { Task } from '../../types';
 function flattenAll(tasks: Task[]): Task[] {
   const result: Task[] = [];
   const walk = (list: Task[]) => {

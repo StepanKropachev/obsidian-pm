@@ -220,7 +220,9 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     // Update row checkboxes
     if (ctx.state.tableBody) {
       const cbs = ctx.state.tableBody.querySelectorAll('.pm-select-checkbox');
-      cbs.forEach(cb => (cb as HTMLInputElement).checked = false);
+      cbs.forEach(cb => {
+        (cb as HTMLInputElement).checked = false;
+      });
     }
     updateSelectAllCheckbox(ctx.state);
     renderBulkActionBar({ ctx, onAction });
