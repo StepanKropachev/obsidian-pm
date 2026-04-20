@@ -25,13 +25,24 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+      - name: Package release archive
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          tag="${REF#refs/tags/}"
+          id=$(node -p "require('./manifest.json').id")
+          mkdir -p "release/$id"
+          cp main.js manifest.json styles.css "release/$id/"
+          (cd release && zip -r "../${id}-${tag}.zip" "$id")
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF: ${{ github.ref }}
         run: |
           tag="${REF#refs/tags/}"
+          id=$(node -p "require('./manifest.json').id")
           gh release create "$tag" \
             --title "$tag" \
             --generate-notes \
-            main.js manifest.json styles.css
+            "${id}-${tag}.zip"
