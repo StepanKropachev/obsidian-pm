@@ -112,8 +112,6 @@ Each task is a `.md` file in your vault supporting:
 3. Copy the three files into that folder.
 4. Reload Obsidian and enable the plugin under **Settings > Community plugins**.
 
----
-
 ## Quick start
 
 1. Click the dashboard icon in the ribbon (or run **Open projects pane** from the command palette).
@@ -127,8 +125,6 @@ Each task is a `.md` file in your vault supporting:
 - `Create new project`
 - `Create new task`
 - `Create new subtask`
-
----
 
 ## Data format
 
@@ -150,8 +146,6 @@ dependencies: ["task-abc123"]
 Task description in Markdown goes here.
 ```
 
----
-
 ## Settings
 
 | Setting | Description |
@@ -165,14 +159,23 @@ Task description in Markdown goes here.
 | Custom priorities | Edit labels, colors, and icons for each priority |
 | Team members | Global roster for task assignment |
 
----
-
 ## Requirements
 
 - Obsidian **1.4.0** or later
 - Desktop and mobile supported
 
----
+## Contributing
+
+I appreciate community interest in the project! However, since this plugin is maintained by one person in their spare time, I have strict rules to keep the codebase clean, stable, and manageable. 
+
+If you want to contribute, please follow these rules:
+
+1. **Open an Issue first:** Do not submit a Pull Request for new features, architecture changes, or major refactoring without discussing it in an issue first. Uncoordinated PRs will be closed.
+2. **No AI-generated bulk code:** I do not accept massive, AI-generated PRs. Code must be human-readable, minimalistic, and match the existing project style.
+3. **Pass the CI:** Make sure your code passes all strict type checks and linters. Run `npm run typecheck` and `npm run lint` locally before pushing.
+4. **Keep it small:** PRs should be strictly focused on a single issue. 
+
+Bug fixes and thoroughly discussed features are always welcome!
 
 ## License
 
