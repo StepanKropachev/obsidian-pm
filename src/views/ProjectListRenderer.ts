@@ -49,14 +49,14 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
     btn.addEventListener('click', () => ctx.onGlobalViewChange(v.mode));
   }
 
-  // Right: group / client / project actions
+  // Right: portfolio / client / project actions
   const right = ctx.toolbarEl.createDiv('pm-toolbar-right');
 
-  const groupBtn = right.createEl('button', { text: '+ new group', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
+  const groupBtn = right.createEl('button', { text: '+ new portfolio', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
   groupBtn.addEventListener('click', () => {
     // Load all projects at call time so counts are fresh
     void ctx.plugin.store.loadAllProjects(ctx.plugin.settings.projectsFolder).then(projects => {
-      openGroupClientModal(ctx.plugin, projects, 'groups', () => { void ctx.onRefreshAll(); });
+      openGroupClientModal(ctx.plugin, projects, 'portfolios', () => { void ctx.onRefreshAll(); });
     });
   });
 
@@ -145,7 +145,8 @@ function renderCards(ctx: ProjectListContext, projects: Project[], container: HT
 
   for (const { groupName, groupProjects } of grouped) {
     const isCollapsed = ctx.plugin.settings.collapsedGroups.includes(groupName);
-    const groupColor  = ctx.plugin.settings.groupColors[groupName] ?? '#8b72be';
+    const pf = ctx.plugin.settings.portfolios.find(g => g.name === groupName);
+    const groupColor  = pf?.color ?? ctx.plugin.settings.groupColors[groupName] ?? '#8b72be';
 
     if (groupName !== '__ungrouped__') {
       // ── Group header ───────────────────────────────────────────────────────
@@ -235,7 +236,7 @@ function renderProjectCard(
   // Title
   body.createEl('h3', { text: project.title, cls: 'pm-project-card-title', attr: { title: project.title } });
 
-  // Client / group label
+  // Client label
   if (project.client) {
     body.createEl('div', { text: project.client, cls: 'pm-project-card-client' });
   }
@@ -386,12 +387,12 @@ function setupDrag(
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Group projects by their `group` field, sort within each group by sortOrder */
+/** Group projects by their `portfolio` field, sort within each group by sortOrder */
 function groupAndSort(projects: Project[]): { groupName: string; groupProjects: Project[] }[] {
   const map = new Map<string, Project[]>();
 
   for (const p of projects) {
-    const key = p.group?.trim() || '__ungrouped__';
+    const key = p.portfolio?.trim() || '__ungrouped__';
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(p);
   }

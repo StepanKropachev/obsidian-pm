@@ -116,7 +116,7 @@ export function hydrateProjectFromFrontmatter(
     startDate: (frontmatter.startDate as string) || undefined,
     endDate:   (frontmatter.endDate   as string) || undefined,
     client:    (frontmatter.client    as string) || undefined,
-    group:     (frontmatter.group     as string) || undefined,
+    portfolio: ((frontmatter.portfolio ?? frontmatter.group) as string) || undefined,
     owner:     (frontmatter.owner     as string) || undefined,
     priority:  VALID_PRIORITIES.has(frontmatter.priority as string)
       ? (frontmatter.priority as TaskPriority) : undefined,

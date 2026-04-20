@@ -34,7 +34,7 @@ export function applyProjectFilters(projects: Project[], f: ProjectFilterState):
       p.title.toLowerCase().includes(q) ||
       (p.client ?? '').toLowerCase().includes(q) ||
       (p.owner ?? '').toLowerCase().includes(q) ||
-      (p.group ?? '').toLowerCase().includes(q) ||
+      (p.portfolio ?? '').toLowerCase().includes(q) ||
       (p.description ?? '').toLowerCase().includes(q),
     );
   }
@@ -43,8 +43,8 @@ export function applyProjectFilters(projects: Project[], f: ProjectFilterState):
     result = result.filter(p => p.status && f.statuses.includes(p.status));
   }
 
-  if (f.groups.length) {
-    result = result.filter(p => p.group && f.groups.includes(p.group));
+  if (f.portfolios.length) {
+    result = result.filter(p => p.portfolio && f.portfolios.includes(p.portfolio));
   }
 
   if (f.owners.length) {
@@ -106,13 +106,13 @@ export function renderProjectFilterBar(
     STATUS_OPTIONS,
     () => { void plugin.saveSettings(); onChange(); });
 
-  // ── Group (only when groups exist) ────────────────────────────────────────
-  const allGroups = [...new Set(
-    allProjects.map(p => p.group).filter((g): g is string => !!g),
+  // ── Portfolio (only when portfolios exist) ────────────────────────────────
+  const allPortfolios = [...new Set(
+    allProjects.map(p => p.portfolio).filter((g): g is string => !!g),
   )].sort();
-  if (allGroups.length) {
-    renderFilterDropdown(bar, 'Group', f.groups,
-      allGroups.map(g => ({ id: g, label: g })),
+  if (allPortfolios.length) {
+    renderFilterDropdown(bar, 'Portfolio', f.portfolios,
+      allPortfolios.map(g => ({ id: g, label: g })),
       () => { void plugin.saveSettings(); onChange(); });
   }
 
@@ -151,7 +151,7 @@ export function renderProjectFilterBar(
 export function countActiveProjectFilters(f: ProjectFilterState): number {
   return (f.text ? 1 : 0)
     + f.statuses.length
-    + f.groups.length
+    + f.portfolios.length
     + f.owners.length
     + f.priorities.length;
 }

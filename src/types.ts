@@ -77,7 +77,7 @@ export interface Project {
   startDate?: string;   // YYYY-MM-DD — if unset, computed from min(task.start)
   endDate?: string;     // YYYY-MM-DD — if unset, computed from max(task.due)
   client?: string;      // billing / owner entity name
-  group?: string;       // folder label in card view (e.g. "Internal", "Client X")
+  portfolio?: string;   // portfolio label in card view (e.g. "Internal", "Client X")
   owner?: string;       // accountable person (from teamMembers or global)
   priority?: TaskPriority;
   budget?: number;      // total budget in currency units
@@ -99,7 +99,7 @@ export interface FilterState {
 export interface ProjectFilterState {
   text: string;
   statuses: ProjectStatus[];
-  groups: string[];
+  portfolios: string[];
   owners: string[];
   priorities: TaskPriority[];
 }
@@ -127,7 +127,7 @@ export interface PriorityConfig {
   icon: string;
 }
 
-export interface GroupConfig {
+export interface PortfolioConfig {
   id: string;
   name: string;
   color: string;        // hex — used in card view dot + badge
@@ -161,12 +161,12 @@ export interface PMSettings {
   ganttHideDone: boolean;
   kanbanShowSubtasks: boolean;
   defaultCurrency: string;                // ISO 4217, e.g. "EUR"
-  groupColors: Record<string, string>;    // legacy: group label → hex color (kept for migration)
-  collapsedGroups: string[];              // group labels that are currently collapsed
+  groupColors: Record<string, string>;    // legacy: portfolio label → hex color (kept for migration)
+  collapsedGroups: string[];              // portfolio labels that are currently collapsed in card view
   globalTableMode: 'tasks' | 'projects'; // table view default mode
   globalTableProjectColumns: ProjectTableColumn[]; // visible columns in project table
   projectFilterState: ProjectFilterState; // persisted project filter across views
-  groups: GroupConfig[];                  // managed portfolio groups
+  portfolios: PortfolioConfig[];          // managed portfolios (maps to project.portfolio frontmatter field)
   clients: ClientConfig[];               // managed clients
 }
 
@@ -206,8 +206,8 @@ export const DEFAULT_SETTINGS: PMSettings = {
   collapsedGroups: [],
   globalTableMode: 'projects',
   globalTableProjectColumns: ['status', 'group', 'client', 'owner', 'priority', 'startDate', 'endDate', 'budget', 'progress', 'tasks'],
-  projectFilterState: { text: '', statuses: [], groups: [], owners: [], priorities: [] },
-  groups: [],
+  projectFilterState: { text: '', statuses: [], portfolios: [], owners: [], priorities: [] },
+  portfolios: [],
   clients: [],
 };
 
@@ -272,10 +272,10 @@ export function makeDefaultFilter(): FilterState {
 }
 
 export function makeDefaultProjectFilter(): ProjectFilterState {
-  return { text: '', statuses: [], groups: [], owners: [], priorities: [] };
+  return { text: '', statuses: [], portfolios: [], owners: [], priorities: [] };
 }
 
-export function makeGroupConfig(name = ''): GroupConfig {
+export function makePortfolioConfig(name = ''): PortfolioConfig {
   return { id: makeId(), name, color: '#8b72be', icon: '📁', description: '', lead: '' };
 }
 

@@ -26,7 +26,7 @@ export function serializeProject(project: Project, statuses: StatusConfig[] = []
   if (project.startDate)               fm.startDate    = project.startDate;
   if (project.endDate)                 fm.endDate      = project.endDate;
   if (project.client)                  fm.client       = project.client;
-  if (project.group)                   fm.group        = project.group;
+  if (project.portfolio)               fm.portfolio    = project.portfolio;
   if (project.owner)                   fm.owner        = project.owner;
   if (project.priority)                fm.priority     = project.priority;
   if (project.budget !== undefined)    fm.budget       = project.budget;

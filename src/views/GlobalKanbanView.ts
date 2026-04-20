@@ -126,8 +126,8 @@ export class GlobalKanbanView implements SubView {
       attr: { title: project.title },
     });
 
-    // Group / client
-    const meta = project.client || project.group;
+    // Portfolio / client
+    const meta = project.client || project.portfolio;
     if (meta) {
       body.createEl('div', { text: meta, cls: 'pm-kanban-project-meta' });
     }

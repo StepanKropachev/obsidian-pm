@@ -42,7 +42,7 @@ interface ColDef {
 
 const ALL_PROJECT_COLS: ColDef[] = [
   { key: 'status',    label: 'Status',      width: '110px', sortKey: 'status'    },
-  { key: 'group',     label: 'Group',       width: '120px', sortKey: 'group'     },
+  { key: 'group',     label: 'Portfolio',   width: '120px', sortKey: 'group'     },
   { key: 'client',    label: 'Client',      width: '120px', sortKey: 'client'    },
   { key: 'owner',     label: 'Owner',       width: '120px', sortKey: 'owner'     },
   { key: 'priority',  label: 'Priority',    width: '100px', sortKey: 'priority'  },
@@ -202,7 +202,7 @@ export class GlobalTableView implements SubView {
         p.title.toLowerCase().includes(query) ||
         (p.client ?? '').toLowerCase().includes(query) ||
         (p.owner ?? '').toLowerCase().includes(query) ||
-        (p.group ?? '').toLowerCase().includes(query),
+        (p.portfolio ?? '').toLowerCase().includes(query),
       );
     }
 
@@ -212,7 +212,7 @@ export class GlobalTableView implements SubView {
       switch (this.projSortKey) {
         case 'title':     return dir * a.title.localeCompare(b.title);
         case 'status':    return dir * (a.status ?? 'z').localeCompare(b.status ?? 'z');
-        case 'group':     return dir * (a.group ?? 'z').localeCompare(b.group ?? 'z');
+        case 'group':     return dir * (a.portfolio ?? 'z').localeCompare(b.portfolio ?? 'z');
         case 'client':    return dir * (a.client ?? 'z').localeCompare(b.client ?? 'z');
         case 'owner':     return dir * (a.owner ?? 'z').localeCompare(b.owner ?? 'z');
         case 'priority':  return dir * (priorityOrder(a.priority ?? '') - priorityOrder(b.priority ?? ''));
@@ -286,11 +286,12 @@ export class GlobalTableView implements SubView {
           break;
         }
         case 'group':
-          if (project.group) {
-            const grpColor = this.plugin.settings.groupColors[project.group] ?? '#8b72be';
+          if (project.portfolio) {
+            const pf = this.plugin.settings.portfolios.find(g => g.name === project.portfolio);
+            const grpColor = pf?.color ?? this.plugin.settings.groupColors[project.portfolio] ?? '#8b72be';
             const dot2 = td.createEl('span', { cls: 'pm-proj-table-group-dot' });
             dot2.style.background = grpColor;
-            td.createEl('span', { text: project.group, cls: 'pm-proj-table-text' });
+            td.createEl('span', { text: project.portfolio, cls: 'pm-proj-table-text' });
           }
           break;
         case 'client':

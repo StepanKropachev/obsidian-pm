@@ -122,18 +122,27 @@ export default class PMPlugin extends Plugin {
     if (!this.settings.globalTableMode) this.settings.globalTableMode = DEFAULT_SETTINGS.globalTableMode;
     if (!this.settings.globalTableProjectColumns?.length) this.settings.globalTableProjectColumns = [...DEFAULT_SETTINGS.globalTableProjectColumns];
     if (!this.settings.projectFilterState) this.settings.projectFilterState = { ...DEFAULT_SETTINGS.projectFilterState };
-    if (!this.settings.groups)   this.settings.groups   = [];
-    if (!this.settings.clients)  this.settings.clients  = [];
+    if (!this.settings.portfolios) this.settings.portfolios = [];
+    if (!this.settings.clients)   this.settings.clients   = [];
+    // Migrate old settings.groups → settings.portfolios (rename)
+    if ((this.settings as unknown as Record<string, unknown>)['groups'] && !this.settings.portfolios.length) {
+      this.settings.portfolios = (this.settings as unknown as Record<string, unknown>)['groups'] as typeof this.settings.portfolios;
+    }
+    // Ensure projectFilterState has portfolios field (renamed from groups)
+    if (!this.settings.projectFilterState.portfolios) {
+      const legacy = (this.settings.projectFilterState as unknown as Record<string, unknown>)['groups'];
+      this.settings.projectFilterState.portfolios = Array.isArray(legacy) ? legacy as string[] : [];
+    }
 
-    // Migrate groupColors → groups array (import legacy color data)
+    // Migrate groupColors → portfolios array (import legacy color data)
     if (this.settings.groupColors && Object.keys(this.settings.groupColors).length > 0) {
-      const existingNames = new Set(this.settings.groups.map(g => g.name));
-      const { makeGroupConfig } = await import('./types');
+      const existingNames = new Set(this.settings.portfolios.map(g => g.name));
+      const { makePortfolioConfig } = await import('./types');
       for (const [name, color] of Object.entries(this.settings.groupColors)) {
         if (!existingNames.has(name)) {
-          const g = makeGroupConfig(name);
+          const g = makePortfolioConfig(name);
           g.color = color;
-          this.settings.groups.push(g);
+          this.settings.portfolios.push(g);
         }
       }
     }

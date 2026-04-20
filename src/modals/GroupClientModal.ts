@@ -1,7 +1,7 @@
 import { App, Modal } from 'obsidian';
 import type PMPlugin from '../main';
-import type { GroupConfig, ClientConfig, Project } from '../types';
-import { makeGroupConfig, makeClientConfig } from '../types';
+import type { PortfolioConfig, ClientConfig, Project } from '../types';
+import { makePortfolioConfig, makeClientConfig } from '../types';
 
 // ─── Shared color palette ─────────────────────────────────────────────────────
 
@@ -10,13 +10,13 @@ const PALETTE = [
   '#79b58d', '#6ba8a0', '#7a9ec4', '#767491', '#8aab6b',
 ];
 
-type Tab = 'groups' | 'clients';
+type Tab = 'portfolios' | 'clients';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export class GroupClientModal extends Modal {
   private tab: Tab;
-  private editingGroupId: string | null = null;
+  private editingPortfolioId: string | null = null;
   private editingClientId: string | null = null;
 
   constructor(
@@ -24,7 +24,7 @@ export class GroupClientModal extends Modal {
     private plugin: PMPlugin,
     private projects: Project[],
     private onSave: () => void,
-    initialTab: Tab = 'groups',
+    initialTab: Tab = 'portfolios',
   ) {
     super(app);
     this.tab = initialTab;
@@ -46,56 +46,56 @@ export class GroupClientModal extends Modal {
 
     // ── Tab bar ───────────────────────────────────────────────────────────────
     const tabBar = el.createDiv('pm-gcm-tabs');
-    for (const t of ['groups', 'clients'] as Tab[]) {
+    for (const t of ['portfolios', 'clients'] as Tab[]) {
       const btn = tabBar.createEl('button', {
-        text: t === 'groups' ? 'Groups' : 'Clients',
+        text: t === 'portfolios' ? 'Portfolios' : 'Clients',
         cls: 'pm-gcm-tab',
       });
       if (this.tab === t) btn.addClass('pm-gcm-tab--active');
       btn.addEventListener('click', () => { this.tab = t; this.render(); });
     }
 
-    if (this.tab === 'groups') {
-      this.renderGroupsTab(el);
+    if (this.tab === 'portfolios') {
+      this.renderPortfoliosTab(el);
     } else {
       this.renderClientsTab(el);
     }
   }
 
-  // ─── Groups tab ─────────────────────────────────────────────────────────────
+  // ─── Portfolios tab ──────────────────────────────────────────────────────────
 
-  private renderGroupsTab(el: HTMLElement): void {
+  private renderPortfoliosTab(el: HTMLElement): void {
     const header = el.createDiv('pm-gcm-header');
-    header.createEl('h3', { text: 'Groups', cls: 'pm-gcm-title' });
-    const addBtn = header.createEl('button', { text: '+ new group', cls: 'pm-btn pm-btn-primary pm-btn-sm' });
+    header.createEl('h3', { text: 'Portfolios', cls: 'pm-gcm-title' });
+    const addBtn = header.createEl('button', { text: '+ new portfolio', cls: 'pm-btn pm-btn-primary pm-btn-sm' });
     addBtn.addEventListener('click', () => {
-      this.editingGroupId = '__new__';
+      this.editingPortfolioId = '__new__';
       this.render();
     });
 
-    const groups = this.plugin.settings.groups;
+    const portfolios = this.plugin.settings.portfolios;
     const list = el.createDiv('pm-gcm-list');
 
-    if (groups.length === 0 && this.editingGroupId !== '__new__') {
-      list.createEl('p', { text: 'No groups yet. Create one to organize your projects.', cls: 'pm-gcm-empty' });
+    if (portfolios.length === 0 && this.editingPortfolioId !== '__new__') {
+      list.createEl('p', { text: 'No portfolios yet. Create one to organize your projects.', cls: 'pm-gcm-empty' });
     }
 
-    for (const group of groups) {
-      const count = this.projects.filter(p => p.group === group.name).length;
-      if (this.editingGroupId === group.id) {
-        this.renderGroupForm(list, group, count);
+    for (const portfolio of portfolios) {
+      const count = this.projects.filter(p => p.portfolio === portfolio.name).length;
+      if (this.editingPortfolioId === portfolio.id) {
+        this.renderPortfolioForm(list, portfolio, count);
       } else {
-        this.renderGroupRow(list, group, count);
+        this.renderPortfolioRow(list, portfolio, count);
       }
     }
 
-    // New group form
-    if (this.editingGroupId === '__new__') {
-      this.renderGroupForm(list, makeGroupConfig(), 0);
+    // New portfolio form
+    if (this.editingPortfolioId === '__new__') {
+      this.renderPortfolioForm(list, makePortfolioConfig(), 0);
     }
   }
 
-  private renderGroupRow(container: HTMLElement, group: GroupConfig, count: number): void {
+  private renderPortfolioRow(container: HTMLElement, group: PortfolioConfig, count: number): void {
     const row = container.createDiv('pm-gcm-row');
 
     const dot = row.createEl('span', { cls: 'pm-gcm-dot' });
@@ -117,19 +117,19 @@ export class GroupClientModal extends Modal {
       cls: 'pm-gcm-count',
     });
     const editBtn = right.createEl('button', { text: 'Edit', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
-    editBtn.addEventListener('click', () => { this.editingGroupId = group.id; this.render(); });
+    editBtn.addEventListener('click', () => { this.editingPortfolioId = group.id; this.render(); });
     const delBtn = right.createEl('button', { text: 'Delete', cls: 'pm-btn pm-btn-danger pm-btn-sm' });
     delBtn.addEventListener('click', () => {
-      this.plugin.settings.groups = this.plugin.settings.groups.filter(g => g.id !== group.id);
+      this.plugin.settings.portfolios = this.plugin.settings.portfolios.filter(g => g.id !== group.id);
       void this.plugin.saveSettings();
       this.onSave();
       this.render();
     });
   }
 
-  private renderGroupForm(container: HTMLElement, initial: GroupConfig, _count: number): void {
-    const isNew = !this.plugin.settings.groups.find(g => g.id === initial.id);
-    const draft: GroupConfig = { ...initial };
+  private renderPortfolioForm(container: HTMLElement, initial: PortfolioConfig, _count: number): void {
+    const isNew = !this.plugin.settings.portfolios.find(g => g.id === initial.id);
+    const draft: PortfolioConfig = { ...initial };
 
     const form = container.createDiv('pm-gcm-form');
 
@@ -175,12 +175,12 @@ export class GroupClientModal extends Modal {
     }
 
     // Description
-    const descInput = this.textField(form, 'Description', draft.description, 'What this group is for…', v => { draft.description = v; });
+    const descInput = this.textField(form, 'Description', draft.description, 'What this portfolio is for…', v => { draft.description = v; });
     descInput.addClass('pm-gcm-form-full');
 
     // Actions
     const actions = form.createDiv('pm-gcm-form-actions');
-    const saveBtn = actions.createEl('button', { text: isNew ? 'Create group' : 'Save', cls: 'pm-btn pm-btn-primary pm-btn-sm' });
+    const saveBtn = actions.createEl('button', { text: isNew ? 'Create portfolio' : 'Save', cls: 'pm-btn pm-btn-primary pm-btn-sm' });
     saveBtn.addEventListener('click', () => {
       const trimmed = nameInput.value.trim();
       if (!trimmed) { nameInput.addClass('pm-input--error'); return; }
@@ -188,23 +188,23 @@ export class GroupClientModal extends Modal {
       draft.color = draft.color || PALETTE[0];
       draft.icon  = draft.icon  || '📁';
       if (isNew) {
-        this.plugin.settings.groups.push(draft);
+        this.plugin.settings.portfolios.push(draft);
         // Keep groupColors in sync for backward compatibility
         this.plugin.settings.groupColors[draft.name] = draft.color;
       } else {
-        const idx = this.plugin.settings.groups.findIndex(g => g.id === draft.id);
+        const idx = this.plugin.settings.portfolios.findIndex(g => g.id === draft.id);
         if (idx >= 0) {
-          this.plugin.settings.groups[idx] = draft;
+          this.plugin.settings.portfolios[idx] = draft;
           this.plugin.settings.groupColors[draft.name] = draft.color;
         }
       }
       void this.plugin.saveSettings();
       this.onSave();
-      this.editingGroupId = null;
+      this.editingPortfolioId = null;
       this.render();
     });
     const cancelBtn = actions.createEl('button', { text: 'Cancel', cls: 'pm-btn pm-btn-ghost pm-btn-sm' });
-    cancelBtn.addEventListener('click', () => { this.editingGroupId = null; this.render(); });
+    cancelBtn.addEventListener('click', () => { this.editingPortfolioId = null; this.render(); });
   }
 
   // ─── Clients tab ─────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type PMPlugin from './main';
-import { PMSettings, DEFAULT_SETTINGS, makeId, makeGroupConfig, makeClientConfig } from './types';
-import type { GroupConfig, ClientConfig } from './types';
+import { PMSettings, DEFAULT_SETTINGS, makeId, makePortfolioConfig, makeClientConfig } from './types';
+import type { PortfolioConfig, ClientConfig } from './types';
 import { flattenTasks } from './store/TaskTreeOps';
 
 export type { PMSettings };
@@ -160,26 +160,26 @@ export class PMSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
-    // ── Groups ────────────────────────────────────────────────────────────────
+    // ── Portfolios ────────────────────────────────────────────────────────────
     new Setting(containerEl)
-      .setName('Groups')
+      .setName('Portfolios')
       .setHeading();
     containerEl.createEl('p', {
       cls: 'pm-settings-desc',
-      text: 'Groups organise projects in the card view. Each group can have a color, icon, description, and lead.',
+      text: 'Portfolios organise projects in the card view. Each portfolio can have a color, icon, description, and lead.',
     });
 
     const groupsContainer = containerEl.createDiv('pm-settings-gcm');
-    this.renderGroupsSection(groupsContainer);
+    this.renderPortfoliosSection(groupsContainer);
 
     new Setting(containerEl)
       .addButton(btn => btn
-        .setButtonText('+ add group')
+        .setButtonText('+ add portfolio')
         .setCta()
         .onClick(() => {
-          this.plugin.settings.groups.push(makeGroupConfig('New Group'));
+          this.plugin.settings.portfolios.push(makePortfolioConfig('New Portfolio'));
           void this.plugin.saveSettings();
-          this.renderGroupsSection(groupsContainer);
+          this.renderPortfoliosSection(groupsContainer);
         }));
 
     // ── Clients ───────────────────────────────────────────────────────────────
@@ -232,19 +232,19 @@ export class PMSettingTab extends PluginSettingTab {
         }));
   }
 
-  private renderGroupsSection(container: HTMLElement): void {
+  private renderPortfoliosSection(container: HTMLElement): void {
     container.empty();
-    const groups = this.plugin.settings.groups;
-    if (groups.length === 0) {
-      container.createEl('p', { text: 'No groups yet.', cls: 'pm-settings-gcm-empty' });
+    const portfolios = this.plugin.settings.portfolios;
+    if (portfolios.length === 0) {
+      container.createEl('p', { text: 'No portfolios yet.', cls: 'pm-settings-gcm-empty' });
       return;
     }
-    for (const group of groups) {
-      this.renderGroupRow(container, group);
+    for (const portfolio of portfolios) {
+      this.renderPortfolioRow(container, portfolio);
     }
   }
 
-  private renderGroupRow(container: HTMLElement, group: GroupConfig): void {
+  private renderPortfolioRow(container: HTMLElement, group: PortfolioConfig): void {
     const row = container.createDiv('pm-settings-gcm-row');
 
     // Color swatch + name
@@ -263,7 +263,7 @@ export class PMSettingTab extends PluginSettingTab {
     iconInput.addEventListener('input', () => { group.icon = iconInput.value.trim() || '📁'; void this.plugin.saveSettings(); });
 
     const nameInput = row.createEl('input', { type: 'text', value: group.name, cls: 'pm-settings-gcm-name' });
-    nameInput.placeholder = 'Group name';
+    nameInput.placeholder = 'Portfolio name';
     nameInput.addEventListener('change', () => {
       const newName = nameInput.value.trim();
       if (!newName) return;
@@ -289,9 +289,9 @@ export class PMSettingTab extends PluginSettingTab {
 
     const del = row.createEl('button', { text: '✕', cls: 'pm-settings-del' });
     del.addEventListener('click', () => {
-      this.plugin.settings.groups = this.plugin.settings.groups.filter(g => g.id !== group.id);
+      this.plugin.settings.portfolios = this.plugin.settings.portfolios.filter(g => g.id !== group.id);
       void this.plugin.saveSettings();
-      this.renderGroupsSection(container);
+      this.renderPortfoliosSection(container);
     });
   }
 

@@ -153,27 +153,27 @@ export class ProjectModal extends Modal {
       this.project.priority = (prioritySelect.value as TaskPriority) || undefined;
     });
 
-    // ── Group + Client row ────────────────────────────────────────────────────
+    // ── Portfolio + Client row ────────────────────────────────────────────────
     const groupRow = el.createDiv('pm-project-modal-section pm-project-row');
 
     const groupWrap = groupRow.createDiv('pm-project-field-wrap');
-    groupWrap.createEl('label', { text: 'Group / folder', cls: 'pm-label' });
+    groupWrap.createEl('label', { text: 'Portfolio', cls: 'pm-label' });
     const groupInput = groupWrap.createEl('input', {
-      type: 'text', value: this.project.group ?? '', cls: 'pm-input',
+      type: 'text', value: this.project.portfolio ?? '', cls: 'pm-input',
     });
-    groupInput.placeholder = 'e.g. internal, acme corp'; // eslint-disable-line obsidianmd/ui/sentence-case
-    // Datalist: prefer managed groups, fall back to groupColors keys for backward compat
-    const groupDatalist = groupWrap.createEl('datalist', { attr: { id: 'pm-group-list' } });
-    groupInput.setAttribute('list', 'pm-group-list');
-    const groupNames = this.plugin.settings.groups.length
-      ? this.plugin.settings.groups.map(g => g.name)
+    groupInput.placeholder = 'e.g. internal, website project'; // eslint-disable-line obsidianmd/ui/sentence-case
+    // Datalist: prefer managed portfolios, fall back to groupColors keys for backward compat
+    const groupDatalist = groupWrap.createEl('datalist', { attr: { id: 'pm-portfolio-list' } });
+    groupInput.setAttribute('list', 'pm-portfolio-list');
+    const portfolioNames = this.plugin.settings.portfolios.length
+      ? this.plugin.settings.portfolios.map(g => g.name)
       : Object.keys(this.plugin.settings.groupColors);
-    for (const g of groupNames) {
+    for (const g of portfolioNames) {
       const opt = groupDatalist.createEl('option', { attr: { value: g } });
-      const grp = this.plugin.settings.groups.find(x => x.name === g);
+      const grp = this.plugin.settings.portfolios.find(x => x.name === g);
       if (grp?.description) opt.label = grp.description;
     }
-    groupInput.addEventListener('input', () => { this.project.group = groupInput.value.trim() || undefined; });
+    groupInput.addEventListener('input', () => { this.project.portfolio = groupInput.value.trim() || undefined; });
 
     const clientWrap = groupRow.createDiv('pm-project-field-wrap');
     clientWrap.createEl('label', { text: 'Client', cls: 'pm-label' });
@@ -353,10 +353,10 @@ export class ProjectModal extends Modal {
         await this.plugin.store.ensureFolder(this.plugin.settings.projectsFolder);
       }
 
-      // persist new group color if this is a new group name
-      const groupName = this.project.group;
-      if (groupName && !this.plugin.settings.groupColors[groupName]) {
-        this.plugin.settings.groupColors[groupName] = this.project.color;
+      // persist new portfolio color if this is a new portfolio name
+      const portfolioName = this.project.portfolio;
+      if (portfolioName && !this.plugin.settings.groupColors[portfolioName]) {
+        this.plugin.settings.groupColors[portfolioName] = this.project.color;
         await this.plugin.saveSettings();
       }
 
