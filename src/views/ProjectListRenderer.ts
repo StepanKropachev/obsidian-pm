@@ -7,6 +7,7 @@ import { projectStatusColor } from '../modals/ProjectModal';
 import { GlobalTableView } from './GlobalTableView';
 import { GlobalKanbanView } from './GlobalKanbanView';
 import { GlobalGanttView } from './GlobalGanttView';
+import { renderProjectFilterBar, applyProjectFilters, countActiveProjectFilters } from './ProjectFilterBar';
 import type { SubView } from './SubView';
 
 export interface ProjectListContext {
@@ -59,25 +60,45 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
 }
 
 export async function renderProjectListContent(ctx: ProjectListContext): Promise<void> {
-  const projects = await ctx.plugin.store.loadAllProjects(ctx.plugin.settings.projectsFolder);
+  const allProjects = await ctx.plugin.store.loadAllProjects(ctx.plugin.settings.projectsFolder);
   if (ctx.isStale()) return;
 
   ctx.contentEl.empty();
-  ctx.contentEl.removeClass('pm-project-list-container', 'pm-global-view-container');
+  ctx.contentEl.removeClass(
+    'pm-project-list-container',
+    'pm-global-view-container',
+    'pm-global-view-with-filter',
+  );
   ctx.setGlobalSubview(null);
 
+  // ── Project filter bar (all views) ─────────────────────────────────────────
+  const filterBarEl = ctx.contentEl.createDiv('pm-project-filter-bar-wrap');
+  const onChange = () => {
+    void ctx.plugin.saveSettings();
+    void renderProjectListContent(ctx);
+  };
+  renderProjectFilterBar(filterBarEl, allProjects, ctx.plugin, onChange);
+
+  // Apply filters; show active-filter indicator on bar wrapper
+  const projects = applyProjectFilters(allProjects, ctx.plugin.settings.projectFilterState);
+  const activeFilters = countActiveProjectFilters(ctx.plugin.settings.projectFilterState);
+  if (activeFilters > 0) filterBarEl.addClass('pm-project-filter-bar-wrap--active');
+
+  // ── Render selected view ───────────────────────────────────────────────────
+  const viewEl = ctx.contentEl.createDiv('pm-global-view-area');
+
   if (ctx.globalView === 'cards') {
-    ctx.contentEl.addClass('pm-project-list-container');
-    renderCards(ctx, projects);
+    viewEl.addClass('pm-project-list-container');
+    renderCards(ctx, projects, viewEl);
   } else {
-    ctx.contentEl.addClass('pm-global-view-container');
+    viewEl.addClass('pm-global-view-container');
     let sv: SubView;
     if (ctx.globalView === 'table') {
-      sv = new GlobalTableView(ctx.contentEl, projects, ctx.plugin, ctx.onRefreshAll);
+      sv = new GlobalTableView(viewEl, projects, ctx.plugin, ctx.onRefreshAll);
     } else if (ctx.globalView === 'kanban') {
-      sv = new GlobalKanbanView(ctx.contentEl, projects, ctx.plugin, ctx.onRefreshAll);
+      sv = new GlobalKanbanView(viewEl, projects, ctx.plugin, ctx.onRefreshAll);
     } else {
-      sv = new GlobalGanttView(ctx.contentEl, projects, ctx.plugin, ctx.onRefreshAll);
+      sv = new GlobalGanttView(viewEl, projects, ctx.plugin, ctx.onRefreshAll);
     }
     ctx.setGlobalSubview(sv);
     sv.render();
@@ -86,9 +107,9 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
 
 // ─── Card rendering ───────────────────────────────────────────────────────────
 
-function renderCards(ctx: ProjectListContext, projects: Project[]): void {
+function renderCards(ctx: ProjectListContext, projects: Project[], container: HTMLElement): void {
   if (projects.length === 0) {
-    const empty = ctx.contentEl.createDiv('pm-empty-state');
+    const empty = container.createDiv('pm-empty-state');
     empty.createEl('div', { text: '📋', cls: 'pm-empty-icon' });
     empty.createEl('h3', { text: 'No projects yet' });
     empty.createEl('p', { text: 'Create your first project to get started.' });
@@ -111,7 +132,7 @@ function renderCards(ctx: ProjectListContext, projects: Project[]): void {
 
     if (groupName !== '__ungrouped__') {
       // ── Group header ───────────────────────────────────────────────────────
-      const groupHeader = ctx.contentEl.createDiv('pm-group-header');
+      const groupHeader = container.createDiv('pm-group-header');
       groupHeader.dataset.group = groupName;
 
       const dot = groupHeader.createEl('span', { cls: 'pm-group-dot' });
@@ -144,7 +165,7 @@ function renderCards(ctx: ProjectListContext, projects: Project[]): void {
     }
 
     // ── Card grid ──────────────────────────────────────────────────────────
-    const grid = ctx.contentEl.createDiv('pm-project-grid');
+    const grid = container.createDiv('pm-project-grid');
     if (isCollapsed) grid.addClass('pm-group-collapsed');
 
     for (const project of groupProjects) {

@@ -179,6 +179,13 @@
 /* ── Content ─────────────────────────────────────────────────────────────── */
 .pm-content { flex: 1; overflow: auto; position: relative; }
 
+/* When the global project list is active, layout filter bar + view vertically */
+.pm-content:has(.pm-project-filter-bar-wrap) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .pm-empty-state {
   display: flex;
@@ -2673,5 +2680,258 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   width: 8px;
   height: 8px;
   border-radius: 50%;
+}
+
+/* ─── Project filter bar (all global views) ────────────────────────────────── */
+
+.pm-project-filter-bar-wrap {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--pm-border);
+}
+
+.pm-project-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  flex-wrap: wrap;
+}
+
+.pm-project-filter-search {
+  flex: 0 0 200px;
+}
+
+.pm-filter-clear-btn {
+  margin-left: 2px;
+  color: var(--pm-danger);
+  border-color: color-mix(in srgb, var(--pm-danger) 30%, transparent);
+}
+.pm-filter-clear-btn:hover {
+  background: color-mix(in srgb, var(--pm-danger) 10%, transparent);
+}
+
+/* Active filter bar indicator */
+.pm-project-filter-bar-wrap--active .pm-project-filter-bar {
+  background: color-mix(in srgb, var(--pm-accent) 4%, transparent);
+}
+
+/* Layout wrapper for filter bar + view area */
+.pm-global-view-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pm-global-view-area.pm-project-list-container {
+  overflow-y: auto;
+}
+.pm-global-view-area.pm-global-view-container {
+  overflow: hidden;
+}
+
+/* ─── Table mode switcher (Tasks / Projects) ────────────────────────────────── */
+
+.pm-table-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--pm-border);
+  flex-shrink: 0;
+}
+
+.pm-table-mode-tab {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--pm-text-muted);
+  cursor: pointer;
+  margin-bottom: -1px;
+  border-radius: var(--pm-radius-sm) var(--pm-radius-sm) 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.pm-table-mode-tab:hover {
+  color: var(--pm-text);
+  background: color-mix(in srgb, var(--pm-accent) 6%, transparent);
+}
+.pm-table-mode-tab--active {
+  color: var(--pm-accent);
+  border-bottom-color: var(--pm-accent);
+}
+
+/* ─── Project table toolbar ──────────────────────────────────────────────────── */
+
+.pm-proj-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--pm-border);
+  flex-shrink: 0;
+}
+
+.pm-proj-table-search {
+  flex: 0 0 200px;
+}
+
+.pm-col-picker-btn {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.pm-proj-table-count {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  margin-left: auto;
+}
+
+/* ─── Task table column widths (CSS classes replace inline styles) ──────────── */
+
+.pm-th-expand    { width: 32px; }
+.pm-th-project   { width: 140px; }
+.pm-th-title     { width: auto; }
+.pm-th-status    { width: 130px; }
+.pm-th-priority  { width: 110px; }
+.pm-th-assignees { width: 140px; }
+.pm-th-due       { width: 110px; }
+.pm-th-progress  { width: 120px; }
+.pm-th-time      { width: 90px; }
+.pm-th-actions   { width: 40px; }
+
+/* ─── Project table header column widths ─────────────────────────────────────── */
+
+.pm-proj-th-title     { min-width: 180px; }
+.pm-proj-th-status    { width: 110px; }
+.pm-proj-th-group     { width: 120px; }
+.pm-proj-th-client    { width: 120px; }
+.pm-proj-th-owner     { width: 130px; }
+.pm-proj-th-priority  { width: 100px; }
+.pm-proj-th-startDate { width: 100px; }
+.pm-proj-th-endDate   { width: 100px; }
+.pm-proj-th-budget    { width: 140px; }
+.pm-proj-th-progress  { width: 120px; }
+.pm-proj-th-tasks     { width: 90px; }
+.pm-proj-th-actions   { width: 40px; }
+
+/* ─── Project table rows ──────────────────────────────────────────────────────── */
+
+.pm-projects-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.pm-proj-table-row {
+  cursor: default;
+  transition: background 0.1s;
+}
+.pm-proj-table-row:hover {
+  background: var(--pm-bg2);
+}
+
+/* Title cell */
+.pm-proj-table-title-cell {
+  padding: 8px 12px;
+  min-width: 180px;
+}
+.pm-proj-table-title-cell--overdue .pm-proj-table-name {
+  color: var(--pm-danger);
+}
+
+.pm-proj-table-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pm-proj-table-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pm-proj-table-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.pm-proj-table-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.pm-proj-table-name:hover {
+  color: var(--pm-accent);
+  text-decoration: underline;
+}
+
+/* Configurable column cells */
+.pm-proj-table-cell {
+  padding: 8px 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: var(--pm-text);
+  border-bottom: 1px solid var(--pm-border);
+}
+
+.pm-proj-table-text {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}
+
+.pm-proj-table-date {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pm-proj-table-date--overdue {
+  color: var(--pm-danger);
+  font-weight: 600;
+}
+
+.pm-proj-table-group-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.pm-proj-table-owner-name {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  margin-left: 5px;
+}
+
+.pm-proj-table-budget {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pm-text-muted);
+}
+.pm-proj-table-budget--over {
+  color: var(--pm-danger);
+  font-weight: 600;
+}
+
+.pm-proj-table-tasks {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pm-text-muted);
+  font-weight: 500;
+}
+
+/* Title cell border too */
+.pm-proj-table-title-cell {
+  border-bottom: 1px solid var(--pm-border);
 }
 

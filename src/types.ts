@@ -9,6 +9,9 @@ export type GlobalViewMode = 'cards' | 'table' | 'kanban' | 'gantt';
 export type DueDateFilter = 'any' | 'overdue' | 'this-week' | 'this-month' | 'no-date';
 export type TaskType = 'task' | 'milestone' | 'subtask';
 export type ProjectStatus = 'active' | 'on-hold' | 'completed' | 'cancelled' | 'draft';
+export type ProjectTableColumn =
+  | 'status' | 'group' | 'client' | 'owner' | 'priority'
+  | 'startDate' | 'endDate' | 'budget' | 'progress' | 'tasks';
 
 export interface Recurrence {
   interval: 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -93,6 +96,14 @@ export interface FilterState {
   showArchived: boolean;
 }
 
+export interface ProjectFilterState {
+  text: string;
+  statuses: ProjectStatus[];
+  groups: string[];
+  owners: string[];
+  priorities: TaskPriority[];
+}
+
 export interface SavedView {
   id: string;
   name: string;
@@ -132,6 +143,9 @@ export interface PMSettings {
   defaultCurrency: string;                // ISO 4217, e.g. "EUR"
   groupColors: Record<string, string>;    // group label → hex color
   collapsedGroups: string[];              // group labels that are currently collapsed
+  globalTableMode: 'tasks' | 'projects'; // table view default mode
+  globalTableProjectColumns: ProjectTableColumn[]; // visible columns in project table
+  projectFilterState: ProjectFilterState; // persisted project filter across views
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -168,6 +182,9 @@ export const DEFAULT_SETTINGS: PMSettings = {
   defaultCurrency: 'EUR',
   groupColors: {},
   collapsedGroups: [],
+  globalTableMode: 'projects',
+  globalTableProjectColumns: ['status', 'group', 'client', 'owner', 'priority', 'startDate', 'endDate', 'budget', 'progress', 'tasks'],
+  projectFilterState: { text: '', statuses: [], groups: [], owners: [], priorities: [] },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -228,4 +245,8 @@ export function makeDefaultFilter(): FilterState {
     dueDateFilter: 'any',
     showArchived: false,
   };
+}
+
+export function makeDefaultProjectFilter(): ProjectFilterState {
+  return { text: '', statuses: [], groups: [], owners: [], priorities: [] };
 }

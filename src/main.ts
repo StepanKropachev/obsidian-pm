@@ -119,6 +119,9 @@ export default class PMPlugin extends Plugin {
     if (!this.settings.defaultCurrency) this.settings.defaultCurrency = DEFAULT_SETTINGS.defaultCurrency;
     if (!this.settings.groupColors)    this.settings.groupColors    = {};
     if (!this.settings.collapsedGroups) this.settings.collapsedGroups = [];
+    if (!this.settings.globalTableMode) this.settings.globalTableMode = DEFAULT_SETTINGS.globalTableMode;
+    if (!this.settings.globalTableProjectColumns?.length) this.settings.globalTableProjectColumns = [...DEFAULT_SETTINGS.globalTableProjectColumns];
+    if (!this.settings.projectFilterState) this.settings.projectFilterState = { ...DEFAULT_SETTINGS.projectFilterState };
 
     // Migrate pre-v1.3 statuses: add `complete` flag if missing
     let migrated = false;
