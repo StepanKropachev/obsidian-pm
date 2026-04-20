@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian';
 import type PMPlugin from '../main';
-import { Project, ViewMode } from '../types';
+import type { Project, ViewMode, GlobalViewMode } from '../types';
 import { truncateTitle, safeAsync } from '../utils';
 import type { SubView } from './SubView';
 import { TableView } from './table/TableView';
@@ -24,7 +24,9 @@ export class ProjectView extends ItemView {
   project: Project | null = null;
   filePath = '';
   currentView: ViewMode;
+  private globalView: GlobalViewMode = 'cards';
   private subview: SubView | null = null;
+  private globalSubview: SubView | null = null;
   private savedTableViewState: TableViewState | null = null;
   private toolbarEl!: HTMLElement;
   private contentEl2!: HTMLElement;
@@ -67,12 +69,10 @@ export class ProjectView extends ItemView {
       this.subview?.handleKeyDown?.(e);
     };
     this.containerEl.addEventListener('keydown', this.keydownHandler);
-    // Make container focusable so it receives keyboard events
     if (!this.containerEl.hasAttribute('tabindex')) {
       this.containerEl.setAttribute('tabindex', '-1');
     }
 
-    // Watch for task file modifications/deletions to keep the view in sync
     const reloadIfRelevant = (filePath: string) => {
       if (!this.project || !this.filePath) return false;
       const taskFolder = this.filePath.replace(/\.md$/, '_tasks');
@@ -89,9 +89,7 @@ export class ProjectView extends ItemView {
     this.registerEvent(this.fileModifyRef);
     this.registerEvent(
       this.app.vault.on('delete', safeAsync(async (file) => {
-        if (reloadIfRelevant(file.path)) {
-          await this.loadProject();
-        }
+        if (reloadIfRelevant(file.path)) await this.loadProject();
       })),
     );
   }
@@ -108,6 +106,8 @@ export class ProjectView extends ItemView {
     this.fileModifyRef = null;
     this.subview?.destroy?.();
     this.subview = null;
+    this.globalSubview?.destroy?.();
+    this.globalSubview = null;
     return Promise.resolve();
   }
 
@@ -117,15 +117,11 @@ export class ProjectView extends ItemView {
     const root = this.contentEl;
     root.empty();
     root.addClass('pm-root');
-
-    // Toolbar
-    this.toolbarEl = root.createDiv('pm-toolbar');
-
-    // Content area
+    this.toolbarEl  = root.createDiv('pm-toolbar');
     this.contentEl2 = root.createDiv('pm-content');
   }
 
-  // ─── Project list (when no file is open) ───────────────────────────────────
+  // ─── Project list (global view) ────────────────────────────────────────────
 
   private getProjectListCtx(): ProjectListContext {
     const token = ++this.renderToken;
@@ -135,14 +131,27 @@ export class ProjectView extends ItemView {
       contentEl: this.contentEl2,
       isStale: () => token !== this.renderToken,
       openProjectFile: (file: TFile) => this.plugin.openProjectFile(file),
+      globalView: this.globalView,
+      onGlobalViewChange: (v: GlobalViewMode) => {
+        this.globalSubview?.destroy?.();
+        this.globalSubview = null;
+        this.globalView = v;
+        this.renderProjectList();
+      },
+      onRefreshAll: () => {
+        this.renderProjectList();
+        return Promise.resolve();
+      },
+      setGlobalSubview: (sv) => { this.globalSubview = sv; },
     };
   }
 
   private renderProjectList(): void {
+    this.globalSubview?.destroy?.();
+    this.globalSubview = null;
     const ctx = this.getProjectListCtx();
     renderProjectListToolbar(ctx);
     this.contentEl2.empty();
-    this.contentEl2.addClass('pm-project-list-container');
     void renderProjectListContent(ctx);
   }
 
@@ -150,16 +159,9 @@ export class ProjectView extends ItemView {
 
   private async loadProject(): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(this.filePath);
-    if (!(file instanceof TFile)) {
-      this.renderProjectList();
-      return;
-    }
+    if (!(file instanceof TFile)) { this.renderProjectList(); return; }
     this.project = await this.plugin.store.loadProject(file);
-    if (!this.project) {
-      this.renderProjectList();
-      return;
-    }
-    // Update tab header text and icon after project loads
+    if (!this.project) { this.renderProjectList(); return; }
     (this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.();
     this.renderProjectToolbar();
     this.renderCurrentView();
@@ -169,9 +171,13 @@ export class ProjectView extends ItemView {
     if (!this.project) return;
     this.toolbarEl.empty();
 
-    // Left: icon, title, description
+    // Left: icon + editable title
     const left = this.toolbarEl.createDiv('pm-toolbar-left');
-    const iconEl = left.createEl('span', { text: this.project.icon, cls: 'pm-toolbar-icon', attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' } });
+    const iconEl = left.createEl('span', {
+      text: this.project.icon,
+      cls: 'pm-toolbar-icon',
+      attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' },
+    });
     iconEl.addEventListener('click', () => {
       openProjectModal(this.plugin, { project: this.project, onSave: updated => {
         this.project = updated;
@@ -190,8 +196,8 @@ export class ProjectView extends ItemView {
     // Center: view switcher
     const switcher = this.toolbarEl.createDiv('pm-view-switcher');
     const views: { mode: ViewMode; icon: string; label: string }[] = [
-      { mode: 'table', icon: '≡', label: 'Table' },
-      { mode: 'gantt', icon: '▬', label: 'Gantt' },
+      { mode: 'table',  icon: '≡', label: 'Table' },
+      { mode: 'gantt',  icon: '▬', label: 'Gantt' },
       { mode: 'kanban', icon: '⊞', label: 'Board' },
     ];
     for (const v of views) {
@@ -238,19 +244,16 @@ export class ProjectView extends ItemView {
     if (!this.project) return;
     this.renderToken++; // cancel any in-flight project list render
 
-    // Preserve quick-add focus across re-renders
     const quickAddFocused = document.activeElement instanceof HTMLElement
       && document.activeElement.matches('.pm-quick-add-input');
 
-    // Save Gantt scroll position and label width before destroying the old view
     let savedGanttScroll: { top: number; anchorDate: Date } | null = null;
     let savedGanttLabelWidth: number | null = null;
     if (this.currentView === 'gantt' && this.subview instanceof GanttView) {
-      savedGanttScroll = this.subview.getScrollPosition();
+      savedGanttScroll    = this.subview.getScrollPosition();
       savedGanttLabelWidth = this.subview.getLabelWidth();
     }
 
-    // Save TableView filter/sort state so it survives project reloads
     if (this.subview instanceof TableView) {
       this.savedTableViewState = this.subview.getViewState();
     } else if (this.currentView !== 'table') {
@@ -267,7 +270,7 @@ export class ProjectView extends ItemView {
         break;
       case 'gantt': {
         const gantt = new GanttView(this.contentEl2, this.project, this.plugin, () => this.refreshProject());
-        if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll);
+        if (savedGanttScroll)     gantt.setPendingScroll(savedGanttScroll);
         if (savedGanttLabelWidth !== null) gantt.setLabelWidth(savedGanttLabelWidth);
         this.subview = gantt;
         break;
@@ -278,7 +281,6 @@ export class ProjectView extends ItemView {
     }
     this.subview?.render();
 
-    // Restore quick-add focus after re-render
     if (quickAddFocused) {
       const newInput = this.contentEl2.querySelector('.pm-quick-add-input') as HTMLInputElement;
       if (newInput) newInput.focus();
@@ -287,7 +289,6 @@ export class ProjectView extends ItemView {
 
   async refreshProject(): Promise<void> {
     if (!this.filePath) return;
-    // Cancel any pending file-modify reload — we're handling it here
     if (this.reloadDebounceTimer !== null) {
       window.clearTimeout(this.reloadDebounceTimer);
       this.reloadDebounceTimer = null;

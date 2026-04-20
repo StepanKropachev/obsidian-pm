@@ -2117,3 +2117,138 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   color: var(--text-normal, #2b3438);
 }
 
+/* ── Global view container ──────────────────────────────────────────────── */
+.pm-global-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Global table: Project column ───────────────────────────────────────── */
+.pm-global-table-project-cell {
+  white-space: nowrap;
+}
+
+.pm-global-project-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: var(--pm-radius-sm);
+  padding: 2px 4px;
+  transition: background 0.1s;
+  max-width: 130px;
+}
+.pm-global-project-badge:hover {
+  background: var(--pm-bg3);
+}
+
+.pm-global-project-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pm-global-project-dot--sm {
+  width: 7px;
+  height: 7px;
+}
+
+.pm-global-project-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--pm-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* subtask count badge in global table expand cell */
+.pm-subtask-count-badge {
+  font-size: 0.7rem;
+  color: var(--pm-text-faint);
+  background: var(--pm-bg3);
+  border-radius: 99px;
+  padding: 0 5px;
+  line-height: 1.6;
+}
+
+/* empty cell in global table */
+.pm-table-empty-cell {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--pm-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Global kanban: project badge on cards ──────────────────────────────── */
+.pm-kanban-card-proj-bar {
+  height: 3px;
+  border-radius: var(--pm-radius-sm) var(--pm-radius-sm) 0 0;
+  margin: -1px -1px 0;   /* bleed to card edges */
+  opacity: 0.8;
+}
+
+.pm-kanban-card-project {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.pm-kanban-card-project-name {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--pm-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+/* ── Global gantt: project section headers ──────────────────────────────── */
+.pm-gantt-project-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  background: var(--pm-bg2);
+  border-bottom: 1px solid var(--pm-border);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pm-gantt-project-section-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.pm-gantt-project-section-icon {
+  font-size: 15px;
+  line-height: 1;
+  margin-left: 6px;
+}
+
+.pm-gantt-project-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--pm-text);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* SVG background stripe for project section header rows */
+.pm-gantt-project-section-bg {
+  fill: var(--pm-bg2, #f5f5f5);
+  opacity: 0.5;
+}
+
