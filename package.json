@@ -5,8 +5,8 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && oxlint ./src && node esbuild.config.mjs production",
+    "dev": "tsdown --watch",
+    "build": "PRODUCTION=1 tsdown",
     "check": "run-p check:**",
     "check:code": "oxlint ./src",
     "check:format": "oxfmt --check ./src",
@@ -20,12 +20,12 @@
     "@2bad/tsconfig": "3.0.2",
     "@types/node": "25.6.0",
     "builtin-modules": "3.3.0",
-    "esbuild": "0.25.0",
     "eslint-plugin-obsidianmd": "0.2.4",
     "npm-run-all2": "8.0.4",
     "obsidian": "latest",
     "oxfmt": "0.46.0",
     "oxlint": "1.61.0",
+    "tsdown": "0.21.9",
     "typescript": "6.0.2"
   },
   "packageManager": "pnpm@10.33.0",
@@ -35,10 +35,5 @@
   "volta": {
     "node": "24.15.0",
     "pnpm": "10.33.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
