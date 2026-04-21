@@ -140,6 +140,18 @@ export class TaskModal extends Modal {
       });
     };
 
+    // MarkdownRenderer emits external anchors with target="_blank"; Electron
+    // silently drops file:// under that, so route file:// clicks through window.open.
+    const attachFileLinkHandlers = () => {
+      descPreview.querySelectorAll<HTMLAnchorElement>('a.external-link').forEach(a => {
+        if (!a.href.startsWith('file://')) return;
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.open(a.href);
+        });
+      });
+    };
+
     const renderPreview = async () => {
       descComp.unload();
       descComp = new Component();
@@ -147,6 +159,7 @@ export class TaskModal extends Modal {
       descPreview.empty();
       await MarkdownRenderer.render(this.app, this.task.description, descPreview, sourcePath, descComp);
       attachCheckboxListeners();
+      attachFileLinkHandlers();
     };
 
     const showEdit = () => {
