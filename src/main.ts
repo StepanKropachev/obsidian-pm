@@ -13,16 +13,29 @@ export default class PMPlugin extends Plugin {
   settings: PMSettings = { ...DEFAULT_SETTINGS };
   store!: ProjectStore;
   notifier!: Notifier;
-  undoStack: Array<{ undo: () => Promise<void> }> = [];
+  undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = [];
+  redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = [];
 
-  pushUndo(entry: { undo: () => Promise<void> }): void {
+  pushUndo(entry: { undo: () => Promise<void>; redo: () => Promise<void> }): void {
     this.undoStack.push(entry);
     if (this.undoStack.length > 20) this.undoStack.shift();
+    this.redoStack = [];
   }
 
   async undoLastAction(): Promise<void> {
     const entry = this.undoStack.pop();
-    if (entry) await entry.undo();
+    if (entry) {
+      await entry.undo();
+      this.redoStack.push(entry);
+    }
+  }
+
+  async redoLastAction(): Promise<void> {
+    const entry = this.redoStack.pop();
+    if (entry) {
+      await entry.redo();
+      this.undoStack.push(entry);
+    }
   }
 
   async onload(): Promise<void> {
@@ -90,6 +103,12 @@ export default class PMPlugin extends Plugin {
       id: 'undo-last-action',
       name: 'Undo last action',
       callback: () => { void this.undoLastAction(); },
+    });
+
+    this.addCommand({
+      id: 'redo-last-action',
+      name: 'Redo last action',
+      callback: () => { void this.redoLastAction(); },
     });
 
     this.addCommand({
