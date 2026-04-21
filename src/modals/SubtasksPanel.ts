@@ -51,14 +51,14 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     const newSub = makeTask({ title: 'New subtask' })
     task.subtasks.push(newSub)
     renderSubtasks()
-    setTimeout(() => {
+    activeWindow.setTimeout(() => {
       const rows = subList.querySelectorAll('.pm-subtask-title')
       const last = rows[rows.length - 1] as HTMLElement
       if (last) {
         last.focus()
-        const range = document.createRange()
+        const range = activeDocument.createRange()
         range.selectNodeContents(last)
-        const sel = window.getSelection()
+        const sel = activeWindow.getSelection()
         if (sel) {
           sel.removeAllRanges()
           sel.addRange(range)

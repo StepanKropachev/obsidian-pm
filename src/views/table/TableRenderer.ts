@@ -168,7 +168,7 @@ export function updateSelectCheckboxes(state: TableState): void {
 // ─── Keyboard handling ──────────────────────────────────────────────────────
 
 export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
-  const active = document.activeElement
+  const active = activeDocument.activeElement
   const isInput =
     active instanceof HTMLInputElement ||
     active instanceof HTMLTextAreaElement ||
@@ -176,7 +176,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
 
   if (e.key === 'Escape') {
     if (isInput) {
-      ;(active as HTMLElement).blur()
+      active.blur()
       return
     }
     if (ctx.state.selectedTaskIds.size > 0) {

@@ -28,7 +28,7 @@ export class NoteLinkSuggest {
 
     this.mirror = createDiv('pm-note-suggest-mirror')
 
-    document.body.appendChild(this.mirror)
+    activeDocument.body.appendChild(this.mirror)
 
     this.textarea.addEventListener('input', this.onInput)
     this.textarea.addEventListener('keydown', this.onKeydown)
@@ -103,7 +103,7 @@ export class NoteLinkSuggest {
 
   private onBlur = (): void => {
     // Delay to allow click on suggestion item
-    setTimeout(() => this.hide(), 150)
+    activeWindow.setTimeout(() => this.hide(), 150)
   }
 
   private onScroll = (): void => {
@@ -174,7 +174,7 @@ export class NoteLinkSuggest {
 
   private position(): void {
     // Sync mirror styles with textarea
-    const style = window.getComputedStyle(this.textarea)
+    const style = activeWindow.getComputedStyle(this.textarea)
     const props = [
       'fontFamily',
       'fontSize',
@@ -205,9 +205,9 @@ export class NoteLinkSuggest {
     // Copy text up to cursor, add a marker span
     const textToCursor = this.textarea.value.slice(0, this.textarea.selectionStart)
     this.mirror.textContent = ''
-    const textNode = document.createTextNode(textToCursor)
+    const textNode = activeDocument.createTextNode(textToCursor)
     this.mirror.appendChild(textNode)
-    const marker = document.createElement('span')
+    const marker = activeDocument.createElement('span')
     marker.textContent = '\u200b' // zero-width space
     this.mirror.appendChild(marker)
 

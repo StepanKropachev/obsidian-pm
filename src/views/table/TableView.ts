@@ -34,8 +34,8 @@ export class TableView implements SubView {
     initialState?: TableViewState
   ) {
     this.state = {
-      sortKey: initialState?.sortKey ?? ('status' as SortKey),
-      sortDir: initialState?.sortDir ?? ('asc' as SortDir),
+      sortKey: initialState?.sortKey ?? 'status',
+      sortDir: initialState?.sortDir ?? 'asc',
       filter: initialState?.filter ?? makeDefaultFilter(),
       selectedTaskId: null,
       selectedTaskIds: new Set(),

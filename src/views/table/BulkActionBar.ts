@@ -168,15 +168,15 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.addSeparator()
     menu.addItem((item) =>
       item.setTitle('Pick date...').onClick(() => {
-        const input = document.createElement('input')
+        const input = activeDocument.createElement('input')
         input.type = 'date'
         input.addClass('pm-offscreen')
-        document.body.appendChild(input)
+        activeDocument.body.appendChild(input)
         input.addEventListener('change', () => {
           if (input.value) onAction({ type: 'set-due-date', due: input.value })
           input.remove()
         })
-        input.addEventListener('blur', () => setTimeout(() => input.remove(), 200))
+        input.addEventListener('blur', () => activeWindow.setTimeout(() => input.remove(), 200))
         input.showPicker()
       })
     )

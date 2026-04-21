@@ -82,8 +82,8 @@ export function attachDragHandle(
     }
 
     const onUp = safeAsync(async () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
+      activeDocument.removeEventListener('mousemove', onMove)
+      activeDocument.removeEventListener('mouseup', onUp)
       activeCleanup = null
       if (!drag.isDragging || !drag.dragTask || !drag.dragBarEl) return
       drag.isDragging = false
@@ -132,11 +132,11 @@ export function attachDragHandle(
       await onRefresh()
     })
 
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
+    activeDocument.addEventListener('mousemove', onMove)
+    activeDocument.addEventListener('mouseup', onUp)
     activeCleanup = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
+      activeDocument.removeEventListener('mousemove', onMove)
+      activeDocument.removeEventListener('mouseup', onUp)
     }
   })
 
@@ -191,8 +191,8 @@ export function attachBarMove(
     }
 
     const onUp = safeAsync(async () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
+      activeDocument.removeEventListener('mousemove', onMove)
+      activeDocument.removeEventListener('mouseup', onUp)
       rect.classList.remove('pm-gantt-bar-grabbing')
       activeCleanup = null
       if (!drag.isDragging || !drag.dragTask || !drag.dragBarEl) return
@@ -241,11 +241,11 @@ export function attachBarMove(
     })
 
     rect.classList.add('pm-gantt-bar-grabbing')
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
+    activeDocument.addEventListener('mousemove', onMove)
+    activeDocument.addEventListener('mouseup', onUp)
     activeCleanup = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
+      activeDocument.removeEventListener('mousemove', onMove)
+      activeDocument.removeEventListener('mouseup', onUp)
     }
   })
 
@@ -288,7 +288,7 @@ function repositionBarChildren(barGroup: SVGGElement, newX: number, newW: number
 
   // Subtask stripe — classless rect with height=3
   for (const el of Array.from(barGroup.children)) {
-    if (el instanceof SVGRectElement && !el.classList.length && el.getAttribute('height') === '3') {
+    if (el.instanceOf(SVGRectElement) && !el.classList.length && el.getAttribute('height') === '3') {
       el.setAttribute('x', String(newX))
       el.setAttribute('width', String(newW))
     }

@@ -31,7 +31,7 @@ export default class PMPlugin extends Plugin {
     this.notifier = new Notifier(this)
 
     // Register the custom view
-    this.registerView(PM_VIEW_TYPE, (leaf) => new ProjectView(leaf, this) as unknown as import('obsidian').View)
+    this.registerView(PM_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
 
     // Open project files in the custom view
     this.registerExtensions([], 'md') // handled via onOpenFile

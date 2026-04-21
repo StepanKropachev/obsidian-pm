@@ -86,8 +86,8 @@ export class ProjectView extends ItemView {
     }
     this.fileModifyRef = this.app.vault.on('modify', (file) => {
       if (!(file instanceof TFile) || !reloadIfRelevant(file.path)) return
-      if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = window.setTimeout(
+      if (this.reloadDebounceTimer !== null) activeWindow.clearTimeout(this.reloadDebounceTimer)
+      this.reloadDebounceTimer = activeWindow.setTimeout(
         safeAsync(async () => {
           this.reloadDebounceTimer = null
           await this.loadProject()
@@ -110,7 +110,7 @@ export class ProjectView extends ItemView {
 
   onClose(): Promise<void> {
     if (this.reloadDebounceTimer !== null) {
-      window.clearTimeout(this.reloadDebounceTimer)
+      activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
     if (this.keydownHandler) {
@@ -280,7 +280,7 @@ export class ProjectView extends ItemView {
 
     // Preserve quick-add focus across re-renders
     const quickAddFocused =
-      document.activeElement instanceof HTMLElement && document.activeElement.matches('.pm-quick-add-input')
+      activeDocument.activeElement instanceof HTMLElement && activeDocument.activeElement.matches('.pm-quick-add-input')
 
     // Save Gantt scroll position and label width before destroying the old view
     let savedGanttScroll: { top: number; anchorDate: Date } | null = null
@@ -335,7 +335,7 @@ export class ProjectView extends ItemView {
     if (!this.filePath) return
     // Cancel any pending file-modify reload — we're handling it here
     if (this.reloadDebounceTimer !== null) {
-      window.clearTimeout(this.reloadDebounceTimer)
+      activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
     const file = this.app.vault.getAbstractFileByPath(this.filePath)

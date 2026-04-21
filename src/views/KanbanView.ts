@@ -234,7 +234,7 @@ export class KanbanView implements SubView {
     card.addEventListener('dragstart', () => {
       this.dragTask = task
       card.addClass('pm-kanban-card--dragging')
-      setTimeout(() => card.addClass('pm-dragging'), 0)
+      activeWindow.setTimeout(() => card.addClass('pm-dragging'), 0)
     })
 
     card.addEventListener('dragend', () => {

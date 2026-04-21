@@ -140,7 +140,7 @@ export class GanttView implements SubView {
       resizing = true
       startX = e.clientX
       startWidth = this.labelWidth
-      document.body.addClass('pm-resize-active')
+      activeDocument.body.addClass('pm-resize-active')
     })
     const onMouseMove = (e: MouseEvent) => {
       if (!resizing) return
@@ -152,13 +152,13 @@ export class GanttView implements SubView {
     const onMouseUp = () => {
       if (!resizing) return
       resizing = false
-      document.body.removeClass('pm-resize-active')
+      activeDocument.body.removeClass('pm-resize-active')
     }
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
+    activeDocument.addEventListener('mousemove', onMouseMove)
+    activeDocument.addEventListener('mouseup', onMouseUp)
     this.cleanupFns.push(() => {
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
+      activeDocument.removeEventListener('mousemove', onMouseMove)
+      activeDocument.removeEventListener('mouseup', onMouseUp)
     })
 
     // Right panel: timeline
@@ -187,8 +187,8 @@ export class GanttView implements SubView {
         void this.plugin.undoLastAction()
       }
     }
-    document.addEventListener('keydown', onKeyDown)
-    this.cleanupFns.push(() => document.removeEventListener('keydown', onKeyDown))
+    activeDocument.addEventListener('keydown', onKeyDown)
+    this.cleanupFns.push(() => activeDocument.removeEventListener('keydown', onKeyDown))
 
     const ctx = this.makeRendererContext()
     renderTimelineHeader(ctx)

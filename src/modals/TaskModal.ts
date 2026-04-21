@@ -164,7 +164,7 @@ export class TaskModal extends Modal {
       descPreview.classList.add('pm-hidden')
       descArea.classList.remove('pm-hidden')
       descArea.value = this.task.description
-      setTimeout(() => {
+      activeWindow.setTimeout(() => {
         autoResize()
         descArea.focus()
       }, 0)
@@ -193,7 +193,7 @@ export class TaskModal extends Modal {
 
     descPreview.addEventListener('click', (e) => {
       const target = e.target as HTMLElement
-      if (target instanceof HTMLInputElement && target.type === 'checkbox') return
+      if (target.instanceOf(HTMLInputElement) && target.type === 'checkbox') return
 
       const link = target.closest('a')
 
@@ -222,7 +222,7 @@ export class TaskModal extends Modal {
       void renderPreview()
     } else {
       descPreview.classList.add('pm-hidden')
-      setTimeout(autoResize, 0)
+      activeWindow.setTimeout(autoResize, 0)
     }
 
     // ── Properties ─────────────────────────────────────────────────────────
