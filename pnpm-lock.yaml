@@ -17,9 +17,15 @@ importers:
       '@types/node':
         specifier: 25.6.0
         version: 25.6.0
+      '@typescript-eslint/parser':
+        specifier: 8.59.0
+        version: 8.59.0(eslint@9.39.4)(typescript@6.0.2)
       builtin-modules:
         specifier: 3.3.0
         version: 3.3.0
+      eslint:
+        specifier: 9.39.4
+        version: 9.39.4
       eslint-plugin-obsidianmd:
         specifier: 0.2.4
         version: 0.2.4(@eslint/js@9.39.4)(@eslint/json@0.14.0)(@typescript-eslint/parser@8.59.0(eslint@9.39.4)(typescript@6.0.2))(eslint@9.39.4)(obsidian@1.12.3(@codemirror/state@6.5.0)(@codemirror/view@6.38.6))(typescript-eslint@8.59.0(eslint@9.39.4)(typescript@6.0.2))
