@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'New plugin version without leading v (e.g. 2.0.0-beta)'
+        description: 'New plugin version (e.g. 2.0.0-beta)'
         required: true
         type: string
       min_app_version:
@@ -35,8 +35,8 @@ jobs:
             exit 1
           fi
           git fetch --tags origin
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "tag v$VERSION already exists" >&2
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "tag $VERSION already exists" >&2
             exit 1
           fi
 
@@ -77,11 +77,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manifest.json versions.json package.json
           git commit -m "bump version to $VERSION"
-          git tag "v$VERSION"
-          git push origin HEAD "v$VERSION"
+          git tag "$VERSION"
+          git push origin HEAD "$VERSION"
 
   release:
     needs: bump
     uses: ./.github/workflows/release.yml
     with:
-      tag: v${{ inputs.version }}
+      tag: ${{ inputs.version }}

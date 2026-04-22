@@ -3,11 +3,11 @@ name: Release Obsidian Plugin
 on:
   push:
     tags:
-      - "v*"
+      - "[0-9]*"
   workflow_call:
     inputs:
       tag:
-        description: 'Tag to release (e.g. v1.4.0)'
+        description: 'Tag to release (e.g. 1.4.0)'
         required: true
         type: string
 
@@ -46,14 +46,13 @@ jobs:
           REF: ${{ steps.resolve.outputs.ref }}
         run: |
           tag="${REF#refs/tags/}"
-          version="${tag#v}"
           manifest_version=$(node -p "require('./manifest.json').version")
-          if [ "$version" != "$manifest_version" ]; then
-            echo "tag version ($version) does not match manifest.json version ($manifest_version)" >&2
+          if [ "$tag" != "$manifest_version" ]; then
+            echo "tag ($tag) does not match manifest.json version ($manifest_version)" >&2
             exit 1
           fi
-          if ! jq -e --arg v "$version" 'has($v)' versions.json > /dev/null; then
-            echo "version $version is missing from versions.json" >&2
+          if ! jq -e --arg v "$tag" 'has($v)' versions.json > /dev/null; then
+            echo "version $tag is missing from versions.json" >&2
             exit 1
           fi
 
