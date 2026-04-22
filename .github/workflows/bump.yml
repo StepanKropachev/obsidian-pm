@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'New plugin version (e.g. 1.4.0)'
+        description: 'New plugin version (e.g. 2.0.0-beta)'
         required: true
         type: string
       min_app_version:
@@ -30,8 +30,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "version '$VERSION' must be x.y.z (obsidian does not support prerelease suffixes)" >&2
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "version '$VERSION' is not valid semver" >&2
             exit 1
           fi
           git fetch --tags origin
