@@ -59,16 +59,6 @@ export function isTaskOverdue(task: Task, statuses: StatusConfig[]): boolean {
   return dueDate < todayMidnight() && !isTerminalStatus(task.status, statuses)
 }
 
-/** Is a task due within `days` days from today? (not overdue, not terminal) */
-export function isTaskDueSoon(task: Task, days: number, statuses: StatusConfig[]): boolean {
-  if (!task.due) return false
-  if (isTerminalStatus(task.status, statuses)) return false
-  const today = todayMidnight()
-  const dueDate = new Date(task.due)
-  dueDate.setHours(0, 0, 0, 0)
-  return dueDate >= today && dueDate.getTime() <= today.getTime() + days * 86400_000
-}
-
 /** Safely convert a custom-field value to a display string.
  *  Arrays are joined with ", "; objects fall back to '' to avoid [object Object]. */
 export function stringifyCustomValue(val: unknown): string {

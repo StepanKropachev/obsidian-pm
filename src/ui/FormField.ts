@@ -42,16 +42,6 @@ export function renderChipList(
 }
 
 /**
- * Render a date input field.
- */
-export function renderDateInput(cls: string, value: string, onChange: (value: string) => void): HTMLInputElement {
-  const input = createEl('input', { type: 'date', cls })
-  input.value = value
-  input.addEventListener('change', () => onChange(input.value))
-  return input
-}
-
-/**
  * Render a progress slider with label.
  */
 export function renderProgressSlider(
