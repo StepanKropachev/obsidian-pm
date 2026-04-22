@@ -3,7 +3,7 @@ name: Release Obsidian Plugin
 on:
   push:
     tags:
-      - "*"
+      - "v*"
 
 permissions:
   contents: write
@@ -21,6 +21,18 @@ jobs:
         with:
           node-version-file: package.json
           cache: pnpm
+
+      - name: Verify tag matches manifest version
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          tag="${REF#refs/tags/}"
+          version="${tag#v}"
+          manifest_version=$(node -p "require('./manifest.json').version")
+          if [ "$version" != "$manifest_version" ]; then
+            echo "tag version ($version) does not match manifest.json version ($manifest_version)" >&2
+            exit 1
+          fi
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
@@ -42,7 +54,12 @@ jobs:
         run: |
           tag="${REF#refs/tags/}"
           id=$(node -p "require('./manifest.json').id")
+          prerelease_flag=""
+          case "$tag" in
+            *-*) prerelease_flag="--prerelease" ;;
+          esac
           gh release create "$tag" \
             --title "$tag" \
             --generate-notes \
-            "${id}-${tag}.zip"
+            $prerelease_flag \
+            main.js manifest.json styles.css "${id}-${tag}.zip"
