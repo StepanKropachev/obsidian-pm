@@ -1,6 +1,7 @@
 import { Task, StatusConfig } from '../types'
 import { flattenTasks } from './TaskTreeOps'
 import { isTerminalStatus } from '../utils'
+import { Temporal } from '../dates'
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -19,15 +20,12 @@ export interface ScheduleResult {
 
 /** Number of calendar days between two YYYY-MM-DD strings. */
 export function daysBetween(a: string, b: string): number {
-  const msPerDay = 86_400_000
-  return Math.round((new Date(b + 'T00:00:00Z').getTime() - new Date(a + 'T00:00:00Z').getTime()) / msPerDay)
+  return Temporal.PlainDate.from(b).since(Temporal.PlainDate.from(a), { largestUnit: 'days' }).days
 }
 
 /** Add `n` days to a YYYY-MM-DD string. */
 export function addDays(date: string, n: number): string {
-  const d = new Date(date + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + n)
-  return d.toISOString().slice(0, 10)
+  return Temporal.PlainDate.from(date).add({ days: n }).toString()
 }
 
 /* ── Cycle detection helper (for dependency-add UI) ───────────── */

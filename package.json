@@ -27,6 +27,7 @@
     "obsidian": "1.12.3",
     "oxfmt": "0.46.0",
     "oxlint": "1.61.0",
+    "temporal-polyfill": "0.3.2",
     "tsdown": "0.21.9",
     "typescript": "6.0.2"
   },

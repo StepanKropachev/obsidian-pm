@@ -1,5 +1,5 @@
 import { COLOR_ACCENT } from './constants'
-import { toIsoDate } from './utils'
+import { today } from './dates'
 
 export type TaskStatus = string
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low'
@@ -165,7 +165,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     type: 'task',
     status: 'todo',
     priority: 'medium',
-    start: toIsoDate(new Date()),
+    start: today().toString(),
     due: '',
     progress: 0,
     assignees: [],
