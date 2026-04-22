@@ -33,8 +33,24 @@ jobs:
             echo "tag version ($version) does not match manifest.json version ($manifest_version)" >&2
             exit 1
           fi
+          if ! jq -e --arg v "$version" 'has($v)' versions.json > /dev/null; then
+            echo "version $version is missing from versions.json" >&2
+            exit 1
+          fi
+
+      - name: Verify release does not already exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ github.ref }}
+        run: |
+          tag="${REF#refs/tags/}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "release $tag already exists; delete it first or bump the version" >&2
+            exit 1
+          fi
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm check
       - run: pnpm build
 
       - name: Package release archive
