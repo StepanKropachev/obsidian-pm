@@ -33,7 +33,7 @@ importers:
         specifier: 8.0.4
         version: 8.0.4
       obsidian:
-        specifier: latest
+        specifier: 1.12.3
         version: 1.12.3(@codemirror/state@6.5.0)(@codemirror/view@6.38.6)
       oxfmt:
         specifier: 0.46.0
