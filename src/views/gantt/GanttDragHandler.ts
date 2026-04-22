@@ -117,11 +117,19 @@ export function attachDragHandle(
         console.error('GanttDragHandler: save failed', err)
         return
       }
+      const redoPatch: Partial<Task> = { ...patch }
       plugin.pushUndo({
         undo: async () => {
           await plugin.store.updateTask(project, taskId, { start: oldStart, due: oldDue })
           if (plugin.settings.autoSchedule) {
             new Notice('Dates reverted. Dependent task dates may need adjustment.')
+          }
+          await onRefresh()
+        },
+        redo: async () => {
+          await plugin.store.updateTask(project, taskId, redoPatch)
+          if (plugin.settings.autoSchedule) {
+            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
           }
           await onRefresh()
         }
@@ -225,11 +233,19 @@ export function attachBarMove(
         console.error('GanttDragHandler: move save failed', err)
         return
       }
+      const redoPatch: Partial<Task> = { ...patch }
       plugin.pushUndo({
         undo: async () => {
           await plugin.store.updateTask(project, taskId, { start: oldStart, due: oldDue })
           if (plugin.settings.autoSchedule) {
             new Notice('Dates reverted. Dependent task dates may need adjustment.')
+          }
+          await onRefresh()
+        },
+        redo: async () => {
+          await plugin.store.updateTask(project, taskId, redoPatch)
+          if (plugin.settings.autoSchedule) {
+            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
           }
           await onRefresh()
         }

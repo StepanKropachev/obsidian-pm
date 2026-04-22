@@ -177,14 +177,29 @@ export class GanttView implements SubView {
     })
     svgContainer.appendChild(this.svgEl)
 
-    // Escape to cancel linking mode; Ctrl/Cmd+Z to undo last drag
+    // Escape to cancel linking mode; Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z
+    // or Ctrl/Cmd+Y to redo the last drag. Only fire when the gantt view's
+    // leaf is the active workspace leaf, so we don't hijack undo/redo while
+    // the user is editing an unrelated note.
+    const isGanttActive = (): boolean => {
+      const leafEl = this.container.closest('.workspace-leaf')
+      return leafEl?.classList.contains('mod-active') ?? false
+    }
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!isGanttActive()) return
       if (e.key === 'Escape' && this.link.active) {
         cancelLink(this.link)
       }
-      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && !this.drag.isDragging) {
+      if (this.drag.isDragging) return
+      const mod = e.ctrlKey || e.metaKey
+      if (!mod) return
+      const key = e.key.toLowerCase()
+      if (key === 'z' && !e.shiftKey) {
         e.preventDefault()
         void this.plugin.undoLastAction()
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault()
+        void this.plugin.redoLastAction()
       }
     }
     activeDocument.addEventListener('keydown', onKeyDown)
