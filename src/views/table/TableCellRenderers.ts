@@ -4,13 +4,13 @@ import { totalLoggedHours } from '../../store/TaskTreeOps'
 import {
   stringToColor,
   formatDateLong,
-  todayMidnight,
   isTaskOverdue,
   getStatusConfig,
   getPriorityConfig,
   safeAsync,
   stringifyCustomValue
 } from '../../utils'
+import { today, parsePlainDate } from '../../dates'
 import { COLOR_ACCENT } from '../../constants'
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge'
 import { openTaskModal } from '../../ui/ModalFactory'
@@ -255,10 +255,9 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
     return
   }
 
-  const dueDate = new Date(task.due)
-  const today = todayMidnight()
+  const due = parsePlainDate(task.due)
   const overdue = isTaskOverdue(task, ctx.plugin.settings.statuses)
-  const isNear = !overdue && dueDate.getTime() - today.getTime() < 3 * 86400_000
+  const isNear = !overdue && due !== null && due.since(today(), { largestUnit: 'days' }).days < 3
 
   const chip = cell.createEl('span', {
     text: formatDateLong(task.due),

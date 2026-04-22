@@ -17,7 +17,8 @@ import {
   renderDependencyArrows,
   renderMilestoneLabels
 } from './GanttRenderer'
-import { svgEl, todayMidnight } from '../../utils'
+import { svgEl } from '../../utils'
+import { Temporal, today } from '../../dates'
 import type { RendererContext } from './GanttRenderer'
 import { renderTaskLabel } from './TaskLabelRenderer'
 
@@ -38,7 +39,7 @@ export class GanttView implements SubView {
     this.labelWidth = w
   }
   private cleanupFns: (() => void)[] = []
-  private pendingScroll: { top: number; anchorDate: Date } | null = null
+  private pendingScroll: { top: number; anchorDate: Temporal.PlainDate } | null = null
 
   constructor(
     private container: HTMLElement,
@@ -54,13 +55,13 @@ export class GanttView implements SubView {
     this.cleanupFns = []
   }
 
-  getScrollPosition(): { top: number; anchorDate: Date } {
+  getScrollPosition(): { top: number; anchorDate: Temporal.PlainDate } {
     const top = this.scrollEl?.scrollTop ?? 0
-    const anchorDate = this.scrollEl ? xToDate(this.cfg, this.scrollEl.scrollLeft) : new Date()
+    const anchorDate = this.scrollEl ? xToDate(this.cfg, this.scrollEl.scrollLeft) : today()
     return { top, anchorDate }
   }
 
-  setPendingScroll(pos: { top: number; anchorDate: Date }): void {
+  setPendingScroll(pos: { top: number; anchorDate: Temporal.PlainDate }): void {
     this.pendingScroll = pos
   }
 
@@ -299,8 +300,7 @@ export class GanttView implements SubView {
 
   private scrollToToday(): void {
     if (!this.scrollEl) return
-    const today = todayMidnight()
-    const x = dateToX(this.cfg, today)
+    const x = dateToX(this.cfg, today())
     const center = x - this.scrollEl.clientWidth / 2
     this.scrollEl.scrollLeft = Math.max(0, center)
   }

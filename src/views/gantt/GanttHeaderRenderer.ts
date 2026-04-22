@@ -1,24 +1,23 @@
 import type { RendererContext } from './GanttRenderer'
 import { HEADER_HEIGHT, dateToX, getWeekNumber } from './TimelineConfig'
 import { svgEl } from '../../utils'
+import { Temporal } from '../../dates'
 
 import type { GanttWeekLabel } from '../../types'
 
 // ─── Week label formatting ────────────────────────────────────────────────
 
-function formatDateRange(weekStart: Date, days: number): string {
-  const end = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + days - 1)
-  const startDay = weekStart.getDate()
-  const endDay = end.getDate()
-  const startMonth = weekStart.toLocaleDateString(undefined, { month: 'short' })
-  if (weekStart.getMonth() === end.getMonth()) {
-    return `${startMonth} ${startDay}\u2013${endDay}`
+function formatDateRange(weekStart: Temporal.PlainDate, days: number): string {
+  const end = weekStart.add({ days: days - 1 })
+  const startMonth = weekStart.toLocaleString(undefined, { month: 'short' })
+  if (weekStart.month === end.month) {
+    return `${startMonth} ${weekStart.day}–${end.day}`
   }
-  const endMonth = end.toLocaleDateString(undefined, { month: 'short' })
-  return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}`
+  const endMonth = end.toLocaleString(undefined, { month: 'short' })
+  return `${startMonth} ${weekStart.day} – ${endMonth} ${end.day}`
 }
 
-function formatWeekLabel(weekStart: Date, days: number, weekNum: number, mode: GanttWeekLabel): string {
+function formatWeekLabel(weekStart: Temporal.PlainDate, days: number, weekNum: number, mode: GanttWeekLabel): string {
   if (mode === 'weekNumber') return `W${weekNum}`
   const range = formatDateRange(weekStart, days)
   if (mode === 'dateRange') return range
@@ -53,9 +52,9 @@ function renderDayHeader(g: SVGGElement, ctx: RendererContext): void {
   const { startDate, totalDays, dayWidth } = ctx.cfg
   renderMonthBands(g, 0, 24, ctx)
   for (let i = 0; i < totalDays; i++) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i)
+    const d = startDate.add({ days: i })
     const x = i * dayWidth
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6
+    const isWeekend = d.dayOfWeek === 6 || d.dayOfWeek === 7
     if (isWeekend) {
       g.appendChild(
         svgEl('rect', {
@@ -73,7 +72,7 @@ function renderDayHeader(g: SVGGElement, ctx: RendererContext): void {
         y: 42,
         class: 'pm-gantt-header-day'
       })
-      text.textContent = String(d.getDate())
+      text.textContent = String(d.day)
       g.appendChild(text)
     }
   }
@@ -84,8 +83,7 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
   renderMonthBands(g, 0, 24, ctx)
 
   // Align to actual Mondays so header ticks match grid lines
-  const dow = startDate.getDay() // 0=Sun … 6=Sat
-  const offsetToMonday = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow
+  const offsetToMonday = startDate.dayOfWeek === 1 ? 0 : 8 - startDate.dayOfWeek
 
   const labelMode = ctx.plugin.settings.ganttWeekLabel
 
@@ -105,7 +103,7 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
   // Full weeks from each Monday
   let i = offsetToMonday
   while (i < totalDays) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i)
+    const d = startDate.add({ days: i })
     const weekNum = getWeekNumber(d)
     const x = i * dayWidth
     const daysInWeek = Math.min(7, totalDays - i)
@@ -131,12 +129,10 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
 }
 
 function renderMonthHeader(g: SVGGElement, ctx: RendererContext): void {
-  const { startDate } = ctx.cfg
   renderYearBands(g, 0, 24, ctx)
-  const date = new Date(startDate)
-  while (date < ctx.cfg.endDate) {
-    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1)
-    const nextMonthStart = new Date(date.getFullYear(), date.getMonth() + 1, 1)
+  let monthStart = ctx.cfg.startDate.with({ day: 1 })
+  while (Temporal.PlainDate.compare(monthStart, ctx.cfg.endDate) < 0) {
+    const nextMonthStart = monthStart.add({ months: 1 })
     const x1 = Math.max(0, dateToX(ctx.cfg, monthStart))
     const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, nextMonthStart))
     const w = x2 - x1
@@ -145,7 +141,7 @@ function renderMonthHeader(g: SVGGElement, ctx: RendererContext): void {
       y: 44,
       class: 'pm-gantt-header-month'
     })
-    text.textContent = monthStart.toLocaleDateString(undefined, { month: 'short' })
+    text.textContent = monthStart.toLocaleString(undefined, { month: 'short' })
     g.appendChild(text)
     g.appendChild(
       svgEl('line', {
@@ -156,17 +152,21 @@ function renderMonthHeader(g: SVGGElement, ctx: RendererContext): void {
         class: 'pm-gantt-header-tick'
       })
     )
-    date.setMonth(date.getMonth() + 1)
+    monthStart = nextMonthStart
   }
 }
 
 function renderQuarterHeader(g: SVGGElement, ctx: RendererContext): void {
-  const { startDate } = ctx.cfg
   renderYearBands(g, 0, 24, ctx)
-  const date = new Date(startDate.getFullYear(), Math.floor(startDate.getMonth() / 3) * 3, 1)
-  while (date < ctx.cfg.endDate) {
-    const q = Math.floor(date.getMonth() / 3) + 1
-    const nextQStart = new Date(date.getFullYear(), date.getMonth() + 3, 1)
+  const { startDate } = ctx.cfg
+  let date = Temporal.PlainDate.from({
+    year: startDate.year,
+    month: Math.floor((startDate.month - 1) / 3) * 3 + 1,
+    day: 1
+  })
+  while (Temporal.PlainDate.compare(date, ctx.cfg.endDate) < 0) {
+    const q = Math.floor((date.month - 1) / 3) + 1
+    const nextQStart = date.add({ months: 3 })
     const x1 = Math.max(0, dateToX(ctx.cfg, date))
     const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, nextQStart))
     const text = svgEl('text', {
@@ -174,17 +174,16 @@ function renderQuarterHeader(g: SVGGElement, ctx: RendererContext): void {
       y: 44,
       class: 'pm-gantt-header-quarter'
     })
-    text.textContent = `Q${q} ${date.getFullYear()}`
+    text.textContent = `Q${q} ${date.year}`
     g.appendChild(text)
-    date.setMonth(date.getMonth() + 3)
+    date = nextQStart
   }
 }
 
 function renderMonthBands(g: SVGGElement, y: number, h: number, ctx: RendererContext): void {
-  const date = new Date(ctx.cfg.startDate)
-  while (date < ctx.cfg.endDate) {
-    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1)
-    const nextMonthStart = new Date(date.getFullYear(), date.getMonth() + 1, 1)
+  let monthStart = ctx.cfg.startDate.with({ day: 1 })
+  while (Temporal.PlainDate.compare(monthStart, ctx.cfg.endDate) < 0) {
+    const nextMonthStart = monthStart.add({ months: 1 })
     const x1 = Math.max(0, dateToX(ctx.cfg, monthStart))
     const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, nextMonthStart))
     const w = x2 - x1
@@ -194,7 +193,7 @@ function renderMonthBands(g: SVGGElement, y: number, h: number, ctx: RendererCon
         y,
         width: w,
         height: h,
-        class: date.getMonth() % 2 === 0 ? 'pm-gantt-band-even' : 'pm-gantt-band-odd'
+        class: (monthStart.month - 1) % 2 === 0 ? 'pm-gantt-band-even' : 'pm-gantt-band-odd'
       })
     )
     const text = svgEl('text', {
@@ -202,16 +201,16 @@ function renderMonthBands(g: SVGGElement, y: number, h: number, ctx: RendererCon
       y: y + h - 6,
       class: 'pm-gantt-header-month-top'
     })
-    text.textContent = monthStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+    text.textContent = monthStart.toLocaleString(undefined, { month: 'short', year: '2-digit' })
     g.appendChild(text)
-    date.setMonth(date.getMonth() + 1)
+    monthStart = nextMonthStart
   }
 }
 
 function renderYearBands(g: SVGGElement, y: number, h: number, ctx: RendererContext): void {
-  const date = new Date(ctx.cfg.startDate.getFullYear(), 0, 1)
-  while (date < ctx.cfg.endDate) {
-    const yearEnd = new Date(date.getFullYear() + 1, 0, 1)
+  let date = Temporal.PlainDate.from({ year: ctx.cfg.startDate.year, month: 1, day: 1 })
+  while (Temporal.PlainDate.compare(date, ctx.cfg.endDate) < 0) {
+    const yearEnd = date.add({ years: 1 })
     const x1 = Math.max(0, dateToX(ctx.cfg, date))
     const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, yearEnd))
     g.appendChild(
@@ -220,7 +219,7 @@ function renderYearBands(g: SVGGElement, y: number, h: number, ctx: RendererCont
         y,
         width: x2 - x1,
         height: h,
-        class: date.getFullYear() % 2 === 0 ? 'pm-gantt-band-even' : 'pm-gantt-band-odd'
+        class: date.year % 2 === 0 ? 'pm-gantt-band-even' : 'pm-gantt-band-odd'
       })
     )
     const text = svgEl('text', {
@@ -228,8 +227,8 @@ function renderYearBands(g: SVGGElement, y: number, h: number, ctx: RendererCont
       y: y + h - 6,
       class: 'pm-gantt-header-year'
     })
-    text.textContent = String(date.getFullYear())
+    text.textContent = String(date.year)
     g.appendChild(text)
-    date.setFullYear(date.getFullYear() + 1)
+    date = yearEnd
   }
 }

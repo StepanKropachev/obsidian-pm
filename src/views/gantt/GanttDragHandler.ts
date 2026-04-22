@@ -3,7 +3,7 @@ import type PMPlugin from '../../main'
 import type { Project, Task } from '../../types'
 import { safeAsync } from '../../utils'
 import type { TimelineCfg } from './TimelineConfig'
-import { xToDate, dateToIso, getSnapPoints, snapX } from './TimelineConfig'
+import { xToDate, getSnapPoints, snapX } from './TimelineConfig'
 
 export interface DragState {
   isDragging: boolean
@@ -101,11 +101,9 @@ export function attachDragHandle(
 
       const patch: Partial<Task> = {}
       if (drag.dragSide === 'left') {
-        patch.start = dateToIso(xToDate(cfg, snappedX))
+        patch.start = xToDate(cfg, snappedX).toString()
       } else {
-        const endD = xToDate(cfg, snappedRight)
-        endD.setDate(endD.getDate() - 1)
-        patch.due = dateToIso(endD)
+        patch.due = xToDate(cfg, snappedRight).subtract({ days: 1 }).toString()
       }
       try {
         await plugin.store.updateTask(project, taskId, patch)
@@ -218,12 +216,11 @@ export function attachBarMove(
       const snappedRight = snapX(snappedX + drag.dragInitialW, snapPoints, snapThreshold)
 
       const newStart = xToDate(cfg, snappedX)
-      const newEnd = xToDate(cfg, snappedRight)
-      newEnd.setDate(newEnd.getDate() - 1)
+      const newEnd = xToDate(cfg, snappedRight).subtract({ days: 1 })
 
       const patch: Partial<Task> = {
-        start: dateToIso(newStart),
-        due: dateToIso(newEnd)
+        start: newStart.toString(),
+        due: newEnd.toString()
       }
       try {
         await plugin.store.updateTask(project, taskId, patch)

@@ -23,16 +23,6 @@ export function formatDateLong(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
 }
 
-/**
- * Today at local midnight as a JS Date. Use only for Gantt pixel math;
- * domain code should prefer `today()` from ./dates (Temporal.PlainDate).
- */
-export function todayMidnight(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 /** Is a status marked as terminal (complete) in the config? */
 export function isTerminalStatus(status: string, statuses: StatusConfig[]): boolean {
   const cfg = statuses.find((s) => s.id === status)

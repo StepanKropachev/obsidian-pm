@@ -3,7 +3,8 @@ import type { Project } from '../../types'
 import type { FlatTask } from '../../store/TaskTreeOps'
 import type { TimelineCfg } from './TimelineConfig'
 import { ROW_HEIGHT, HEADER_HEIGHT, dateToX } from './TimelineConfig'
-import { svgEl, todayMidnight } from '../../utils'
+import { svgEl } from '../../utils'
+import { today } from '../../dates'
 import type { DragState } from './GanttDragHandler'
 import type { LinkState } from './GanttLinkHandler'
 
@@ -31,11 +32,11 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
   const { startDate, totalDays, dayWidth, granularity } = ctx.cfg
 
   for (let i = 0; i < totalDays; i++) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i)
+    const d = startDate.add({ days: i })
     const x = i * dayWidth
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6
-    const isMonday = d.getDay() === 1
-    const isFirst = d.getDate() === 1
+    const isWeekend = d.dayOfWeek === 6 || d.dayOfWeek === 7
+    const isMonday = d.dayOfWeek === 1
+    const isFirst = d.day === 1
 
     if (isWeekend && granularity === 'day') {
       g.appendChild(
@@ -53,7 +54,7 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
       (granularity === 'day' && isMonday) ||
       (granularity === 'week' && isMonday) ||
       (granularity === 'month' && isFirst) ||
-      (granularity === 'quarter' && isFirst && d.getMonth() % 3 === 0)
+      (granularity === 'quarter' && isFirst && (d.month - 1) % 3 === 0)
 
     if (shouldDrawLine) {
       g.appendChild(
@@ -87,8 +88,7 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
 // ─── Today line ────────────────────────────────────────────────────────────
 
 export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
-  const today = todayMidnight()
-  const x = dateToX(ctx.cfg, today)
+  const x = dateToX(ctx.cfg, today())
   if (x < 0 || x > ctx.cfg.totalWidth) return
 
   const g = svgEl('g', { class: 'pm-gantt-today-group' })
