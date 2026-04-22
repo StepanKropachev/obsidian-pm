@@ -1,4 +1,4 @@
-import builtins from 'builtin-modules'
+import { builtinModules } from 'node:module'
 import { defineConfig } from 'tsdown'
 
 const prod = Boolean(process.env['PRODUCTION'])
@@ -30,7 +30,7 @@ export default defineConfig({
       '@lezer/common',
       '@lezer/highlight',
       '@lezer/lr',
-      ...builtins
+      ...builtinModules
     ]
   }
 })
