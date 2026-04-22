@@ -3,7 +3,7 @@ import type { Project } from '../../types'
 import type { FlatTask } from '../../store/TaskTreeOps'
 import type { TimelineCfg } from './TimelineConfig'
 import { ROW_HEIGHT, HEADER_HEIGHT, dateToX } from './TimelineConfig'
-import { svgEl } from '../../utils'
+import { svgEl, todayMidnight } from '../../utils'
 import type { DragState } from './GanttDragHandler'
 import type { LinkState } from './GanttLinkHandler'
 
@@ -87,8 +87,7 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
 // ─── Today line ────────────────────────────────────────────────────────────
 
 export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = todayMidnight()
   const x = dateToX(ctx.cfg, today)
   if (x < 0 || x > ctx.cfg.totalWidth) return
 

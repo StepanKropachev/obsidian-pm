@@ -1,5 +1,6 @@
 import type { Task, GanttGranularity } from '../../types'
 import { flattenTasks } from '../../store/TaskTreeOps'
+import { todayMidnight } from '../../utils'
 
 export const DAY_MS = 86400_000
 export const ROW_HEIGHT = 44
@@ -33,8 +34,7 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
     if (t.due) dates.push(new Date(t.due))
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = todayMidnight()
   dates.push(today)
 
   let startDate = dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : today

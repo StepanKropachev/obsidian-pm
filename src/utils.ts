@@ -29,6 +29,12 @@ export function todayMidnight(): Date {
   return d
 }
 
+// TODO: formats in UTC, so "today" rolls over in the evening for users
+// west of UTC. Switch to local-time assembly (getFullYear/getMonth/getDate).
+export function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
 /** Is a status marked as terminal (complete) in the config? */
 export function isTerminalStatus(status: string, statuses: StatusConfig[]): boolean {
   const cfg = statuses.find((s) => s.id === status)
