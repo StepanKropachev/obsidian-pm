@@ -2,7 +2,7 @@
   "id": "project-manager",
   "name": "Project Manager",
   "version": "1.3.2",
-  "minAppVersion": "1.4.0",
+  "minAppVersion": "1.7.2",
   "description": "Full-featured project management: stunning Gantt charts, Kanban boards, Table views, customizable fields, due date notifications.",
   "author": "Stepan Kropachev",
   "authorUrl": "https://github.com/StepanKropachev",

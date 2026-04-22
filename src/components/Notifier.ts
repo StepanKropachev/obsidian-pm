@@ -1,73 +1,73 @@
-import { Notice } from 'obsidian';
-import type PMPlugin from '../main';
-import type { Project } from '../types';
-import { flattenTasks } from '../store/TaskTreeOps';
-import { isTerminalStatus } from '../utils';
+import { Notice } from 'obsidian'
+import type PMPlugin from '../main'
+import type { Project } from '../types'
+import { flattenTasks } from '../store/TaskTreeOps'
+import { isTerminalStatus } from '../utils'
 
-const CHECK_INTERVAL_MS = 60 * 60 * 1000; // check every hour
+const CHECK_INTERVAL_MS = 60 * 60 * 1000 // check every hour
 
 export class Notifier {
-  private intervalId: number | null = null;
-  private notifiedIds = new Set<string>(); // prevent repeat notifications within session
+  private intervalId: number | null = null
+  private notifiedIds = new Set<string>() // prevent repeat notifications within session
 
   constructor(private plugin: PMPlugin) {}
 
   start(): void {
-    void this.check();
-    this.intervalId = window.setInterval(() => { void this.check(); }, CHECK_INTERVAL_MS);
-    this.plugin.registerInterval(this.intervalId);
+    void this.check()
+    this.intervalId = activeWindow.setInterval(() => {
+      void this.check()
+    }, CHECK_INTERVAL_MS)
+    this.plugin.registerInterval(this.intervalId)
   }
 
   stop(): void {
     if (this.intervalId !== null) {
-      window.clearInterval(this.intervalId);
-      this.intervalId = null;
+      activeWindow.clearInterval(this.intervalId)
+      this.intervalId = null
     }
   }
 
   async check(): Promise<void> {
-    if (!this.plugin.settings.notificationsEnabled) return;
+    if (!this.plugin.settings.notificationsEnabled) return
 
-    const leadDays = this.plugin.settings.notificationLeadDays;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const thresholdMs = today.getTime() + leadDays * 86400_000;
+    const leadDays = this.plugin.settings.notificationLeadDays
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const thresholdMs = today.getTime() + leadDays * 86400_000
 
-    let projects: Project[];
+    let projects: Project[]
     try {
-      projects = await this.plugin.store.loadAllProjects(this.plugin.settings.projectsFolder);
+      projects = await this.plugin.store.loadAllProjects(this.plugin.settings.projectsFolder)
     } catch {
-      return;
+      return
     }
 
     for (const project of projects) {
-      const flat = flattenTasks(project.tasks);
+      const flat = flattenTasks(project.tasks)
       for (const { task } of flat) {
-        if (!task.due) continue;
-        if (isTerminalStatus(task.status, this.plugin.settings.statuses)) continue;
+        if (!task.due) continue
+        if (isTerminalStatus(task.status, this.plugin.settings.statuses)) continue
 
-        const dueDate = new Date(task.due);
-        dueDate.setHours(0, 0, 0, 0);
+        const dueDate = new Date(task.due)
+        dueDate.setHours(0, 0, 0, 0)
 
-        const isOverdue = dueDate < today;
-        const isDueSoon = dueDate.getTime() <= thresholdMs && dueDate >= today;
+        const isOverdue = dueDate < today
+        const isDueSoon = dueDate.getTime() <= thresholdMs && dueDate >= today
 
-        const notifKey = `${task.id}-${task.due}`;
+        const notifKey = `${task.id}-${task.due}`
 
         if (isOverdue && !this.notifiedIds.has(notifKey + '-overdue')) {
-          this.notifiedIds.add(notifKey + '-overdue');
-          const daysAgo = Math.round((today.getTime() - dueDate.getTime()) / 86400_000);
-          new Notice(
-            `⚠️ Overdue: "${task.title}" in ${project.title} was due ${daysAgo}d ago`,
-            8000,
-          );
+          this.notifiedIds.add(notifKey + '-overdue')
+          const daysAgo = Math.round((today.getTime() - dueDate.getTime()) / 86400_000)
+          new Notice(`⚠️ Overdue: "${task.title}" in ${project.title} was due ${daysAgo}d ago`, 8000)
         } else if (isDueSoon && !this.notifiedIds.has(notifKey + '-soon')) {
-          this.notifiedIds.add(notifKey + '-soon');
-          const daysLeft = Math.round((dueDate.getTime() - today.getTime()) / 86400_000);
-          const msg = daysLeft === 0
-            ? `📅 Due today: "${task.title}" in ${project.title}`
-            : `📅 Due in ${daysLeft}d: "${task.title}" in ${project.title}`;
-          new Notice(msg, 6000);
+          this.notifiedIds.add(notifKey + '-soon')
+          const daysLeft = Math.round((dueDate.getTime() - today.getTime()) / 86400_000)
+          const msg =
+            daysLeft === 0
+              ? `📅 Due today: "${task.title}" in ${project.title}`
+              : `📅 Due in ${daysLeft}d: "${task.title}" in ${project.title}`
+          new Notice(msg, 6000)
         }
       }
     }
