@@ -1,7 +1,7 @@
 import { Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { findTask, flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
-import { formatBadgeText } from '../../utils'
+import { formatBadgeText, toIsoDate } from '../../utils'
 import { promptText } from '../../ui/ModalFactory'
 import { TaskPickerModal } from '../../modals/PickerModals'
 import type { TableContext } from './TableRenderer'
@@ -141,29 +141,30 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   dueBtn.addEventListener('click', (e) => {
     const menu = new Menu()
     const today = new Date()
-    const fmt = (d: Date) => d.toISOString().slice(0, 10)
     const addDays = (days: number) => {
       const d = new Date(today)
       d.setDate(d.getDate() + days)
       return d
     }
     menu.addItem((item) =>
-      item.setTitle(`Today (${fmt(today)})`).onClick(() => onAction({ type: 'set-due-date', due: fmt(today) }))
+      item
+        .setTitle(`Today (${toIsoDate(today)})`)
+        .onClick(() => onAction({ type: 'set-due-date', due: toIsoDate(today) }))
     )
     menu.addItem((item) =>
       item
-        .setTitle(`Tomorrow (${fmt(addDays(1))})`)
-        .onClick(() => onAction({ type: 'set-due-date', due: fmt(addDays(1)) }))
+        .setTitle(`Tomorrow (${toIsoDate(addDays(1))})`)
+        .onClick(() => onAction({ type: 'set-due-date', due: toIsoDate(addDays(1)) }))
     )
     menu.addItem((item) =>
       item
-        .setTitle(`In 1 week (${fmt(addDays(7))})`)
-        .onClick(() => onAction({ type: 'set-due-date', due: fmt(addDays(7)) }))
+        .setTitle(`In 1 week (${toIsoDate(addDays(7))})`)
+        .onClick(() => onAction({ type: 'set-due-date', due: toIsoDate(addDays(7)) }))
     )
     menu.addItem((item) =>
       item
-        .setTitle(`In 2 weeks (${fmt(addDays(14))})`)
-        .onClick(() => onAction({ type: 'set-due-date', due: fmt(addDays(14)) }))
+        .setTitle(`In 2 weeks (${toIsoDate(addDays(14))})`)
+        .onClick(() => onAction({ type: 'set-due-date', due: toIsoDate(addDays(14)) }))
     )
     menu.addSeparator()
     menu.addItem((item) =>

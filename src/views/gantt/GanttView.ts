@@ -17,7 +17,7 @@ import {
   renderDependencyArrows,
   renderMilestoneLabels
 } from './GanttRenderer'
-import { svgEl } from '../../utils'
+import { svgEl, todayMidnight } from '../../utils'
 import type { RendererContext } from './GanttRenderer'
 import { renderTaskLabel } from './TaskLabelRenderer'
 
@@ -299,8 +299,7 @@ export class GanttView implements SubView {
 
   private scrollToToday(): void {
     if (!this.scrollEl) return
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = todayMidnight()
     const x = dateToX(this.cfg, today)
     const center = x - this.scrollEl.clientWidth / 2
     this.scrollEl.scrollLeft = Math.max(0, center)

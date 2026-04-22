@@ -29,6 +29,12 @@ export function todayMidnight(): Date {
   return d
 }
 
+// TODO: formats in UTC, so "today" rolls over in the evening for users
+// west of UTC. Switch to local-time assembly (getFullYear/getMonth/getDate).
+export function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
 /** Is a status marked as terminal (complete) in the config? */
 export function isTerminalStatus(status: string, statuses: StatusConfig[]): boolean {
   const cfg = statuses.find((s) => s.id === status)
@@ -57,16 +63,6 @@ export function isTaskOverdue(task: Task, statuses: StatusConfig[]): boolean {
   if (!task.due) return false
   const dueDate = new Date(task.due)
   return dueDate < todayMidnight() && !isTerminalStatus(task.status, statuses)
-}
-
-/** Is a task due within `days` days from today? (not overdue, not terminal) */
-export function isTaskDueSoon(task: Task, days: number, statuses: StatusConfig[]): boolean {
-  if (!task.due) return false
-  if (isTerminalStatus(task.status, statuses)) return false
-  const today = todayMidnight()
-  const dueDate = new Date(task.due)
-  dueDate.setHours(0, 0, 0, 0)
-  return dueDate >= today && dueDate.getTime() <= today.getTime() + days * 86400_000
 }
 
 /** Safely convert a custom-field value to a display string.

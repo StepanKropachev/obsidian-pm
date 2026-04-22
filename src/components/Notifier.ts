@@ -2,7 +2,7 @@ import { Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
-import { isTerminalStatus } from '../utils'
+import { isTerminalStatus, todayMidnight } from '../utils'
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // check every hour
 
@@ -31,8 +31,7 @@ export class Notifier {
     if (!this.plugin.settings.notificationsEnabled) return
 
     const leadDays = this.plugin.settings.notificationLeadDays
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = todayMidnight()
     const thresholdMs = today.getTime() + leadDays * 86400_000
 
     let projects: Project[]
