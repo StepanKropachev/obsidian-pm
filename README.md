@@ -172,7 +172,7 @@ If you want to contribute, please follow these rules:
 
 1. **Open an Issue first:** Do not submit a Pull Request for new features, architecture changes, or major refactoring without discussing it in an issue first. Uncoordinated PRs will be closed.
 2. **No AI-generated bulk code:** I do not accept massive, AI-generated PRs. Code must be human-readable, minimalistic, and match the existing project style.
-3. **Pass the CI:** Make sure your code passes all strict type checks and linters. Run `npm run typecheck` and `npm run lint` locally before pushing.
+3. **Pass the CI:** Make sure your code passes all strict type checks and linters. Run `pnpm check` and `pnpm check:submission` locally before pushing.
 4. **Keep it small:** PRs should be strictly focused on a single issue. 
 
 Bug fixes and thoroughly discussed features are always welcome!
