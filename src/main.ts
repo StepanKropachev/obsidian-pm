@@ -15,6 +15,7 @@ export default class PMPlugin extends Plugin {
   notifier!: Notifier
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
   redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
+  private _openingProjectFile: string | null = null
 
   pushUndo(entry: { undo: () => Promise<void>; redo: () => Promise<void> }): void {
     this.undoStack.push(entry)
@@ -182,20 +183,25 @@ export default class PMPlugin extends Plugin {
   }
 
   async openProjectFile(file: TFile): Promise<void> {
-    // Check if already open
-    for (const leaf of this.app.workspace.getLeavesOfType(PM_VIEW_TYPE)) {
-      const view = leaf.view as unknown as ProjectView
-      if (view.filePath === file.path) {
-        await this.app.workspace.revealLeaf(leaf)
-        return
+    if (this._openingProjectFile === file.path) return
+    this._openingProjectFile = file.path
+    try {
+      for (const leaf of this.app.workspace.getLeavesOfType(PM_VIEW_TYPE)) {
+        const view = leaf.view as unknown as ProjectView
+        if (view.filePath === file.path) {
+          await this.app.workspace.revealLeaf(leaf)
+          return
+        }
       }
+      const leaf = this.app.workspace.getLeaf('tab')
+      await leaf.setViewState({
+        type: PM_VIEW_TYPE,
+        state: { filePath: file.path }
+      })
+      await this.app.workspace.revealLeaf(leaf)
+    } finally {
+      this._openingProjectFile = null
     }
-    const leaf = this.app.workspace.getLeaf('tab')
-    await leaf.setViewState({
-      type: PM_VIEW_TYPE,
-      state: { filePath: file.path }
-    })
-    await this.app.workspace.revealLeaf(leaf)
   }
 
   showNotice(msg: string, duration = 3000): void {
