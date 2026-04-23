@@ -9,6 +9,7 @@ export {
   deleteTaskFromTree,
   addTaskToTree,
   moveTaskInTree,
+  cloneTaskSubtree,
   totalLoggedHours,
   filterArchived,
   filterDone,

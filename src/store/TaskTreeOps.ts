@@ -1,4 +1,5 @@
 import type { Task, StatusConfig } from '../types'
+import { makeId } from '../types'
 import { isTerminalStatus } from '../utils'
 
 /** Flatten a task tree into a list, preserving depth info */
@@ -69,6 +70,47 @@ export function addTaskToTree(tasks: Task[], newTask: Task, parentId: string | n
   const parent = findTask(tasks, parentId)
   if (parent) parent.subtasks.push(newTask)
   else tasks.push(newTask)
+}
+
+/**
+ * Deep-clone a task subtree with fresh ids, timestamps, and no file paths.
+ * When includeSubtasks is false, the clone has no children and its dependencies
+ * are copied verbatim (they still point at originals in the project).
+ * When includeSubtasks is true, the whole subtree is cloned and dependencies
+ * that target another node within the subtree are remapped to the new ids;
+ * dependencies pointing outside the subtree are preserved as-is.
+ */
+export function cloneTaskSubtree(source: Task, includeSubtasks: boolean): Task {
+  const idMap = new Map<string, string>()
+  const clone = cloneNode(source, includeSubtasks, idMap)
+  if (includeSubtasks) remapDeps(clone, idMap)
+  return clone
+}
+
+function cloneNode(source: Task, includeSubtasks: boolean, idMap: Map<string, string>): Task {
+  const now = new Date().toISOString()
+  const newId = makeId()
+  idMap.set(source.id, newId)
+  return {
+    ...source,
+    id: newId,
+    filePath: undefined,
+    createdAt: now,
+    updatedAt: now,
+    collapsed: false,
+    subtasks: includeSubtasks ? source.subtasks.map((s) => cloneNode(s, true, idMap)) : [],
+    dependencies: [...source.dependencies],
+    assignees: [...source.assignees],
+    tags: [...source.tags],
+    customFields: { ...source.customFields },
+    timeLogs: source.timeLogs ? source.timeLogs.map((l) => ({ ...l })) : undefined,
+    recurrence: source.recurrence ? { ...source.recurrence } : undefined
+  }
+}
+
+function remapDeps(task: Task, idMap: Map<string, string>): void {
+  task.dependencies = task.dependencies.map((id) => idMap.get(id) ?? id)
+  for (const sub of task.subtasks) remapDeps(sub, idMap)
 }
 
 /** Move a task before or after another task in the tree (same level) */
