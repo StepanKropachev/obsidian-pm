@@ -1,7 +1,7 @@
 import type { Task, FilterState, TaskPriority, DueDateFilter, StatusConfig } from '../../types'
 import type { FlatTask } from '../../store/TaskTreeOps'
 import type { TableState } from './TableRenderer'
-import { isTerminalStatus, statusSortOrder } from '../../utils'
+import { isTerminalStatus, statusSortOrder, todayMidnight } from '../../utils'
 
 export function isFilterActive(filter: FilterState): boolean {
   return !!(
@@ -43,8 +43,7 @@ export function applyFilters(flat: FlatTask[], filter: FilterState, statuses: St
 }
 
 function matchDueDateFilter(task: Task, filter: DueDateFilter, statuses: StatusConfig[] = []): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = todayMidnight()
 
   switch (filter) {
     case 'no-date':

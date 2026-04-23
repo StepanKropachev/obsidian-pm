@@ -90,8 +90,7 @@ export default class PMPlugin extends Plugin {
       callback: () => {
         openProjectModal(this, {
           onSave: async (project) => {
-            const file = this.app.vault.getAbstractFileByPath(project.filePath)
-            if (file instanceof TFile) await this.openProjectFile(file)
+            await this.openProjectByPath(project.filePath)
           }
         })
       }
@@ -205,6 +204,11 @@ export default class PMPlugin extends Plugin {
     }
   }
 
+  async openProjectByPath(path: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(path)
+    if (file instanceof TFile) await this.openProjectFile(file)
+  }
+
   showNotice(msg: string, duration = 3000): void {
     new Notice(msg, duration)
   }
@@ -242,10 +246,7 @@ export default class PMPlugin extends Plugin {
       parentId,
       onSave: async () => {
         await this.store.saveProject(project)
-        const pFile = this.app.vault.getAbstractFileByPath(project.filePath)
-        if (pFile instanceof TFile) {
-          await this.openProjectFile(pFile)
-        }
+        await this.openProjectByPath(project.filePath)
       }
     })
   }
@@ -267,10 +268,7 @@ export default class PMPlugin extends Plugin {
     if (activeProject) {
       const project = activeProject
       const onImportComplete = async () => {
-        const pFile = this.app.vault.getAbstractFileByPath(project.filePath)
-        if (pFile instanceof TFile) {
-          await this.openProjectFile(pFile)
-        }
+        await this.openProjectByPath(project.filePath)
       }
       openImportModal(this, activeProject, onImportComplete)
       return
@@ -285,10 +283,7 @@ export default class PMPlugin extends Plugin {
 
     openProjectPicker(this, projects, (project) => {
       const onImportComplete = async () => {
-        const pFile = this.app.vault.getAbstractFileByPath(project.filePath)
-        if (pFile instanceof TFile) {
-          await this.openProjectFile(pFile)
-        }
+        await this.openProjectByPath(project.filePath)
       }
       openImportModal(this, project, onImportComplete)
     })

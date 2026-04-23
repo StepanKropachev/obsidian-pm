@@ -1,5 +1,6 @@
 import type { Task } from '../types'
 import { totalLoggedHours } from '../store/TaskTreeOps'
+import { toIsoDate } from '../utils'
 
 /**
  * Renders the time tracking section (estimate, progress bar, log entries)
@@ -81,7 +82,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   addLogBtn.addEventListener('click', () => {
     if (!task.timeLogs) task.timeLogs = []
     task.timeLogs.push({
-      date: new Date().toISOString().slice(0, 10),
+      date: toIsoDate(new Date()),
       hours: 0,
       note: ''
     })

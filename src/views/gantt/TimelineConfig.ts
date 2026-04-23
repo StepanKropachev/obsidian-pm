@@ -1,5 +1,6 @@
 import type { Task, GanttGranularity } from '../../types'
 import { flattenTasks } from '../../store/TaskTreeOps'
+import { todayMidnight } from '../../utils'
 
 export const DAY_MS = 86400_000
 export const ROW_HEIGHT = 44
@@ -33,8 +34,7 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
     if (t.due) dates.push(new Date(t.due))
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = todayMidnight()
   dates.push(today)
 
   let startDate = dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : today
@@ -150,20 +150,4 @@ export function getWeekNumber(d: Date): number {
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-export function lighten(hex: string, amount: number): string {
-  return adjustColor(hex, amount)
-}
-
-export function darken(hex: string, amount: number): string {
-  return adjustColor(hex, -amount)
-}
-
-function adjustColor(hex: string, amount: number): string {
-  const num = parseInt(hex.replace('#', ''), 16)
-  const r = Math.min(255, Math.max(0, Math.round(((num >> 16) & 0xff) + 255 * amount)))
-  const g = Math.min(255, Math.max(0, Math.round(((num >> 8) & 0xff) + 255 * amount)))
-  const b = Math.min(255, Math.max(0, Math.round((num & 0xff) + 255 * amount)))
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
