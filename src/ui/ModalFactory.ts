@@ -18,6 +18,17 @@ export function confirmDialog(app: App, message: string, confirmLabel = 'Delete'
 }
 
 /**
+ * Asks the user whether to duplicate a task with or without its subtasks.
+ * Resolves to the chosen mode, or null if cancelled.
+ */
+export function confirmDuplicateSubtasks(app: App, taskTitle: string): Promise<'with-subtasks' | 'task-only' | null> {
+  return new Promise((resolve) => {
+    const modal = new DuplicateSubtasksModal(app, taskTitle, resolve)
+    modal.open()
+  })
+}
+
+/**
  * Opens an Obsidian-native text input prompt.
  * Returns the trimmed string, or null if cancelled/empty.
  */
@@ -141,6 +152,59 @@ class ConfirmModal extends Modal {
 
   onClose(): void {
     this.finish(false)
+    this.contentEl.empty()
+  }
+}
+
+class DuplicateSubtasksModal extends Modal {
+  private resolved = false
+
+  constructor(
+    app: App,
+    private taskTitle: string,
+    private resolve: (value: 'with-subtasks' | 'task-only' | null) => void
+  ) {
+    super(app)
+  }
+
+  private finish(value: 'with-subtasks' | 'task-only' | null): void {
+    if (this.resolved) return
+    this.resolved = true
+    this.resolve(value)
+  }
+
+  onOpen(): void {
+    const { contentEl } = this
+    this.modalEl.addClass('pm-confirm-modal')
+
+    contentEl.createEl('p', {
+      text: `Duplicate "${this.taskTitle}" with its subtasks?`,
+      cls: 'pm-confirm-text'
+    })
+
+    const btnRow = contentEl.createDiv('pm-modal-btn-row')
+
+    const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' })
+    cancelBtn.addEventListener('click', () => {
+      this.finish(null)
+      this.close()
+    })
+
+    const taskOnlyBtn = btnRow.createEl('button', { text: 'Task only' })
+    taskOnlyBtn.addEventListener('click', () => {
+      this.finish('task-only')
+      this.close()
+    })
+
+    const withSubtasksBtn = btnRow.createEl('button', { text: 'With subtasks', cls: 'mod-cta' })
+    withSubtasksBtn.addEventListener('click', () => {
+      this.finish('with-subtasks')
+      this.close()
+    })
+  }
+
+  onClose(): void {
+    this.finish(null)
     this.contentEl.empty()
   }
 }

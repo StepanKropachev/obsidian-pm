@@ -1,7 +1,15 @@
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { Project, Task, StatusConfig } from '../types'
 import { makeProject, makeTask } from '../types'
-import { updateTaskInTree, deleteTaskFromTree, addTaskToTree, findTask } from './TaskTreeOps'
+import {
+  updateTaskInTree,
+  deleteTaskFromTree,
+  addTaskToTree,
+  findTask,
+  flattenTasks,
+  moveTaskInTree,
+  cloneTaskSubtree
+} from './TaskTreeOps'
 import { computeSchedule } from './Scheduler'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { parseFrontmatter, FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
@@ -281,6 +289,18 @@ export class ProjectStore {
   async insertTask(project: Project, task: Task, parentId: string | null = null): Promise<void> {
     addTaskToTree(project.tasks, task, parentId)
     await this.saveProject(project)
+  }
+
+  async duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null> {
+    const source = findTask(project.tasks, sourceId)
+    if (!source) return null
+    const copy = cloneTaskSubtree(source, includeSubtasks)
+    copy.title = `${source.title} (copy)`
+    const parentId = flattenTasks(project.tasks).find((f) => f.task.id === sourceId)?.parentId ?? null
+    addTaskToTree(project.tasks, copy, parentId)
+    moveTaskInTree(project.tasks, copy.id, sourceId, 'after')
+    await this.saveProject(project)
+    return copy
   }
 
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {
