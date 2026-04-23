@@ -2,7 +2,8 @@ import { Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
-import { isTerminalStatus, todayMidnight } from '../utils'
+import { isTerminalStatus } from '../utils'
+import { Temporal, today, parsePlainDate } from '../dates'
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // check every hour
 
@@ -31,8 +32,8 @@ export class Notifier {
     if (!this.plugin.settings.notificationsEnabled) return
 
     const leadDays = this.plugin.settings.notificationLeadDays
-    const today = todayMidnight()
-    const thresholdMs = today.getTime() + leadDays * 86400_000
+    const now = today()
+    const threshold = now.add({ days: leadDays })
 
     let projects: Project[]
     try {
@@ -44,24 +45,23 @@ export class Notifier {
     for (const project of projects) {
       const flat = flattenTasks(project.tasks)
       for (const { task } of flat) {
-        if (!task.due) continue
+        const due = parsePlainDate(task.due)
+        if (!due) continue
         if (isTerminalStatus(task.status, this.plugin.settings.statuses)) continue
 
-        const dueDate = new Date(task.due)
-        dueDate.setHours(0, 0, 0, 0)
-
-        const isOverdue = dueDate < today
-        const isDueSoon = dueDate.getTime() <= thresholdMs && dueDate >= today
+        const cmpToToday = Temporal.PlainDate.compare(due, now)
+        const isOverdue = cmpToToday < 0
+        const isDueSoon = cmpToToday >= 0 && Temporal.PlainDate.compare(due, threshold) <= 0
 
         const notifKey = `${task.id}-${task.due}`
 
         if (isOverdue && !this.notifiedIds.has(notifKey + '-overdue')) {
           this.notifiedIds.add(notifKey + '-overdue')
-          const daysAgo = Math.round((today.getTime() - dueDate.getTime()) / 86400_000)
+          const daysAgo = now.since(due, { largestUnit: 'days' }).days
           new Notice(`⚠️ Overdue: "${task.title}" in ${project.title} was due ${daysAgo}d ago`, 8000)
         } else if (isDueSoon && !this.notifiedIds.has(notifKey + '-soon')) {
           this.notifiedIds.add(notifKey + '-soon')
-          const daysLeft = Math.round((dueDate.getTime() - today.getTime()) / 86400_000)
+          const daysLeft = due.since(now, { largestUnit: 'days' }).days
           const msg =
             daysLeft === 0
               ? `📅 Due today: "${task.title}" in ${project.title}`

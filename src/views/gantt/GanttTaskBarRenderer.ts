@@ -4,15 +4,14 @@ import { flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOp
 import { openTaskModal } from '../../ui/ModalFactory'
 import { COLOR_ACCENT } from '../../constants'
 import { svgEl, getStatusConfig, safeAsync } from '../../utils'
+import { parsePlainDate } from '../../dates'
 import {
-  DAY_MS,
   ROW_HEIGHT,
   HEADER_HEIGHT,
   BAR_PADDING,
   BAR_BORDER_RADIUS,
   dateToX,
   xToDate,
-  dateToIso,
   getSnapPoints,
   snapX
 } from './TimelineConfig'
@@ -23,8 +22,8 @@ import type { RendererContext } from './GanttRenderer'
 // ─── Task bars ─────────────────────────────────────────────────────────────
 
 export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: number, ctx: RendererContext): void {
-  const startDate = task.start ? new Date(task.start) : null
-  const endDate = task.due ? new Date(task.due) : null
+  const startDate = parsePlainDate(task.start)
+  const endDate = parsePlainDate(task.due)
   if (!startDate && !endDate) {
     renderEmptyRowClickTarget(g, task, row, ctx)
     return
@@ -53,9 +52,10 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     return
   }
 
-  // Normal task bar
+  // Normal task bar. A task with end date E occupies the day E, so the bar
+  // right edge sits at the start of E+1.
   const effectiveStart = startDate ?? endDate!
-  const effectiveEnd = endDate ? new Date(endDate.getTime() + DAY_MS) : new Date(effectiveStart.getTime() + DAY_MS)
+  const effectiveEnd = (endDate ?? effectiveStart).add({ days: 1 })
 
   const x = Math.max(0, dateToX(ctx.cfg, effectiveStart))
   const xEnd = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, effectiveEnd))
@@ -284,8 +284,7 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
       const svgRect = ctx.svgEl.getBoundingClientRect()
       const rawX = e.clientX - svgRect.left
       const snapped = snapX(rawX, snapPoints, snapThreshold)
-      const date = xToDate(ctx.cfg, snapped)
-      const iso = dateToIso(date)
+      const iso = xToDate(ctx.cfg, snapped).toString()
 
       try {
         await ctx.plugin.store.updateTask(ctx.project, task.id, { start: iso, due: iso })
@@ -310,7 +309,7 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
 // ─── Milestone diamond ────────────────────────────────────────────────────
 
 function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: string, ctx: RendererContext): void {
-  const date = task.due ? new Date(task.due) : task.start ? new Date(task.start) : null
+  const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
   if (!date) return
 
   const cx = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2
@@ -346,7 +345,8 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
   const labelsG = svgEl('g', { class: 'pm-gantt-milestone-labels' })
 
   for (const { task } of milestones) {
-    const date = task.due ? new Date(task.due) : new Date(task.start)
+    const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
+    if (!date) continue
     const x = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2
     const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
     const color = statusConfig?.color ?? COLOR_ACCENT
@@ -403,15 +403,17 @@ export function renderDependencyArrows(ctx: RendererContext): void {
     const toRow = indexMap.get(task.id)
     if (toRow === undefined) continue
     const toY = HEADER_HEIGHT + toRow * ROW_HEIGHT + ROW_HEIGHT / 2
-    const toX = task.start ? dateToX(ctx.cfg, new Date(task.start)) : -1
-    if (toX < 0) continue
+    const taskStart = parsePlainDate(task.start)
+    if (!taskStart) continue
+    const toX = dateToX(ctx.cfg, taskStart)
 
     for (const depId of task.dependencies) {
       const fromRow = indexMap.get(depId)
       if (fromRow === undefined) continue
       const depTask = allFlat.find((f) => f.task.id === depId)?.task
-      if (!depTask?.due) continue
-      const fromX = dateToX(ctx.cfg, new Date(new Date(depTask.due).getTime() + DAY_MS))
+      const depDue = depTask ? parsePlainDate(depTask.due) : null
+      if (!depDue) continue
+      const fromX = dateToX(ctx.cfg, depDue.add({ days: 1 }))
       const fromY = HEADER_HEIGHT + fromRow * ROW_HEIGHT + ROW_HEIGHT / 2
 
       const midX = (fromX + toX) / 2

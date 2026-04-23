@@ -1,8 +1,7 @@
 import type { Task, GanttGranularity } from '../../types'
 import { flattenTasks } from '../../store/TaskTreeOps'
-import { todayMidnight } from '../../utils'
+import { Temporal, today, parsePlainDate } from '../../dates'
 
-export const DAY_MS = 86400_000
 export const ROW_HEIGHT = 44
 export const HEADER_HEIGHT = 56
 export const LABEL_WIDTH = 280
@@ -17,56 +16,57 @@ export const DAY_WIDTH: Record<GanttGranularity, number> = {
 }
 
 export interface TimelineCfg {
-  startDate: Date
-  endDate: Date
+  startDate: Temporal.PlainDate
+  endDate: Temporal.PlainDate
   dayWidth: number
   granularity: GanttGranularity
   totalDays: number
   totalWidth: number
 }
 
+const MIN_DAYS: Record<GanttGranularity, number> = {
+  day: 30,
+  week: 90,
+  month: 365,
+  quarter: 365
+}
+
 export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity): TimelineCfg {
   const allTasks = flattenTasks(tasks).map((f) => f.task)
-  const dates: Date[] = []
+  const dates: Temporal.PlainDate[] = []
 
   for (const t of allTasks) {
-    if (t.start) dates.push(new Date(t.start))
-    if (t.due) dates.push(new Date(t.due))
+    const start = parsePlainDate(t.start)
+    const due = parsePlainDate(t.due)
+    if (start) dates.push(start)
+    if (due) dates.push(due)
   }
 
-  const today = todayMidnight()
-  dates.push(today)
+  const now = today()
+  dates.push(now)
 
-  let startDate = dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : today
-  let endDate = dates.length
-    ? new Date(Math.max(...dates.map((d) => d.getTime())))
-    : new Date(today.getTime() + 30 * DAY_MS)
+  let startDate = dates.reduce((min, d) => (Temporal.PlainDate.compare(d, min) < 0 ? d : min), dates[0])
+  let endDate = dates.reduce((max, d) => (Temporal.PlainDate.compare(d, max) > 0 ? d : max), dates[0])
 
   // Add padding
-  startDate = new Date(startDate.getTime() - 7 * DAY_MS)
-  endDate = new Date(endDate.getTime() + 14 * DAY_MS)
+  startDate = startDate.subtract({ days: 7 })
+  endDate = endDate.add({ days: 14 })
 
   // Enforce minimum visible range based on granularity
-  const minDays: Record<GanttGranularity, number> = {
-    day: 30,
-    week: 90,
-    month: 365,
-    quarter: 365
-  }
-  const currentSpan = (endDate.getTime() - startDate.getTime()) / DAY_MS
-  if (currentSpan < minDays[granularity]) {
-    const extra = (minDays[granularity] - currentSpan) / 2
-    startDate = new Date(startDate.getTime() - extra * DAY_MS)
-    endDate = new Date(endDate.getTime() + extra * DAY_MS)
+  const currentSpan = endDate.since(startDate, { largestUnit: 'days' }).days
+  if (currentSpan < MIN_DAYS[granularity]) {
+    const extra = Math.ceil((MIN_DAYS[granularity] - currentSpan) / 2)
+    startDate = startDate.subtract({ days: extra })
+    endDate = endDate.add({ days: extra })
   }
 
   // Snap to month start for cleaner headers
   if (granularity === 'week' || granularity === 'month' || granularity === 'quarter') {
-    startDate.setDate(1)
+    startDate = startDate.with({ day: 1 })
   }
 
   const dayWidth = DAY_WIDTH[granularity]
-  const totalDays = calendarDayDiff(startDate, endDate)
+  const totalDays = endDate.since(startDate, { largestUnit: 'days' }).days
   return {
     startDate,
     endDate,
@@ -77,27 +77,12 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
   }
 }
 
-/** Calendar-day difference, DST-safe (uses UTC noon to dodge transitions). */
-function calendarDayDiff(from: Date, to: Date): number {
-  const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate(), 12)
-  const b = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate(), 12)
-  return Math.round((b - a) / DAY_MS)
+export function dateToX(cfg: TimelineCfg, date: Temporal.PlainDate): number {
+  return date.since(cfg.startDate, { largestUnit: 'days' }).days * cfg.dayWidth
 }
 
-export function dateToX(cfg: TimelineCfg, date: Date): number {
-  return calendarDayDiff(cfg.startDate, date) * cfg.dayWidth
-}
-
-export function xToDate(cfg: TimelineCfg, x: number): Date {
-  const days = Math.round(x / cfg.dayWidth)
-  return new Date(cfg.startDate.getFullYear(), cfg.startDate.getMonth(), cfg.startDate.getDate() + days)
-}
-
-export function dateToIso(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+export function xToDate(cfg: TimelineCfg, x: number): Temporal.PlainDate {
+  return cfg.startDate.add({ days: Math.round(x / cfg.dayWidth) })
 }
 
 /**
@@ -112,19 +97,18 @@ export function getSnapPoints(cfg: TimelineCfg): number[] {
   const { startDate, totalDays, dayWidth, granularity } = cfg
 
   for (let i = 0; i <= totalDays; i++) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i)
+    const d = startDate.add({ days: i })
     const x = i * dayWidth
 
     if (granularity === 'day') {
       points.push(x)
     } else if (granularity === 'week') {
-      const dow = d.getDay()
-      if (dow === 1 || dow === 4) points.push(x) // Monday, Thursday
+      // Temporal dayOfWeek: Mon=1..Sun=7
+      if (d.dayOfWeek === 1 || d.dayOfWeek === 4) points.push(x)
     } else if (granularity === 'month') {
-      const day = d.getDate()
-      if (day === 1 || day === 8 || day === 15 || day === 22) points.push(x)
+      if (d.day === 1 || d.day === 8 || d.day === 15 || d.day === 22) points.push(x)
     } else if (granularity === 'quarter') {
-      if (d.getDate() === 1) points.push(x)
+      if (d.day === 1) points.push(x)
     }
   }
   return points
@@ -145,9 +129,6 @@ export function snapX(x: number, snapPoints: number[], threshold: number): numbe
   return minDist <= threshold ? closest : x
 }
 
-export function getWeekNumber(d: Date): number {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+export function getWeekNumber(d: Temporal.PlainDate): number {
+  return d.weekOfYear ?? 0
 }

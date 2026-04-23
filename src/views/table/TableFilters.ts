@@ -1,7 +1,8 @@
 import type { Task, FilterState, TaskPriority, DueDateFilter, StatusConfig } from '../../types'
 import type { FlatTask } from '../../store/TaskTreeOps'
 import type { TableState } from './TableRenderer'
-import { isTerminalStatus, statusSortOrder, todayMidnight } from '../../utils'
+import { isTerminalStatus, statusSortOrder } from '../../utils'
+import { Temporal, today, parsePlainDate } from '../../dates'
 
 export function isFilterActive(filter: FilterState): boolean {
   return !!(
@@ -43,29 +44,23 @@ export function applyFilters(flat: FlatTask[], filter: FilterState, statuses: St
 }
 
 function matchDueDateFilter(task: Task, filter: DueDateFilter, statuses: StatusConfig[] = []): boolean {
-  const today = todayMidnight()
+  if (filter === 'no-date') return !task.due
+  const due = parsePlainDate(task.due)
+  if (!due) return false
+  const now = today()
 
   switch (filter) {
-    case 'no-date':
-      return !task.due
-    case 'overdue': {
-      if (!task.due) return false
-      const d = new Date(task.due)
-      return d < today && !isTerminalStatus(task.status, statuses)
-    }
+    case 'overdue':
+      return Temporal.PlainDate.compare(due, now) < 0 && !isTerminalStatus(task.status, statuses)
     case 'this-week': {
-      if (!task.due) return false
-      const d = new Date(task.due)
-      const endOfWeek = new Date(today)
-      const dayOfWeek = today.getDay()
-      endOfWeek.setDate(today.getDate() + (7 - dayOfWeek))
-      return d >= today && d <= endOfWeek
+      // Preserve pre-Temporal behavior: the original used JS getDay (Sunday=0..Saturday=6)
+      // and added `7 - dayOfWeek` days, so the window ran from today through the upcoming Sunday.
+      const daysToEnd = 7 - (now.dayOfWeek % 7) // Temporal dayOfWeek: Mon=1..Sun=7
+      const endOfWeek = now.add({ days: daysToEnd })
+      return Temporal.PlainDate.compare(due, now) >= 0 && Temporal.PlainDate.compare(due, endOfWeek) <= 0
     }
-    case 'this-month': {
-      if (!task.due) return false
-      const d = new Date(task.due)
-      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear() && d >= today
-    }
+    case 'this-month':
+      return due.year === now.year && due.month === now.month && Temporal.PlainDate.compare(due, now) >= 0
     default:
       return true
   }

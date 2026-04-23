@@ -1,5 +1,6 @@
 import { Notice } from 'obsidian'
 import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
+import { today, parsePlainDate, Temporal } from './dates'
 
 /** Deterministic HSL color from a string (e.g. assignee name) */
 export function stringToColor(s: string): string {
@@ -20,19 +21,6 @@ export function formatDateLong(iso: string): string {
   if (!iso) return ''
   const d = new Date(iso)
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
-}
-
-/** Today at midnight (00:00:00.000) */
-export function todayMidnight(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-// TODO: formats in UTC, so "today" rolls over in the evening for users
-// west of UTC. Switch to local-time assembly (getFullYear/getMonth/getDate).
-export function toIsoDate(d: Date): string {
-  return d.toISOString().slice(0, 10)
 }
 
 /** Is a status marked as terminal (complete) in the config? */
@@ -60,9 +48,9 @@ export function statusSortOrder(status: string, statuses: StatusConfig[]): numbe
 
 /** Is a task overdue? (past due, not in a terminal status) */
 export function isTaskOverdue(task: Task, statuses: StatusConfig[]): boolean {
-  if (!task.due) return false
-  const dueDate = new Date(task.due)
-  return dueDate < todayMidnight() && !isTerminalStatus(task.status, statuses)
+  const due = parsePlainDate(task.due)
+  if (!due) return false
+  return Temporal.PlainDate.compare(due, today()) < 0 && !isTerminalStatus(task.status, statuses)
 }
 
 /** Safely convert a custom-field value to a display string.
