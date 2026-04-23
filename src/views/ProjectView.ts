@@ -8,13 +8,11 @@ import type { TableViewState } from './table/TableView'
 import { GanttView } from './gantt/GanttView'
 import { KanbanView } from './KanbanView'
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
-import { renderProjectListToolbar, renderProjectListContent } from './ProjectListRenderer'
-import type { ProjectListContext } from './ProjectListRenderer'
 
-export const PM_VIEW_TYPE = 'pm-project-view'
+export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
-interface ViewState {
-  filePath?: string
+interface ProjectViewState {
+  filePath: string
   [key: string]: unknown
 }
 
@@ -30,7 +28,6 @@ export class ProjectView extends ItemView {
   private titleEl2!: HTMLElement
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private fileModifyRef: EventRef | null = null
-  private renderToken = 0
   private reloadDebounceTimer: number | null = null
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
@@ -41,43 +38,45 @@ export class ProjectView extends ItemView {
   }
 
   getViewType(): string {
-    return PM_VIEW_TYPE
+    return PM_PROJECT_VIEW_TYPE
   }
   getDisplayText(): string {
-    return truncateTitle(this.project?.title ?? 'PM', 10)
+    return truncateTitle(this.project?.title ?? 'Project', 10)
   }
   getIcon(): string {
     return 'chart-gantt'
   }
 
-  async setState(state: ViewState, result: unknown): Promise<void> {
-    if (state.filePath) {
+  async setState(state: ProjectViewState, result: unknown): Promise<void> {
+    if (state.filePath && state.filePath !== this.filePath) {
       this.filePath = state.filePath
       await this.loadProject()
     }
     await super.setState(state, result as import('obsidian').ViewStateResult)
   }
 
-  getState(): ViewState {
+  getState(): ProjectViewState {
     return { filePath: this.filePath }
   }
 
   async onOpen(): Promise<void> {
     this.containerEl.addClass('pm-view')
-    this.buildSkeleton()
+    const root = this.contentEl
+    root.empty()
+    root.addClass('pm-root')
+    this.toolbarEl = root.createDiv('pm-toolbar')
+    this.contentEl2 = root.createDiv('pm-content')
+
     if (this.filePath) await this.loadProject()
-    else this.renderProjectList()
 
     this.keydownHandler = (e: KeyboardEvent) => {
       this.subview?.handleKeyDown?.(e)
     }
     this.containerEl.addEventListener('keydown', this.keydownHandler)
-    // Make container focusable so it receives keyboard events
     if (!this.containerEl.hasAttribute('tabindex')) {
       this.containerEl.setAttribute('tabindex', '-1')
     }
 
-    // Watch for task file modifications/deletions to keep the view in sync
     const reloadIfRelevant = (filePath: string) => {
       if (!this.project || !this.filePath) return false
       const taskFolder = this.filePath.replace(/\.md$/, '_tasks')
@@ -122,65 +121,34 @@ export class ProjectView extends ItemView {
     return Promise.resolve()
   }
 
-  // ─── Skeleton ──────────────────────────────────────────────────────────────
-
-  private buildSkeleton(): void {
-    const root = this.contentEl
-    root.empty()
-    root.addClass('pm-root')
-
-    // Toolbar
-    this.toolbarEl = root.createDiv('pm-toolbar')
-
-    // Content area
-    this.contentEl2 = root.createDiv('pm-content')
-  }
-
-  // ─── Project list (when no file is open) ───────────────────────────────────
-
-  private getProjectListCtx(): ProjectListContext {
-    const token = ++this.renderToken
-    return {
-      plugin: this.plugin,
-      toolbarEl: this.toolbarEl,
-      contentEl: this.contentEl2,
-      isStale: () => token !== this.renderToken,
-      openProjectFile: (file: TFile) => this.plugin.openProjectFile(file)
-    }
-  }
-
-  private renderProjectList(): void {
-    const ctx = this.getProjectListCtx()
-    renderProjectListToolbar(ctx)
-    this.contentEl2.empty()
-    this.contentEl2.addClass('pm-project-list-container')
-    void renderProjectListContent(ctx)
-  }
-
-  // ─── Project view ──────────────────────────────────────────────────────────
-
   private async loadProject(): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(this.filePath)
     if (!(file instanceof TFile)) {
-      this.renderProjectList()
+      this.renderMissingProject()
       return
     }
     this.project = await this.plugin.store.loadProject(file)
     if (!this.project) {
-      this.renderProjectList()
+      this.renderMissingProject()
       return
     }
-    // Update tab header text and icon after project loads
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()
     this.renderCurrentView()
+  }
+
+  private renderMissingProject(): void {
+    this.toolbarEl.empty()
+    this.contentEl2.empty()
+    const msg = this.contentEl2.createDiv('pm-empty-state')
+    msg.createEl('h3', { text: 'Project not found' })
+    msg.createEl('p', { text: `No project at ${this.filePath}. It may have been deleted or renamed.` })
   }
 
   private renderProjectToolbar(): void {
     if (!this.project) return
     this.toolbarEl.empty()
 
-    // Left: icon, title, description
     const left = this.toolbarEl.createDiv('pm-toolbar-left')
     const iconEl = left.createEl('span', {
       text: this.project.icon,
@@ -208,7 +176,6 @@ export class ProjectView extends ItemView {
       })
     )
 
-    // Center: view switcher
     const switcher = this.toolbarEl.createDiv('pm-view-switcher')
     const views: { mode: ViewMode; icon: string; label: string }[] = [
       { mode: 'table', icon: '≡', label: 'Table' },
@@ -231,7 +198,6 @@ export class ProjectView extends ItemView {
       })
     }
 
-    // Right: actions
     const right = this.toolbarEl.createDiv('pm-toolbar-right')
     const addBtn = right.createEl('button', { text: '+ add task', cls: 'pm-btn pm-btn-primary' })
     addBtn.addEventListener('click', () => {
@@ -275,13 +241,10 @@ export class ProjectView extends ItemView {
 
   private renderCurrentView(): void {
     if (!this.project) return
-    this.renderToken++ // cancel any in-flight project list render
 
-    // Preserve quick-add focus across re-renders
     const quickAddFocused =
       activeDocument.activeElement instanceof HTMLElement && activeDocument.activeElement.matches('.pm-quick-add-input')
 
-    // Save Gantt scroll position and label width before destroying the old view
     let savedGanttScroll: ReturnType<GanttView['getScrollPosition']> | null = null
     let savedGanttLabelWidth: number | null = null
     if (this.currentView === 'gantt' && this.subview instanceof GanttView) {
@@ -289,7 +252,6 @@ export class ProjectView extends ItemView {
       savedGanttLabelWidth = this.subview.getLabelWidth()
     }
 
-    // Save TableView filter/sort state so it survives project reloads
     if (this.subview instanceof TableView) {
       this.savedTableViewState = this.subview.getViewState()
     } else if (this.currentView !== 'table') {
@@ -323,7 +285,6 @@ export class ProjectView extends ItemView {
     }
     this.subview?.render()
 
-    // Restore quick-add focus after re-render
     if (quickAddFocused) {
       const newInput = this.contentEl2.querySelector('.pm-quick-add-input') as HTMLInputElement
       if (newInput) newInput.focus()
@@ -332,7 +293,6 @@ export class ProjectView extends ItemView {
 
   async refreshProject(): Promise<void> {
     if (!this.filePath) return
-    // Cancel any pending file-modify reload — we're handling it here
     if (this.reloadDebounceTimer !== null) {
       activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null

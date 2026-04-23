@@ -1,9 +1,11 @@
-import { Plugin, TFile, Notice } from 'obsidian'
+import { MarkdownView, Plugin, Notice } from 'obsidian'
 import { DEFAULT_SETTINGS, PMSettings, Project } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
 import { ProjectStore } from './store'
 import { PMSettingTab } from './settings'
-import { ProjectView, PM_VIEW_TYPE } from './views/ProjectView'
+import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
+import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
+import { PMViewRouter } from './views/PMViewRouter'
 import { openProjectModal, openTaskModal, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
 import { migrateProjects } from './migration'
@@ -13,9 +15,9 @@ export default class PMPlugin extends Plugin {
   settings: PMSettings = { ...DEFAULT_SETTINGS }
   store!: ProjectStore
   notifier!: Notifier
+  router!: PMViewRouter
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
   redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
-  private _openingProjectFile: string | null = null
 
   pushUndo(entry: { undo: () => Promise<void>; redo: () => Promise<void> }): void {
     this.undoStack.push(entry)
@@ -43,44 +45,26 @@ export default class PMPlugin extends Plugin {
     await this.loadSettings()
     this.store = new ProjectStore(this.app, () => this.settings.statuses)
     this.notifier = new Notifier(this)
+    this.router = new PMViewRouter(this)
 
-    // Register the custom view
-    this.registerView(PM_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
+    this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
+    this.registerView(PM_DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this))
 
-    // Open project files in the custom view
-    this.registerExtensions([], 'md') // handled via onOpenFile
     this.app.workspace.onLayoutReady(
       safeAsync(async () => {
-        // Run migration for old-format projects
         await migrateProjects(this)
-
-        this.registerEvent(
-          this.app.workspace.on(
-            'file-open',
-            safeAsync(async (file: TFile | null) => {
-              if (!file) return
-              const cache = this.app.metadataCache.getFileCache(file)
-              const fm = cache?.frontmatter
-              if (fm?.['pm-project'] === true) {
-                await this.openProjectFile(file)
-              }
-            })
-          )
-        )
       })
     )
 
-    // Ribbon icon
     this.addRibbonIcon('chart-gantt', 'Project manager', async () => {
-      await this.openProjectsPane()
+      await this.router.openDashboard()
     })
 
-    // Commands
     this.addCommand({
       id: 'open-projects',
       name: 'Open projects pane',
       callback: () => {
-        void this.openProjectsPane()
+        void this.router.openDashboard()
       }
     })
 
@@ -90,7 +74,7 @@ export default class PMPlugin extends Plugin {
       callback: () => {
         openProjectModal(this, {
           onSave: async (project) => {
-            await this.openProjectByPath(project.filePath)
+            await this.router.openProjectByPath(project.filePath)
           }
         })
       }
@@ -136,10 +120,22 @@ export default class PMPlugin extends Plugin {
       }
     })
 
-    // Settings tab
-    this.addSettingTab(new PMSettingTab(this.app, this))
+    this.addCommand({
+      id: 'open-current-as-project',
+      name: 'Open current file as project',
+      checkCallback: (checking: boolean) => {
+        const md = this.app.workspace.getActiveViewOfType(MarkdownView)
+        const file = md?.file
+        if (!file) return false
+        const cache = this.app.metadataCache.getFileCache(file)
+        if (cache?.frontmatter?.['pm-project'] !== true) return false
+        if (checking) return true
+        void md.leaf.setViewState({ type: PM_PROJECT_VIEW_TYPE, state: { filePath: file.path } })
+        return true
+      }
+    })
 
-    // Start notifier
+    this.addSettingTab(new PMSettingTab(this.app, this))
     this.notifier.start()
   }
 
@@ -150,11 +146,9 @@ export default class PMPlugin extends Plugin {
   async loadSettings(): Promise<void> {
     const saved = (await this.loadData()) as Partial<PMSettings> | null
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {})
-    // Merge nested arrays carefully
     if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
 
-    // Migrate pre-v1.3 statuses: add `complete` flag if missing
     let migrated = false
     for (const s of this.settings.statuses) {
       if (s.complete === undefined) {
@@ -167,46 +161,6 @@ export default class PMPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings)
-  }
-
-  async openProjectsPane(): Promise<void> {
-    const existing = this.app.workspace
-      .getLeavesOfType(PM_VIEW_TYPE)
-      .find((leaf) => (leaf.view as unknown as ProjectView).filePath === '')
-    if (existing) {
-      await this.app.workspace.revealLeaf(existing)
-      return
-    }
-    const leaf = this.app.workspace.getLeaf('tab')
-    await leaf.setViewState({ type: PM_VIEW_TYPE, state: {} })
-    await this.app.workspace.revealLeaf(leaf)
-  }
-
-  async openProjectFile(file: TFile): Promise<void> {
-    if (this._openingProjectFile === file.path) return
-    this._openingProjectFile = file.path
-    try {
-      for (const leaf of this.app.workspace.getLeavesOfType(PM_VIEW_TYPE)) {
-        const view = leaf.view as unknown as ProjectView
-        if (view.filePath === file.path) {
-          await this.app.workspace.revealLeaf(leaf)
-          return
-        }
-      }
-      const leaf = this.app.workspace.getLeaf('tab')
-      await leaf.setViewState({
-        type: PM_VIEW_TYPE,
-        state: { filePath: file.path }
-      })
-      await this.app.workspace.revealLeaf(leaf)
-    } finally {
-      this._openingProjectFile = null
-    }
-  }
-
-  async openProjectByPath(path: string): Promise<void> {
-    const file = this.app.vault.getAbstractFileByPath(path)
-    if (file instanceof TFile) await this.openProjectFile(file)
   }
 
   showNotice(msg: string, duration = 3000): void {
@@ -222,7 +176,6 @@ export default class PMPlugin extends Plugin {
     }
     openProjectPicker(this, projects, (project) => {
       if (mode === 'pick-parent') {
-        // Pick a parent task
         const flat = flattenTasks(project.tasks)
         if (!flat.length) {
           this.showNotice('No tasks in this project. Create a task first.')
@@ -246,35 +199,32 @@ export default class PMPlugin extends Plugin {
       parentId,
       onSave: async () => {
         await this.store.saveProject(project)
-        await this.openProjectByPath(project.filePath)
+        await this.router.openProjectByPath(project.filePath)
       }
     })
   }
 
   private async importNotes(): Promise<void> {
-    // Try to find an active project view with a project
-    const activeLeaves = this.app.workspace.getLeavesOfType(PM_VIEW_TYPE)
+    const activeLeaves = this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)
     let activeProject: Project | null = null
 
     for (const leaf of activeLeaves) {
-      const view = leaf.view as unknown as ProjectView
-      if (view.project) {
-        activeProject = view.project
+      if (!(leaf.view instanceof ProjectView)) continue
+      if (leaf.view.project) {
+        activeProject = leaf.view.project
         break
       }
     }
 
-    // If a project is open, use it directly
     if (activeProject) {
       const project = activeProject
       const onImportComplete = async () => {
-        await this.openProjectByPath(project.filePath)
+        await this.router.openProjectByPath(project.filePath)
       }
       openImportModal(this, activeProject, onImportComplete)
       return
     }
 
-    // Otherwise, show project picker first
     const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
     if (!projects.length) {
       this.showNotice('No projects yet. Create a project first.')
@@ -283,7 +233,7 @@ export default class PMPlugin extends Plugin {
 
     openProjectPicker(this, projects, (project) => {
       const onImportComplete = async () => {
-        await this.openProjectByPath(project.filePath)
+        await this.router.openProjectByPath(project.filePath)
       }
       openImportModal(this, project, onImportComplete)
     })
