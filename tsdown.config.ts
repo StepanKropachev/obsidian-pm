@@ -2,12 +2,14 @@ import { builtinModules } from 'node:module'
 import { defineConfig } from 'tsdown'
 
 const prod = Boolean(process.env['PRODUCTION'])
+const vaultPath = process.env['VAULT_PATH']
+const outDir = vaultPath ? `${vaultPath}/.obsidian/plugins/project-manager` : '.'
 
 export default defineConfig({
   entry: 'src/main.ts',
   format: 'cjs',
   target: 'es2022',
-  outDir: '.',
+  outDir,
   platform: 'node',
   dts: false,
   minify: prod,
