@@ -171,14 +171,15 @@ export default class PMPlugin extends Plugin {
   }
 
   async openProjectsPane(): Promise<void> {
-    // Open or reveal a project list view in the left sidebar
-    const existing = this.app.workspace.getLeavesOfType(PM_VIEW_TYPE + '-list')
-    if (existing.length) {
-      await this.app.workspace.revealLeaf(existing[0])
+    const existing = this.app.workspace
+      .getLeavesOfType(PM_VIEW_TYPE)
+      .find((leaf) => (leaf.view as unknown as ProjectView).filePath === '')
+    if (existing) {
+      await this.app.workspace.revealLeaf(existing)
       return
     }
     const leaf = this.app.workspace.getLeaf('tab')
-    await leaf.setViewState({ type: PM_VIEW_TYPE, state: { mode: 'list' } })
+    await leaf.setViewState({ type: PM_VIEW_TYPE, state: {} })
     await this.app.workspace.revealLeaf(leaf)
   }
 

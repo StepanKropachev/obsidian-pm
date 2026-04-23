@@ -15,7 +15,6 @@ export const PM_VIEW_TYPE = 'pm-project-view'
 
 interface ViewState {
   filePath?: string
-  mode?: 'list'
   [key: string]: unknown
 }
 
