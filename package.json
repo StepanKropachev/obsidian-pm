@@ -14,13 +14,17 @@
     "check:types": "tsc -noEmit -skipLibCheck",
     "fix": "run-p fix:**",
     "fix:code": "oxlint --fix ./src",
-    "fix:format": "oxfmt ./src"
+    "fix:format": "oxfmt ./src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@2bad/axiom": "2.0.0",
     "@2bad/tsconfig": "3.0.2",
     "@types/node": "25.6.0",
     "@typescript-eslint/parser": "8.59.0",
+    "@vitest/coverage-v8": "4.1.5",
     "eslint": "9.39.4",
     "eslint-plugin-obsidianmd": "0.2.4",
     "npm-run-all2": "8.0.4",
@@ -29,7 +33,10 @@
     "oxlint": "1.61.0",
     "temporal-polyfill": "0.3.2",
     "tsdown": "0.21.9",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.5",
+    "yaml": "2.8.3"
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {
