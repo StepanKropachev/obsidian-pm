@@ -24,7 +24,7 @@ export class ProjectView extends ItemView {
   private subview: SubView | null = null
   private savedTableViewState: TableViewState | null = null
   private toolbarEl!: HTMLElement
-  private contentEl2!: HTMLElement
+  private bodyEl!: HTMLElement
   private titleEl2!: HTMLElement
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private fileModifyRef: EventRef | null = null
@@ -65,7 +65,7 @@ export class ProjectView extends ItemView {
     root.empty()
     root.addClass('pm-root')
     this.toolbarEl = root.createDiv('pm-toolbar')
-    this.contentEl2 = root.createDiv('pm-content')
+    this.bodyEl = root.createDiv('pm-content')
 
     if (this.filePath) await this.loadProject()
 
@@ -139,8 +139,8 @@ export class ProjectView extends ItemView {
 
   private renderMissingProject(): void {
     this.toolbarEl.empty()
-    this.contentEl2.empty()
-    const msg = this.contentEl2.createDiv('pm-empty-state')
+    this.bodyEl.empty()
+    const msg = this.bodyEl.createDiv('pm-empty-state')
     msg.createEl('h3', { text: 'Project not found' })
     msg.createEl('p', { text: `No project at ${this.filePath}. It may have been deleted or renamed.` })
   }
@@ -259,13 +259,13 @@ export class ProjectView extends ItemView {
     }
 
     this.subview?.destroy?.()
-    this.contentEl2.empty()
+    this.bodyEl.empty()
     this.subview = null
 
     switch (this.currentView) {
       case 'table':
         this.subview = new TableView(
-          this.contentEl2,
+          this.bodyEl,
           this.project,
           this.plugin,
           () => this.refreshProject(),
@@ -273,20 +273,20 @@ export class ProjectView extends ItemView {
         )
         break
       case 'gantt': {
-        const gantt = new GanttView(this.contentEl2, this.project, this.plugin, () => this.refreshProject())
+        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
         if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll)
         if (savedGanttLabelWidth !== null) gantt.setLabelWidth(savedGanttLabelWidth)
         this.subview = gantt
         break
       }
       case 'kanban':
-        this.subview = new KanbanView(this.contentEl2, this.project, this.plugin, () => this.refreshProject())
+        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
         break
     }
     this.subview?.render()
 
     if (quickAddFocused) {
-      const newInput = this.contentEl2.querySelector('.pm-quick-add-input') as HTMLInputElement
+      const newInput = this.bodyEl.querySelector('.pm-quick-add-input') as HTMLInputElement
       if (newInput) newInput.focus()
     }
   }
