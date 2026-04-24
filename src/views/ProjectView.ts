@@ -252,8 +252,12 @@ export class ProjectView extends ItemView {
       savedGanttLabelWidth = this.subview.getLabelWidth()
     }
 
+    let savedTableScrollTop: number | null = null
     if (this.subview instanceof TableView) {
       this.savedTableViewState = this.subview.getViewState()
+      if (this.currentView === 'table') {
+        savedTableScrollTop = this.subview.getScrollTop()
+      }
     } else if (this.currentView !== 'table') {
       this.savedTableViewState = null
     }
@@ -263,15 +267,18 @@ export class ProjectView extends ItemView {
     this.subview = null
 
     switch (this.currentView) {
-      case 'table':
-        this.subview = new TableView(
+      case 'table': {
+        const table = new TableView(
           this.bodyEl,
           this.project,
           this.plugin,
           () => this.refreshProject(),
           this.savedTableViewState ?? undefined
         )
+        if (savedTableScrollTop !== null) table.setPendingScrollTop(savedTableScrollTop)
+        this.subview = table
         break
+      }
       case 'gantt': {
         const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
         if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll)

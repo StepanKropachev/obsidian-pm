@@ -27,6 +27,7 @@ export interface TableViewState {
 export class TableView implements SubView {
   private state: TableState
   private activeSavedViewId: string | null
+  private pendingScrollTop: number | null = null
 
   constructor(
     private container: HTMLElement,
@@ -45,6 +46,15 @@ export class TableView implements SubView {
       tableBody: null
     }
     this.activeSavedViewId = initialState?.activeSavedViewId ?? null
+  }
+
+  getScrollTop(): number {
+    const wrapper = this.container.querySelector('.pm-table-wrapper')
+    return wrapper?.scrollTop ?? 0
+  }
+
+  setPendingScrollTop(top: number): void {
+    this.pendingScrollTop = top
   }
 
   getViewState(): TableViewState {
@@ -101,6 +111,12 @@ export class TableView implements SubView {
     const ctx = this.makeTableContext()
     renderTable(ctx)
     renderBulkActionBar({ ctx, onAction: safeAsync((a) => this.handleBulkAction(a)) })
+
+    if (this.pendingScrollTop !== null) {
+      const wrapper = this.container.querySelector('.pm-table-wrapper')
+      if (wrapper) wrapper.scrollTop = this.pendingScrollTop
+      this.pendingScrollTop = null
+    }
   }
 
   focusQuickAdd(): void {
