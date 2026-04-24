@@ -3,6 +3,7 @@ import type { Project, TaskStatus, TaskPriority } from '../types'
 import { makeTask, DEFAULT_STATUSES, DEFAULT_PRIORITIES } from '../types'
 import { parseFrontmatter, TASK_FRONTMATTER_KEY } from '../store/YamlParser'
 import { serializeTask, taskFilePath } from '../store/YamlSerializer'
+import { ensureFolder } from '../store/vaultFs'
 
 interface FileItem {
   file: TFile
@@ -351,11 +352,7 @@ export class ImportModal extends Modal {
           if (this.fileHandling === 'move') {
             // Move: rename to new location, then update content
             try {
-              // Ensure tasks folder exists
-              const tasksFolderExists = this.app.vault.getAbstractFileByPath(tasksFolder)
-              if (!tasksFolderExists) {
-                await this.app.vault.createFolder(tasksFolder)
-              }
+              await ensureFolder(this.app, tasksFolder)
 
               // Rename file to new path
               await this.app.fileManager.renameFile(file, newFilePath)
@@ -374,11 +371,7 @@ export class ImportModal extends Modal {
           } else {
             // Copy: create new file, keep original
             try {
-              // Ensure tasks folder exists
-              const tasksFolderExists = this.app.vault.getAbstractFileByPath(tasksFolder)
-              if (!tasksFolderExists) {
-                await this.app.vault.createFolder(tasksFolder)
-              }
+              await ensureFolder(this.app, tasksFolder)
 
               await this.app.vault.create(newFilePath, newContent)
               imported.push(file.basename)

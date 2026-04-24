@@ -15,6 +15,7 @@ import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from '
 import { parseFrontmatter, FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
 import { hydrateProjectFromFrontmatter, hydrateTaskFromFile, hydrateTasks } from './YamlHydrator'
 import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
+import { ensureFolder } from './vaultFs'
 
 /**
  * Handles all read/write operations against the Obsidian vault.
@@ -38,10 +39,7 @@ export class ProjectStore {
   // ─── Folder helpers ────────────────────────────────────────────────────────
 
   async ensureFolder(folderPath: string): Promise<void> {
-    const normalized = normalizePath(folderPath)
-    if (!(this.app.vault.getAbstractFileByPath(normalized) instanceof TFolder)) {
-      await this.app.vault.createFolder(normalized)
-    }
+    await ensureFolder(this.app, folderPath)
   }
 
   /** Get the task subfolder path for a project */

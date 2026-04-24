@@ -1,18 +1,12 @@
-import { TFile, TFolder, normalizePath } from 'obsidian'
+import { TFile, normalizePath } from 'obsidian'
 import type { App } from 'obsidian'
 import type { Project } from '../types'
 import { findTask } from './TaskTreeOps'
+import { ensureFolder } from './vaultFs'
 
 /** Get the task subfolder path for a project */
 function projectTaskFolder(project: Project): string {
   return project.filePath.replace(/\.md$/, '_tasks')
-}
-
-async function ensureFolder(app: App, folderPath: string): Promise<void> {
-  const normalized = normalizePath(folderPath)
-  if (!(app.vault.getAbstractFileByPath(normalized) instanceof TFolder)) {
-    await app.vault.createFolder(normalized)
-  }
 }
 
 export async function archiveTask(app: App, project: Project, taskId: string): Promise<void> {
