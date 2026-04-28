@@ -65,7 +65,7 @@ export function attachDragHandle(
       const dx = ev.clientX - drag.dragStartX
       if (Math.abs(dx) > 3) drag.dragMoved = true
       let newX = drag.dragInitialX
-      let newW = drag.dragInitialW
+      let newW: number
       if (drag.dragSide === 'left') {
         newX = Math.max(0, drag.dragInitialX + dx)
         newX = snapX(newX, snapPoints, snapThreshold)
