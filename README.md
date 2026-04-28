@@ -67,12 +67,51 @@ Card-based board grouped by status. Drag cards between columns to update status 
   - Set status, priority, assignee, tag, or due date
   - Adjust progress
   - Archive/unarchive
+  - Set a parent task
   - Delete
 
 ### Import
-- **Import existing notes** — Turn any Markdown file in your vault into a task. Choose to move or copy, set default status and priority, and batch-select files with search.
+You can add any existing note from your vault to project as a task. Run **Project Manager: Import notes as tasks** in the Command Palette, pick a project, select files, then choose default status, default priority, and whether to **move** files into the task folder or **copy** them. Already-imported notes are skipped.
 
-<img width="1422" height="820" alt="Task detail modal" src="https://github.com/user-attachments/assets/28f0f768-bb80-4128-b3ce-3d4090b8032f" />
+https://github.com/user-attachments/assets/64e386c5-09b5-42a6-9599-089cc54c98eb
+
+- If a project view is open, import auto-targets that project (no picker shown).
+- If no project view is open, a project picker appears first, then the import modal.
+
+You can also create a project from a note. Add `pm-project: true` to any note's frontmatter, then run **Open current file as project**.
+
+
+## Collaboration over the Project
+
+The vault is the database. Anything that syncs your vault syncs your projects.
+
+**Git** works well. Commit your projects folder, push, pull. Sync conflicts show up as regular Markdown conflicts. Resolve them like any other file.
+**Obsidian Sync, iCloud, Dropbox, Syncthing** all work without extra setup.
+
+For teams:
+
+- Add people in **Settings > Team members**, or to a project's own member list from the project modal.
+- Assign tasks via the Assignees field. Filter by assignee in the Table view.
+- Notifications are local. Each person sees their own due date reminders.
+
+There is no real-time multi-user editing. Two people editing the same task at once produces a sync conflict, same as any Markdown note.
+
+## Settings
+
+| Setting | Description |
+|---|---|
+| Projects folder | Vault folder where project and task files are stored |
+| Default view | Table, Gantt, or Kanban |
+| Gantt granularity | Default timeline scale (day / week / month / quarter) |
+| Gantt week labels | Week number, date range, or both |
+| Due date notifications | Reminders N days before due dates |
+| Notifications on/off | Master switch for due date reminders, separate from lead time |
+| Auto-schedule | When a blocking task moves, its dependents shift to match. Cycles are refused. |
+| Hide done in Gantt | Skip completed and cancelled tasks on the timeline |
+| Show subtasks in Kanban | Render subtasks as their own cards, not just inside the parent |
+| Custom statuses | Edit labels, colors, and icons for each status |
+| Custom priorities | Edit labels, colors, and icons for each priority |
+| Team members | Global roster for task assignment |
 
 ## Task properties
 
@@ -121,10 +160,16 @@ Each task is a `.md` file in your vault supporting:
 5. Switch views using the Table / Gantt / Kanban tabs at the top.
 
 **Commands:**
-- `Open projects pane`
-- `Create new project`
-- `Create new task`
-- `Create new subtask`
+| Command | What it does |
+|---|---|
+| Open projects pane | Open the project list |
+| Create new project | Open the new project modal |
+| Create new task | Pick a project, then create a task |
+| Create new subtask | Pick a project and a parent task |
+| Import notes as tasks | Convert Markdown notes into tasks |
+| Open current file as project | Open the active note as a project (needs `pm-project: true`) |
+| Undo last action | Revert the last change |
+| Redo last action | Reapply an undone change |
 
 ## Data format
 
