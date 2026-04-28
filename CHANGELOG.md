@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+- Clicking a project file no longer auto-opens the PM view. Bind the new "Open current file as project" command to a hotkey for the old behavior.
+
 ### Added
+
+- Duplicate task action in the table and Kanban context menus
+- "Open current file as project" command
 
 ### Fixed
 
-### Changed
-
-### Removed
+- "Today" rolling over in the evening west of UTC
+- Tab hijack when clicking a project from a task tab
+- Duplicate tabs when opening a project
+- Duplicate project list pane from the ribbon button
+- Table scroll position not preserved across task modal open/close
+- Project folder errors on case-insensitive vaults
 
 ## [1.3.2] - 2026-04-21
 
