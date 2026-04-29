@@ -15,6 +15,7 @@ import { AvatarStack } from '../ui/primitives/AvatarStack'
 import { Badge } from '../ui/primitives/Badge'
 import { Chip } from '../ui/primitives/Chip'
 import { DueDateChip } from '../ui/primitives/DueDateChip'
+import { ProgressBar } from '../ui/primitives/ProgressBar'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import type { SubView } from './SubView'
 
@@ -201,9 +202,7 @@ export class KanbanView implements SubView {
 
     // Progress mini bar
     if (task.progress > 0) {
-      const pbar = body.createDiv('pm-kanban-card-pbar')
-      const pfill = pbar.createDiv('pm-kanban-card-pbar-fill')
-      pfill.setCssStyles({ width: `${task.progress}%` })
+      new ProgressBar(body).setSize('sm').setValue(task.progress)
     }
 
     // Subtask count

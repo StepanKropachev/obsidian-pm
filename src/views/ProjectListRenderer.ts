@@ -3,6 +3,7 @@ import type PMPlugin from '../main'
 import type { Task, StatusConfig } from '../types'
 import { safeAsync, isTerminalStatus } from '../utils'
 import { openProjectModal } from '../ui/ModalFactory'
+import { ProgressBar } from '../ui/primitives/ProgressBar'
 
 export interface ProjectListContext {
   plugin: PMPlugin
@@ -71,10 +72,10 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
     const done = countTasks(project.tasks, true, ctx.plugin.settings.statuses)
     meta.createEl('span', { text: `${done}/${total} tasks`, cls: 'pm-project-card-tasks' })
 
-    const progressBar = body.createDiv('pm-project-card-progress')
-    const fill = progressBar.createDiv('pm-project-card-progress-fill')
-    fill.style.width = total ? `${Math.round((done / total) * 100)}%` : '0%'
-    fill.style.background = project.color
+    new ProgressBar(body)
+      .setSize('sm')
+      .setValue(total ? (done / total) * 100 : 0)
+      .setColor(project.color)
 
     card.addEventListener(
       'click',
