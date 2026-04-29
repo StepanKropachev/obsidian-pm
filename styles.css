@@ -537,23 +537,44 @@
 .pm-add-subtask-btn:hover { background: var(--pm-bg3); color: var(--pm-accent); }
 
 /* Tags */
-.pm-tag {
-  display: inline-block;
-  padding: 2px 7px;
-  background: var(--pm-bg3);
-  border-radius: 99px;
-  font-size: 11px;
-  color: var(--pm-text-muted);
+/* ── Chip ─────────────────────────────────────────────────────────────── */
+.pm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+  border: 1px solid transparent;
   white-space: nowrap;
 }
-.pm-tag--sm { padding: 1px 5px; font-size: 10px; }
-.pm-tag--removable { display: inline-flex; align-items: center; gap: 4px; }
-.pm-tag-rm {
-  background: transparent; border: none; cursor: pointer;
-  color: var(--pm-text-muted); font-size: 10px; padding: 0;
-  line-height: 1;
+.pm-chip--pill { border-radius: 99px; }
+.pm-chip--sm { padding: 1px 6px; font-size: 10px; }
+.pm-chip--accent {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  color: var(--text-accent);
+  border-color: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
 }
-.pm-tag-rm:hover { color: var(--pm-danger); }
+.pm-chip-rm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  opacity: 0.6;
+}
+.pm-chip-rm:hover {
+  opacity: 1;
+  color: var(--text-error, var(--color-red));
+}
+.pm-chip-rm svg { width: 12px; height: 12px; }
 .pm-suggest-create { color: var(--text-accent); font-style: italic; }
 
 /* Add task row */
@@ -1093,50 +1114,6 @@
 .pm-prop-text:focus, .pm-prop-select:focus { border-color: var(--pm-accent); outline: none; }
 
 .pm-prop-assignees, .pm-prop-tags, .pm-prop-deps { flex-wrap: wrap; }
-
-.pm-assignee-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: var(--pm-accent-light);
-  border-radius: 99px;
-  font-size: 12px;
-  color: var(--pm-accent);
-  border: 1px solid rgba(139,114,190,0.25);
-}
-.pm-assignee-chip-rm {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-accent);
-  font-size: 10px;
-  padding: 0;
-  line-height: 1;
-  opacity: 0.7;
-}
-.pm-assignee-chip-rm:hover { opacity: 1; }
-
-.pm-dep-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: var(--pm-bg3);
-  border-radius: var(--pm-radius-sm);
-  font-size: 12px;
-  color: var(--pm-text-muted);
-  border: 1px solid var(--pm-border);
-}
-.pm-dep-chip-rm {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 10px;
-  padding: 0;
-}
-.pm-dep-chip-rm:hover { color: var(--pm-danger); }
 
 /* Modal sections */
 .pm-modal-section { padding: 14px 24px; border-top: 1px solid var(--pm-border); }

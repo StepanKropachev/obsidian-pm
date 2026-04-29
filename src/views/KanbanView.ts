@@ -13,6 +13,7 @@ import {
 import { openTaskModal } from '../ui/ModalFactory'
 import { AvatarStack } from '../ui/primitives/AvatarStack'
 import { Badge } from '../ui/primitives/Badge'
+import { Chip } from '../ui/primitives/Chip'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import type { SubView } from './SubView'
 
@@ -180,7 +181,7 @@ export class KanbanView implements SubView {
     if (task.tags.length) {
       const tagsEl = body.createDiv('pm-kanban-card-tags')
       for (const tag of task.tags.slice(0, 3)) {
-        tagsEl.createEl('span', { text: tag, cls: 'pm-tag pm-tag--sm' })
+        new Chip(tagsEl).setLabel(tag).setShape('pill').setSize('sm')
       }
     }
 

@@ -1,6 +1,7 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
+import { renderChipList } from '../ui/FormField'
 import { stringifyCustomValue } from '../utils'
 
 export function renderCustomFieldInput(
@@ -61,32 +62,29 @@ export function renderCustomFieldInput(
     case 'multiselect': {
       const vals = Array.isArray(currentVal) ? (currentVal as string[]) : []
       const renderMulti = () => {
-        wrap.empty()
-        for (const v of vals) {
-          const chip = wrap.createEl('span', { cls: 'pm-tag pm-tag--removable', text: v })
-          const rm = chip.createEl('button', { text: '\u2715', cls: 'pm-tag-rm' })
-          rm.addEventListener('click', () => {
+        renderChipList(wrap, vals, {
+          shape: 'pill',
+          onRemove: (v) => {
             const idx = vals.indexOf(v)
             if (idx > -1) vals.splice(idx, 1)
             task.customFields[cf.id] = [...vals]
             renderMulti()
-          })
-        }
-        const addBtn = wrap.createEl('button', { text: '+ add', cls: 'pm-prop-add-btn' })
-        addBtn.addEventListener('click', (e) => {
-          const menu = new Menu()
-          for (const opt of cf.options ?? []) {
-            if (!vals.includes(opt)) {
-              menu.addItem((item) =>
-                item.setTitle(opt).onClick(() => {
-                  vals.push(opt)
-                  task.customFields[cf.id] = [...vals]
-                  renderMulti()
-                })
-              )
+          },
+          onAdd: (e) => {
+            const menu = new Menu()
+            for (const opt of cf.options ?? []) {
+              if (!vals.includes(opt)) {
+                menu.addItem((item) =>
+                  item.setTitle(opt).onClick(() => {
+                    vals.push(opt)
+                    task.customFields[cf.id] = [...vals]
+                    renderMulti()
+                  })
+                )
+              }
             }
+            menu.showAtMouseEvent(e)
           }
-          menu.showAtMouseEvent(e)
         })
       }
       renderMulti()
