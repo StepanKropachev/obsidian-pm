@@ -3,7 +3,6 @@ import type PMPlugin from '../main'
 import { Project, Task, TaskStatus } from '../types'
 import { totalLoggedHours, flattenTasks } from '../store/TaskTreeOps'
 import {
-  stringToColor,
   formatDateShort,
   isTaskOverdue,
   isTerminalStatus,
@@ -12,6 +11,7 @@ import {
   safeAsync
 } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
+import { AvatarStack } from '../ui/primitives/AvatarStack'
 import { Badge } from '../ui/primitives/Badge'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import type { SubView } from './SubView'
@@ -187,13 +187,7 @@ export class KanbanView implements SubView {
     // Footer: assignees + due date
     const footer = body.createDiv('pm-kanban-card-footer')
 
-    const avatars = footer.createDiv('pm-kanban-card-avatars')
-    for (const a of task.assignees.slice(0, 3)) {
-      const av = avatars.createEl('span', { cls: 'pm-avatar pm-avatar--sm' })
-      av.textContent = a.slice(0, 2).toUpperCase()
-      av.title = a
-      av.style.background = stringToColor(a)
-    }
+    new AvatarStack(footer).setNames(task.assignees).setMax(3).setSize('sm')
 
     if (task.due) {
       const overdue = isTaskOverdue(task, this.plugin.settings.statuses)

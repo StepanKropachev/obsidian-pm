@@ -1,7 +1,8 @@
 import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, CustomFieldDef, makeId, makeProject } from '../types'
-import { stringToColor, safeAsync } from '../utils'
+import { safeAsync } from '../utils'
+import { Avatar } from '../ui/primitives/Avatar'
 import { COLOR_DANGER } from '../constants'
 
 const PROJECT_COLORS = [
@@ -147,9 +148,7 @@ export class ProjectModal extends Modal {
       for (let i = 0; i < this.project.teamMembers.length; i++) {
         const row = memberWrap.createDiv('pm-member-row')
         const name = this.project.teamMembers[i] || '?'
-        const avatar = row.createEl('span', { cls: 'pm-avatar' })
-        avatar.textContent = name.slice(0, 2).toUpperCase()
-        avatar.setCssStyles({ background: stringToColor(name) })
+        new Avatar(row).setName(name)
         const input = row.createEl('input', {
           type: 'text',
           value: this.project.teamMembers[i],
