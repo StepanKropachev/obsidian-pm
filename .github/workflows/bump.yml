@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: version-bump
@@ -25,6 +26,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
 
       - name: Validate version
         env:
@@ -37,6 +40,10 @@ jobs:
           git fetch --tags origin
           if git rev-parse "$VERSION" >/dev/null 2>&1; then
             echo "tag $VERSION already exists" >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "bump-$VERSION" >/dev/null 2>&1; then
+            echo "branch bump-$VERSION already exists on origin; delete it first" >&2
             exit 1
           fi
 
@@ -69,16 +76,56 @@ jobs:
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           EOF
 
-      - name: Commit and push tag
+      - name: Push bump branch
         env:
           VERSION: ${{ inputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "bump-$VERSION"
           git add manifest.json versions.json package.json
           git commit -m "bump version to $VERSION"
-          git tag "$VERSION"
-          git push origin HEAD "$VERSION"
+          git push -u origin "bump-$VERSION"
+
+      - name: Open PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          pr_url=$(gh pr create \
+            --base main \
+            --head "bump-$VERSION" \
+            --title "bump version to $VERSION" \
+            --body "Automated version bump to $VERSION.")
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for build check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: gh pr checks "$PR_URL" --watch --fail-fast --interval 10
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: gh pr merge "$PR_URL" --squash --delete-branch
+
+      - name: Tag merge commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          sha=$(gh pr view "$PR_URL" --json mergeCommit -q .mergeCommit.oid)
+          if [ -z "$sha" ] || [ "$sha" = "null" ]; then
+            echo "could not resolve merge commit sha for $PR_URL" >&2
+            exit 1
+          fi
+          git fetch origin "$sha"
+          git tag "$VERSION" "$sha"
+          git push origin "$VERSION"
 
   release:
     needs: bump
