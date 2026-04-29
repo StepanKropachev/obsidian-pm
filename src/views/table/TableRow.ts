@@ -38,7 +38,7 @@ export function renderTaskRow(
     const target = e.target as HTMLElement
     if (
       target.closest(
-        'button, input, .pm-status-badge, .pm-priority-badge, .pm-task-title-text, .pm-due-chip, .pm-due-placeholder, .pm-table-cell-select'
+        'button, input, .pm-badge--interactive, .pm-task-title-text, .pm-due-chip, .pm-due-placeholder, .pm-table-cell-select'
       )
     ) {
       return

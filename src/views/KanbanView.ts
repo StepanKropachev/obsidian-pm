@@ -12,6 +12,7 @@ import {
   safeAsync
 } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
+import { Badge } from '../ui/primitives/Badge'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import type { SubView } from './SubView'
 
@@ -157,25 +158,13 @@ export class KanbanView implements SubView {
     const titleRow = body.createDiv('pm-kanban-card-title-row')
     titleRow.createEl('span', { text: task.title, cls: 'pm-kanban-card-title' })
     if (task.type === 'milestone') {
-      titleRow.createEl('span', {
-        text: 'M',
-        cls: 'pm-task-badge pm-task-badge--milestone',
-        attr: { title: 'Milestone' }
-      })
+      new Badge(titleRow).setLabel('M').setSize('sm').setColor('var(--color-purple)').setTooltip('Milestone')
     }
     if (task.type === 'subtask') {
-      titleRow.createEl('span', {
-        text: 'Sub',
-        cls: 'pm-task-badge pm-task-badge--subtask',
-        attr: { title: 'Subtask' }
-      })
+      new Badge(titleRow).setLabel('Sub').setSize('sm').setColor('var(--color-green)').setTooltip('Subtask')
     }
     if (task.recurrence) {
-      titleRow.createEl('span', {
-        text: 'R',
-        cls: 'pm-task-badge pm-task-badge--recurrence',
-        attr: { title: 'Recurring' }
-      })
+      new Badge(titleRow).setLabel('R').setSize('sm').setColor('var(--color-blue)').setTooltip('Recurring')
     }
 
     // Time badge

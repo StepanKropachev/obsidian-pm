@@ -419,26 +419,34 @@
 
 .pm-table-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
 
-/* Badges */
-.pm-status-badge, .pm-priority-badge {
+/* ── Badge ────────────────────────────────────────────────────────────── */
+.pm-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: var(--pm-radius-sm);
-  font-size: 11px;
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--badge-color) 30%, transparent);
-  background: color-mix(in srgb, var(--badge-color) 8%, transparent);
-  color: var(--badge-color);
+  border: 1px solid color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 30%, transparent);
+  background: color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 8%, transparent);
+  color: var(--pm-badge-color, var(--text-muted));
   white-space: nowrap;
+  line-height: 1.2;
   transition: background 0.15s;
 }
-.pm-status-badge:hover, .pm-priority-badge:hover {
-  background: color-mix(in srgb, var(--badge-color) 16%, transparent);
+.pm-badge--interactive { cursor: pointer; }
+.pm-badge--interactive:hover {
+  background: color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 16%, transparent);
+}
+.pm-badge--sm {
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* Avatar */
@@ -1027,27 +1035,6 @@
 }
 
 .pm-prop-value { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.pm-prop-value--badge {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: var(--pm-radius-sm, 0.25rem);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border: 1px solid color-mix(in srgb, var(--badge-color) 30%, transparent);
-  background: color-mix(in srgb, var(--badge-color) 8%, transparent);
-  color: var(--badge-color);
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.pm-prop-value--badge:hover {
-  background: color-mix(in srgb, var(--badge-color) 16%, transparent);
-}
 
 .pm-prop-progress-wrap {
   display: flex;
@@ -1649,45 +1636,6 @@
 .pm-modal-header {
   background: var(--background-primary);
   border-bottom-color: var(--pm-border, var(--background-modifier-border));
-}
-
-/* ── Task badges (replace emojis) ────────────────────────────────────── */
-.pm-task-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  flex-shrink: 0;
-  line-height: 1;
-}
-.pm-task-badge--milestone {
-  background: rgba(139,114,190,0.15);
-  color: #69519a;
-  border: 1px solid rgba(139,114,190,0.3);
-}
-.pm-task-badge--recurrence {
-  background: rgba(74,126,184,0.15);
-  color: #4a7eb8;
-  border: 1px solid rgba(74,126,184,0.3);
-}
-.pm-task-badge--archived {
-  background: rgba(138,148,160,0.15);
-  color: #8a94a0;
-  border: 1px solid rgba(138,148,160,0.3);
-  width: auto;
-  height: auto;
-  padding: 1px 6px;
-}
-.pm-task-badge--subtask {
-  background: rgba(121,181,141,0.15);
-  color: #79b58d;
-  border: 1px solid rgba(121,181,141,0.3);
-  width: auto;
-  padding: 1px 5px;
 }
 
 /* ── Properties container ────────────────────────────────────────────── */
