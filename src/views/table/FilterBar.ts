@@ -4,6 +4,7 @@ import type { Project, FilterState, TaskPriority, DueDateFilter } from '../../ty
 import { makeDefaultFilter } from '../../types'
 import { collectAllAssignees, collectAllTags } from '../../store'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
+import { Pill } from '../../ui/primitives/Pill'
 import { formatBadgeText } from '../../utils'
 
 export interface FilterBarContext {
@@ -90,17 +91,14 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   renderDueDateFilter(bar, ctx)
 
   // Show archived toggle
-  const archiveBtn = bar.createEl('button', {
-    text: ctx.filter.showArchived ? 'Archived ✓' : 'Archived',
-    cls: 'pm-filter-dropdown-btn'
-  })
-  if (ctx.filter.showArchived) archiveBtn.addClass('pm-filter-dropdown-btn--active')
-  archiveBtn.addEventListener('click', () => {
-    ctx.filter.showArchived = !ctx.filter.showArchived
-    archiveBtn.setText(ctx.filter.showArchived ? 'Archived ✓' : 'Archived')
-    archiveBtn.toggleClass('pm-filter-dropdown-btn--active', ctx.filter.showArchived)
-    ctx.refreshTable()
-  })
+  const archivePill = new Pill(bar)
+    .setLabel(ctx.filter.showArchived ? 'Archived ✓' : 'Archived')
+    .setActive(ctx.filter.showArchived)
+    .onClick(() => {
+      ctx.filter.showArchived = !ctx.filter.showArchived
+      archivePill.setLabel(ctx.filter.showArchived ? 'Archived ✓' : 'Archived').setActive(ctx.filter.showArchived)
+      ctx.refreshTable()
+    })
 
   // Clear button
   const activeCount = countActiveFilters(ctx.filter)
@@ -122,28 +120,25 @@ function renderDueDateFilter(parent: HTMLElement, ctx: FilterBarContext): void {
     'this-month': 'This month',
     'no-date': 'No date'
   }
-  const btn = parent.createEl('button', {
-    text: current !== 'any' ? `Due: ${labels[current]}` : 'Due date',
-    cls: 'pm-filter-dropdown-btn'
-  })
-  if (current !== 'any') btn.addClass('pm-filter-dropdown-btn--active')
-
-  btn.addEventListener('click', (e) => {
-    const menu = new Menu()
-    const opts: DueDateFilter[] = ['any', 'overdue', 'this-week', 'this-month', 'no-date']
-    for (const opt of opts) {
-      menu.addItem((item) =>
-        item
-          .setTitle(labels[opt])
-          .setChecked(current === opt)
-          .onClick(() => {
-            ctx.filter.dueDateFilter = opt
-            ctx.rerender()
-          })
-      )
-    }
-    menu.showAtMouseEvent(e)
-  })
+  new Pill(parent)
+    .setLabel(current !== 'any' ? `Due: ${labels[current]}` : 'Due date')
+    .setActive(current !== 'any')
+    .onClick((e) => {
+      const menu = new Menu()
+      const opts: DueDateFilter[] = ['any', 'overdue', 'this-week', 'this-month', 'no-date']
+      for (const opt of opts) {
+        menu.addItem((item) =>
+          item
+            .setTitle(labels[opt])
+            .setChecked(current === opt)
+            .onClick(() => {
+              ctx.filter.dueDateFilter = opt
+              ctx.rerender()
+            })
+        )
+      }
+      menu.showAtMouseEvent(e)
+    })
 }
 
 function countActiveFilters(f: FilterState): number {
