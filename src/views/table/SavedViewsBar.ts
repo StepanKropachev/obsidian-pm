@@ -1,7 +1,8 @@
-import { Menu } from 'obsidian'
+import { ButtonComponent, Menu } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Project, FilterState, SavedView } from '../../types'
 import { makeId, makeDefaultFilter } from '../../types'
+import { Pill } from '../../ui/primitives/Pill'
 import { safeAsync } from '../../utils'
 
 export interface SavedViewsContext {
@@ -35,64 +36,67 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
   const bar = container.createDiv('pm-saved-views-bar')
 
   // "All" pill
-  const allPill = bar.createEl('button', { text: 'All', cls: 'pm-saved-view-pill' })
-  if (!ctx.activeSavedViewId) allPill.addClass('pm-saved-view-pill--active')
-  allPill.addEventListener('click', () => {
-    ctx.setActiveSavedViewId(null)
-    ctx.setFilter(makeDefaultFilter())
-    ctx.setSort('status', 'asc')
-    ctx.rerender()
-  })
-
-  for (const sv of ctx.project.savedViews) {
-    const pill = bar.createEl('button', { text: sv.name, cls: 'pm-saved-view-pill' })
-    if (ctx.activeSavedViewId === sv.id) pill.addClass('pm-saved-view-pill--active')
-    pill.addEventListener('click', () => {
-      ctx.setActiveSavedViewId(sv.id)
-      ctx.setFilter({ ...sv.filter })
-      ctx.setSort(sv.sortKey, sv.sortDir)
+  new Pill(bar)
+    .setLabel('All')
+    .setShape('pill')
+    .setActive(!ctx.activeSavedViewId)
+    .onClick(() => {
+      ctx.setActiveSavedViewId(null)
+      ctx.setFilter(makeDefaultFilter())
+      ctx.setSort('status', 'asc')
       ctx.rerender()
     })
-    pill.addEventListener('contextmenu', (e) => {
-      e.preventDefault()
-      const menu = new Menu()
-      menu.addItem((item) =>
-        item
-          .setTitle('Update with current filters')
-          .setIcon('refresh-cw')
-          .onClick(
-            safeAsync(async () => {
-              sv.filter = { ...ctx.filter }
-              sv.sortKey = ctx.sortKey
-              sv.sortDir = ctx.sortDir
-              await ctx.plugin.store.saveProject(ctx.project)
-              ctx.rerender()
-            })
-          )
-      )
-      menu.addItem((item) =>
-        item
-          .setTitle('Delete view')
-          .setIcon('trash')
-          .onClick(
-            safeAsync(async () => {
-              ctx.project.savedViews = ctx.project.savedViews.filter((v) => v.id !== sv.id)
-              if (ctx.activeSavedViewId === sv.id) ctx.setActiveSavedViewId(null)
-              await ctx.plugin.store.saveProject(ctx.project)
-              ctx.rerender()
-            })
-          )
-      )
-      menu.showAtMouseEvent(e)
-    })
+
+  for (const sv of ctx.project.savedViews) {
+    new Pill(bar)
+      .setLabel(sv.name)
+      .setShape('pill')
+      .setActive(ctx.activeSavedViewId === sv.id)
+      .onClick(() => {
+        ctx.setActiveSavedViewId(sv.id)
+        ctx.setFilter({ ...sv.filter })
+        ctx.setSort(sv.sortKey, sv.sortDir)
+        ctx.rerender()
+      })
+      .onContextMenu((e) => {
+        e.preventDefault()
+        const menu = new Menu()
+        menu.addItem((item) =>
+          item
+            .setTitle('Update with current filters')
+            .setIcon('refresh-cw')
+            .onClick(
+              safeAsync(async () => {
+                sv.filter = { ...ctx.filter }
+                sv.sortKey = ctx.sortKey
+                sv.sortDir = ctx.sortDir
+                await ctx.plugin.store.saveProject(ctx.project)
+                ctx.rerender()
+              })
+            )
+        )
+        menu.addItem((item) =>
+          item
+            .setTitle('Delete view')
+            .setIcon('trash')
+            .onClick(
+              safeAsync(async () => {
+                ctx.project.savedViews = ctx.project.savedViews.filter((v) => v.id !== sv.id)
+                if (ctx.activeSavedViewId === sv.id) ctx.setActiveSavedViewId(null)
+                await ctx.plugin.store.saveProject(ctx.project)
+                ctx.rerender()
+              })
+            )
+        )
+        menu.showAtMouseEvent(e)
+      })
   }
 
-  // "+ Save View" button
+  // "+ Save View" action
   if (hasActiveFilters(ctx.filter)) {
-    const saveBtn = bar.createEl('button', { text: '+ save view', cls: 'pm-saved-view-pill pm-saved-view-pill--save' })
-    saveBtn.addEventListener('click', () => {
+    const saveBtn = new ButtonComponent(bar).setButtonText('+ save view').onClick(() => {
       // Replace button with inline input (prompt() doesn't work in Electron)
-      saveBtn.addClass('pm-hidden')
+      saveBtn.buttonEl.addClass('pm-hidden')
       const wrapper = bar.createDiv('pm-saved-view-inline-input')
       const input = wrapper.createEl('input', {
         type: 'text',
@@ -108,7 +112,7 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
         const name = input.value.trim()
         if (!name) {
           wrapper.remove()
-          saveBtn.removeClass('pm-hidden')
+          saveBtn.buttonEl.removeClass('pm-hidden')
           return
         }
         const sv: SavedView = {
@@ -131,14 +135,14 @@ export function renderSavedViewsBar(container: HTMLElement, ctx: SavedViewsConte
         }
         if (e.key === 'Escape') {
           wrapper.remove()
-          saveBtn.removeClass('pm-hidden')
+          saveBtn.buttonEl.removeClass('pm-hidden')
         }
       })
       input.addEventListener('blur', () => {
         if (input.value.trim()) commit()
         else {
           wrapper.remove()
-          saveBtn.removeClass('pm-hidden')
+          saveBtn.buttonEl.removeClass('pm-hidden')
         }
       })
     })
