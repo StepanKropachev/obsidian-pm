@@ -212,8 +212,8 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       const all = [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
       const remaining = all.filter((m) => !task.assignees.includes(m))
       renderChipList(wrap, task.assignees, {
-        chipCls: 'pm-assignee-chip',
-        rmCls: 'pm-assignee-chip-rm',
+        variant: 'accent',
+        shape: 'pill',
         onRemove: (a) => {
           task.assignees = task.assignees.filter((x) => x !== a)
           render()
@@ -268,8 +268,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         (t) => !task.tags.includes(t)
       )
       renderChipList(wrap, task.tags, {
-        chipCls: 'pm-tag pm-tag--removable',
-        rmCls: 'pm-tag-rm',
+        shape: 'pill',
         onRemove: (tag) => {
           task.tags = task.tags.filter((x) => x !== tag)
           render()
@@ -300,8 +299,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         wrap,
         task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
         {
-          chipCls: 'pm-dep-chip',
-          rmCls: 'pm-dep-chip-rm',
+          shape: 'rounded',
           labelFn: (depId) => allTasks.find((t) => t.id === depId)?.title ?? depId,
           onRemove: (depId) => {
             task.dependencies = task.dependencies.filter((x) => x !== depId)

@@ -1,3 +1,6 @@
+import { ButtonComponent } from 'obsidian'
+import { Chip } from './primitives/Chip'
+
 /**
  * Render a labeled property row (label + value) used in modals.
  */
@@ -9,35 +12,35 @@ export function renderPropRow(container: HTMLElement, label: string, valueBuilde
   return row
 }
 
+export interface ChipListOpts {
+  variant?: 'default' | 'accent'
+  shape?: 'rounded' | 'pill'
+  onRemove: (item: string) => void
+  labelFn?: (item: string) => string
+  onAdd?: (e: MouseEvent) => void
+  addLabel?: string
+  renderAdd?: (container: HTMLElement) => void
+}
+
 /**
  * Render a chip list with remove buttons and an add button.
  * Used for assignees, tags, dependencies, etc.
  */
-export function renderChipList(
-  container: HTMLElement,
-  items: string[],
-  opts: {
-    chipCls: string
-    rmCls: string
-    onRemove: (item: string) => void
-    labelFn?: (item: string) => string
-    onAdd?: (e: MouseEvent) => void
-    addLabel?: string
-    renderAdd?: (container: HTMLElement) => void
-  }
-): void {
+export function renderChipList(container: HTMLElement, items: string[], opts: ChipListOpts): void {
   container.empty()
+  const variant = opts.variant ?? 'default'
+  const shape = opts.shape ?? 'pill'
   for (const item of items) {
-    const chip = container.createEl('span', { cls: opts.chipCls })
-    chip.setText(opts.labelFn ? opts.labelFn(item) : item)
-    const rm = chip.createEl('button', { text: '\u2715', cls: opts.rmCls })
-    rm.addEventListener('click', () => opts.onRemove(item))
+    new Chip(container)
+      .setLabel(opts.labelFn ? opts.labelFn(item) : item)
+      .setVariant(variant)
+      .setShape(shape)
+      .setRemovable(() => opts.onRemove(item))
   }
   if (opts.renderAdd) {
     opts.renderAdd(container)
   } else if (opts.onAdd) {
-    const addBtn = container.createEl('button', { text: opts.addLabel ?? '+ Add', cls: 'pm-prop-add-btn' })
-    addBtn.addEventListener('click', (e) => opts.onAdd!(e))
+    new ButtonComponent(container).setButtonText(opts.addLabel ?? '+ Add').onClick((e) => opts.onAdd!(e))
   }
 }
 

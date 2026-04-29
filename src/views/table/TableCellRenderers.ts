@@ -15,6 +15,7 @@ import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
+import { Chip } from '../../ui/primitives/Chip'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -173,7 +174,7 @@ export function renderTitleCell(row: HTMLElement, task: Task, depth: number, ctx
   if (task.tags.length) {
     const tagRow = cell.createDiv('pm-table-tags')
     for (const tag of task.tags) {
-      tagRow.createEl('span', { text: tag, cls: 'pm-tag' })
+      new Chip(tagRow).setLabel(tag).setShape('pill')
     }
   }
 }
