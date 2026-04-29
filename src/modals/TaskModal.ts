@@ -16,6 +16,7 @@ export class TaskModal extends Modal {
   private originalParentId: string | null
   private cancelled = false
   private saved = false
+  private persistPromise: Promise<void> | null = null
   private noteSuggest: NoteLinkSuggest | null = null
 
   constructor(
@@ -65,7 +66,13 @@ export class TaskModal extends Modal {
     this.contentEl.empty()
   }
 
-  private async persistTask(): Promise<void> {
+  private persistTask(): Promise<void> {
+    if (this.persistPromise) return this.persistPromise
+    this.persistPromise = this.runPersist()
+    return this.persistPromise
+  }
+
+  private async runPersist(): Promise<void> {
     if (this.isNew) {
       await this.plugin.store.insertTask(this.project, this.task, this.parentId)
     } else if (this.parentId !== this.originalParentId) {
