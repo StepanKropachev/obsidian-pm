@@ -17,6 +17,7 @@ import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
 import { Chip } from '../../ui/primitives/Chip'
 import { DueDateChip } from '../../ui/primitives/DueDateChip'
+import { ProgressBar } from '../../ui/primitives/ProgressBar'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -260,12 +261,10 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
 
 export function renderProgressCell(row: HTMLElement, task: Task, statusColor: string | undefined): void {
   const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-progress' })
-  const wrap = cell.createDiv('pm-progress-wrap')
-  const bar = wrap.createDiv('pm-progress-bar')
-  const fill = bar.createDiv('pm-progress-fill')
-  fill.style.width = `${task.progress}%`
-  fill.style.background = statusColor ?? COLOR_ACCENT
-  wrap.createEl('span', { text: `${task.progress}%`, cls: 'pm-progress-label' })
+  new ProgressBar(cell)
+    .setValue(task.progress)
+    .setColor(statusColor ?? COLOR_ACCENT)
+    .setShowLabel(true)
 }
 
 export function renderTimeCell(row: HTMLElement, task: Task): void {

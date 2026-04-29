@@ -180,17 +180,6 @@
 .pm-project-card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .pm-project-card-tasks { font-size: 12px; color: var(--pm-text-muted); }
 
-.pm-project-card-progress {
-  height: 4px;
-  background: var(--background-modifier-border);
-  border-radius: 99px;
-  overflow: hidden;
-}
-.pm-project-card-progress-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.4s ease;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TABLE VIEW
@@ -519,11 +508,31 @@
   background: transparent;
 }
 
-/* Progress */
-.pm-progress-wrap { display: flex; align-items: center; gap: 8px; }
-.pm-progress-bar { flex: 1; height: 6px; background: var(--background-modifier-border); border-radius: 99px; overflow: hidden; }
-.pm-progress-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
-.pm-progress-label { font-size: 11px; color: var(--pm-text-muted); min-width: 28px; }
+/* ── ProgressBar ──────────────────────────────────────────────────────── */
+.pm-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pm-progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--background-modifier-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.pm-progress--sm .pm-progress-track { height: 3px; }
+.pm-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--pm-progress-color, var(--interactive-accent));
+  transition: width 0.3s ease;
+}
+.pm-progress-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  min-width: 28px;
+}
 
 /* Row menu */
 .pm-row-menu-btn {
@@ -954,14 +963,6 @@
   justify-content: space-between;
   gap: 8px;
 }
-
-.pm-kanban-card-pbar {
-  height: 3px;
-  background: var(--pm-bg3);
-  border-radius: 99px;
-  overflow: hidden;
-}
-.pm-kanban-card-pbar-fill { height: 100%; border-radius: 99px; background: var(--pm-accent); }
 
 .pm-kanban-card-subtasks { font-size: 11px; color: var(--pm-text-muted); }
 .pm-kanban-card-parent {
