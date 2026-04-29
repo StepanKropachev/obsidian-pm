@@ -14,6 +14,7 @@ import { today, parsePlainDate } from '../../dates'
 import { COLOR_ACCENT } from '../../constants'
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { Badge } from '../../ui/primitives/Badge'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -157,20 +158,16 @@ export function renderTitleCell(row: HTMLElement, task: Task, depth: number, ctx
   })
 
   if (task.type === 'milestone') {
-    cell.createEl('span', { text: 'M', cls: 'pm-task-badge pm-task-badge--milestone', attr: { title: 'Milestone' } })
+    new Badge(cell).setLabel('M').setSize('sm').setColor('var(--color-purple)').setTooltip('Milestone')
   }
   if (task.type === 'subtask') {
-    cell.createEl('span', { text: 'Sub', cls: 'pm-task-badge pm-task-badge--subtask', attr: { title: 'Subtask' } })
+    new Badge(cell).setLabel('Sub').setSize('sm').setColor('var(--color-green)').setTooltip('Subtask')
   }
   if (task.recurrence) {
-    cell.createEl('span', { text: 'R', cls: 'pm-task-badge pm-task-badge--recurrence', attr: { title: 'Recurring' } })
+    new Badge(cell).setLabel('R').setSize('sm').setColor('var(--color-blue)').setTooltip('Recurring')
   }
   if (task.archived) {
-    cell.createEl('span', {
-      text: 'Archived',
-      cls: 'pm-task-badge pm-task-badge--archived',
-      attr: { title: 'Archived' }
-    })
+    new Badge(cell).setLabel('Archived').setSize('sm').setColor('var(--text-muted)').setTooltip('Archived')
   }
 
   if (task.tags.length) {

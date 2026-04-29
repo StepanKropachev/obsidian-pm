@@ -4,6 +4,7 @@ import { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField'
+import { Badge } from '../ui/primitives/Badge'
 import { COLOR_MUTED } from '../constants'
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
@@ -28,49 +29,51 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   // Status
   renderPropRow(container, 'Status', () => {
     const statusConfig = getStatusConfig(plugin.settings.statuses, task.status)
-    const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' })
-    val.setCssProps({ '--badge-color': statusConfig?.color ?? COLOR_MUTED })
-    val.setText(formatBadgeText(statusConfig?.icon, statusConfig?.label ?? task.status))
-    val.addEventListener('click', (e) => {
-      const menu = new Menu()
-      for (const s of plugin.settings.statuses) {
-        menu.addItem((item) =>
-          item
-            .setTitle(formatBadgeText(s.icon, s.label))
-            .setChecked(s.id === task.status)
-            .onClick(() => {
-              task.status = s.id
-              rerender()
-            })
-        )
-      }
-      menu.showAtMouseEvent(e)
-    })
-    return val
+    const wrap = createDiv('pm-prop-value')
+    new Badge(wrap)
+      .setLabel(formatBadgeText(statusConfig?.icon, statusConfig?.label ?? task.status))
+      .setColor(statusConfig?.color ?? COLOR_MUTED)
+      .onClick((e) => {
+        const menu = new Menu()
+        for (const s of plugin.settings.statuses) {
+          menu.addItem((item) =>
+            item
+              .setTitle(formatBadgeText(s.icon, s.label))
+              .setChecked(s.id === task.status)
+              .onClick(() => {
+                task.status = s.id
+                rerender()
+              })
+          )
+        }
+        menu.showAtMouseEvent(e)
+      })
+    return wrap
   })
 
   // Priority
   renderPropRow(container, 'Priority', () => {
     const prioConfig = getPriorityConfig(plugin.settings.priorities, task.priority)
-    const val = createEl('button', { cls: 'pm-prop-value pm-prop-value--badge' })
-    val.setCssProps({ '--badge-color': prioConfig?.color ?? COLOR_MUTED })
-    val.setText(formatBadgeText(prioConfig?.icon, prioConfig?.label ?? task.priority))
-    val.addEventListener('click', (e) => {
-      const menu = new Menu()
-      for (const p of plugin.settings.priorities) {
-        menu.addItem((item) =>
-          item
-            .setTitle(formatBadgeText(p.icon, p.label))
-            .setChecked(p.id === task.priority)
-            .onClick(() => {
-              task.priority = p.id
-              rerender()
-            })
-        )
-      }
-      menu.showAtMouseEvent(e)
-    })
-    return val
+    const wrap = createDiv('pm-prop-value')
+    new Badge(wrap)
+      .setLabel(formatBadgeText(prioConfig?.icon, prioConfig?.label ?? task.priority))
+      .setColor(prioConfig?.color ?? COLOR_MUTED)
+      .onClick((e) => {
+        const menu = new Menu()
+        for (const p of plugin.settings.priorities) {
+          menu.addItem((item) =>
+            item
+              .setTitle(formatBadgeText(p.icon, p.label))
+              .setChecked(p.id === task.priority)
+              .onClick(() => {
+                task.priority = p.id
+                rerender()
+              })
+          )
+        }
+        menu.showAtMouseEvent(e)
+      })
+    return wrap
   })
 
   // Type

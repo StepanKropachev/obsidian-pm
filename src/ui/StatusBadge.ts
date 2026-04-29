@@ -2,6 +2,7 @@ import { Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority, StatusConfig, PriorityConfig } from '../types'
 import { COLOR_MUTED, COLOR_MUTED_ALT } from '../constants'
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils'
+import { Badge } from './primitives/Badge'
 
 /**
  * Render a clickable status badge that opens a menu to change the status.
@@ -13,24 +14,22 @@ export function renderStatusBadge(
   onChange: (status: TaskStatus) => void
 ): HTMLElement {
   const config = getStatusConfig(statuses, task.status)
-  const badge = container.createEl('span', {
-    text: formatBadgeText(config?.icon, config?.label ?? task.status),
-    cls: 'pm-status-badge'
-  })
-  badge.style.setProperty('--badge-color', config?.color ?? COLOR_MUTED)
-  badge.addEventListener('click', (e) => {
-    const menu = new Menu()
-    for (const s of statuses) {
-      menu.addItem((item) =>
-        item
-          .setTitle(formatBadgeText(s.icon, s.label))
-          .setChecked(s.id === task.status)
-          .onClick(() => onChange(s.id))
-      )
-    }
-    menu.showAtMouseEvent(e)
-  })
-  return badge
+  const badge = new Badge(container)
+    .setLabel(formatBadgeText(config?.icon, config?.label ?? task.status))
+    .setColor(config?.color ?? COLOR_MUTED)
+    .onClick((e) => {
+      const menu = new Menu()
+      for (const s of statuses) {
+        menu.addItem((item) =>
+          item
+            .setTitle(formatBadgeText(s.icon, s.label))
+            .setChecked(s.id === task.status)
+            .onClick(() => onChange(s.id))
+        )
+      }
+      menu.showAtMouseEvent(e)
+    })
+  return badge.el
 }
 
 /**
@@ -43,24 +42,22 @@ export function renderPriorityBadge(
   onChange: (priority: TaskPriority) => void
 ): HTMLElement {
   const config = getPriorityConfig(priorities, task.priority)
-  const badge = container.createEl('span', {
-    text: formatBadgeText(config?.icon, config?.label ?? task.priority),
-    cls: 'pm-priority-badge'
-  })
-  badge.style.setProperty('--badge-color', config?.color ?? COLOR_MUTED_ALT)
-  badge.addEventListener('click', (e) => {
-    const menu = new Menu()
-    for (const p of priorities) {
-      menu.addItem((item) =>
-        item
-          .setTitle(formatBadgeText(p.icon, p.label))
-          .setChecked(p.id === task.priority)
-          .onClick(() => onChange(p.id))
-      )
-    }
-    menu.showAtMouseEvent(e)
-  })
-  return badge
+  const badge = new Badge(container)
+    .setLabel(formatBadgeText(config?.icon, config?.label ?? task.priority))
+    .setColor(config?.color ?? COLOR_MUTED_ALT)
+    .onClick((e) => {
+      const menu = new Menu()
+      for (const p of priorities) {
+        menu.addItem((item) =>
+          item
+            .setTitle(formatBadgeText(p.icon, p.label))
+            .setChecked(p.id === task.priority)
+            .onClick(() => onChange(p.id))
+        )
+      }
+      menu.showAtMouseEvent(e)
+    })
+  return badge.el
 }
 
 /**
