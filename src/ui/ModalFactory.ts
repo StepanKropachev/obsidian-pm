@@ -1,4 +1,4 @@
-import { type App, Modal } from 'obsidian'
+import { type App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
 import { TaskModal } from '../modals/TaskModal'
@@ -74,23 +74,23 @@ class TextPromptModal extends Modal {
 
     const btnRow = contentEl.createDiv('pm-modal-btn-row')
 
-    const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' })
-    cancelBtn.addEventListener('click', () => {
+    new ButtonComponent(btnRow).setButtonText('Cancel').onClick(() => {
       this.finish(null)
       this.close()
     })
 
-    const okBtn = btnRow.createEl('button', { text: 'OK', cls: 'mod-cta' })
-    okBtn.addEventListener('click', () => {
+    const submit = () => {
       const val = input.value.trim()
       this.finish(val || null)
       this.close()
-    })
+    }
+
+    new ButtonComponent(btnRow).setButtonText('OK').setCta().onClick(submit)
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault()
-        okBtn.click()
+        submit()
       }
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -137,17 +137,18 @@ class ConfirmModal extends Modal {
 
     const btnRow = contentEl.createDiv('pm-modal-btn-row')
 
-    const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' })
-    cancelBtn.addEventListener('click', () => {
+    new ButtonComponent(btnRow).setButtonText('Cancel').onClick(() => {
       this.finish(false)
       this.close()
     })
 
-    const confirmBtn = btnRow.createEl('button', { text: this.confirmLabel, cls: 'mod-warning pm-btn-confirm-danger' })
-    confirmBtn.addEventListener('click', () => {
-      this.finish(true)
-      this.close()
-    })
+    new ButtonComponent(btnRow)
+      .setButtonText(this.confirmLabel)
+      .setWarning()
+      .onClick(() => {
+        this.finish(true)
+        this.close()
+      })
   }
 
   onClose(): void {
@@ -184,23 +185,23 @@ class DuplicateSubtasksModal extends Modal {
 
     const btnRow = contentEl.createDiv('pm-modal-btn-row')
 
-    const cancelBtn = btnRow.createEl('button', { text: 'Cancel', cls: 'mod-muted' })
-    cancelBtn.addEventListener('click', () => {
+    new ButtonComponent(btnRow).setButtonText('Cancel').onClick(() => {
       this.finish(null)
       this.close()
     })
 
-    const taskOnlyBtn = btnRow.createEl('button', { text: 'Task only' })
-    taskOnlyBtn.addEventListener('click', () => {
+    new ButtonComponent(btnRow).setButtonText('Task only').onClick(() => {
       this.finish('task-only')
       this.close()
     })
 
-    const withSubtasksBtn = btnRow.createEl('button', { text: 'With subtasks', cls: 'mod-cta' })
-    withSubtasksBtn.addEventListener('click', () => {
-      this.finish('with-subtasks')
-      this.close()
-    })
+    new ButtonComponent(btnRow)
+      .setButtonText('With subtasks')
+      .setCta()
+      .onClick(() => {
+        this.finish('with-subtasks')
+        this.close()
+      })
   }
 
   onClose(): void {

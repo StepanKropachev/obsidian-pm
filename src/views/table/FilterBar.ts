@@ -1,4 +1,4 @@
-import { Menu } from 'obsidian'
+import { ButtonComponent, Menu } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Project, FilterState, TaskPriority, DueDateFilter } from '../../types'
 import { makeDefaultFilter } from '../../types'
@@ -105,8 +105,7 @@ export function renderFilterBar(container: HTMLElement, ctx: FilterBarContext): 
   // Clear button
   const activeCount = countActiveFilters(ctx.filter)
   if (activeCount > 0) {
-    const clearBtn = bar.createEl('button', { text: `✕ Clear (${activeCount})`, cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-    clearBtn.addEventListener('click', () => {
+    new ButtonComponent(bar).setButtonText(`✕ Clear (${activeCount})`).onClick(() => {
       ctx.setFilter(makeDefaultFilter())
       ctx.setActiveSavedViewId(null)
       ctx.rerender()

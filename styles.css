@@ -113,48 +113,6 @@
 }
 .pm-view-btn-icon { font-size: 14px; }
 
-/* ── Buttons ─────────────────────────────────────────────────────────────── */
-.pm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: var(--pm-radius-sm);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.pm-btn:focus-visible { outline: 2px solid var(--pm-accent); outline-offset: 2px; }
-
-.pm-btn-primary {
-  background: linear-gradient(180deg, var(--pm-accent), var(--pm-accent-dim));
-  color: #fff;
-}
-.pm-btn-primary:hover { background: linear-gradient(180deg, var(--pm-accent-dim), var(--pm-accent-dim)); box-shadow: 0 2px 8px rgba(139,114,190,0.25); }
-.pm-btn-primary:active { box-shadow: none; }
-
-.theme-light .pm-btn-primary {
-  background: transparent;
-  color: var(--pm-accent);
-  border: 1px solid color-mix(in srgb, var(--pm-accent) 40%, transparent);
-}
-.theme-light .pm-btn-primary:hover {
-  background: var(--pm-accent-light);
-  box-shadow: none;
-}
-
-.pm-btn-ghost { background: transparent; color: var(--pm-text-muted); }
-.pm-btn-ghost:hover { background: var(--pm-bg3); color: var(--pm-text); }
-
-.pm-btn-danger { background: transparent; color: var(--pm-danger); }
-.pm-btn-danger:hover { background: rgba(196,112,112,0.1); }
-
-.pm-btn-icon { padding: 6px 8px; }
-.pm-btn-sm { padding: 3px 8px; font-size: 12px; }
-
 .pm-prop-add-btn {
   background: transparent;
   border: 1px dashed var(--pm-border);
@@ -1889,9 +1847,6 @@
 .pm-offscreen { position: fixed; opacity: 0; pointer-events: none; }
 .pm-no-shrink { flex-shrink: 0; }
 body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; user-select: none !important; }
-
-/* Confirm button (modal) */
-.pm-btn-confirm-danger { background: var(--background-modifier-error); color: var(--text-on-accent); }
 
 /* Prompt / Confirm modal typography */
 .pm-prompt-text,

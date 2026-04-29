@@ -1,3 +1,4 @@
+import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Project, Task, GanttGranularity } from '../../types'
 import { type FlatTask, flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps'
@@ -97,22 +98,14 @@ export class GanttView implements SubView {
     }
 
     bar.createEl('span', { cls: 'pm-gantt-sep' })
-    const todayBtn = bar.createEl('button', { text: 'Today', cls: 'pm-btn pm-btn-ghost pm-gantt-today-btn' })
-    todayBtn.addEventListener('click', () => this.scrollToToday())
+    new ButtonComponent(bar).setButtonText('Today').onClick(() => this.scrollToToday())
 
-    const expBtn = bar.createEl('button', { text: 'Expand all', cls: 'pm-btn pm-btn-ghost' })
-    expBtn.addEventListener('click', () => this.setAllCollapsed(false))
-    const colBtn = bar.createEl('button', { text: 'Collapse all', cls: 'pm-btn pm-btn-ghost' })
-    colBtn.addEventListener('click', () => this.setAllCollapsed(true))
+    new ButtonComponent(bar).setButtonText('Expand all').onClick(() => this.setAllCollapsed(false))
+    new ButtonComponent(bar).setButtonText('Collapse all').onClick(() => this.setAllCollapsed(true))
 
     bar.createEl('span', { cls: 'pm-gantt-sep' })
     const hideDone = this.plugin.settings.ganttHideDone
-    const toggleBtn = bar.createEl('button', {
-      text: hideDone ? 'Show completed' : 'Hide completed',
-      cls: 'pm-btn pm-btn-ghost'
-    })
-    if (hideDone) toggleBtn.addClass('pm-gantt-toggle-active')
-    toggleBtn.addEventListener('click', () => {
+    new ButtonComponent(bar).setButtonText(hideDone ? 'Show completed' : 'Hide completed').onClick(() => {
       this.plugin.settings.ganttHideDone = !this.plugin.settings.ganttHideDone
       void this.plugin.saveSettings()
       this.render()
