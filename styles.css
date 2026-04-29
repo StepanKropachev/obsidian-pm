@@ -472,30 +472,52 @@
 .pm-avatar-stack { display: inline-flex; align-items: center; }
 .pm-avatar-stack > .pm-avatar:not(:first-child) { margin-left: -6px; }
 
-/* Due date chip */
+/* ── DueDateChip ──────────────────────────────────────────────────────── */
 .pm-due-chip {
   display: inline-block;
   padding: 3px 7px;
-  border-radius: var(--pm-radius-sm);
-  font-size: 12px;
-  background: var(--pm-bg2);
-  color: var(--pm-text-muted);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  background: var(--background-secondary);
+  color: var(--text-muted);
   white-space: nowrap;
-  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
-.pm-due-chip:hover { background: var(--pm-bg3); }
-.pm-due-chip--near { background: rgba(245,158,11,0.15); color: var(--pm-warning); }
-.pm-due-chip--near:hover { background: rgba(245,158,11,0.22); }
-.pm-due-chip--overdue { background: rgba(196,112,112,0.15); color: var(--pm-danger); font-weight: 600; }
-.pm-due-chip--overdue:hover { background: rgba(196,112,112,0.22); }
-.pm-due-placeholder {
-  color: var(--pm-text-faint);
-  cursor: pointer;
-  padding: 3px 7px;
-  border-radius: var(--pm-radius-sm);
-  font-size: 12px;
+.pm-due-chip--interactive { cursor: pointer; }
+.pm-due-chip--interactive:hover { background: var(--background-modifier-hover); }
+.pm-due-chip--placeholder {
+  background: transparent;
+  color: var(--text-faint);
 }
-.pm-due-placeholder:hover { background: var(--pm-bg3); color: var(--pm-text-muted); }
+.pm-due-chip--placeholder.pm-due-chip--interactive:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+.pm-due-chip--near {
+  background: color-mix(in srgb, var(--color-orange) 18%, transparent);
+  color: var(--color-orange);
+}
+.pm-due-chip--near.pm-due-chip--interactive:hover {
+  background: color-mix(in srgb, var(--color-orange) 28%, transparent);
+}
+.pm-due-chip--overdue {
+  background: color-mix(in srgb, var(--color-red) 18%, transparent);
+  color: var(--color-red);
+  font-weight: 600;
+}
+.pm-due-chip--overdue.pm-due-chip--interactive:hover {
+  background: color-mix(in srgb, var(--color-red) 28%, transparent);
+}
+.pm-due-chip--label {
+  display: inline;
+  padding: 0;
+  background: transparent;
+  font-size: var(--font-ui-smaller);
+}
+.pm-due-chip--label.pm-due-chip--near,
+.pm-due-chip--label.pm-due-chip--overdue {
+  background: transparent;
+}
 
 /* Progress */
 .pm-progress-wrap { display: flex; align-items: center; gap: 8px; }
@@ -932,12 +954,6 @@
   justify-content: space-between;
   gap: 8px;
 }
-
-.pm-kanban-due {
-  font-size: 11px;
-  color: var(--pm-text-muted);
-}
-.pm-kanban-due--overdue { color: var(--pm-danger); font-weight: 600; }
 
 .pm-kanban-card-pbar {
   height: 3px;

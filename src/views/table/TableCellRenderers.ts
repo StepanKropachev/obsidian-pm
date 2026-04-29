@@ -16,6 +16,7 @@ import { openTaskModal } from '../../ui/ModalFactory'
 import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
 import { Chip } from '../../ui/primitives/Chip'
+import { DueDateChip } from '../../ui/primitives/DueDateChip'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -234,11 +235,13 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
   const cell = row.createEl('td', { cls: 'pm-table-cell' })
 
   if (!task.due) {
-    const placeholder = cell.createEl('span', { text: '\u2014', cls: 'pm-due-placeholder' })
-    placeholder.addEventListener('click', (e) => {
-      e.stopPropagation()
-      startDueDateEdit(cell, placeholder, task, ctx)
-    })
+    const chip = new DueDateChip(cell)
+      .setLabel('\u2014')
+      .setPlaceholder(true)
+      .onClick((e) => {
+        e.stopPropagation()
+        startDueDateEdit(cell, chip.el, task, ctx)
+      })
     return
   }
 
@@ -246,17 +249,13 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
   const overdue = isTaskOverdue(task, ctx.plugin.settings.statuses)
   const isNear = !overdue && due !== null && due.since(today(), { largestUnit: 'days' }).days < 3
 
-  const chip = cell.createEl('span', {
-    text: formatDateLong(task.due),
-    cls: 'pm-due-chip'
-  })
-  if (overdue) chip.addClass('pm-due-chip--overdue')
-  else if (isNear) chip.addClass('pm-due-chip--near')
-
-  chip.addEventListener('click', (e) => {
-    e.stopPropagation()
-    startDueDateEdit(cell, chip, task, ctx)
-  })
+  const chip = new DueDateChip(cell)
+    .setLabel(formatDateLong(task.due))
+    .setUrgency(overdue ? 'overdue' : isNear ? 'near' : 'normal')
+    .onClick((e) => {
+      e.stopPropagation()
+      startDueDateEdit(cell, chip.el, task, ctx)
+    })
 }
 
 export function renderProgressCell(row: HTMLElement, task: Task, statusColor: string | undefined): void {
