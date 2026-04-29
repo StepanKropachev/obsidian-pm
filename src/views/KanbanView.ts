@@ -14,6 +14,7 @@ import { openTaskModal } from '../ui/ModalFactory'
 import { AvatarStack } from '../ui/primitives/AvatarStack'
 import { Badge } from '../ui/primitives/Badge'
 import { Chip } from '../ui/primitives/Chip'
+import { DueDateChip } from '../ui/primitives/DueDateChip'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import type { SubView } from './SubView'
 
@@ -192,11 +193,10 @@ export class KanbanView implements SubView {
 
     if (task.due) {
       const overdue = isTaskOverdue(task, this.plugin.settings.statuses)
-      const chip = footer.createEl('span', {
-        text: formatDateShort(task.due),
-        cls: 'pm-kanban-due'
-      })
-      if (overdue) chip.addClass('pm-kanban-due--overdue')
+      new DueDateChip(footer)
+        .setVariant('label')
+        .setLabel(formatDateShort(task.due))
+        .setUrgency(overdue ? 'overdue' : 'normal')
     }
 
     // Progress mini bar

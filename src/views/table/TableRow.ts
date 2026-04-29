@@ -37,9 +37,7 @@ export function renderTaskRow(
   row.addEventListener('click', (e) => {
     const target = e.target as HTMLElement
     if (
-      target.closest(
-        'button, input, .pm-badge--interactive, .pm-task-title-text, .pm-due-chip, .pm-due-placeholder, .pm-table-cell-select'
-      )
+      target.closest('button, input, .pm-badge--interactive, .pm-task-title-text, .pm-due-chip, .pm-table-cell-select')
     ) {
       return
     }
