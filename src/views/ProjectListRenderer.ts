@@ -1,4 +1,4 @@
-import { TFile, Menu } from 'obsidian'
+import { ButtonComponent, TFile, Menu } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task, StatusConfig } from '../types'
 import { safeAsync, isTerminalStatus } from '../utils'
@@ -16,15 +16,17 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
   ctx.toolbarEl.empty()
   ctx.toolbarEl.createEl('h2', { text: 'Project manager', cls: 'pm-toolbar-title' })
 
-  const newBtn = ctx.toolbarEl.createEl('button', { text: '+ new project', cls: 'pm-btn pm-btn-primary' })
-  newBtn.addEventListener('click', () => {
-    openProjectModal(ctx.plugin, {
-      onSave: async (project) => {
-        const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
-        if (file instanceof TFile) await ctx.openProjectFile(file)
-      }
+  new ButtonComponent(ctx.toolbarEl)
+    .setButtonText('+ new project')
+    .setCta()
+    .onClick(() => {
+      openProjectModal(ctx.plugin, {
+        onSave: async (project) => {
+          const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
+          if (file instanceof TFile) await ctx.openProjectFile(file)
+        }
+      })
     })
-  })
 }
 
 export async function renderProjectListContent(ctx: ProjectListContext): Promise<void> {
@@ -38,15 +40,17 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
     empty.createEl('div', { text: '\ud83d\udccb', cls: 'pm-empty-icon' })
     empty.createEl('h3', { text: 'No projects yet' })
     empty.createEl('p', { text: 'Create your first project to get started.' })
-    const btn = empty.createEl('button', { text: '+ new project', cls: 'pm-btn pm-btn-primary' })
-    btn.addEventListener('click', () => {
-      openProjectModal(ctx.plugin, {
-        onSave: async (project) => {
-          const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
-          if (file instanceof TFile) await ctx.openProjectFile(file)
-        }
+    new ButtonComponent(empty)
+      .setButtonText('+ new project')
+      .setCta()
+      .onClick(() => {
+        openProjectModal(ctx.plugin, {
+          onSave: async (project) => {
+            const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
+            if (file instanceof TFile) await ctx.openProjectFile(file)
+          }
+        })
       })
-    })
     return
   }
 

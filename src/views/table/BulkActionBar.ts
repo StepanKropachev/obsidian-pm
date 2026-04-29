@@ -1,4 +1,4 @@
-import { Menu } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { findTask, flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
 import { formatBadgeText } from '../../utils'
@@ -67,8 +67,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   left.createEl('span', { text: `${count} selected`, cls: 'pm-bulk-bar-count' })
 
   // Status button
-  const statusBtn = left.createEl('button', { text: 'Set status', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  statusBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set status').onClick((e) => {
     const menu = new Menu()
     for (const s of ctx.plugin.settings.statuses) {
       menu.addItem((item) =>
@@ -79,8 +78,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Priority button
-  const priorityBtn = left.createEl('button', { text: 'Set priority', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  priorityBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set priority').onClick((e) => {
     const menu = new Menu()
     for (const p of ctx.plugin.settings.priorities) {
       menu.addItem((item) =>
@@ -93,8 +91,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Assignee button
-  const assigneeBtn = left.createEl('button', { text: 'Set assignee', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  assigneeBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
     const allMembers = collectAllAssignees(ctx.project.tasks, [
       ...ctx.project.teamMembers,
@@ -118,8 +115,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Tag button
-  const tagBtn = left.createEl('button', { text: 'Set tag', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  tagBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set tag').onClick((e) => {
     const menu = new Menu()
     const allTags = collectAllTags(ctx.project.tasks)
     for (const t of allTags) {
@@ -138,8 +134,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Due Date button
-  const dueBtn = left.createEl('button', { text: 'Set due date', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  dueBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set due date').onClick((e) => {
     const menu = new Menu()
     const now = today()
     const ahead = (days: number) => now.add({ days }).toString()
@@ -176,8 +171,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Progress button
-  const progressBtn = left.createEl('button', { text: 'Set progress', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  progressBtn.addEventListener('click', (e) => {
+  new ButtonComponent(left).setButtonText('Set progress').onClick((e) => {
     const menu = new Menu()
     for (const pct of [0, 25, 50, 75, 100]) {
       menu.addItem((item) => item.setTitle(`${pct}%`).onClick(() => onAction({ type: 'set-progress', progress: pct })))
@@ -186,8 +180,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   })
 
   // Set parent / Remove parent buttons
-  const parentBtn = left.createEl('button', { text: 'Set parent', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  parentBtn.addEventListener('click', () => {
+  new ButtonComponent(left).setButtonText('Set parent').onClick(() => {
     const selectedIdSet = new Set(ctx.state.selectedTaskIds)
     // Collect all descendants of selected tasks to prevent circular refs
     const excludedIds = new Set<string>(selectedIdSet)
@@ -208,8 +201,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     modal.open()
   })
 
-  const removeParentBtn = left.createEl('button', { text: 'Remove parent', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-  removeParentBtn.addEventListener('click', () => onAction({ type: 'remove-parent' }))
+  new ButtonComponent(left).setButtonText('Remove parent').onClick(() => onAction({ type: 'remove-parent' }))
 
   // Archive / Unarchive button — show based on selected tasks' state
   const selectedIds = [...ctx.state.selectedTaskIds]
@@ -218,37 +210,32 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   const hasNonArchived = selectedTasks.some((t) => !t.archived)
 
   if (hasNonArchived) {
-    const archiveBtn = left.createEl('button', { text: 'Archive', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-    archiveBtn.addEventListener('click', () => onAction({ type: 'archive' }))
+    new ButtonComponent(left).setButtonText('Archive').onClick(() => onAction({ type: 'archive' }))
   }
   if (hasArchived) {
-    const unarchiveBtn = left.createEl('button', { text: 'Unarchive', cls: 'pm-btn pm-btn-ghost pm-btn-sm' })
-    unarchiveBtn.addEventListener('click', () => onAction({ type: 'unarchive' }))
+    new ButtonComponent(left).setButtonText('Unarchive').onClick(() => onAction({ type: 'unarchive' }))
   }
 
   // Delete button
-  const deleteBtn = left.createEl('button', { text: 'Delete', cls: 'pm-btn pm-btn-danger pm-btn-sm' })
-  deleteBtn.addEventListener('click', () => {
-    onAction({ type: 'delete' })
-  })
+  new ButtonComponent(left)
+    .setButtonText('Delete')
+    .setWarning()
+    .onClick(() => onAction({ type: 'delete' }))
 
   // Right section: clear selection
   const right = bar.createDiv('pm-bulk-bar-right')
-  const clearBtn = right.createEl('button', {
-    cls: 'pm-btn pm-btn-ghost pm-btn-icon pm-btn-sm',
-    attr: { 'aria-label': 'Clear selection' }
-  })
-  clearBtn.setText('\u00d7')
-  clearBtn.addEventListener('click', () => {
-    ctx.state.selectedTaskIds.clear()
-    // Update row checkboxes
-    if (ctx.state.tableBody) {
-      const cbs = ctx.state.tableBody.querySelectorAll('.pm-select-checkbox')
-      cbs.forEach((cb) => {
-        ;(cb as HTMLInputElement).checked = false
-      })
-    }
-    updateSelectAllCheckbox(ctx.state)
-    renderBulkActionBar({ ctx, onAction })
-  })
+  new ExtraButtonComponent(right)
+    .setIcon('x')
+    .setTooltip('Clear selection')
+    .onClick(() => {
+      ctx.state.selectedTaskIds.clear()
+      if (ctx.state.tableBody) {
+        const cbs = ctx.state.tableBody.querySelectorAll('.pm-select-checkbox')
+        cbs.forEach((cb) => {
+          ;(cb as HTMLInputElement).checked = false
+        })
+      }
+      updateSelectAllCheckbox(ctx.state)
+      renderBulkActionBar({ ctx, onAction })
+    })
 }

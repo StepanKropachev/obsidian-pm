@@ -1,4 +1,4 @@
-import { App, Component, Modal, MarkdownRenderer, Notice } from 'obsidian'
+import { App, ButtonComponent, Component, Modal, MarkdownRenderer, Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
@@ -271,12 +271,7 @@ export class TaskModal extends Modal {
 
     if (!this.isNew) {
       if (this.task.archived) {
-        const unarchiveBtn = footer.createEl('button', {
-          text: 'Unarchive',
-          cls: 'pm-btn pm-btn-ghost'
-        })
-        unarchiveBtn.addEventListener(
-          'click',
+        new ButtonComponent(footer).setButtonText('Unarchive').onClick(
           safeAsync(async () => {
             await this.plugin.store.unarchiveTask(this.project, this.task.id)
             new Notice('Task unarchived')
@@ -286,12 +281,7 @@ export class TaskModal extends Modal {
           })
         )
       } else {
-        const archiveBtn = footer.createEl('button', {
-          text: 'Archive',
-          cls: 'pm-btn pm-btn-ghost'
-        })
-        archiveBtn.addEventListener(
-          'click',
+        new ButtonComponent(footer).setButtonText('Archive').onClick(
           safeAsync(async () => {
             await this.plugin.store.archiveTask(this.project, this.task.id)
             new Notice('Task archived')
@@ -302,32 +292,31 @@ export class TaskModal extends Modal {
         )
       }
 
-      const deleteBtn = footer.createEl('button', { text: 'Delete', cls: 'pm-btn pm-btn-danger' })
-      deleteBtn.addEventListener(
-        'click',
-        safeAsync(async () => {
-          if (await confirmDialog(this.app, `Delete "${this.task.title}"?`)) {
-            await this.plugin.store.deleteTask(this.project, this.task.id)
-            await this.onSave(this.task)
-            this.cancelled = true
-            this.close()
-          }
-        })
-      )
+      new ButtonComponent(footer)
+        .setButtonText('Delete')
+        .setWarning()
+        .onClick(
+          safeAsync(async () => {
+            if (await confirmDialog(this.app, `Delete "${this.task.title}"?`)) {
+              await this.plugin.store.deleteTask(this.project, this.task.id)
+              await this.onSave(this.task)
+              this.cancelled = true
+              this.close()
+            }
+          })
+        )
     }
 
     footer.createDiv('pm-footer-spacer')
 
-    const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'pm-btn pm-btn-ghost' })
-    cancelBtn.addEventListener('click', () => {
+    new ButtonComponent(footer).setButtonText('Cancel').onClick(() => {
       this.cancelled = true
       this.close()
     })
 
-    const saveBtn = footer.createEl('button', {
-      text: this.isNew ? 'Create (Shift+Enter)' : 'Save (Shift+Enter)',
-      cls: 'pm-btn pm-btn-primary'
-    })
+    const saveBtn = new ButtonComponent(footer)
+      .setButtonText(this.isNew ? 'Create (Shift+Enter)' : 'Save (Shift+Enter)')
+      .setCta()
     let saving = false
     const doSave = safeAsync(async () => {
       if (saving) return
@@ -343,7 +332,7 @@ export class TaskModal extends Modal {
       this.close()
     })
 
-    saveBtn.addEventListener('click', doSave)
+    saveBtn.onClick(doSave)
     this.modalEl.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault()

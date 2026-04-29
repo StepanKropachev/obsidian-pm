@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, ViewMode } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
@@ -199,19 +199,20 @@ export class ProjectView extends ItemView {
     }
 
     const right = this.toolbarEl.createDiv('pm-toolbar-right')
-    const addBtn = right.createEl('button', { text: '+ add task', cls: 'pm-btn pm-btn-primary' })
-    addBtn.addEventListener('click', () => {
-      if (!this.project) return
-      openTaskModal(this.plugin, this.project, {
-        onSave: async () => {
-          await this.refreshProject()
-        }
+    new ButtonComponent(right)
+      .setButtonText('+ add task')
+      .setCta()
+      .onClick(() => {
+        if (!this.project) return
+        openTaskModal(this.plugin, this.project, {
+          onSave: async () => {
+            await this.refreshProject()
+          }
+        })
       })
-    })
 
     if (this.currentView === 'gantt') {
-      const milestoneBtn = right.createEl('button', { text: '+ milestone', cls: 'pm-btn pm-btn-ghost' })
-      milestoneBtn.addEventListener('click', () => {
+      new ButtonComponent(right).setButtonText('+ milestone').onClick(() => {
         if (!this.project) return
         openTaskModal(this.plugin, this.project, {
           defaults: { type: 'milestone' },
@@ -222,21 +223,19 @@ export class ProjectView extends ItemView {
       })
     }
 
-    const settingsBtn = right.createEl('button', {
-      cls: 'pm-btn pm-btn-icon',
-      attr: { 'aria-label': 'Project settings' }
-    })
-    settingsBtn.createEl('span', { text: '⚙' })
-    settingsBtn.addEventListener('click', () => {
-      openProjectModal(this.plugin, {
-        project: this.project,
-        onSave: (updated) => {
-          this.project = updated
-          this.renderProjectToolbar()
-          this.renderCurrentView()
-        }
+    new ExtraButtonComponent(right)
+      .setIcon('settings')
+      .setTooltip('Project settings')
+      .onClick(() => {
+        openProjectModal(this.plugin, {
+          project: this.project,
+          onSave: (updated) => {
+            this.project = updated
+            this.renderProjectToolbar()
+            this.renderCurrentView()
+          }
+        })
       })
-    })
   }
 
   private renderCurrentView(): void {

@@ -1,4 +1,4 @@
-import { App, Modal } from 'obsidian'
+import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, CustomFieldDef, makeId, makeProject } from '../types'
 import { stringToColor, safeAsync } from '../utils'
@@ -213,34 +213,31 @@ export class ProjectModal extends Modal {
     const footer = el.createDiv('pm-modal-footer')
     footer.createDiv('pm-footer-spacer')
 
-    const cancelBtn = footer.createEl('button', { text: 'Cancel', cls: 'pm-btn pm-btn-ghost' })
-    cancelBtn.addEventListener('click', () => this.close())
+    new ButtonComponent(footer).setButtonText('Cancel').onClick(() => this.close())
 
-    const saveBtn = footer.createEl('button', {
-      text: this.isNew ? '+ Create project' : 'Save',
-      cls: 'pm-btn pm-btn-primary'
-    })
-    saveBtn.addEventListener(
-      'click',
-      safeAsync(async () => {
-        const title = titleInput.value.trim()
-        if (!title) {
-          titleInput.addClass('pm-input-error')
-          titleInput.focus()
-          return
-        }
-        this.project.title = title
+    new ButtonComponent(footer)
+      .setButtonText(this.isNew ? '+ Create project' : 'Save')
+      .setCta()
+      .onClick(
+        safeAsync(async () => {
+          const title = titleInput.value.trim()
+          if (!title) {
+            titleInput.addClass('pm-input-error')
+            titleInput.focus()
+            return
+          }
+          this.project.title = title
 
-        if (this.isNew) {
-          this.project.filePath = `${this.plugin.settings.projectsFolder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`
-          await this.plugin.store.ensureFolder(this.plugin.settings.projectsFolder)
-        }
+          if (this.isNew) {
+            this.project.filePath = `${this.plugin.settings.projectsFolder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`
+            await this.plugin.store.ensureFolder(this.plugin.settings.projectsFolder)
+          }
 
-        await this.plugin.store.saveProject(this.project)
-        await this.onSave(this.project)
-        this.close()
-      })
-    )
+          await this.plugin.store.saveProject(this.project)
+          await this.onSave(this.project)
+          this.close()
+        })
+      )
   }
 
   private renderCustomFieldEditor(
