@@ -2,7 +2,6 @@ import { Menu } from 'obsidian'
 import type { Task, Project } from '../../types'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
 import {
-  stringToColor,
   formatDateLong,
   isTaskOverdue,
   getStatusConfig,
@@ -14,6 +13,7 @@ import { today, parsePlainDate } from '../../dates'
 import { COLOR_ACCENT } from '../../constants'
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
@@ -212,18 +212,7 @@ export function renderPriorityCell(row: HTMLElement, task: Task, ctx: TableConte
 
 export function renderAssigneesCell(row: HTMLElement, task: Task): void {
   const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-assignees' })
-  for (const a of task.assignees.slice(0, 3)) {
-    const avatar = cell.createEl('span', { cls: 'pm-avatar' })
-    avatar.textContent = a.slice(0, 2).toUpperCase()
-    avatar.title = a
-    avatar.style.background = stringToColor(a)
-  }
-  if (task.assignees.length > 3) {
-    cell.createEl('span', {
-      text: `+${task.assignees.length - 3}`,
-      cls: 'pm-avatar pm-avatar-more'
-    })
-  }
+  new AvatarStack(cell).setNames(task.assignees).setMax(3)
 }
 
 function startDueDateEdit(cell: HTMLElement, display: HTMLElement, task: Task, ctx: TableContext): void {
