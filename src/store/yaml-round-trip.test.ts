@@ -170,6 +170,18 @@ describe('project round-trip', () => {
     expect(frontmatter.taskIds).toEqual(['t-1', 't-2'])
   })
 
+  it('dedups taskIds and body links when project.tasks has the same task twice', () => {
+    const p = makeProject('P', 'Projects/P.md')
+    const task = makeTask({ id: 't-dup', title: 'Dup', filePath: 'Projects/P_tasks/dup-tdup.md' })
+    p.tasks = [task, task]
+    const md = serializeProject(p)
+    const { frontmatter } = parseFrontmatter(md)
+    if (!frontmatter) throw new Error('frontmatter missing')
+    expect(frontmatter.taskIds).toEqual(['t-dup'])
+    const bulletCount = md.split('\n').filter((l) => l.startsWith('- [ ] [[dup-tdup|')).length
+    expect(bulletCount).toBe(1)
+  })
+
   it('falls back to the file basename when title is missing', () => {
     const project = hydrateProjectFromFrontmatter({}, '', 'Projects/Fallback.md', 'Fallback')
     expect(project.title).toBe('Fallback')

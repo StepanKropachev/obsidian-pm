@@ -147,15 +147,19 @@ export class ProjectStore {
     }
 
     const result: Task[] = []
+    const pushed = new Set<string>()
     for (const id of topLevelIds) {
+      if (pushed.has(id)) continue
       const task = taskMap.get(id)
-      if (task) result.push(task)
+      if (task) {
+        result.push(task)
+        pushed.add(id)
+      }
     }
     for (const task of taskMap.values()) {
-      if (!topLevelIds.includes(task.id)) {
-        const isChild = [...taskMap.values()].some((t) => t.subtasks.some((s) => s.id === task.id))
-        if (!isChild) result.push(task)
-      }
+      if (pushed.has(task.id)) continue
+      const isChild = [...taskMap.values()].some((t) => t.subtasks.some((s) => s.id === task.id))
+      if (!isChild) result.push(task)
     }
 
     return result
