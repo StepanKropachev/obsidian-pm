@@ -58,7 +58,7 @@ export class TaskModal extends Modal {
   }
 
   onClose(): void {
-    if (!this.cancelled && !this.saved && this.task.title.trim()) {
+    if (!this.isNew && !this.cancelled && !this.saved && this.task.title.trim()) {
       void this.persistTask()
     }
     this.noteSuggest?.destroy()
