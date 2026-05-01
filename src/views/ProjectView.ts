@@ -8,6 +8,7 @@ import type { TableViewState } from './table/TableView'
 import { GanttView } from './gantt/GanttView'
 import { KanbanView } from './KanbanView'
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
+import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
 
 export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
@@ -176,27 +177,18 @@ export class ProjectView extends ItemView {
       })
     )
 
-    const switcher = this.toolbarEl.createDiv('pm-view-switcher')
-    const views: { mode: ViewMode; icon: string; label: string }[] = [
-      { mode: 'table', icon: '≡', label: 'Table' },
-      { mode: 'gantt', icon: '▬', label: 'Gantt' },
-      { mode: 'kanban', icon: '⊞', label: 'Board' }
-    ]
-    for (const v of views) {
-      const btn = switcher.createEl('button', {
-        cls: 'pm-view-btn',
-        attr: { 'aria-label': `Switch to ${v.label} view` }
-      })
-      btn.createEl('span', { text: v.icon, cls: 'pm-view-btn-icon' })
-      btn.createEl('span', { text: v.label })
-      if (v.mode === this.currentView) btn.addClass('pm-view-btn--active')
-      btn.addEventListener('click', () => {
-        this.currentView = v.mode
-        switcher.querySelectorAll('.pm-view-btn').forEach((b) => b.removeClass('pm-view-btn--active'))
-        btn.addClass('pm-view-btn--active')
+    new ViewSwitcher<ViewMode>(this.toolbarEl, {
+      options: [
+        { id: 'table', icon: '≡', label: 'Table' },
+        { id: 'gantt', icon: '▬', label: 'Gantt' },
+        { id: 'kanban', icon: '⊞', label: 'Board' }
+      ],
+      active: this.currentView,
+      onChange: (mode) => {
+        this.currentView = mode
         this.renderCurrentView()
-      })
-    }
+      }
+    })
 
     const right = this.toolbarEl.createDiv('pm-toolbar-right')
     new ButtonComponent(right)
