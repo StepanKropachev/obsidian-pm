@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Status and priority badges in the task modal are spans, no longer keyboard-focusable
 - Confirm "Delete" uses Obsidian's native warning style
 - Light-theme primary buttons use solid accent (`mod-cta`) instead of the bordered variant
-- Project view header gear, bulk-action clear, and chip remove buttons use lucide icons
+- Project view header gear, bulk-action clear, chip remove, and table row icon buttons use lucide icons
 - Chip remove buttons turn red on hover, uniformly across tags, assignees, and dependencies
 - Project-card and kanban-card progress bars are 3px tall
 
