@@ -27,9 +27,9 @@ export class Badge {
     return this
   }
 
-  onClick(callback: (e: MouseEvent) => unknown): this {
+  onClick(handler: (e: MouseEvent) => unknown): this {
     this.el.addClass('pm-badge--interactive')
-    this.el.addEventListener('click', callback)
+    this.el.addEventListener('click', handler)
     return this
   }
 }

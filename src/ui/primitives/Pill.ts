@@ -25,13 +25,13 @@ export class Pill {
     return this
   }
 
-  onClick(callback: (e: MouseEvent) => unknown): this {
-    this.el.addEventListener('click', callback)
+  onClick(handler: (e: MouseEvent) => unknown): this {
+    this.el.addEventListener('click', handler)
     return this
   }
 
-  onContextMenu(callback: (e: MouseEvent) => unknown): this {
-    this.el.addEventListener('contextmenu', callback)
+  onContextMenu(handler: (e: MouseEvent) => unknown): this {
+    this.el.addEventListener('contextmenu', handler)
     return this
   }
 }

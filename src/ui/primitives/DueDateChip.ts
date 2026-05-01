@@ -26,9 +26,9 @@ export class DueDateChip {
     return this
   }
 
-  onClick(callback: (e: MouseEvent) => unknown): this {
+  onClick(handler: (e: MouseEvent) => unknown): this {
     this.el.addClass('pm-due-chip--interactive')
-    this.el.addEventListener('click', callback)
+    this.el.addEventListener('click', handler)
     return this
   }
 }
