@@ -1,21 +1,19 @@
-import { getStatusConfig, isTerminalStatus, stringifyCustomValue } from '../../utils'
+import { getStatusConfig, isTaskOverdue, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
+import { today, parsePlainDate } from '../../dates'
 import { COLOR_ACCENT } from '../../constants'
 import type { Task } from '../../types'
 import type { TableContext, TableState } from './TableRenderer'
-import {
-  renderSelectCell,
-  renderExpandCell,
-  renderTitleCell,
-  renderStatusCell,
-  renderPriorityCell,
-  renderDueDateCell,
-  renderActionsCell
-} from './TableCellRenderers'
+import { renderSelectCell, renderExpandCell, renderActionsCell } from './TableCellRenderers'
+import { openTaskModal } from '../../ui/ModalFactory'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
+import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
+import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
 import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
+import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
+import { TitleCell } from '../../ui/composites/cells/TitleCell'
 
 // ─── Row orchestrator ──────────────────────────────────────────────────────────
 
@@ -51,17 +49,73 @@ export function renderTaskRow(
 
   renderSelectCell(row, task, ctx)
   renderExpandCell(row, task, ctx)
-  renderTitleCell(row, task, depth, ctx)
-  renderStatusCell(row, task, ctx)
-  renderPriorityCell(row, task, ctx)
+
+  new TitleCell(row, {
+    task,
+    depth,
+    onTitleClick: () => {
+      openTaskModal(ctx.plugin, ctx.project, {
+        task,
+        onSave: async () => {
+          await ctx.onRefresh()
+        }
+      })
+    },
+    onTitleSave: async (title) => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { title })
+      await ctx.onRefresh()
+    },
+    onAddSubtask: () => {
+      openTaskModal(ctx.plugin, ctx.project, {
+        parentId: task.id,
+        onSave: async () => {
+          await ctx.onRefresh()
+        }
+      })
+    }
+  })
+
+  new StatusCell(row, {
+    task,
+    statuses: ctx.plugin.settings.statuses,
+    onChange: safeAsync(async (status) => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { status })
+      await ctx.onRefresh()
+    })
+  })
+
+  new PriorityCell(row, {
+    task,
+    priorities: ctx.plugin.settings.priorities,
+    onChange: safeAsync(async (priority) => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { priority })
+      await ctx.onRefresh()
+    })
+  })
+
   new AssigneesCell(row, task.assignees)
-  renderDueDateCell(row, task, ctx)
+
+  const due = parsePlainDate(task.due)
+  const overdue = isTaskOverdue(task, ctx.plugin.settings.statuses)
+  const isNear = !overdue && due !== null && due.since(today(), { largestUnit: 'days' }).days < 3
+  new DueDateCell(row, {
+    task,
+    urgency: overdue ? 'overdue' : isNear ? 'near' : 'normal',
+    onSave: async (val) => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { due: val })
+      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id, ctx.plugin.settings.statuses)
+      await ctx.onRefresh()
+    }
+  })
+
   new ProgressCell(row, { value: task.progress, color: statusConfig?.color ?? COLOR_ACCENT })
   new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
+
   for (const cf of ctx.project.customFields) {
     const val = task.customFields[cf.id]
     new CustomFieldCell(row, val !== undefined ? stringifyCustomValue(val) : '')
   }
+
   renderActionsCell(row, task, ctx)
 }
 
