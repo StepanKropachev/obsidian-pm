@@ -1,13 +1,12 @@
-import { setIcon } from 'obsidian'
+import { setIcon, setTooltip } from 'obsidian'
 
 export class Chip {
   el: HTMLElement
   private labelEl: HTMLElement
-  private rmBtn: HTMLButtonElement | null = null
 
   constructor(parentEl: HTMLElement) {
     this.el = parentEl.createEl('span', { cls: 'pm-chip' })
-    this.labelEl = this.el.createEl('span', { cls: 'pm-chip-label' })
+    this.labelEl = this.el.createSpan()
   }
 
   setLabel(text: string): this {
@@ -31,16 +30,14 @@ export class Chip {
   }
 
   setTooltip(text: string): this {
-    this.el.setAttribute('title', text)
+    setTooltip(this.el, text)
     return this
   }
 
   setRemovable(onRemove: () => void): this {
-    if (!this.rmBtn) {
-      this.rmBtn = this.el.createEl('button', { cls: 'pm-chip-rm' })
-      setIcon(this.rmBtn, 'x')
-    }
-    this.rmBtn.onclick = (e) => {
+    const rmBtn = this.el.createEl('button', { cls: 'pm-chip-rm' })
+    setIcon(rmBtn, 'x')
+    rmBtn.onclick = (e) => {
       e.preventDefault()
       e.stopPropagation()
       onRemove()

@@ -503,10 +503,6 @@
   background: transparent;
   font-size: var(--font-ui-smaller);
 }
-.pm-due-chip--label.pm-due-chip--near,
-.pm-due-chip--label.pm-due-chip--overdue {
-  background: transparent;
-}
 
 /* ── ProgressBar ──────────────────────────────────────────────────────── */
 .pm-progress {

@@ -1,3 +1,4 @@
+import { setTooltip } from 'obsidian'
 import { stringToColor } from '../../utils'
 
 export class Avatar {
@@ -10,7 +11,7 @@ export class Avatar {
   setName(name: string): this {
     this.el.setText(name.slice(0, 2).toUpperCase())
     this.el.style.background = stringToColor(name)
-    this.el.setAttribute('title', name)
+    setTooltip(this.el, name)
     return this
   }
 

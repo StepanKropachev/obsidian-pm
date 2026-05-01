@@ -1,37 +1,37 @@
 export class Pill {
-  buttonEl: HTMLButtonElement
+  el: HTMLButtonElement
 
   constructor(parentEl: HTMLElement) {
-    this.buttonEl = parentEl.createEl('button', { cls: 'pm-pill' })
+    this.el = parentEl.createEl('button', { cls: 'pm-pill' })
   }
 
   setLabel(text: string): this {
-    this.buttonEl.setText(text)
+    this.el.setText(text)
     return this
   }
 
   setActive(active: boolean): this {
-    this.buttonEl.toggleClass('pm-pill--active', active)
+    this.el.toggleClass('pm-pill--active', active)
     return this
   }
 
   setShape(shape: 'rounded' | 'pill'): this {
-    this.buttonEl.toggleClass('pm-pill--pill', shape === 'pill')
+    this.el.toggleClass('pm-pill--pill', shape === 'pill')
     return this
   }
 
   setAriaLabel(label: string): this {
-    this.buttonEl.setAttribute('aria-label', label)
+    this.el.setAttribute('aria-label', label)
     return this
   }
 
   onClick(callback: (e: MouseEvent) => unknown): this {
-    this.buttonEl.addEventListener('click', callback)
+    this.el.addEventListener('click', callback)
     return this
   }
 
   onContextMenu(callback: (e: MouseEvent) => unknown): this {
-    this.buttonEl.addEventListener('contextmenu', callback)
+    this.el.addEventListener('contextmenu', callback)
     return this
   }
 }

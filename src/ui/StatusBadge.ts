@@ -4,9 +4,6 @@ import { COLOR_MUTED, COLOR_MUTED_ALT } from '../constants'
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils'
 import { Badge } from './primitives/Badge'
 
-/**
- * Render a clickable status badge that opens a menu to change the status.
- */
 export function renderStatusBadge(
   container: HTMLElement,
   task: Task,
@@ -32,9 +29,6 @@ export function renderStatusBadge(
   return badge.el
 }
 
-/**
- * Render a clickable priority badge that opens a menu to change the priority.
- */
 export function renderPriorityBadge(
   container: HTMLElement,
   task: Task,
@@ -60,9 +54,6 @@ export function renderPriorityBadge(
   return badge.el
 }
 
-/**
- * Render a simple status dot (colored circle).
- */
 export function renderStatusDot(
   container: HTMLElement,
   status: TaskStatus,

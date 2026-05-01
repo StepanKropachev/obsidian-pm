@@ -1,3 +1,5 @@
+import { setTooltip } from 'obsidian'
+
 export class Badge {
   el: HTMLElement
 
@@ -21,7 +23,7 @@ export class Badge {
   }
 
   setTooltip(text: string): this {
-    this.el.setAttribute('title', text)
+    setTooltip(this.el, text)
     return this
   }
 
