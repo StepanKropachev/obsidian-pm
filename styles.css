@@ -387,18 +387,6 @@
 .pm-table-cell-actions { width: 40px; text-align: center; }
 .pm-table-cell-assignees { min-width: 80px; }
 
-.pm-expand-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 11px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  transition: color 0.15s;
-}
-.pm-expand-btn:hover { color: var(--pm-text); }
-
 .pm-task-title-text {
   cursor: pointer;
   font-weight: 500;
@@ -530,38 +518,13 @@
   min-width: 28px;
 }
 
-/* Row menu */
-.pm-row-menu-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 16px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
+/* ── IconButton ────────────────────────────────────────────────────────── */
+.pm-icon-btn--hover-only {
   opacity: 0;
   transition: opacity 0.15s;
 }
-.pm-table-row:hover .pm-row-menu-btn { opacity: 1; }
-.pm-row-menu-btn:hover { background: var(--pm-bg3); color: var(--pm-text); }
-
-.pm-add-subtask-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 4px;
-  line-height: 1;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.pm-table-row:hover .pm-add-subtask-btn { opacity: 1; }
-.pm-add-subtask-btn:hover { background: var(--pm-bg3); color: var(--pm-accent); }
+.pm-table-row:hover .pm-icon-btn--hover-only { opacity: 1; }
+.pm-icon-btn--hover-only:focus-visible { opacity: 1; }
 
 /* Tags */
 /* ── Chip ─────────────────────────────────────────────────────────────── */

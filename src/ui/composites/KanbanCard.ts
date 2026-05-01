@@ -5,6 +5,7 @@ import { Badge } from '../primitives/Badge'
 import { Chip } from '../primitives/Chip'
 import { DueDateChip } from '../primitives/DueDateChip'
 import { ProgressBar } from '../primitives/ProgressBar'
+import { TimeChip } from '../primitives/TimeChip'
 
 export interface KanbanCardProps {
   task: Task
@@ -54,9 +55,7 @@ export class KanbanCard {
 
     const est = task.timeEstimate ?? 0
     if (props.loggedHours > 0 || est > 0) {
-      const timeBadge = body.createEl('span', { cls: 'pm-time-chip pm-time-chip--sm' })
-      timeBadge.setText(est > 0 ? `${props.loggedHours}/${est}h` : `${props.loggedHours}h`)
-      if (est > 0 && props.loggedHours > est) timeBadge.addClass('pm-time-chip--over')
+      new TimeChip(body).setSize('sm').setHours(props.loggedHours, est)
     }
 
     if (task.tags.length) {

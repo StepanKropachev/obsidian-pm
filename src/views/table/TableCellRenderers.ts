@@ -17,7 +17,9 @@ import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
 import { Chip } from '../../ui/primitives/Chip'
 import { DueDateChip } from '../../ui/primitives/DueDateChip'
+import { IconButton } from '../../ui/primitives/IconButton'
 import { ProgressBar } from '../../ui/primitives/ProgressBar'
+import { TimeChip } from '../../ui/primitives/TimeChip'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -103,18 +105,15 @@ export function renderSelectCell(row: HTMLElement, task: Task, ctx: TableContext
 export function renderExpandCell(row: HTMLElement, task: Task, ctx: TableContext): void {
   const cell = row.createEl('td', { cls: 'pm-table-cell-expand' })
   if (task.subtasks.length > 0) {
-    const btn = cell.createEl('button', {
-      text: task.collapsed ? '\u25b6' : '\u25bc',
-      cls: 'pm-expand-btn',
-      attr: { 'aria-label': task.collapsed ? 'Expand subtasks' : 'Collapse subtasks' }
-    })
-    btn.addEventListener(
-      'click',
-      safeAsync(async () => {
-        await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
-        await ctx.onRefresh()
-      })
-    )
+    new IconButton(cell)
+      .setIcon(task.collapsed ? 'chevron-right' : 'chevron-down')
+      .setTooltip(task.collapsed ? 'Expand subtasks' : 'Collapse subtasks')
+      .onClick(
+        safeAsync(async () => {
+          await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+          await ctx.onRefresh()
+        })
+      )
   }
 }
 
@@ -145,20 +144,19 @@ export function renderTitleCell(row: HTMLElement, task: Task, depth: number, ctx
     })
   })
 
-  const addSubtaskBtn = cell.createEl('button', {
-    cls: 'pm-add-subtask-btn',
-    attr: { 'aria-label': 'Add subtask', title: 'Add subtask' }
-  })
-  addSubtaskBtn.setText('+')
-  addSubtaskBtn.addEventListener('click', (e) => {
-    e.stopPropagation()
-    openTaskModal(ctx.plugin, ctx.project, {
-      parentId: task.id,
-      onSave: async () => {
-        await ctx.onRefresh()
-      }
+  new IconButton(cell)
+    .setIcon('plus')
+    .setTooltip('Add subtask')
+    .setRevealOnHover(true)
+    .onClick((e) => {
+      e.stopPropagation()
+      openTaskModal(ctx.plugin, ctx.project, {
+        parentId: task.id,
+        onSave: async () => {
+          await ctx.onRefresh()
+        }
+      })
     })
-  })
 
   if (task.type === 'milestone') {
     new Badge(cell).setLabel('M').setSize('sm').setColor('var(--color-purple)').setTooltip('Milestone')
@@ -272,24 +270,21 @@ export function renderTimeCell(row: HTMLElement, task: Task): void {
   const logged = totalLoggedHours(task)
   const est = task.timeEstimate ?? 0
   if (logged > 0 || est > 0) {
-    const chip = cell.createEl('span', { cls: 'pm-time-chip' })
-    chip.setText(est > 0 ? `${logged}/${est}h` : `${logged}h`)
-    if (est > 0 && logged > est) chip.addClass('pm-time-chip--over')
+    new TimeChip(cell).setHours(logged, est)
   }
 }
 
 export function renderActionsCell(row: HTMLElement, task: Task, ctx: TableContext): void {
   const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-actions' })
-  const btn = cell.createEl('button', {
-    text: '\u22ef',
-    cls: 'pm-row-menu-btn',
-    attr: { 'aria-label': 'Task actions' }
-  })
-  btn.addEventListener('click', (e) => {
-    const menu = new Menu()
-    buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh })
-    menu.showAtMouseEvent(e)
-  })
+  new IconButton(cell)
+    .setIcon('more-horizontal')
+    .setTooltip('Task actions')
+    .setRevealOnHover(true)
+    .onClick((e) => {
+      const menu = new Menu()
+      buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh })
+      menu.showAtMouseEvent(e)
+    })
 }
 
 export function renderCustomFieldCells(row: HTMLElement, task: Task, project: Project): void {
