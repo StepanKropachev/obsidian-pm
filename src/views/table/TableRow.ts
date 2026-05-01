@@ -1,16 +1,21 @@
+import { Menu } from 'obsidian'
 import { getStatusConfig, isTaskOverdue, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
 import { today, parsePlainDate } from '../../dates'
 import { COLOR_ACCENT } from '../../constants'
 import type { Task } from '../../types'
+import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext, TableState } from './TableRenderer'
-import { renderSelectCell, renderExpandCell, renderActionsCell } from './TableCellRenderers'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
+import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
+import { ExpandCell } from '../../ui/composites/cells/ExpandCell'
 import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
 import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
+import { SelectCell } from '../../ui/composites/cells/SelectCell'
 import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { TitleCell } from '../../ui/composites/cells/TitleCell'
@@ -47,8 +52,41 @@ export function renderTaskRow(
     updateSelectedRow(ctx.state)
   })
 
-  renderSelectCell(row, task, ctx)
-  renderExpandCell(row, task, ctx)
+  new SelectCell(row, {
+    checked: ctx.state.selectedTaskIds.has(task.id),
+    onClick: (e) => {
+      const cb = e.target as HTMLInputElement
+      const checked = cb.checked
+      if (e.shiftKey && ctx.state.lastCheckedTaskId) {
+        const ids = getVisibleTaskIds(ctx.state)
+        const curIdx = ids.indexOf(task.id)
+        const lastIdx = ids.indexOf(ctx.state.lastCheckedTaskId)
+        if (curIdx !== -1 && lastIdx !== -1) {
+          const [from, to] = curIdx < lastIdx ? [curIdx, lastIdx] : [lastIdx, curIdx]
+          for (let i = from; i <= to; i++) {
+            if (checked) ctx.state.selectedTaskIds.add(ids[i])
+            else ctx.state.selectedTaskIds.delete(ids[i])
+          }
+          updateSelectCheckboxes(ctx.state)
+        }
+      } else if (checked) {
+        ctx.state.selectedTaskIds.add(task.id)
+      } else {
+        ctx.state.selectedTaskIds.delete(task.id)
+      }
+      ctx.state.lastCheckedTaskId = task.id
+      ctx.onSelectionChange()
+    }
+  })
+
+  new ExpandCell(row, {
+    hasSubtasks: task.subtasks.length > 0,
+    collapsed: task.collapsed,
+    onToggle: safeAsync(async () => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+      await ctx.onRefresh()
+    })
+  })
 
   new TitleCell(row, {
     task,
@@ -116,7 +154,13 @@ export function renderTaskRow(
     new CustomFieldCell(row, val !== undefined ? stringifyCustomValue(val) : '')
   }
 
-  renderActionsCell(row, task, ctx)
+  new ActionsCell(row, {
+    onClick: (e) => {
+      const menu = new Menu()
+      buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh })
+      menu.showAtMouseEvent(e)
+    }
+  })
 }
 
 // ─── Selection ─────────────────────────────────────────────────────────────────
