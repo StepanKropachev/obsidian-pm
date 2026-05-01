@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- UI now follows the Obsidian theme: accent color, near/overdue colors, badge palette, and avatars all read from Obsidian CSS variables instead of the previous hardcoded purple
+- Toolbar, gantt, filter, and bulk-action buttons render at native size (previously compact)
+- Saved-view tabs share the soft accent treatment with filter pills (previously filled accent)
+- `+ save view` and inline chip-list add buttons are native buttons (no longer dashed pills)
+- Status and priority badges in the task modal are spans, no longer keyboard-focusable
+- Confirm "Delete" uses Obsidian's native warning style
+- Light-theme primary buttons use solid accent (`mod-cta`) instead of the bordered variant
+- Project view header gear, bulk-action clear, and chip remove buttons use lucide icons
+- Chip remove buttons turn red on hover, uniformly across tags, assignees, and dependencies
+- Project-card and kanban-card progress bars are 3px tall
+
+### Fixed
+
+- Phantom 6px right margin on solo avatars (visible in the project edit modal)
+- Kanban cards silently dropping the 4th+ assignee (now shown as `+N`)
+- Duplicate task entries when creating a task
+
 ## [1.4.0] - 2026-04-29
 
 ### Breaking Changes
