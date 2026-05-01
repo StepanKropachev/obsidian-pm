@@ -1410,8 +1410,9 @@
    NEW: Milestone, Time Tracking, Recurrence, Drag Handles, Inline Edit
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Task type toggle ──────────────────────────────────────────────────── */
-.pm-prop-type-btn {
+/* ── SegmentedControl ──────────────────────────────────────────────────── */
+.pm-segmented { display: flex; gap: 6px; }
+.pm-segmented-btn {
   all: unset;
   cursor: pointer;
   padding: 4px 12px;
@@ -1422,21 +1423,20 @@
   border: 1px solid var(--pm-border);
   transition: all 0.15s;
 }
-.pm-prop-type-btn:hover { background: var(--pm-bg3); }
-.pm-prop-type-btn--milestone {
+.pm-segmented-btn:hover { background: var(--pm-bg3); }
+.pm-segmented-btn--milestone {
   background: rgba(139,114,190,0.15);
   border-color: rgba(139,114,190,0.4);
   color: #69519a;
 }
-.pm-prop-type-btn--subtask {
+.pm-segmented-btn--subtask {
   background: rgba(121,181,141,0.15);
   border-color: rgba(121,181,141,0.4);
   color: #79b58d;
 }
-.pm-prop-type-btn--active {
+.pm-segmented-btn--active {
   box-shadow: 0 0 0 2px var(--pm-accent);
 }
-.pm-prop-type-selector { gap: 6px; }
 
 /* ── Recurrence picker ─────────────────────────────────────────────────── */
 .pm-prop-recurrence { flex-wrap: wrap; gap: 6px; }

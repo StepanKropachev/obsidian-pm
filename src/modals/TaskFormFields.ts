@@ -5,6 +5,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField'
 import { Badge } from '../ui/primitives/Badge'
+import { SegmentedControl } from '../ui/primitives/SegmentedControl'
 import { COLOR_MUTED } from '../constants'
 import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
@@ -78,29 +79,26 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
 
   // Type
   renderPropRow(container, 'Type', () => {
-    const wrap = createDiv('pm-prop-value pm-prop-type-selector')
-    const types: { id: TaskType; label: string; cls: string }[] = [
-      { id: 'task', label: 'Task', cls: '' },
-      { id: 'subtask', label: 'Subtask', cls: 'pm-prop-type-btn--subtask' },
-      { id: 'milestone', label: 'Milestone', cls: 'pm-prop-type-btn--milestone' }
-    ]
-    for (const t of types) {
-      const btn = wrap.createEl('button', {
-        cls: `pm-prop-type-btn ${t.cls} ${task.type === t.id ? 'pm-prop-type-btn--active' : ''}`
-      })
-      btn.setText(t.label)
-      btn.addEventListener('click', () => {
-        task.type = t.id
-        if (t.id === 'milestone') {
+    const wrap = createDiv('pm-prop-value')
+    new SegmentedControl<TaskType>(wrap, {
+      options: [
+        { id: 'task', label: 'Task' },
+        { id: 'subtask', label: 'Subtask', cls: 'pm-segmented-btn--subtask' },
+        { id: 'milestone', label: 'Milestone', cls: 'pm-segmented-btn--milestone' }
+      ],
+      active: task.type,
+      onChange: (type) => {
+        task.type = type
+        if (type === 'milestone') {
           task.start = ''
           task.progress = 0
         }
-        if (t.id !== 'subtask') {
+        if (type !== 'subtask') {
           ctx.setParentId(null)
         }
         rerender()
-      })
-    }
+      }
+    })
     return wrap
   })
 
