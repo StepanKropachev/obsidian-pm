@@ -8,6 +8,7 @@ import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext, TableState } from './TableRenderer'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
+import { TaskRow } from '../../ui/composites/TaskRow'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
@@ -32,24 +33,16 @@ export function renderTaskRow(
   const isDone = isTerminalStatus(task.status, ctx.plugin.settings.statuses)
   const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
 
-  const row = tbody.createEl('tr', { cls: 'pm-table-row' })
-  row.dataset.taskId = task.id
-  if (isDone) row.addClass('pm-table-row--done')
-  if (task.archived) row.addClass('pm-table-row--archived')
-  if (ctx.state.selectedTaskId === task.id) row.addClass('pm-table-row--selected')
-  row.style.setProperty('--depth', String(depth))
-
-  row.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement
-    if (
-      target.closest(
-        'button, input, .pm-badge--interactive, .pm-task-title-text, .pm-due-chip, .pm-table-cell-select, .pm-icon-btn'
-      )
-    ) {
-      return
+  const { el: row } = new TaskRow(tbody, {
+    taskId: task.id,
+    depth,
+    isDone,
+    isArchived: !!task.archived,
+    isSelected: ctx.state.selectedTaskId === task.id,
+    onRowClick: () => {
+      ctx.state.selectedTaskId = task.id
+      updateSelectedRow(ctx.state)
     }
-    ctx.state.selectedTaskId = task.id
-    updateSelectedRow(ctx.state)
   })
 
   new SelectCell(row, {
