@@ -1,4 +1,6 @@
-import { getStatusConfig, isTerminalStatus } from '../../utils'
+import { getStatusConfig, isTerminalStatus, stringifyCustomValue } from '../../utils'
+import { totalLoggedHours } from '../../store/TaskTreeOps'
+import { COLOR_ACCENT } from '../../constants'
 import type { Task } from '../../types'
 import type { TableContext, TableState } from './TableRenderer'
 import {
@@ -7,13 +9,13 @@ import {
   renderTitleCell,
   renderStatusCell,
   renderPriorityCell,
-  renderAssigneesCell,
   renderDueDateCell,
-  renderProgressCell,
-  renderTimeCell,
-  renderCustomFieldCells,
   renderActionsCell
 } from './TableCellRenderers'
+import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
+import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
+import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
+import { TimeCell } from '../../ui/composites/cells/TimeCell'
 
 // ─── Row orchestrator ──────────────────────────────────────────────────────────
 
@@ -52,11 +54,14 @@ export function renderTaskRow(
   renderTitleCell(row, task, depth, ctx)
   renderStatusCell(row, task, ctx)
   renderPriorityCell(row, task, ctx)
-  renderAssigneesCell(row, task)
+  new AssigneesCell(row, task.assignees)
   renderDueDateCell(row, task, ctx)
-  renderProgressCell(row, task, statusConfig?.color)
-  renderTimeCell(row, task)
-  renderCustomFieldCells(row, task, ctx.project)
+  new ProgressCell(row, { value: task.progress, color: statusConfig?.color ?? COLOR_ACCENT })
+  new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
+  for (const cf of ctx.project.customFields) {
+    const val = task.customFields[cf.id]
+    new CustomFieldCell(row, val !== undefined ? stringifyCustomValue(val) : '')
+  }
   renderActionsCell(row, task, ctx)
 }
 

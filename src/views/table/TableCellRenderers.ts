@@ -1,25 +1,13 @@
 import { Menu } from 'obsidian'
-import type { Task, Project } from '../../types'
-import { totalLoggedHours } from '../../store/TaskTreeOps'
-import {
-  formatDateLong,
-  isTaskOverdue,
-  getStatusConfig,
-  getPriorityConfig,
-  safeAsync,
-  stringifyCustomValue
-} from '../../utils'
+import type { Task } from '../../types'
+import { formatDateLong, isTaskOverdue, getStatusConfig, getPriorityConfig, safeAsync } from '../../utils'
 import { today, parsePlainDate } from '../../dates'
-import { COLOR_ACCENT } from '../../constants'
 import { renderStatusBadge, renderPriorityBadge } from '../../ui/StatusBadge'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { AvatarStack } from '../../ui/primitives/AvatarStack'
 import { Badge } from '../../ui/primitives/Badge'
 import { Chip } from '../../ui/primitives/Chip'
 import { DueDateChip } from '../../ui/primitives/DueDateChip'
 import { IconButton } from '../../ui/primitives/IconButton'
-import { ProgressBar } from '../../ui/primitives/ProgressBar'
-import { TimeChip } from '../../ui/primitives/TimeChip'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext } from './TableRenderer'
@@ -211,11 +199,6 @@ export function renderPriorityCell(row: HTMLElement, task: Task, ctx: TableConte
   }
 }
 
-export function renderAssigneesCell(row: HTMLElement, task: Task): void {
-  const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-assignees' })
-  new AvatarStack(cell).setNames(task.assignees).setMax(3)
-}
-
 function startDueDateEdit(cell: HTMLElement, display: HTMLElement, task: Task, ctx: TableContext): void {
   makeInlineEdit({
     container: cell,
@@ -257,23 +240,6 @@ export function renderDueDateCell(row: HTMLElement, task: Task, ctx: TableContex
     })
 }
 
-export function renderProgressCell(row: HTMLElement, task: Task, statusColor: string | undefined): void {
-  const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-progress' })
-  new ProgressBar(cell)
-    .setValue(task.progress)
-    .setColor(statusColor ?? COLOR_ACCENT)
-    .setShowLabel(true)
-}
-
-export function renderTimeCell(row: HTMLElement, task: Task): void {
-  const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-time' })
-  const logged = totalLoggedHours(task)
-  const est = task.timeEstimate ?? 0
-  if (logged > 0 || est > 0) {
-    new TimeChip(cell).setHours(logged, est)
-  }
-}
-
 export function renderActionsCell(row: HTMLElement, task: Task, ctx: TableContext): void {
   const cell = row.createEl('td', { cls: 'pm-table-cell pm-table-cell-actions' })
   new IconButton(cell)
@@ -285,13 +251,4 @@ export function renderActionsCell(row: HTMLElement, task: Task, ctx: TableContex
       buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh })
       menu.showAtMouseEvent(e)
     })
-}
-
-export function renderCustomFieldCells(row: HTMLElement, task: Task, project: Project): void {
-  for (const cf of project.customFields) {
-    const cell = row.createEl('td', { cls: 'pm-table-cell' })
-    const val = task.customFields[cf.id]
-    const display = val !== undefined ? stringifyCustomValue(val) : ''
-    cell.createEl('span', { text: display || '\u2014', cls: 'pm-cf-value' })
-  }
 }
