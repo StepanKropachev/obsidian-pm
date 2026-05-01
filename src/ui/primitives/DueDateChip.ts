@@ -1,6 +1,5 @@
 export class DueDateChip {
   el: HTMLElement
-  private urgencyClass: string | null = null
 
   constructor(parentEl: HTMLElement) {
     this.el = parentEl.createEl('span', { cls: 'pm-due-chip' })
@@ -17,13 +16,8 @@ export class DueDateChip {
   }
 
   setUrgency(urgency: 'normal' | 'near' | 'overdue'): this {
-    if (this.urgencyClass) {
-      this.el.removeClass(this.urgencyClass)
-      this.urgencyClass = null
-    }
-    if (urgency === 'near') this.urgencyClass = 'pm-due-chip--near'
-    else if (urgency === 'overdue') this.urgencyClass = 'pm-due-chip--overdue'
-    if (this.urgencyClass) this.el.addClass(this.urgencyClass)
+    this.el.toggleClass('pm-due-chip--near', urgency === 'near')
+    this.el.toggleClass('pm-due-chip--overdue', urgency === 'overdue')
     return this
   }
 

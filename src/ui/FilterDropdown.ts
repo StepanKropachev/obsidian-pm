@@ -1,10 +1,6 @@
 import { Menu } from 'obsidian'
 import { Pill } from './primitives/Pill'
 
-/**
- * Render a filter dropdown pill that opens a multi-select menu.
- * Used in TableView's filter bar for status, priority, assignee, tag filters.
- */
 export function renderFilterDropdown(
   parent: HTMLElement,
   label: string,
@@ -44,6 +40,6 @@ export function renderFilterDropdown(
       menu.showAtMouseEvent(e)
     })
 
-  pill.buttonEl.setAttribute('role', 'combobox')
-  return pill.buttonEl
+  pill.el.setAttribute('role', 'combobox')
+  return pill.el
 }

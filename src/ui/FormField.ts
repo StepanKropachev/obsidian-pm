@@ -1,9 +1,6 @@
 import { ButtonComponent } from 'obsidian'
 import { Chip } from './primitives/Chip'
 
-/**
- * Render a labeled property row (label + value) used in modals.
- */
 export function renderPropRow(container: HTMLElement, label: string, valueBuilder: () => HTMLElement): HTMLElement {
   const row = container.createDiv('pm-prop-row')
   row.createEl('span', { text: label, cls: 'pm-prop-label' })
@@ -22,10 +19,6 @@ export interface ChipListOpts {
   renderAdd?: (container: HTMLElement) => void
 }
 
-/**
- * Render a chip list with remove buttons and an add button.
- * Used for assignees, tags, dependencies, etc.
- */
 export function renderChipList(container: HTMLElement, items: string[], opts: ChipListOpts): void {
   container.empty()
   const variant = opts.variant ?? 'default'
@@ -44,9 +37,6 @@ export function renderChipList(container: HTMLElement, items: string[], opts: Ch
   }
 }
 
-/**
- * Render a progress slider with label.
- */
 export function renderProgressSlider(
   container: HTMLElement,
   value: number,
