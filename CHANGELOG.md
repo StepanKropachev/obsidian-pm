@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Quick-add input, search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
+- Filter state persists per project across plugin reloads
+- Saved views remember the view mode they were created in; selecting one switches the project to that mode
+- Gantt now lifts a matching task to the top level when its parent is filtered out, so search and filters reveal deeply nested matches
+
 ### Changed
 
 - UI now follows the Obsidian theme: accent color, near/overdue colors, badge palette, and avatars all read from Obsidian CSS variables instead of the previous hardcoded purple
@@ -19,12 +26,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project view header gear, bulk-action clear, chip remove, and table row icon buttons use lucide icons
 - Chip remove buttons turn red on hover, uniformly across tags, assignees, and dependencies
 - Project-card and kanban-card progress bars are 3px tall
+- The filter row collapses when no filters are active; click the `Filter` pill to expand
+- Toggling a filter pill no longer steals focus from the search input
+- Gantt milestone labels and dependency arrows now honor the active filter
+
+### Removed
+
+- The gantt "Hide completed" button. Use the Status filter to exclude `Done` and `Cancelled` instead; existing `ganttHideDone: true` settings are migrated automatically into each project's status filter
 
 ### Fixed
 
 - Phantom 6px right margin on solo avatars (visible in the project edit modal)
 - Kanban cards silently dropping the 4th+ assignee (now shown as `+N`)
 - Duplicate task entries when creating a task
+- Saved-view pill staying highlighted after the user diverged from its filter
 
 ## [1.4.0] - 2026-04-29
 
