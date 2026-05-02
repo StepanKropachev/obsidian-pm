@@ -225,6 +225,10 @@ export class ProjectView extends ItemView {
       if (!sv) return
       Object.assign(this.filter, sv.filter)
       this.activeSavedViewId = sv.id
+      if (sv.viewMode && sv.viewMode !== this.currentView) {
+        this.currentView = sv.viewMode
+        this.renderProjectToolbar()
+      }
       if (this.subview instanceof TableView) {
         this.savedTableViewState = { sortKey: sv.sortKey as TableViewState['sortKey'], sortDir: sv.sortDir }
       }
@@ -243,7 +247,8 @@ export class ProjectView extends ItemView {
       name,
       filter: { ...this.filter },
       sortKey: sortMeta.sortKey,
-      sortDir: sortMeta.sortDir
+      sortDir: sortMeta.sortDir,
+      viewMode: this.currentView
     }
     this.project.savedViews.push(sv)
     this.activeSavedViewId = sv.id
@@ -257,6 +262,7 @@ export class ProjectView extends ItemView {
     const sv = this.project.savedViews.find((v) => v.id === id)
     if (!sv) return
     sv.filter = { ...this.filter }
+    sv.viewMode = this.currentView
     if (this.subview instanceof TableView) {
       const ts = this.subview.getViewState()
       sv.sortKey = ts.sortKey

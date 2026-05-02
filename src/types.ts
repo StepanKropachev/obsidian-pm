@@ -85,6 +85,7 @@ export interface SavedView {
   filter: FilterState
   sortKey: string
   sortDir: 'asc' | 'desc'
+  viewMode?: ViewMode
 }
 
 export interface PerProjectFilter {
