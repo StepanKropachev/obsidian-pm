@@ -28,7 +28,6 @@ export class TableView implements SubView {
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
     filter: FilterState,
-    private onFocusQuickAdd: () => void,
     initialState?: TableViewState
   ) {
     this.state = {
@@ -181,7 +180,6 @@ export class TableView implements SubView {
       plugin: this.plugin,
       state: this.state,
       onRefresh: this.onRefresh,
-      onFocusQuickAdd: this.onFocusQuickAdd,
       onSelectionChange: () => {
         updateSelectAllCheckbox(this.state)
         this.updateBulkBar()

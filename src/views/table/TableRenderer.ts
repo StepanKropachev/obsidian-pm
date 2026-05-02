@@ -27,7 +27,6 @@ export interface TableContext {
   plugin: PMPlugin
   state: TableState
   onRefresh: () => Promise<void>
-  onFocusQuickAdd: () => void
   onSelectionChange: () => void
   onBulkDelete: () => void
 }
@@ -228,12 +227,6 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
           }
         })
       }
-      break
-    }
-    case 'n':
-    case 'N': {
-      e.preventDefault()
-      ctx.onFocusQuickAdd()
       break
     }
     case 'Delete':

@@ -11,7 +11,6 @@ export interface ProjectHeaderProps {
   activeSavedViewId: string | null
   onFilterChange: () => void
   onClearFilter: () => void
-  onQuickAdd: (title: string) => Promise<void>
   onSavedViewSelect: (id: string | null) => void
   onSavedViewSave: (name: string) => Promise<void>
   onSavedViewUpdate: (id: string) => Promise<void>
@@ -30,10 +29,6 @@ export class ProjectHeader {
   ) {
     this.el = parentEl.createDiv('pm-project-header')
     this.render()
-  }
-
-  focusQuickAdd(): void {
-    this.primaryRow?.focusQuickAdd()
   }
 
   /** Re-render after a filter or activeSavedViewId replacement (e.g., apply saved view, clear). */
@@ -60,7 +55,6 @@ export class ProjectHeader {
       filter: this.props.filter,
       activeSavedViewId: this.props.activeSavedViewId,
       filterRowExpanded: this.filterRowExpanded,
-      onQuickAdd: this.props.onQuickAdd,
       onSearchChange: this.props.onFilterChange,
       onSavedViewSelect: this.props.onSavedViewSelect,
       onSavedViewSave: this.props.onSavedViewSave,

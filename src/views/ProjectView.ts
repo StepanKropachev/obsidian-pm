@@ -1,6 +1,6 @@
-import { ButtonComponent, ExtraButtonComponent, ItemView, Notice, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId, makeTask } from '../types'
+import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -10,7 +10,6 @@ import { KanbanView } from './KanbanView'
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
 import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
 import { ProjectHeader } from '../ui/composites/ProjectHeader'
-import { addTaskToTree, deleteTaskFromTree } from '../store/TaskTreeOps'
 
 export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
@@ -188,7 +187,6 @@ export class ProjectView extends ItemView {
       activeSavedViewId: this.activeSavedViewId,
       onFilterChange: () => this.handleFilterMutation(),
       onClearFilter: () => this.handleClearFilter(),
-      onQuickAdd: (title) => this.handleQuickAdd(title),
       onSavedViewSelect: (id) => this.handleSavedViewSelect(id),
       onSavedViewSave: (name) => this.handleSavedViewSave(name),
       onSavedViewUpdate: (id) => this.handleSavedViewUpdate(id),
@@ -281,28 +279,8 @@ export class ProjectView extends ItemView {
     this.header?.refresh()
   }
 
-  private async handleQuickAdd(title: string): Promise<void> {
-    if (!this.project) return
-    const task = makeTask({ title })
-    addTaskToTree(this.project.tasks, task, null)
-    try {
-      await this.plugin.store.saveProject(this.project)
-    } catch (err) {
-      deleteTaskFromTree(this.project.tasks, task.id)
-      new Notice('Failed to save task. Please try again.')
-      console.error('quick-add: save failed', err)
-      await this.refreshProject()
-      return
-    }
-    await this.refreshProject()
-  }
-
   private refreshSubview(): void {
     this.subview?.render()
-  }
-
-  focusQuickAdd(): void {
-    this.header?.focusQuickAdd()
   }
 
   private renderProjectToolbar(): void {
@@ -421,7 +399,6 @@ export class ProjectView extends ItemView {
           this.plugin,
           () => this.refreshProject(),
           this.filter,
-          () => this.focusQuickAdd(),
           this.savedTableViewState ?? undefined
         )
         if (savedTableScrollTop !== null) table.setPendingScrollTop(savedTableScrollTop)

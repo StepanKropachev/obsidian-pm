@@ -9,7 +9,6 @@ export interface PrimaryRowProps {
   filter: FilterState
   activeSavedViewId: string | null
   filterRowExpanded: boolean
-  onQuickAdd: (title: string) => Promise<void>
   onSearchChange: () => void
   onSavedViewSelect: (id: string | null) => void
   onSavedViewSave: (name: string) => Promise<void>
@@ -27,18 +26,9 @@ export class PrimaryRow {
     private props: PrimaryRowProps
   ) {
     this.el = parentEl.createDiv('pm-project-header-primary')
-    this.renderQuickAddInput()
     this.renderSearchInput()
     this.volatileEl = this.el.createDiv('pm-project-header-actions')
     this.renderVolatile()
-  }
-
-  focusQuickAdd(): void {
-    const input = this.el.querySelector<HTMLInputElement>('.pm-project-header-quick-add')
-    if (input) {
-      input.focus()
-      input.select()
-    }
   }
 
   setActiveSavedViewId(id: string | null): void {
@@ -56,28 +46,6 @@ export class PrimaryRow {
     this.renderSavedViewPills(this.volatileEl)
     this.renderSaveViewAction(this.volatileEl)
     this.renderFilterToggle(this.volatileEl)
-  }
-
-  private renderQuickAddInput(): void {
-    const input = this.el.createEl('input', {
-      type: 'text',
-      placeholder: 'Quick add task… (press Enter)',
-      cls: 'pm-project-header-quick-add'
-    })
-    input.addEventListener(
-      'keydown',
-      safeAsync(async (e: KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          const title = input.value.trim()
-          if (!title) return
-          input.value = ''
-          await this.props.onQuickAdd(title)
-        } else if (e.key === 'Escape') {
-          input.value = ''
-          input.blur()
-        }
-      })
-    )
   }
 
   private renderSearchInput(): void {

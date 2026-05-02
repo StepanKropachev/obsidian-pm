@@ -51,7 +51,6 @@
   flex-wrap: wrap;
 }
 
-.pm-project-header-quick-add,
 .pm-project-header-search {
   flex: 1 1 200px;
   min-width: 160px;
@@ -62,7 +61,6 @@
   color: var(--text-normal);
   font-size: var(--font-ui-smaller);
 }
-.pm-project-header-quick-add:focus,
 .pm-project-header-search:focus {
   outline: none;
   border-color: var(--interactive-accent);
