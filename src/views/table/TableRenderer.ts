@@ -3,7 +3,6 @@ import type { Project, FilterState } from '../../types'
 import { type FlatTask, flattenTasks, findTask } from '../../store/TaskTreeOps'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { focusQuickAdd } from './QuickAddBar'
 import { compareTask } from './TableFilters'
 import { renderTaskRow, updateSelectedRow, updateSelectAllCheckbox } from './TableRow'
 
@@ -28,6 +27,7 @@ export interface TableContext {
   plugin: PMPlugin
   state: TableState
   onRefresh: () => Promise<void>
+  onFocusQuickAdd: () => void
   onSelectionChange: () => void
   onBulkDelete: () => void
 }
@@ -233,7 +233,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
     case 'n':
     case 'N': {
       e.preventDefault()
-      focusQuickAdd(ctx.container)
+      ctx.onFocusQuickAdd()
       break
     }
     case 'Delete':

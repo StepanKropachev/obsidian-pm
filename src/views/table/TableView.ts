@@ -5,9 +5,6 @@ import type { Project, FilterState } from '../../types'
 import { findTask } from '../../store/TaskTreeOps'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
-import { renderQuickAddBar, focusQuickAdd } from './QuickAddBar'
-import { renderSavedViewsBar } from './SavedViewsBar'
-import { renderFilterBar } from './FilterBar'
 import { renderTable, refreshTableBody, handleTableKeyDown } from './TableRenderer'
 import type { SortKey, SortDir, TableState } from './TableRenderer'
 import { updateSelectAllCheckbox } from './TableRow'
@@ -21,11 +18,8 @@ export interface TableViewState {
   sortDir: SortDir
 }
 
-export type FilterChangeCallback = (filter: FilterState, activeSavedViewId: string | null) => void
-
 export class TableView implements SubView {
   private state: TableState
-  private activeSavedViewId: string | null
   private pendingScrollTop: number | null = null
 
   constructor(
@@ -34,8 +28,7 @@ export class TableView implements SubView {
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
     filter: FilterState,
-    activeSavedViewId: string | null,
-    private onFilterChange: FilterChangeCallback,
+    private onFocusQuickAdd: () => void,
     initialState?: TableViewState
   ) {
     this.state = {
@@ -47,11 +40,6 @@ export class TableView implements SubView {
       lastCheckedTaskId: null,
       tableBody: null
     }
-    this.activeSavedViewId = activeSavedViewId
-  }
-
-  private notifyFilterChange(): void {
-    this.onFilterChange(this.state.filter, this.activeSavedViewId)
   }
 
   getScrollTop(): number {
@@ -75,52 +63,6 @@ export class TableView implements SubView {
     this.container.empty()
     this.container.addClass('pm-table-view')
 
-    renderQuickAddBar(this.container, this.project, this.plugin, this.onRefresh)
-
-    renderSavedViewsBar(this.container, {
-      project: this.project,
-      plugin: this.plugin,
-      filter: this.state.filter,
-      sortKey: this.state.sortKey,
-      sortDir: this.state.sortDir,
-      activeSavedViewId: this.activeSavedViewId,
-      setActiveSavedViewId: (id) => {
-        this.activeSavedViewId = id
-      },
-      setFilter: (f) => {
-        this.state.filter = f
-      },
-      setSort: (key, dir) => {
-        this.state.sortKey = key as SortKey
-        this.state.sortDir = dir as SortDir
-      },
-      rerender: () => {
-        this.render()
-        this.notifyFilterChange()
-      }
-    })
-
-    renderFilterBar(this.container, {
-      project: this.project,
-      plugin: this.plugin,
-      filter: this.state.filter,
-      setFilter: (f) => {
-        this.state.filter = f
-      },
-      activeSavedViewId: this.activeSavedViewId,
-      setActiveSavedViewId: (id) => {
-        this.activeSavedViewId = id
-      },
-      refreshTable: () => {
-        this.doRefreshTable()
-        this.notifyFilterChange()
-      },
-      rerender: () => {
-        this.render()
-        this.notifyFilterChange()
-      }
-    })
-
     const ctx = this.makeTableContext()
     renderTable(ctx)
     renderBulkActionBar({ ctx, onAction: safeAsync((a) => this.handleBulkAction(a)) })
@@ -130,10 +72,6 @@ export class TableView implements SubView {
       if (wrapper) wrapper.scrollTop = this.pendingScrollTop
       this.pendingScrollTop = null
     }
-  }
-
-  focusQuickAdd(): void {
-    focusQuickAdd(this.container)
   }
 
   handleKeyDown(e: KeyboardEvent): void {
@@ -243,6 +181,7 @@ export class TableView implements SubView {
       plugin: this.plugin,
       state: this.state,
       onRefresh: this.onRefresh,
+      onFocusQuickAdd: this.onFocusQuickAdd,
       onSelectionChange: () => {
         updateSelectAllCheckbox(this.state)
         this.updateBulkBar()
