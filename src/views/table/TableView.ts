@@ -2,7 +2,6 @@ import { Notice } from 'obsidian'
 import { confirmDialog } from '../../ui/ModalFactory'
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { makeDefaultFilter } from '../../types'
 import { findTask } from '../../store/TaskTreeOps'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
@@ -18,11 +17,11 @@ import type { BulkAction } from './BulkActionBar'
 const taskCount = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
 export interface TableViewState {
-  filter: FilterState
   sortKey: SortKey
   sortDir: SortDir
-  activeSavedViewId: string | null
 }
+
+export type FilterChangeCallback = (filter: FilterState, activeSavedViewId: string | null) => void
 
 export class TableView implements SubView {
   private state: TableState
@@ -34,18 +33,25 @@ export class TableView implements SubView {
     private project: Project,
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
+    filter: FilterState,
+    activeSavedViewId: string | null,
+    private onFilterChange: FilterChangeCallback,
     initialState?: TableViewState
   ) {
     this.state = {
       sortKey: initialState?.sortKey ?? 'status',
       sortDir: initialState?.sortDir ?? 'asc',
-      filter: initialState?.filter ?? makeDefaultFilter(),
+      filter,
       selectedTaskId: null,
       selectedTaskIds: new Set(),
       lastCheckedTaskId: null,
       tableBody: null
     }
-    this.activeSavedViewId = initialState?.activeSavedViewId ?? null
+    this.activeSavedViewId = activeSavedViewId
+  }
+
+  private notifyFilterChange(): void {
+    this.onFilterChange(this.state.filter, this.activeSavedViewId)
   }
 
   getScrollTop(): number {
@@ -59,10 +65,8 @@ export class TableView implements SubView {
 
   getViewState(): TableViewState {
     return {
-      filter: this.state.filter,
       sortKey: this.state.sortKey,
-      sortDir: this.state.sortDir,
-      activeSavedViewId: this.activeSavedViewId
+      sortDir: this.state.sortDir
     }
   }
 
@@ -90,7 +94,10 @@ export class TableView implements SubView {
         this.state.sortKey = key as SortKey
         this.state.sortDir = dir as SortDir
       },
-      rerender: () => this.render()
+      rerender: () => {
+        this.render()
+        this.notifyFilterChange()
+      }
     })
 
     renderFilterBar(this.container, {
@@ -104,8 +111,14 @@ export class TableView implements SubView {
       setActiveSavedViewId: (id) => {
         this.activeSavedViewId = id
       },
-      refreshTable: () => this.doRefreshTable(),
-      rerender: () => this.render()
+      refreshTable: () => {
+        this.doRefreshTable()
+        this.notifyFilterChange()
+      },
+      rerender: () => {
+        this.render()
+        this.notifyFilterChange()
+      }
     })
 
     const ctx = this.makeTableContext()

@@ -1,6 +1,6 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, ViewMode } from '../types'
+import { Project, ViewMode, FilterState, makeDefaultFilter } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -22,6 +22,8 @@ export class ProjectView extends ItemView {
   project: Project | null = null
   filePath = ''
   currentView: ViewMode
+  filter: FilterState = makeDefaultFilter()
+  activeSavedViewId: string | null = null
   private subview: SubView | null = null
   private savedTableViewState: TableViewState | null = null
   private toolbarEl!: HTMLElement
@@ -133,9 +135,30 @@ export class ProjectView extends ItemView {
       this.renderMissingProject()
       return
     }
+    this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()
     this.renderCurrentView()
+  }
+
+  private loadFilterFromSettings(): void {
+    const saved = this.plugin.settings.projectFilters[this.filePath]
+    if (saved) {
+      this.filter = saved.filter
+      this.activeSavedViewId = saved.activeSavedViewId
+    } else {
+      this.filter = makeDefaultFilter()
+      this.activeSavedViewId = null
+    }
+  }
+
+  private async persistFilter(): Promise<void> {
+    if (!this.filePath) return
+    this.plugin.settings.projectFilters[this.filePath] = {
+      filter: this.filter,
+      activeSavedViewId: this.activeSavedViewId
+    }
+    await this.plugin.saveSettings()
   }
 
   private renderMissingProject(): void {
@@ -264,6 +287,13 @@ export class ProjectView extends ItemView {
           this.project,
           this.plugin,
           () => this.refreshProject(),
+          this.filter,
+          this.activeSavedViewId,
+          (filter, activeSavedViewId) => {
+            this.filter = filter
+            this.activeSavedViewId = activeSavedViewId
+            void this.persistFilter()
+          },
           this.savedTableViewState ?? undefined
         )
         if (savedTableScrollTop !== null) table.setPendingScrollTop(savedTableScrollTop)

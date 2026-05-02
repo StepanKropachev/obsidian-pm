@@ -53,6 +53,7 @@ export default class PMPlugin extends Plugin {
     this.app.workspace.onLayoutReady(
       safeAsync(async () => {
         await migrateProjects(this)
+        await this.cleanupStaleProjectFilters()
       })
     )
 
@@ -148,6 +149,7 @@ export default class PMPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {})
     if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
+    if (!this.settings.projectFilters) this.settings.projectFilters = {}
 
     let migrated = false
     for (const s of this.settings.statuses) {
@@ -157,6 +159,23 @@ export default class PMPlugin extends Plugin {
       }
     }
     if (migrated) await this.saveSettings()
+  }
+
+  async cleanupStaleProjectFilters(): Promise<void> {
+    const filters = this.settings.projectFilters
+    const cleaned: typeof filters = {}
+    let dirty = false
+    for (const [path, entry] of Object.entries(filters)) {
+      if (this.app.vault.getAbstractFileByPath(path)) {
+        cleaned[path] = entry
+      } else {
+        dirty = true
+      }
+    }
+    if (dirty) {
+      this.settings.projectFilters = cleaned
+      await this.saveSettings()
+    }
   }
 
   async saveSettings(): Promise<void> {
