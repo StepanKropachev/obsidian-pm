@@ -17,5 +17,6 @@ export {
   collectAllTags
 } from './TaskTreeOps'
 export type { FlatTask } from './TaskTreeOps'
+export { applyTaskFilter, applyTaskFilterFlat, countActiveFilters, isFilterActive, matchesFilter } from './TaskFilter'
 export { computeSchedule, wouldCreateCycle } from './Scheduler'
 export { archiveTask, unarchiveTask } from './ArchiveOps'

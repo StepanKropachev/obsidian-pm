@@ -3,6 +3,7 @@ import type PMPlugin from '../../main'
 import type { Project, FilterState, TaskPriority, DueDateFilter } from '../../types'
 import { makeDefaultFilter } from '../../types'
 import { collectAllAssignees, collectAllTags } from '../../store'
+import { countActiveFilters } from '../../store/TaskFilter'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Pill } from '../../ui/primitives/Pill'
 import { formatBadgeText } from '../../utils'
@@ -139,16 +140,4 @@ function renderDueDateFilter(parent: HTMLElement, ctx: FilterBarContext): void {
       }
       menu.showAtMouseEvent(e)
     })
-}
-
-function countActiveFilters(f: FilterState): number {
-  let count = 0
-  if (f.text) count++
-  if (f.statuses.length) count++
-  if (f.priorities.length) count++
-  if (f.assignees.length) count++
-  if (f.tags.length) count++
-  if (f.dueDateFilter !== 'any') count++
-  if (f.showArchived) count++
-  return count
 }
