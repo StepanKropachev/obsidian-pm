@@ -119,7 +119,6 @@ export interface PMSettings {
   notificationsEnabled: boolean
   notificationLeadDays: number
   autoSchedule: boolean
-  ganttHideDone: boolean
   kanbanShowSubtasks: boolean
   projectFilters: Record<string, PerProjectFilter>
 }
@@ -150,7 +149,6 @@ export const DEFAULT_SETTINGS: PMSettings = {
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],
-  ganttHideDone: false,
   kanbanShowSubtasks: false,
   notificationsEnabled: true,
   notificationLeadDays: 2,

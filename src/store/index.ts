@@ -12,7 +12,6 @@ export {
   cloneTaskSubtree,
   totalLoggedHours,
   filterArchived,
-  filterDone,
   collectAllAssignees,
   collectAllTags
 } from './TaskTreeOps'
