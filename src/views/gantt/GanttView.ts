@@ -1,7 +1,8 @@
 import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../../main'
-import type { Project, Task, GanttGranularity } from '../../types'
-import { type FlatTask, flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps'
+import type { Project, Task, GanttGranularity, FilterState } from '../../types'
+import { type FlatTask, flattenTasks, filterDone } from '../../store/TaskTreeOps'
+import { applyTaskFilterPromote } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import type { SubView } from '../SubView'
 import type { TimelineCfg } from './TimelineConfig'
@@ -46,7 +47,8 @@ export class GanttView implements SubView {
     private container: HTMLElement,
     private project: Project,
     private plugin: PMPlugin,
-    private onRefresh: () => Promise<void>
+    private onRefresh: () => Promise<void>,
+    private filter: FilterState
   ) {
     this.granularity = plugin.settings.ganttGranularity
   }
@@ -287,8 +289,9 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    const tasks = filterArchived(this.project.tasks)
-    return this.plugin.settings.ganttHideDone ? filterDone(tasks, this.plugin.settings.statuses) : tasks
+    const statuses = this.plugin.settings.statuses
+    const tasks = applyTaskFilterPromote(this.project.tasks, this.filter, statuses)
+    return this.plugin.settings.ganttHideDone ? filterDone(tasks, statuses) : tasks
   }
 
   private scrollToToday(): void {

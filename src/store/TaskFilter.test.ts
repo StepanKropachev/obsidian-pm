@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { applyTaskFilter, applyTaskFilterFlat, countActiveFilters, isFilterActive, matchesFilter } from './TaskFilter'
+import {
+  applyTaskFilter,
+  applyTaskFilterFlat,
+  applyTaskFilterPromote,
+  countActiveFilters,
+  isFilterActive,
+  matchesFilter
+} from './TaskFilter'
 import { flattenTasks } from './TaskTreeOps'
 import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type FilterState, type Task } from '../types'
 
@@ -115,6 +122,61 @@ describe('applyTaskFilter (tree-shaped)', () => {
     const out = applyTaskFilter([parent], filter({ statuses: ['todo'] }), DEFAULT_STATUSES)
     expect(parent.subtasks).toEqual([child])
     expect(out[0].subtasks).toEqual([])
+  })
+})
+
+describe('applyTaskFilterPromote', () => {
+  it('lifts a matching grandchild to the slot of its dropped parent', () => {
+    const tasks = [
+      task({
+        id: 'root',
+        status: 'todo',
+        subtasks: [task({ id: 'mid', status: 'done', subtasks: [task({ id: 'leaf', status: 'todo' })] })]
+      })
+    ]
+    const out = applyTaskFilterPromote(tasks, filter({ statuses: ['todo'] }), DEFAULT_STATUSES)
+    expect(out.map((t) => t.id)).toEqual(['root'])
+    expect(out[0].subtasks.map((t) => t.id)).toEqual(['leaf'])
+  })
+
+  it('promotes orphans all the way to top level when ancestors are dropped', () => {
+    const tasks = [
+      task({
+        id: 'root',
+        status: 'done',
+        subtasks: [task({ id: 'mid', status: 'done', subtasks: [task({ id: 'leaf', status: 'todo' })] })]
+      })
+    ]
+    const out = applyTaskFilterPromote(tasks, filter({ statuses: ['todo'] }), DEFAULT_STATUSES)
+    expect(out.map((t) => t.id)).toEqual(['leaf'])
+  })
+
+  it('preserves a promoted task’s own subtree', () => {
+    const tasks = [
+      task({
+        id: 'root',
+        status: 'done',
+        subtasks: [
+          task({
+            id: 'mid',
+            status: 'todo',
+            subtasks: [task({ id: 'leaf', status: 'todo' })]
+          })
+        ]
+      })
+    ]
+    const out = applyTaskFilterPromote(tasks, filter({ statuses: ['todo'] }), DEFAULT_STATUSES)
+    expect(out.map((t) => t.id)).toEqual(['mid'])
+    expect(out[0].subtasks.map((t) => t.id)).toEqual(['leaf'])
+  })
+
+  it('drops branches with no matching descendants', () => {
+    const tasks = [
+      task({ id: 'a', status: 'done', subtasks: [task({ id: 'a1', status: 'done' })] }),
+      task({ id: 'b', status: 'todo' })
+    ]
+    const out = applyTaskFilterPromote(tasks, filter({ statuses: ['todo'] }), DEFAULT_STATUSES)
+    expect(out.map((t) => t.id)).toEqual(['b'])
   })
 })
 

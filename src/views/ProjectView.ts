@@ -423,14 +423,14 @@ export class ProjectView extends ItemView {
         break
       }
       case 'gantt': {
-        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
+        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
         if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll)
         if (savedGanttLabelWidth !== null) gantt.setLabelWidth(savedGanttLabelWidth)
         this.subview = gantt
         break
       }
       case 'kanban':
-        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
+        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
         break
     }
     this.subview?.render()
