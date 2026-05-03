@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Quick-add input, search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
+- Search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
 - Filter state persists per project across plugin reloads
 - Saved views remember the view mode they were created in; selecting one switches the project to that mode
 - Gantt now lifts a matching task to the top level when its parent is filtered out, so search and filters reveal deeply nested matches
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The gantt "Hide completed" button. Use the Status filter to exclude `Done` and `Cancelled` instead; existing `ganttHideDone: true` settings are migrated automatically into each project's status filter
+- The inline quick-add task input above the table. Use the toolbar `+ add task` button (which opens the task modal) instead
 
 ### Fixed
 
