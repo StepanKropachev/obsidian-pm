@@ -316,9 +316,9 @@ export class ProjectView extends ItemView {
 
     new ViewSwitcher<ViewMode>(this.toolbarEl, {
       options: [
-        { id: 'table', icon: '≡', label: 'Table' },
-        { id: 'gantt', icon: '▬', label: 'Gantt' },
-        { id: 'kanban', icon: '⊞', label: 'Board' }
+        { id: 'table', icon: 'table', label: 'Table' },
+        { id: 'gantt', icon: 'git-fork', label: 'Gantt' },
+        { id: 'kanban', icon: 'layout-dashboard', label: 'Board' }
       ],
       active: this.currentView,
       onChange: (mode) => {

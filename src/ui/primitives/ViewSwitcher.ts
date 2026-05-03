@@ -1,3 +1,5 @@
+import { ExtraButtonComponent } from 'obsidian'
+
 export interface ViewSwitcherOption<T extends string> {
   id: T
   icon: string
@@ -16,16 +18,12 @@ export class ViewSwitcher<T extends string> {
   constructor(parentEl: HTMLElement, props: ViewSwitcherProps<T>) {
     this.el = parentEl.createDiv('pm-view-switcher')
     for (const opt of props.options) {
-      const btn = this.el.createEl('button', {
-        cls: 'pm-view-btn',
-        attr: { 'aria-label': `Switch to ${opt.label} view` }
-      })
-      btn.createEl('span', { text: opt.icon, cls: 'pm-view-btn-icon' })
-      btn.createEl('span', { text: opt.label })
-      if (opt.id === props.active) btn.addClass('pm-view-btn--active')
-      btn.addEventListener('click', () => {
+      const btn = new ExtraButtonComponent(this.el).setIcon(opt.icon).setTooltip(opt.label)
+      btn.extraSettingsEl.addClass('pm-view-btn')
+      if (opt.id === props.active) btn.extraSettingsEl.addClass('pm-view-btn--active')
+      btn.onClick(() => {
         this.el.querySelectorAll('.pm-view-btn').forEach((b) => b.removeClass('pm-view-btn--active'))
-        btn.addClass('pm-view-btn--active')
+        btn.extraSettingsEl.addClass('pm-view-btn--active')
         props.onChange(opt.id)
       })
     }

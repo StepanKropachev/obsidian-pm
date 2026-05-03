@@ -143,34 +143,30 @@
 
 /* ── View switcher ───────────────────────────────────────────────────────── */
 .pm-view-switcher {
-  display: flex;
-  background: var(--pm-bg3);
-  border-radius: var(--pm-radius);
-  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--background-modifier-hover);
+  border-radius: var(--radius-s);
+  padding: 2px;
   gap: 2px;
 }
 
-.pm-view-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border: none;
+/* override clickable-icon defaults to get a segmented control shape */
+.pm-view-switcher .pm-view-btn.clickable-icon {
+  border-radius: calc(var(--radius-s) - 2px);
   background: transparent;
-  color: var(--pm-text-muted);
-  border-radius: calc(var(--pm-radius) - 2px);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
 }
-.pm-view-btn:hover { background: var(--pm-bg3); color: var(--pm-text); }
-.pm-view-btn--active {
-  background: var(--pm-bg);
-  color: var(--pm-text);
-  box-shadow: 0 1px 3px var(--pm-shadow-ambient);
+.pm-view-switcher .pm-view-btn.clickable-icon:hover {
+  background: transparent;
+  color: var(--text-normal);
 }
-.pm-view-btn-icon { font-size: 14px; }
+.pm-view-switcher .pm-view-btn--active.clickable-icon,
+.pm-view-switcher .pm-view-btn--active.clickable-icon:hover {
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
 
 .pm-prop-add-btn {
   background: transparent;
