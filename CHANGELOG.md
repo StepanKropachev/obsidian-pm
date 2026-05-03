@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The filter row collapses when no filters are active; click the `Filter` pill to expand
 - Toggling a filter pill no longer steals focus from the search input
 - Gantt milestone labels and dependency arrows now honor the active filter
+- View switcher buttons are icon-only (previously icon + label)
 
 ### Removed
 
