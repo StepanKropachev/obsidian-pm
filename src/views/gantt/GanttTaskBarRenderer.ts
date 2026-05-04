@@ -1,6 +1,5 @@
 import { Notice } from 'obsidian'
 import type { Task } from '../../types'
-import { flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { COLOR_ACCENT } from '../../constants'
 import { svgEl, getStatusConfig, safeAsync } from '../../utils'
@@ -338,8 +337,7 @@ function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: 
 // ─── Milestone labels ─────────────────────────────────────────────────────
 
 export function renderMilestoneLabels(ctx: RendererContext): void {
-  const all = flattenTasks(ctx.project.tasks)
-  const milestones = all.filter((f) => f.task.type === 'milestone' && (f.task.due || f.task.start))
+  const milestones = ctx.flatTasks.filter((f) => f.task.type === 'milestone' && (f.task.due || f.task.start))
   if (!milestones.length) return
 
   const labelsG = svgEl('g', { class: 'pm-gantt-milestone-labels' })
@@ -382,23 +380,12 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
 // ─── Dependency arrows ─────────────────────────────────────────────────────
 
 export function renderDependencyArrows(ctx: RendererContext): void {
-  let activeTasks = filterArchived(ctx.project.tasks)
-  if (ctx.plugin.settings.ganttHideDone) activeTasks = filterDone(activeTasks, ctx.plugin.settings.statuses)
-  const allFlat = flattenTasks(activeTasks)
   const indexMap = new Map<string, number>()
-  let visibleRow = 0
-  const countVisible = (tasks: Task[]) => {
-    for (const t of tasks) {
-      indexMap.set(t.id, visibleRow)
-      visibleRow++
-      if (!t.collapsed) countVisible(t.subtasks)
-    }
-  }
-  countVisible(activeTasks)
+  ctx.flatTasks.forEach((f, i) => indexMap.set(f.task.id, i))
 
   const arrowGroup = svgEl('g', { class: 'pm-gantt-arrows' })
 
-  for (const { task } of allFlat) {
+  for (const { task } of ctx.flatTasks) {
     if (!task.dependencies?.length) continue
     const toRow = indexMap.get(task.id)
     if (toRow === undefined) continue
@@ -410,7 +397,7 @@ export function renderDependencyArrows(ctx: RendererContext): void {
     for (const depId of task.dependencies) {
       const fromRow = indexMap.get(depId)
       if (fromRow === undefined) continue
-      const depTask = allFlat.find((f) => f.task.id === depId)?.task
+      const depTask = ctx.flatTasks.find((f) => f.task.id === depId)?.task
       const depDue = depTask ? parsePlainDate(depTask.due) : null
       if (!depDue) continue
       const fromX = dateToX(ctx.cfg, depDue.add({ days: 1 }))

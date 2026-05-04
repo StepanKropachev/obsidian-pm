@@ -1,7 +1,8 @@
 import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../../main'
-import type { Project, Task, GanttGranularity } from '../../types'
-import { type FlatTask, flattenTasks, filterArchived, filterDone } from '../../store/TaskTreeOps'
+import type { Project, Task, GanttGranularity, FilterState } from '../../types'
+import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
+import { applyTaskFilterPromote } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import type { SubView } from '../SubView'
 import type { TimelineCfg } from './TimelineConfig'
@@ -46,7 +47,8 @@ export class GanttView implements SubView {
     private container: HTMLElement,
     private project: Project,
     private plugin: PMPlugin,
-    private onRefresh: () => Promise<void>
+    private onRefresh: () => Promise<void>,
+    private filter: FilterState
   ) {
     this.granularity = plugin.settings.ganttGranularity
   }
@@ -102,14 +104,6 @@ export class GanttView implements SubView {
 
     new ButtonComponent(bar).setButtonText('Expand all').onClick(() => this.setAllCollapsed(false))
     new ButtonComponent(bar).setButtonText('Collapse all').onClick(() => this.setAllCollapsed(true))
-
-    bar.createEl('span', { cls: 'pm-gantt-sep' })
-    const hideDone = this.plugin.settings.ganttHideDone
-    new ButtonComponent(bar).setButtonText(hideDone ? 'Show completed' : 'Hide completed').onClick(() => {
-      this.plugin.settings.ganttHideDone = !this.plugin.settings.ganttHideDone
-      void this.plugin.saveSettings()
-      this.render()
-    })
   }
 
   private renderGantt(): void {
@@ -287,8 +281,7 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    const tasks = filterArchived(this.project.tasks)
-    return this.plugin.settings.ganttHideDone ? filterDone(tasks, this.plugin.settings.statuses) : tasks
+    return applyTaskFilterPromote(this.project.tasks, this.filter, this.plugin.settings.statuses)
   }
 
   private scrollToToday(): void {

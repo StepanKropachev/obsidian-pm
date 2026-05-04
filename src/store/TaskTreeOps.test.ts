@@ -5,14 +5,13 @@ import {
   collectAllTags,
   deleteTaskFromTree,
   filterArchived,
-  filterDone,
   findTask,
   flattenTasks,
   moveTaskInTree,
   totalLoggedHours,
   updateTaskInTree
 } from './TaskTreeOps'
-import { DEFAULT_STATUSES, makeTask, type Task } from '../types'
+import { makeTask, type Task } from '../types'
 
 function task(overrides: Partial<Task> & { id: string }): Task {
   return makeTask(overrides)
@@ -165,18 +164,6 @@ describe('filterArchived', () => {
     const original = [task({ id: 'a', archived: true })]
     filterArchived(original)
     expect(original.map((t) => t.id)).toEqual(['a'])
-  })
-})
-
-describe('filterDone', () => {
-  it('drops tasks in a terminal status', () => {
-    const tasks = [
-      task({ id: 'a', status: 'done' }),
-      task({ id: 'b', status: 'todo', subtasks: [task({ id: 'b1', status: 'cancelled' })] })
-    ]
-    const filtered = filterDone(tasks, DEFAULT_STATUSES)
-    expect(filtered.map((t) => t.id)).toEqual(['b'])
-    expect(filtered[0].subtasks).toEqual([])
   })
 })
 

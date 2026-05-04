@@ -1,9 +1,9 @@
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
 import { type FlatTask, flattenTasks, findTask } from '../../store/TaskTreeOps'
+import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { focusQuickAdd } from './QuickAddBar'
-import { applyFilters, isFilterActive, compareTask } from './TableFilters'
+import { compareTask } from './TableFilters'
 import { renderTaskRow, updateSelectedRow, updateSelectAllCheckbox } from './TableRow'
 
 type SortKey = 'title' | 'status' | 'priority' | 'due' | 'assignees' | 'progress'
@@ -117,7 +117,7 @@ function fillTableBody(ctx: TableContext): void {
 
   let flat = flattenTasks(ctx.project.tasks)
   const hasActiveFilter = isFilterActive(ctx.state.filter)
-  flat = applyFilters(flat, ctx.state.filter, ctx.plugin.settings.statuses)
+  flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.plugin.settings.statuses)
 
   // Build set of IDs present after filtering
   const filteredIds = new Set(flat.map((f) => f.task.id))
@@ -227,12 +227,6 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
           }
         })
       }
-      break
-    }
-    case 'n':
-    case 'N': {
-      e.preventDefault()
-      focusQuickAdd(ctx.container)
       break
     }
     case 'Delete':

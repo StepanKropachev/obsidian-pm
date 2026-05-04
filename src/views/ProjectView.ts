@@ -1,6 +1,6 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, ViewMode } from '../types'
+import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -9,6 +9,7 @@ import { GanttView } from './gantt/GanttView'
 import { KanbanView } from './KanbanView'
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
 import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
+import { ProjectHeader } from '../ui/composites/ProjectHeader'
 
 export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
@@ -22,10 +23,14 @@ export class ProjectView extends ItemView {
   project: Project | null = null
   filePath = ''
   currentView: ViewMode
+  filter: FilterState = makeDefaultFilter()
+  activeSavedViewId: string | null = null
   private subview: SubView | null = null
   private savedTableViewState: TableViewState | null = null
   private toolbarEl!: HTMLElement
+  private headerEl!: HTMLElement
   private bodyEl!: HTMLElement
+  private header: ProjectHeader | null = null
   private titleEl2!: HTMLElement
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private fileModifyRef: EventRef | null = null
@@ -66,6 +71,7 @@ export class ProjectView extends ItemView {
     root.empty()
     root.addClass('pm-root')
     this.toolbarEl = root.createDiv('pm-toolbar')
+    this.headerEl = root.createDiv('pm-project-header-mount')
     this.bodyEl = root.createDiv('pm-content')
 
     if (this.filePath) await this.loadProject()
@@ -133,17 +139,148 @@ export class ProjectView extends ItemView {
       this.renderMissingProject()
       return
     }
+    this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()
+    this.renderProjectHeader()
     this.renderCurrentView()
+  }
+
+  private loadFilterFromSettings(): void {
+    const saved = this.plugin.settings.projectFilters[this.filePath]
+    if (saved) {
+      this.filter = saved.filter
+      this.activeSavedViewId = saved.activeSavedViewId
+    } else {
+      this.filter = makeDefaultFilter()
+      this.activeSavedViewId = null
+    }
+  }
+
+  private async persistFilter(): Promise<void> {
+    if (!this.filePath) return
+    this.plugin.settings.projectFilters[this.filePath] = {
+      filter: this.filter,
+      activeSavedViewId: this.activeSavedViewId
+    }
+    await this.plugin.saveSettings()
   }
 
   private renderMissingProject(): void {
     this.toolbarEl.empty()
+    this.headerEl.empty()
+    this.header = null
     this.bodyEl.empty()
     const msg = this.bodyEl.createDiv('pm-empty-state')
     msg.createEl('h3', { text: 'Project not found' })
     msg.createEl('p', { text: `No project at ${this.filePath}. It may have been deleted or renamed.` })
+  }
+
+  private renderProjectHeader(): void {
+    if (!this.project) return
+    this.headerEl.empty()
+    this.header = new ProjectHeader(this.headerEl, {
+      project: this.project,
+      statuses: this.plugin.settings.statuses,
+      priorities: this.plugin.settings.priorities,
+      filter: this.filter,
+      activeSavedViewId: this.activeSavedViewId,
+      onFilterChange: () => this.handleFilterMutation(),
+      onClearFilter: () => this.handleClearFilter(),
+      onSavedViewSelect: (id) => this.handleSavedViewSelect(id),
+      onSavedViewSave: (name) => this.handleSavedViewSave(name),
+      onSavedViewUpdate: (id) => this.handleSavedViewUpdate(id),
+      onSavedViewDelete: (id) => this.handleSavedViewDelete(id)
+    })
+  }
+
+  private handleFilterMutation(): void {
+    if (this.activeSavedViewId !== null) {
+      this.activeSavedViewId = null
+      this.header?.setActiveSavedViewId(null)
+    } else {
+      this.header?.notifyMutation()
+    }
+    void this.persistFilter()
+    this.refreshSubview()
+  }
+
+  private handleClearFilter(): void {
+    Object.assign(this.filter, makeDefaultFilter())
+    this.activeSavedViewId = null
+    void this.persistFilter()
+    this.header?.refresh()
+    this.refreshSubview()
+  }
+
+  private handleSavedViewSelect(id: string | null): void {
+    if (!this.project) return
+    if (id === null) {
+      Object.assign(this.filter, makeDefaultFilter())
+      this.activeSavedViewId = null
+    } else {
+      const sv = this.project.savedViews.find((v) => v.id === id)
+      if (!sv) return
+      Object.assign(this.filter, sv.filter)
+      this.activeSavedViewId = sv.id
+      if (sv.viewMode && sv.viewMode !== this.currentView) {
+        this.currentView = sv.viewMode
+        this.renderProjectToolbar()
+      }
+      if (this.subview instanceof TableView) {
+        this.savedTableViewState = { sortKey: sv.sortKey as TableViewState['sortKey'], sortDir: sv.sortDir }
+      }
+    }
+    void this.persistFilter()
+    this.header?.refresh()
+    this.renderCurrentView()
+  }
+
+  private async handleSavedViewSave(name: string): Promise<void> {
+    if (!this.project) return
+    const sortMeta =
+      this.subview instanceof TableView ? this.subview.getViewState() : { sortKey: 'status', sortDir: 'asc' as const }
+    const sv: SavedView = {
+      id: makeId(),
+      name,
+      filter: { ...this.filter },
+      sortKey: sortMeta.sortKey,
+      sortDir: sortMeta.sortDir,
+      viewMode: this.currentView
+    }
+    this.project.savedViews.push(sv)
+    this.activeSavedViewId = sv.id
+    await this.plugin.store.saveProject(this.project)
+    void this.persistFilter()
+    this.header?.refresh()
+  }
+
+  private async handleSavedViewUpdate(id: string): Promise<void> {
+    if (!this.project) return
+    const sv = this.project.savedViews.find((v) => v.id === id)
+    if (!sv) return
+    sv.filter = { ...this.filter }
+    sv.viewMode = this.currentView
+    if (this.subview instanceof TableView) {
+      const ts = this.subview.getViewState()
+      sv.sortKey = ts.sortKey
+      sv.sortDir = ts.sortDir
+    }
+    await this.plugin.store.saveProject(this.project)
+    this.header?.refresh()
+  }
+
+  private async handleSavedViewDelete(id: string): Promise<void> {
+    if (!this.project) return
+    this.project.savedViews = this.project.savedViews.filter((v) => v.id !== id)
+    if (this.activeSavedViewId === id) this.activeSavedViewId = null
+    await this.plugin.store.saveProject(this.project)
+    void this.persistFilter()
+    this.header?.refresh()
+  }
+
+  private refreshSubview(): void {
+    this.subview?.render()
   }
 
   private renderProjectToolbar(): void {
@@ -179,9 +316,9 @@ export class ProjectView extends ItemView {
 
     new ViewSwitcher<ViewMode>(this.toolbarEl, {
       options: [
-        { id: 'table', icon: '≡', label: 'Table' },
-        { id: 'gantt', icon: '▬', label: 'Gantt' },
-        { id: 'kanban', icon: '⊞', label: 'Board' }
+        { id: 'table', icon: 'table', label: 'Table' },
+        { id: 'gantt', icon: 'git-fork', label: 'Gantt' },
+        { id: 'kanban', icon: 'layout-dashboard', label: 'Board' }
       ],
       active: this.currentView,
       onChange: (mode) => {
@@ -233,9 +370,6 @@ export class ProjectView extends ItemView {
   private renderCurrentView(): void {
     if (!this.project) return
 
-    const quickAddFocused =
-      activeDocument.activeElement instanceof HTMLElement && activeDocument.activeElement.matches('.pm-quick-add-input')
-
     let savedGanttScroll: ReturnType<GanttView['getScrollPosition']> | null = null
     let savedGanttLabelWidth: number | null = null
     if (this.currentView === 'gantt' && this.subview instanceof GanttView) {
@@ -264,6 +398,7 @@ export class ProjectView extends ItemView {
           this.project,
           this.plugin,
           () => this.refreshProject(),
+          this.filter,
           this.savedTableViewState ?? undefined
         )
         if (savedTableScrollTop !== null) table.setPendingScrollTop(savedTableScrollTop)
@@ -271,22 +406,17 @@ export class ProjectView extends ItemView {
         break
       }
       case 'gantt': {
-        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
+        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
         if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll)
         if (savedGanttLabelWidth !== null) gantt.setLabelWidth(savedGanttLabelWidth)
         this.subview = gantt
         break
       }
       case 'kanban':
-        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject())
+        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
         break
     }
     this.subview?.render()
-
-    if (quickAddFocused) {
-      const newInput = this.bodyEl.querySelector('.pm-quick-add-input') as HTMLInputElement
-      if (newInput) newInput.focus()
-    }
   }
 
   async refreshProject(): Promise<void> {

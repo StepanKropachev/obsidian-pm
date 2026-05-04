@@ -85,6 +85,12 @@ export interface SavedView {
   filter: FilterState
   sortKey: string
   sortDir: 'asc' | 'desc'
+  viewMode?: ViewMode
+}
+
+export interface PerProjectFilter {
+  filter: FilterState
+  activeSavedViewId: string | null
 }
 
 export interface StatusConfig {
@@ -113,8 +119,8 @@ export interface PMSettings {
   notificationsEnabled: boolean
   notificationLeadDays: number
   autoSchedule: boolean
-  ganttHideDone: boolean
   kanbanShowSubtasks: boolean
+  projectFilters: Record<string, PerProjectFilter>
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -143,11 +149,11 @@ export const DEFAULT_SETTINGS: PMSettings = {
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],
-  ganttHideDone: false,
   kanbanShowSubtasks: false,
   notificationsEnabled: true,
   notificationLeadDays: 2,
-  autoSchedule: true
+  autoSchedule: true,
+  projectFilters: {}
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

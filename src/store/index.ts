@@ -12,10 +12,17 @@ export {
   cloneTaskSubtree,
   totalLoggedHours,
   filterArchived,
-  filterDone,
   collectAllAssignees,
   collectAllTags
 } from './TaskTreeOps'
 export type { FlatTask } from './TaskTreeOps'
+export {
+  applyTaskFilter,
+  applyTaskFilterFlat,
+  applyTaskFilterPromote,
+  countActiveFilters,
+  isFilterActive,
+  matchesFilter
+} from './TaskFilter'
 export { computeSchedule, wouldCreateCycle } from './Scheduler'
 export { archiveTask, unarchiveTask } from './ArchiveOps'

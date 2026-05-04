@@ -1,7 +1,8 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, TaskStatus } from '../types'
+import { Project, Task, TaskStatus, FilterState } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
+import { matchesFilter } from '../store/TaskFilter'
 import { isTaskOverdue, isTerminalStatus, getPriorityConfig } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
@@ -15,7 +16,8 @@ export class KanbanView implements SubView {
     private container: HTMLElement,
     private project: Project,
     private plugin: PMPlugin,
-    private onRefresh: () => Promise<void>
+    private onRefresh: () => Promise<void>,
+    private filter: FilterState
   ) {}
 
   render(): void {
@@ -44,12 +46,10 @@ export class KanbanView implements SubView {
   }
 
   private getTasksForStatus(status: TaskStatus): Task[] {
-    if (this.plugin.settings.kanbanShowSubtasks) {
-      return flattenTasks(this.project.tasks)
-        .map((ft) => ft.task)
-        .filter((t) => t.status === status && !t.archived)
-    }
-    return this.project.tasks.filter((t) => t.status === status && !t.archived)
+    const candidates = this.plugin.settings.kanbanShowSubtasks
+      ? flattenTasks(this.project.tasks).map((ft) => ft.task)
+      : this.project.tasks
+    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.plugin.settings.statuses))
   }
 
   private buildCardData(task: Task): KanbanCardData {

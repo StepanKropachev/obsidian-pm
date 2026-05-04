@@ -40,6 +40,65 @@
   overflow: hidden;
 }
 
+/* ── Project Header ──────────────────────────────────────────────────────── */
+.pm-project-header { display: flex; flex-direction: column; flex-shrink: 0; }
+
+.pm-project-header-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-search {
+  flex: 1 1 200px;
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+.pm-project-header-search:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.pm-project-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-saved-views {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-save-input { display: inline-flex; align-items: center; }
+.pm-project-header-save-input-field {
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+
+.pm-project-header-filter-toggle { margin-left: auto; }
+
+.pm-project-header-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 8px;
+  flex-wrap: wrap;
+}
+
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 .pm-toolbar {
   display: flex;
@@ -84,34 +143,30 @@
 
 /* ── View switcher ───────────────────────────────────────────────────────── */
 .pm-view-switcher {
-  display: flex;
-  background: var(--pm-bg3);
-  border-radius: var(--pm-radius);
-  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--background-modifier-hover);
+  border-radius: var(--radius-s);
+  padding: 2px;
   gap: 2px;
 }
 
-.pm-view-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border: none;
+/* override clickable-icon defaults to get a segmented control shape */
+.pm-view-switcher .pm-view-btn.clickable-icon {
+  border-radius: calc(var(--radius-s) - 2px);
   background: transparent;
-  color: var(--pm-text-muted);
-  border-radius: calc(var(--pm-radius) - 2px);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
 }
-.pm-view-btn:hover { background: var(--pm-bg3); color: var(--pm-text); }
-.pm-view-btn--active {
-  background: var(--pm-bg);
-  color: var(--pm-text);
-  box-shadow: 0 1px 3px var(--pm-shadow-ambient);
+.pm-view-switcher .pm-view-btn.clickable-icon:hover {
+  background: transparent;
+  color: var(--text-normal);
 }
-.pm-view-btn-icon { font-size: 14px; }
+.pm-view-switcher .pm-view-btn--active.clickable-icon,
+.pm-view-switcher .pm-view-btn--active.clickable-icon:hover {
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
 
 .pm-prop-add-btn {
   background: transparent;
@@ -186,29 +241,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 .pm-table-view { display: flex; flex-direction: column; height: 100%; }
 
-/* ── Quick-Add Bar ────────────────────────────────────────────────────────── */
-.pm-quick-add {
-  padding: 10px 16px 6px;
-  flex-shrink: 0;
-}
-.pm-quick-add-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px dashed var(--pm-border);
-  border-radius: var(--pm-radius);
-  background: var(--pm-bg2);
-  color: var(--pm-text);
-  font-size: 13px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.pm-quick-add-input:focus {
-  border-style: solid;
-  border-color: var(--pm-accent);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(139,114,190,0.15);
-}
-.pm-quick-add-input::placeholder { color: var(--pm-text-faint); }
-
 /* ── Bulk Action Bar ─────────────────────────────────────────────────────── */
 .pm-bulk-bar {
   display: flex;
@@ -242,15 +274,6 @@
   padding-right: 4px;
 }
 
-/* ── Saved Views Bar ──────────────────────────────────────────────────────── */
-.pm-saved-views-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 16px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
 /* ── Pill ─────────────────────────────────────────────────────────────────── */
 .pm-pill {
   display: inline-flex;
@@ -287,40 +310,6 @@
   background: color-mix(in srgb, var(--pm-accent) 10%, transparent) !important;
   box-shadow: inset 3px 0 0 var(--pm-accent);
 }
-
-.pm-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--pm-border);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.pm-filter-input {
-  flex: 0 0 220px;
-  padding: 6px 10px;
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg2);
-  color: var(--pm-text);
-  font-size: 13px;
-}
-.pm-filter-input:focus { border-color: var(--pm-accent); outline: none; }
-
-.pm-filter-pills { display: flex; gap: 5px; flex-wrap: wrap; }
-.pm-filter-pill {
-  padding: 3px 10px;
-  border-radius: 99px;
-  font-size: 12px;
-  cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--pill-color) 40%, transparent);
-  background: color-mix(in srgb, var(--pill-color) 12%, transparent);
-  color: var(--pill-color);
-  transition: all 0.15s;
-}
-.pm-filter-pill:hover { background: color-mix(in srgb, var(--pill-color) 25%, transparent); }
 
 .pm-table-wrapper { flex: 1; overflow: auto; }
 

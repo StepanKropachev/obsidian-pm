@@ -1,6 +1,5 @@
-import type { Task, StatusConfig } from '../types'
+import type { Task } from '../types'
 import { makeId } from '../types'
-import { isTerminalStatus } from '../utils'
 
 /** Flatten a task tree into a list, preserving depth info */
 export interface FlatTask {
@@ -136,13 +135,6 @@ export function filterArchived(tasks: Task[]): Task[] {
   return tasks
     .filter((t) => !t.archived)
     .map((t) => (t.subtasks.length ? { ...t, subtasks: filterArchived(t.subtasks) } : t))
-}
-
-/** Filter terminal (complete) tasks from a task tree (returns a shallow copy) */
-export function filterDone(tasks: Task[], statuses: StatusConfig[]): Task[] {
-  return tasks
-    .filter((t) => !isTerminalStatus(t.status, statuses))
-    .map((t) => (t.subtasks.length ? { ...t, subtasks: filterDone(t.subtasks, statuses) } : t))
 }
 
 /** Collect all unique assignees from a task tree */

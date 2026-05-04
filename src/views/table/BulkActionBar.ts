@@ -46,15 +46,7 @@ export function renderBulkActionBar(opts: BulkActionBarOpts): void {
 
 function createBar(container: HTMLElement): HTMLElement {
   const bar = createDiv({ cls: 'pm-bulk-bar' })
-  // Insert after quick-add bar (first child) or at the top
-  const quickAdd = container.querySelector('.pm-quick-add')
-  if (quickAdd?.nextSibling) {
-    container.insertBefore(bar, quickAdd.nextSibling)
-  } else if (quickAdd) {
-    container.appendChild(bar)
-  } else {
-    container.prepend(bar)
-  }
+  container.prepend(bar)
   return bar
 }
 
