@@ -234,7 +234,7 @@ export class TaskModal extends Modal {
           const file = item.getAsFile()
           if (file) {
             const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-            const sub = item.type.split('/')[1] || 'png'
+            const sub = (item.type.split('/')[1] || 'png').split('+')[0]
             const ext = sub === 'jpeg' ? 'jpg' : sub
             attachments.push({ blob: file, name: `Pasted-${stamp}.${ext}` })
           }
