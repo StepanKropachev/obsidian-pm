@@ -72,19 +72,15 @@ export class TaskModal extends Modal {
     return this.persistPromise
   }
 
-  private async insertPastedImages(
+  private async insertAttachments(
     descArea: HTMLTextAreaElement,
-    images: { blob: Blob; mime: string }[],
+    items: { blob: Blob; name: string }[],
     sourcePath: string,
     autoResize: () => void
   ): Promise<void> {
-    for (const { blob, mime } of images) {
-      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const sub = mime.split('/')[1] || 'png'
-      const ext = sub === 'jpeg' ? 'jpg' : sub
-      const baseName = `Pasted-${stamp}.${ext}`
+    for (const { blob, name } of items) {
       try {
-        const path = await this.app.fileManager.getAvailablePathForAttachment(baseName, sourcePath)
+        const path = await this.app.fileManager.getAvailablePathForAttachment(name, sourcePath)
         const buffer = await blob.arrayBuffer()
         const file = await this.app.vault.createBinary(path, buffer)
         const snippet = `![[${file.name}]]`
@@ -92,8 +88,8 @@ export class TaskModal extends Modal {
         this.task.description = descArea.value
         autoResize()
       } catch (err) {
-        console.error('Failed to save pasted image', err)
-        new Notice('Failed to save pasted image')
+        console.error('Failed to save attachment', err)
+        new Notice('Failed to save attachment')
       }
     }
   }
@@ -232,16 +228,39 @@ export class TaskModal extends Modal {
     descArea.addEventListener('paste', (e) => {
       const items = e.clipboardData?.items
       if (!items) return
-      const images: { blob: Blob; mime: string }[] = []
+      const attachments: { blob: Blob; name: string }[] = []
       for (const item of items) {
         if (item.kind === 'file' && item.type.startsWith('image/')) {
           const file = item.getAsFile()
-          if (file) images.push({ blob: file, mime: item.type })
+          if (file) {
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+            const sub = item.type.split('/')[1] || 'png'
+            const ext = sub === 'jpeg' ? 'jpg' : sub
+            attachments.push({ blob: file, name: `Pasted-${stamp}.${ext}` })
+          }
         }
       }
-      if (images.length === 0) return
+      if (attachments.length === 0) return
       e.preventDefault()
-      void this.insertPastedImages(descArea, images, sourcePath, autoResize)
+      void this.insertAttachments(descArea, attachments, sourcePath, autoResize)
+    })
+
+    descSection.addEventListener('dragover', (e) => {
+      if (!e.dataTransfer) return
+      if (!Array.from(e.dataTransfer.types).includes('Files')) return
+      e.preventDefault()
+    })
+
+    descSection.addEventListener('drop', (e) => {
+      const files = e.dataTransfer?.files
+      if (!files || files.length === 0) return
+      e.preventDefault()
+      if (descArea.classList.contains('pm-hidden')) {
+        showEdit()
+        descArea.selectionStart = descArea.selectionEnd = descArea.value.length
+      }
+      const attachments = Array.from(files).map((f) => ({ blob: f, name: f.name }))
+      void this.insertAttachments(descArea, attachments, sourcePath, autoResize)
     })
 
     // Note link suggest (inline [[ autocomplete)
