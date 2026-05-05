@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Paste a screenshot or drag any file onto the task modal description to save it under the vault's attachments folder and embed it as `![[...]]` at the cursor
 - Search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
 - Filter state persists per project across plugin reloads
 - Saved views remember the view mode they were created in; selecting one switches the project to that mode
