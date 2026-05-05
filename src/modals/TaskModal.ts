@@ -72,6 +72,32 @@ export class TaskModal extends Modal {
     return this.persistPromise
   }
 
+  private async insertPastedImages(
+    descArea: HTMLTextAreaElement,
+    images: { blob: Blob; mime: string }[],
+    sourcePath: string,
+    autoResize: () => void
+  ): Promise<void> {
+    for (const { blob, mime } of images) {
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const sub = mime.split('/')[1] || 'png'
+      const ext = sub === 'jpeg' ? 'jpg' : sub
+      const baseName = `Pasted-${stamp}.${ext}`
+      try {
+        const path = await this.app.fileManager.getAvailablePathForAttachment(baseName, sourcePath)
+        const buffer = await blob.arrayBuffer()
+        const file = await this.app.vault.createBinary(path, buffer)
+        const snippet = `![[${file.name}]]`
+        descArea.setRangeText(snippet, descArea.selectionStart, descArea.selectionEnd, 'end')
+        this.task.description = descArea.value
+        autoResize()
+      } catch (err) {
+        console.error('Failed to save pasted image', err)
+        new Notice('Failed to save pasted image')
+      }
+    }
+  }
+
   private async runPersist(): Promise<void> {
     if (this.isNew) {
       await this.plugin.store.insertTask(this.project, this.task, this.parentId)
@@ -202,6 +228,21 @@ export class TaskModal extends Modal {
       autoResize()
     })
     descArea.addEventListener('blur', () => showPreview())
+
+    descArea.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      const images: { blob: Blob; mime: string }[] = []
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) images.push({ blob: file, mime: item.type })
+        }
+      }
+      if (images.length === 0) return
+      e.preventDefault()
+      void this.insertPastedImages(descArea, images, sourcePath, autoResize)
+    })
 
     // Note link suggest (inline [[ autocomplete)
     this.noteSuggest?.destroy()
