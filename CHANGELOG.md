@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Now we use the first letters of first and second word for avatar initials
 - UI now follows the Obsidian theme: accent color, near/overdue colors, badge palette, and avatars all read from Obsidian CSS variables instead of the previous hardcoded purple
 - Toolbar, gantt, filter, and bulk-action buttons render at native size (previously compact)
 - Saved-view tabs share the soft accent treatment with filter pills (previously filled accent)
