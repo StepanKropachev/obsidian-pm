@@ -372,6 +372,15 @@
   pointer-events: auto;
 }
 .pm-table-cell-expand { width: 32px; text-align: center; padding: 0; }
+.pm-table-cell-expand .collapse-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.pm-table-cell-expand .collapse-icon:hover { color: var(--text-normal); }
+.pm-table-cell-expand .collapse-icon.is-collapsed .svg-icon { transform: rotate(-90deg); }
 .pm-table-cell-progress { min-width: 120px; }
 .pm-table-cell-actions { width: 40px; text-align: center; }
 .pm-table-cell-assignees { min-width: 80px; }
@@ -1223,7 +1232,7 @@
 
 /* Icon picker */
 .pm-icon-picker { position: relative; flex-shrink: 0; }
-.pm-icon-btn {
+.pm-icon-picker-btn {
   font-size: 32px;
   background: var(--pm-bg2);
   border: 1px solid var(--pm-border);
@@ -1233,7 +1242,7 @@
   transition: background 0.15s;
   line-height: 1;
 }
-.pm-icon-btn:hover { background: var(--pm-bg3); }
+.pm-icon-picker-btn:hover { background: var(--pm-bg3); }
 .pm-icon-grid {
   position: absolute;
   top: calc(100% + 4px);

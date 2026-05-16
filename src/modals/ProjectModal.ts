@@ -74,7 +74,7 @@ export class ProjectModal extends Modal {
 
     // Icon picker
     const iconWrap = topRow.createDiv('pm-icon-picker')
-    const iconBtn = iconWrap.createEl('button', { text: this.project.icon, cls: 'pm-icon-btn' })
+    const iconBtn = iconWrap.createEl('button', { text: this.project.icon, cls: 'pm-icon-picker-btn' })
 
     const iconGrid = iconWrap.createDiv('pm-icon-grid')
     iconGrid.addClass('pm-hidden')
