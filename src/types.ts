@@ -121,6 +121,7 @@ export interface PMSettings {
   autoSchedule: boolean
   kanbanShowSubtasks: boolean
   saveTaskOnClose: boolean
+  kanbanShowDescriptionPreview: boolean
   projectFilters: Record<string, PerProjectFilter>
 }
 
@@ -151,6 +152,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],
   kanbanShowSubtasks: false,
+  kanbanShowDescriptionPreview: false,
   notificationsEnabled: true,
   notificationLeadDays: 2,
   autoSchedule: true,

@@ -56,6 +56,9 @@ export class KanbanView implements SubView {
     const priorityConfig = getPriorityConfig(this.plugin.settings.priorities, task.priority)
     const priorityColor =
       priorityConfig && task.priority !== 'medium' && task.priority !== 'low' ? priorityConfig.color : undefined
+    const descriptionPreview = this.plugin.settings.kanbanShowDescriptionPreview
+      ? makeDescriptionPreview(task.description)
+      : undefined
 
     let parentTitle: string | undefined
     if (this.plugin.settings.kanbanShowSubtasks && task.type === 'subtask') {
@@ -72,6 +75,7 @@ export class KanbanView implements SubView {
     return {
       task,
       priorityColor,
+      descriptionPreview,
       parentTitle,
       subtaskProgress,
       loggedHours: totalLoggedHours(task),
@@ -108,4 +112,9 @@ export class KanbanView implements SubView {
     await this.plugin.store.updateTask(this.project, this.dragTask.id, { status: newStatus })
     await this.onRefresh()
   }
+}
+
+function makeDescriptionPreview(description: string): string | undefined {
+  const normalized = description.replace(/\s+/g, ' ').trim()
+  return normalized.length ? normalized : undefined
 }
