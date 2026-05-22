@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -80,6 +82,15 @@ jobs:
           mkdir -p "release/$id"
           cp main.js manifest.json styles.css "release/$id/"
           (cd release && zip -r "../${id}-${tag}.zip" "$id")
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+            *.zip
 
       - name: Create release
         env:
