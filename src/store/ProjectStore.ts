@@ -18,6 +18,23 @@ import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
 import { ensureFolder } from './vaultFs'
 
 /**
+ * Pick a save path for a task. New tasks get the bare-slug name from
+ * `taskFilePath`. Legacy `<slug>-<id8>.md` files are kept in place as long
+ * as their slug still matches the current title, so untouched vaults don't
+ * churn just because the suffix scheme changed.
+ */
+function resolveTaskPath(task: Task, folder: string, previousPath: string | undefined): string {
+  const desired = taskFilePath(task.title, folder)
+  if (!previousPath) return desired
+  const desiredBasename = desired.slice(desired.lastIndexOf('/') + 1).replace(/\.md$/, '')
+  const previousFolder = previousPath.slice(0, previousPath.lastIndexOf('/'))
+  const previousBasename = previousPath.slice(previousPath.lastIndexOf('/') + 1).replace(/\.md$/, '')
+  const legacyBasename = `${desiredBasename}-${task.id.slice(0, 8)}`
+  if (previousFolder === folder && previousBasename === legacyBasename) return previousPath
+  return desired
+}
+
+/**
  * Handles all read/write operations against the Obsidian vault.
  *
  * Storage layout:
@@ -244,8 +261,9 @@ export class ProjectStore {
   }
 
   private async saveTaskFile(task: Task, project: Project, parentTask: Task | null, folder: string): Promise<void> {
-    const filePath = normalizePath(taskFilePath(task.title, task.id, folder))
-    const oldFilePath = task.filePath && task.filePath !== filePath ? task.filePath : null
+    const previousPath = task.filePath
+    const filePath = normalizePath(resolveTaskPath(task, folder, previousPath))
+    const oldFilePath = previousPath && previousPath !== filePath ? previousPath : null
     task.filePath = filePath
 
     try {
@@ -253,6 +271,9 @@ export class ProjectStore {
       const content = serializeTask(task, project, parentTask, this.getStatuses())
       const existing = this.app.vault.getAbstractFileByPath(filePath)
       if (existing instanceof TFile) {
+        if (existing.path !== previousPath) {
+          throw new Error(`Another file already exists at "${filePath}". Rename one task to resolve.`)
+        }
         await this.app.vault.modify(existing, content)
       } else {
         await this.app.vault.create(filePath, content)

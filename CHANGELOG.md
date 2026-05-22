@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gantt milestone labels and dependency arrows now respect the active filter
 - View switcher buttons are icon-only (previously icon + label)
 - Assignee avatar initials combine the first letter of the first two words (e.g., "Michael Jordan" becomes "MJ" instead of "MI"), so people who share a first name don't collide as often
+- New task files save as `<slug>.md` instead of `<slug>-<id>.md`. Existing files keep their current name until the title changes or you rename them yourself
 
 ### Removed
 

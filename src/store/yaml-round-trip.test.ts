@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { hydrateProjectFromFrontmatter, hydrateTaskFromFile } from './YamlHydrator'
 import { parseFrontmatter } from './YamlParser'
-import { serializeProject, serializeTask } from './YamlSerializer'
+import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
 import { makeProject, makeTask, type Project, type SavedView, type Task } from '../types'
 
 function roundTripTask(
@@ -104,6 +104,16 @@ describe('task round-trip', () => {
     expect(task.customFields).toEqual({ impact: 'high', score: 42 })
   })
 
+  it('subtask wikilinks derive from sub.filePath, falling back to a bare slug', () => {
+    const project = makeProject('P', 'Projects/P.md')
+    const legacySub = makeTask({ id: 'sub-legacy', title: 'Legacy', filePath: 'Projects/P_tasks/legacy-12345678.md' })
+    const newSub = makeTask({ id: 'sub-new', title: 'Fresh One' }) // no filePath yet
+    const parent = makeTask({ id: 'parent', subtasks: [legacySub, newSub] })
+    const md = serializeTask(parent, project, null)
+    expect(md).toContain('[[legacy-12345678|Legacy]]')
+    expect(md).toContain('[[fresh-one|Fresh One]]')
+  })
+
   it('drops auto-generated Parent wiki-link and Subtasks section from the description', () => {
     const child = makeTask({ id: 'child' })
     const parent = makeTask({ id: 'parent-x', description: 'User-written note.', subtasks: [child] })
@@ -180,6 +190,11 @@ describe('project round-trip', () => {
     expect(frontmatter.taskIds).toEqual(['t-dup'])
     const bulletCount = md.split('\n').filter((l) => l.startsWith('- [ ] [[dup-tdup|')).length
     expect(bulletCount).toBe(1)
+  })
+
+  it('taskFilePath returns a bare-slug path without an id suffix', () => {
+    expect(taskFilePath('Bug Fix', 'Projects/P_tasks')).toBe('Projects/P_tasks/bug-fix.md')
+    expect(taskFilePath('A/B:C', 'Projects/P_tasks')).toBe('Projects/P_tasks/a-b-c.md')
   })
 
   it('falls back to the file basename when title is missing', () => {

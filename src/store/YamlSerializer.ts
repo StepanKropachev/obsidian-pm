@@ -108,8 +108,7 @@ export function serializeTask(
     yamlLines.push('')
     yamlLines.push('## Subtasks')
     for (const sub of task.subtasks) {
-      const subSlug = sanitizeFileName(sub.title).toLowerCase().replace(/\s+/g, '-').slice(0, 40)
-      const subBasename = `${subSlug}-${sub.id.slice(0, 8)}`
+      const subBasename = sub.filePath ? sub.filePath.replace(/^.*\//, '').replace(/\.md$/, '') : taskSlug(sub.title)
       const check = isTerminalStatus(sub.status, statuses) ? 'x' : ' '
       yamlLines.push(`- [${check}] [[${subBasename}|${sub.title}]]`)
     }
@@ -118,8 +117,11 @@ export function serializeTask(
   return yamlLines.join('\n')
 }
 
+function taskSlug(title: string): string {
+  return sanitizeFileName(title).toLowerCase().replace(/\s+/g, '-').slice(0, 40)
+}
+
 /** Build the file path for a task .md file */
-export function taskFilePath(taskTitle: string, taskId: string, folder: string): string {
-  const slug = sanitizeFileName(taskTitle).toLowerCase().replace(/\s+/g, '-').slice(0, 40)
-  return `${folder}/${slug}-${taskId.slice(0, 8)}.md`
+export function taskFilePath(taskTitle: string, folder: string): string {
+  return `${folder}/${taskSlug(taskTitle)}.md`
 }
