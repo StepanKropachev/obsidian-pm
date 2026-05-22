@@ -2,7 +2,7 @@ export class TimeChip {
   el: HTMLElement
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('span', { cls: 'pm-time-chip' })
+    this.el = parentEl.createSpan({ cls: 'pm-time-chip' })
   }
 
   setHours(logged: number, estimate?: number): this {

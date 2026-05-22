@@ -185,7 +185,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         })
 
         const endWrap = wrap.createDiv('pm-recur-end')
-        endWrap.createEl('span', { text: 'Until', cls: 'pm-recur-label' })
+        endWrap.createSpan({ text: 'Until', cls: 'pm-recur-label' })
         const endInput = endWrap.createEl('input', { type: 'date', cls: 'pm-prop-date pm-recur-end-input' })
         endInput.value = rec.endDate ?? ''
         endInput.addEventListener('change', () => {

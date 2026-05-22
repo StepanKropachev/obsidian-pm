@@ -18,7 +18,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
 
   // Estimate
   const estRow = timeSection.createDiv('pm-time-est-row')
-  estRow.createEl('span', { text: 'Estimate:', cls: 'pm-time-label' })
+  estRow.createSpan({ text: 'Estimate:', cls: 'pm-time-label' })
   const estInput = estRow.createEl('input', { type: 'number', cls: 'pm-prop-text pm-time-est-input' })
   estInput.value = est > 0 ? String(est) : ''
   estInput.placeholder = 'Hours'

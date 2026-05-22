@@ -188,7 +188,7 @@ export class ImportModal extends Modal {
       this.fileHandling = 'move'
     })
 
-    moveLabel.createEl('span', { text: 'Move to tasks folder (default)' })
+    moveLabel.createSpan({ text: 'Move to tasks folder (default)' })
 
     // Copy option
     const copyLabel = radioGroup.createEl('label')
@@ -201,7 +201,7 @@ export class ImportModal extends Modal {
       this.fileHandling = 'copy'
     })
 
-    copyLabel.createEl('span', { text: 'Copy (keep original)' })
+    copyLabel.createSpan({ text: 'Copy (keep original)' })
 
     // ── Footer ───────────────────────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer')
@@ -244,8 +244,8 @@ export class ImportModal extends Modal {
         this.applyRowStyles(row, item.selected)
       })
 
-      row.createEl('span', { text: item.file.basename, cls: 'import-file-name' })
-      row.createEl('span', { text: item.folder, cls: 'import-file-folder' })
+      row.createSpan({ text: item.file.basename, cls: 'import-file-name' })
+      row.createSpan({ text: item.folder, cls: 'import-file-folder' })
 
       row.addEventListener('click', (e) => {
         // Don't toggle if clicking the checkbox itself — let native change event handle it

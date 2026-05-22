@@ -99,7 +99,7 @@ export class GanttView implements SubView {
       })
     }
 
-    bar.createEl('span', { cls: 'pm-gantt-sep' })
+    bar.createSpan({ cls: 'pm-gantt-sep' })
     new ButtonComponent(bar).setButtonText('Today').onClick(() => this.scrollToToday())
 
     new ButtonComponent(bar).setButtonText('Expand all').onClick(() => this.setAllCollapsed(false))
@@ -115,7 +115,7 @@ export class GanttView implements SubView {
     leftPanel.style.minWidth = `${this.labelWidth}px`
     const leftHeader = leftPanel.createDiv('pm-gantt-left-header')
     leftHeader.style.height = `${HEADER_HEIGHT}px`
-    leftHeader.createEl('span', { text: 'Task', cls: 'pm-gantt-left-header-label' })
+    leftHeader.createSpan({ text: 'Task', cls: 'pm-gantt-left-header-label' })
     const leftBody = leftPanel.createDiv('pm-gantt-left-body')
 
     // Resize handle

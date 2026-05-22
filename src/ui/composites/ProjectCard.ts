@@ -21,11 +21,11 @@ export class ProjectCard {
     colorBar.setCssStyles({ background: props.color })
 
     const body = card.createDiv('pm-project-card-body')
-    body.createEl('div', { text: props.icon, cls: 'pm-project-card-icon' })
+    body.createDiv({ text: props.icon, cls: 'pm-project-card-icon' })
     body.createEl('h3', { text: props.title, cls: 'pm-project-card-title' })
 
     const meta = body.createDiv('pm-project-card-meta')
-    meta.createEl('span', {
+    meta.createSpan({
       text: `${props.tasksDone}/${props.tasksTotal} tasks`,
       cls: 'pm-project-card-tasks'
     })

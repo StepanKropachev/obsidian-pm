@@ -43,14 +43,14 @@ export class KanbanColumn {
     topBar.setCssStyles({ background: props.status.color })
 
     const titleRow = header.createDiv('pm-kanban-col-title-row')
-    const badge = titleRow.createEl('span', {
+    const badge = titleRow.createSpan({
       text: formatBadgeText(props.status.icon, props.status.label),
       cls: 'pm-kanban-col-badge'
     })
     badge.style.color = props.status.color
 
     const headerRight = titleRow.createDiv('pm-kanban-col-header-right')
-    headerRight.createEl('span', {
+    headerRight.createSpan({
       text: String(props.cards.length),
       cls: 'pm-kanban-col-count'
     })

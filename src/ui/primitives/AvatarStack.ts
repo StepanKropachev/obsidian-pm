@@ -36,7 +36,7 @@ export class AvatarStack {
     }
     const overflow = this.names.length - visible.length
     if (overflow > 0) {
-      const more = this.el.createEl('span', { cls: 'pm-avatar pm-avatar--more' })
+      const more = this.el.createSpan({ cls: 'pm-avatar pm-avatar--more' })
       more.setText(`+${overflow}`)
       if (this.size === 'sm') more.addClass('pm-avatar--sm')
     }

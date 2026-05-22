@@ -4,7 +4,7 @@ export class Badge {
   el: HTMLElement
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('span', { cls: 'pm-badge' })
+    this.el = parentEl.createSpan({ cls: 'pm-badge' })
   }
 
   setLabel(text: string): this {

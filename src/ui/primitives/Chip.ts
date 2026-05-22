@@ -5,7 +5,7 @@ export class Chip {
   private labelEl: HTMLElement
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('span', { cls: 'pm-chip' })
+    this.el = parentEl.createSpan({ cls: 'pm-chip' })
     this.labelEl = this.el.createSpan()
   }
 

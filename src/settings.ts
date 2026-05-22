@@ -244,7 +244,7 @@ export class PMSettingTab extends PluginSettingTab {
       const row = container.createDiv('pm-settings-status-row')
 
       // Drag handle
-      row.createEl('span', { text: '⠿', cls: 'pm-settings-drag-handle' })
+      row.createSpan({ text: '⠿', cls: 'pm-settings-drag-handle' })
       row.draggable = true
       row.addEventListener('dragstart', (e) => {
         e.dataTransfer?.setData('text/plain', String(i))
@@ -295,7 +295,7 @@ export class PMSettingTab extends PluginSettingTab {
       const completeLabel = row.createEl('label', { cls: 'pm-settings-complete-toggle' })
       const checkbox = completeLabel.createEl('input', { type: 'checkbox' })
       checkbox.checked = s.complete
-      completeLabel.createEl('span', { text: 'Done', cls: 'pm-settings-complete-text' })
+      completeLabel.createSpan({ text: 'Done', cls: 'pm-settings-complete-text' })
       checkbox.addEventListener('change', () => {
         this.plugin.settings.statuses[i].complete = checkbox.checked
         void this.plugin.saveSettings()

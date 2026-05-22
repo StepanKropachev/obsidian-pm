@@ -63,7 +63,7 @@ export class ProjectModal extends Modal {
   private buildForm(el: HTMLElement): void {
     // ── Header ────────────────────────────────────────────────────────────────
     const header = el.createDiv('pm-project-modal-header')
-    header.createEl('span', { text: '✦', cls: 'pm-project-modal-header-icon' })
+    header.createSpan({ text: '✦', cls: 'pm-project-modal-header-icon' })
     header.createEl('h2', {
       text: this.isNew ? 'New project' : 'Project settings',
       cls: 'pm-modal-heading'
@@ -183,8 +183,8 @@ export class ProjectModal extends Modal {
     // ── Custom fields ─────────────────────────────────────────────────────────
     const cfSection = el.createDiv('pm-modal-section')
     const cfHeader = cfSection.createDiv('pm-modal-section-header')
-    cfHeader.createEl('span', { text: 'Custom fields', cls: 'pm-modal-subheading' })
-    cfHeader.createEl('span', { text: 'Extra properties for tasks', cls: 'pm-modal-hint' })
+    cfHeader.createSpan({ text: 'Custom fields', cls: 'pm-modal-subheading' })
+    cfHeader.createSpan({ text: 'Extra properties for tasks', cls: 'pm-modal-hint' })
 
     const cfList = cfSection.createDiv('pm-cf-list')
     const renderCFs = () => {

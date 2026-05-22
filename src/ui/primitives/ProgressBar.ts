@@ -28,7 +28,7 @@ export class ProgressBar {
 
   setShowLabel(show: boolean): this {
     if (show && !this.labelEl) {
-      this.labelEl = this.el.createEl('span', { cls: 'pm-progress-label', text: '0%' })
+      this.labelEl = this.el.createSpan({ cls: 'pm-progress-label', text: '0%' })
     } else if (!show && this.labelEl) {
       this.labelEl.remove()
       this.labelEl = null

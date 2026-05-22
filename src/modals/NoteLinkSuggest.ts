@@ -207,7 +207,7 @@ export class NoteLinkSuggest {
     this.mirror.textContent = ''
     const textNode = activeDocument.createTextNode(textToCursor)
     this.mirror.appendChild(textNode)
-    const marker = activeDocument.createElement('span')
+    const marker = activeDocument.createSpan()
     marker.textContent = '\u200b' // zero-width space
     this.mirror.appendChild(marker)
 

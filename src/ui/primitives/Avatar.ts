@@ -19,7 +19,7 @@ export class Avatar {
   el: HTMLSpanElement
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('span', { cls: 'pm-avatar' })
+    this.el = parentEl.createSpan({ cls: 'pm-avatar' })
   }
 
   setName(name: string): this {

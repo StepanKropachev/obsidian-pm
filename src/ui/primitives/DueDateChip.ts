@@ -2,7 +2,7 @@ export class DueDateChip {
   el: HTMLElement
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('span', { cls: 'pm-due-chip' })
+    this.el = parentEl.createSpan({ cls: 'pm-due-chip' })
   }
 
   setLabel(text: string): this {

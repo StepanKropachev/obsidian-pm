@@ -72,23 +72,23 @@ export function renderTaskLabel(
       })
     )
   } else {
-    el.createEl('span', { cls: 'pm-gantt-label-spacer' })
+    el.createSpan({ cls: 'pm-gantt-label-spacer' })
   }
 
   // Color dot
   const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
-  const dot = el.createEl('span', { cls: 'pm-gantt-label-dot' })
+  const dot = el.createSpan({ cls: 'pm-gantt-label-dot' })
   dot.style.background = statusConfig?.color ?? COLOR_MUTED
 
   // Title
-  const titleEl = el.createEl('span', { text: task.title, cls: 'pm-gantt-label-title' })
+  const titleEl = el.createSpan({ text: task.title, cls: 'pm-gantt-label-title' })
   titleEl.addEventListener('click', () => {
     openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() })
   })
 
   // Progress %
   if (task.progress > 0) {
-    el.createEl('span', { text: `${task.progress}%`, cls: 'pm-gantt-label-progress' })
+    el.createSpan({ text: `${task.progress}%`, cls: 'pm-gantt-label-progress' })
   }
 
   // "+" button to add subtask (hover-visible)

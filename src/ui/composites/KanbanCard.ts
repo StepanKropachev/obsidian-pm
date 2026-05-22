@@ -38,11 +38,11 @@ export class KanbanCard {
     const body = card.createDiv('pm-kanban-card-body')
 
     if (props.parentTitle) {
-      body.createEl('span', { text: props.parentTitle, cls: 'pm-kanban-card-parent' })
+      body.createSpan({ text: props.parentTitle, cls: 'pm-kanban-card-parent' })
     }
 
     const titleRow = body.createDiv('pm-kanban-card-title-row')
-    titleRow.createEl('span', { text: task.title, cls: 'pm-kanban-card-title' })
+    titleRow.createSpan({ text: task.title, cls: 'pm-kanban-card-title' })
     if (task.type === 'milestone') {
       new Badge(titleRow).setLabel('M').setSize('sm').setColor('var(--color-purple)').setTooltip('Milestone')
     }
@@ -81,7 +81,7 @@ export class KanbanCard {
 
     if (props.subtaskProgress) {
       const { done, total } = props.subtaskProgress
-      body.createEl('span', {
+      body.createSpan({
         text: `${done}/${total} subtasks`,
         cls: 'pm-kanban-card-subtasks'
       })

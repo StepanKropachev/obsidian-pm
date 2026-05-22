@@ -19,7 +19,7 @@ export class ProjectPickerModal extends SuggestModal<Project> {
   }
 
   renderSuggestion(project: Project, el: HTMLElement): void {
-    el.createEl('span', { text: `${project.icon} ${project.title}` })
+    el.createSpan({ text: `${project.icon} ${project.title}` })
   }
 
   onChooseSuggestion(project: Project): void {
@@ -44,7 +44,7 @@ export class TaskPickerModal extends SuggestModal<Task> {
   }
 
   renderSuggestion(task: Task, el: HTMLElement): void {
-    el.createEl('span', { text: task.title })
+    el.createSpan({ text: task.title })
   }
 
   onChooseSuggestion(task: Task): void {
@@ -74,9 +74,9 @@ export class TagPickerModal extends SuggestModal<string> {
   renderSuggestion(item: string, el: HTMLElement): void {
     if (item.startsWith(NEW_TAG_PREFIX)) {
       const tag = item.slice(NEW_TAG_PREFIX.length)
-      el.createEl('span', { text: `Create: ${tag}`, cls: 'pm-suggest-create' })
+      el.createSpan({ text: `Create: ${tag}`, cls: 'pm-suggest-create' })
     } else {
-      el.createEl('span', { text: item })
+      el.createSpan({ text: item })
     }
   }
 

@@ -56,7 +56,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   // Left section: count + actions
   const left = bar.createDiv('pm-bulk-bar-left')
-  left.createEl('span', { text: `${count} selected`, cls: 'pm-bulk-bar-count' })
+  left.createSpan({ text: `${count} selected`, cls: 'pm-bulk-bar-count' })
 
   // Status button
   new ButtonComponent(left).setButtonText('Set status').onClick((e) => {
@@ -145,7 +145,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.addSeparator()
     menu.addItem((item) =>
       item.setTitle('Pick date...').onClick(() => {
-        const input = activeDocument.createElement('input')
+        const input = activeDocument.createEl('input')
         input.type = 'date'
         input.addClass('pm-offscreen')
         activeDocument.body.appendChild(input)

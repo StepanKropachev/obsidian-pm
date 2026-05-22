@@ -20,7 +20,7 @@ export class TitleCell {
     this.el = parentRow.createEl('td', { cls: 'pm-table-cell-title' })
     this.el.setCssStyles({ paddingLeft: `${props.depth * 20 + 8}px` })
 
-    const titleSpan = this.el.createEl('span', { text: task.title, cls: 'pm-task-title-text' })
+    const titleSpan = this.el.createSpan({ text: task.title, cls: 'pm-task-title-text' })
     titleSpan.addEventListener('click', () => props.onTitleClick())
     titleSpan.addEventListener('dblclick', (e) => {
       e.stopPropagation()

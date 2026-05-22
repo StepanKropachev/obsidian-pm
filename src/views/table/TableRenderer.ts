@@ -70,9 +70,9 @@ export function renderTable(ctx: TableContext): void {
       th.addClass('pm-table-th-sortable')
       th.setAttribute('role', 'button')
       th.setAttribute('aria-label', `Sort by ${col.label}`)
-      th.createEl('span', { text: col.label })
+      th.createSpan({ text: col.label })
       if (ctx.state.sortKey === col.key) {
-        th.createEl('span', {
+        th.createSpan({
           text: ctx.state.sortDir === 'asc' ? ' \u2191' : ' \u2193',
           cls: 'pm-sort-indicator'
         })

@@ -288,7 +288,7 @@ export class ProjectView extends ItemView {
     this.toolbarEl.empty()
 
     const left = this.toolbarEl.createDiv('pm-toolbar-left')
-    const iconEl = left.createEl('span', {
+    const iconEl = left.createSpan({
       text: this.project.icon,
       cls: 'pm-toolbar-icon',
       attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' }

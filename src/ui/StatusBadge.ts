@@ -61,7 +61,7 @@ export function renderStatusDot(
   cls = 'pm-subtask-dot'
 ): HTMLElement {
   const config = getStatusConfig(statuses, status)
-  const dot = container.createEl('span', { cls })
+  const dot = container.createSpan({ cls })
   dot.style.background = config?.color ?? COLOR_MUTED
   return dot
 }

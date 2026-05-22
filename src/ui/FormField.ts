@@ -3,7 +3,7 @@ import { Chip } from './primitives/Chip'
 
 export function renderPropRow(container: HTMLElement, label: string, valueBuilder: () => HTMLElement): HTMLElement {
   const row = container.createDiv('pm-prop-row')
-  row.createEl('span', { text: label, cls: 'pm-prop-label' })
+  row.createSpan({ text: label, cls: 'pm-prop-label' })
   const valueEl = valueBuilder()
   row.appendChild(valueEl)
   return row
@@ -48,7 +48,7 @@ export function renderProgressSlider(
   slider.max = '100'
   slider.step = '5'
   slider.value = String(value)
-  const label = wrap.createEl('span', { text: `${value}%`, cls: 'pm-progress-slider-label' })
+  const label = wrap.createSpan({ text: `${value}%`, cls: 'pm-progress-slider-label' })
   slider.addEventListener('input', () => {
     const v = parseInt(slider.value)
     label.textContent = `${v}%`
