@@ -34,6 +34,15 @@ function resolveTaskPath(task: Task, folder: string, previousPath: string | unde
   return desired
 }
 
+/** Thrown when saving a task would collide with an existing file in the vault. */
+export class TaskFileNameConflictError extends Error {
+  constructor(public readonly path: string) {
+    const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '')
+    super(`A note named "${name}" already exists.`)
+    this.name = 'TaskFileNameConflictError'
+  }
+}
+
 /**
  * Handles all read/write operations against the Obsidian vault.
  *
@@ -232,6 +241,7 @@ export class ProjectStore {
         await this.app.vault.create(project.filePath, content)
       }
     } catch (e) {
+      if (e instanceof TaskFileNameConflictError) throw e
       console.error(`[PM] Failed to save project "${project.title}":`, e)
       new Notice(`Project Manager: Failed to save "${project.title}". Check console for details.`)
       throw e
@@ -256,6 +266,7 @@ export class ProjectStore {
       }
     }
     if (errors.length) {
+      if (errors.length === 1 && errors[0] instanceof TaskFileNameConflictError) throw errors[0]
       throw new Error(`Failed to save ${errors.length} task(s): ${errors.map((e) => e.message).join('; ')}`)
     }
   }
@@ -264,7 +275,6 @@ export class ProjectStore {
     const previousPath = task.filePath
     const filePath = normalizePath(resolveTaskPath(task, folder, previousPath))
     const oldFilePath = previousPath && previousPath !== filePath ? previousPath : null
-    task.filePath = filePath
 
     try {
       // Write new file first, then delete old — prevents data loss if interrupted
@@ -272,12 +282,13 @@ export class ProjectStore {
       const existing = this.app.vault.getAbstractFileByPath(filePath)
       if (existing instanceof TFile) {
         if (existing.path !== previousPath) {
-          throw new Error(`Another file already exists at "${filePath}". Rename one task to resolve.`)
+          throw new TaskFileNameConflictError(filePath)
         }
         await this.app.vault.modify(existing, content)
       } else {
         await this.app.vault.create(filePath, content)
       }
+      task.filePath = filePath
 
       if (oldFilePath) {
         const oldFile = this.app.vault.getAbstractFileByPath(oldFilePath)
@@ -286,9 +297,25 @@ export class ProjectStore {
         }
       }
     } catch (e) {
-      console.error(`[PM] Failed to save task "${task.title}" (${task.id}):`, e)
+      if (!(e instanceof TaskFileNameConflictError)) {
+        console.error(`[PM] Failed to save task "${task.title}" (${task.id}):`, e)
+      }
       throw e
     }
+  }
+
+  /**
+   * Pre-flight check: would saving this task (at its current title) collide
+   * with another file already in the vault? Returns the conflicting path or
+   * null. Callers can surface this inline before triggering a save.
+   */
+  findTaskFileConflict(project: Project, task: Task): string | null {
+    const baseFolder = this.projectTaskFolder(project)
+    const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
+    const desired = normalizePath(resolveTaskPath(task, folder, task.filePath))
+    if (desired === task.filePath) return null
+    const existing = this.app.vault.getAbstractFileByPath(desired)
+    return existing instanceof TFile ? desired : null
   }
 
   // ─── CRUD shortcuts ────────────────────────────────────────────────────────
