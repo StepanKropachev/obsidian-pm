@@ -37,10 +37,17 @@ function resolveTaskPath(task: Task, folder: string, previousPath: string | unde
 /** Thrown when saving a task would collide with an existing file in the vault. */
 export class TaskFileNameConflictError extends Error {
   constructor(public readonly path: string) {
-    const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '')
-    super(`A note named "${name}" already exists.`)
+    super(`A note named "${fileNameFromPath(path)}" already exists.`)
     this.name = 'TaskFileNameConflictError'
   }
+
+  get fileName(): string {
+    return fileNameFromPath(this.path)
+  }
+}
+
+function fileNameFromPath(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '')
 }
 
 /**
@@ -306,16 +313,16 @@ export class ProjectStore {
 
   /**
    * Pre-flight check: would saving this task (at its current title) collide
-   * with another file already in the vault? Returns the conflicting path or
-   * null. Callers can surface this inline before triggering a save.
+   * with another file already in the vault? Returns a typed error callers can
+   * surface inline, or null if the save would proceed cleanly.
    */
-  findTaskFileConflict(project: Project, task: Task): string | null {
+  findTaskFileConflict(project: Project, task: Task): TaskFileNameConflictError | null {
     const baseFolder = this.projectTaskFolder(project)
     const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
     const desired = normalizePath(resolveTaskPath(task, folder, task.filePath))
     if (desired === task.filePath) return null
     const existing = this.app.vault.getAbstractFileByPath(desired)
-    return existing instanceof TFile ? desired : null
+    return existing instanceof TFile ? new TaskFileNameConflictError(desired) : null
   }
 
   // ─── CRUD shortcuts ────────────────────────────────────────────────────────

@@ -68,8 +68,7 @@ export class TaskModal extends Modal {
     ) {
       const conflict = this.plugin.store.findTaskFileConflict(this.project, this.task)
       if (conflict) {
-        const name = conflict.slice(conflict.lastIndexOf('/') + 1).replace(/\.md$/, '')
-        new Notice(`Task not saved: a note named "${name}" already exists.`)
+        new Notice(`Task not saved: a note named "${conflict.fileName}" already exists.`)
       } else {
         void this.persistTask()
       }
@@ -434,19 +433,12 @@ export class TaskModal extends Modal {
           return
         }
         clearTitleError()
-        const conflict = this.plugin.store.findTaskFileConflict(this.project, this.task)
-        if (conflict) {
-          const name = conflict.slice(conflict.lastIndexOf('/') + 1).replace(/\.md$/, '')
-          showTitleError(`A note named "${name}" already exists. Choose a different title.`)
-          return
-        }
         await this.persistTask()
         this.saved = true
         this.close()
       } catch (err) {
         if (err instanceof TaskFileNameConflictError) {
-          const name = err.path.slice(err.path.lastIndexOf('/') + 1).replace(/\.md$/, '')
-          showTitleError(`A note named "${name}" already exists. Choose a different title.`)
+          showTitleError(`A note named "${err.fileName}" already exists. Choose a different title.`)
           return
         }
         console.error('[PM]', err)
