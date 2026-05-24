@@ -1,4 +1,4 @@
-export { ProjectStore } from './ProjectStore'
+export { ProjectStore, TaskFileNameConflictError } from './ProjectStore'
 export { parseFrontmatter, appendYaml, isOldFormat } from './YamlParser'
 export { hydrateTasks } from './YamlHydrator'
 export { serializeProject, serializeTask } from './YamlSerializer'
