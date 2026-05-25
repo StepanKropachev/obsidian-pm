@@ -2,6 +2,7 @@ import { App, ButtonComponent, Component, ExtraButtonComponent, Modal, MarkdownR
 import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
+import { TaskFileNameConflictError } from '../store'
 import { safeAsync, getDefaultStatusId } from '../utils'
 import { renderStatusDot } from '../ui/StatusBadge'
 import { confirmDialog } from '../ui/ModalFactory'
@@ -65,7 +66,12 @@ export class TaskModal extends Modal {
       !this.saved &&
       this.task.title.trim()
     ) {
-      void this.persistTask()
+      const conflict = this.plugin.store.findTaskFileConflict(this.project, this.task)
+      if (conflict) {
+        new Notice(`Task not saved: a note named "${conflict.fileName}" already exists.`)
+      } else {
+        void this.persistTask()
+      }
     }
     this.noteSuggest?.destroy()
     this.noteSuggest = null
@@ -74,8 +80,12 @@ export class TaskModal extends Modal {
 
   private persistTask(): Promise<void> {
     if (this.persistPromise) return this.persistPromise
-    this.persistPromise = this.runPersist()
-    return this.persistPromise
+    const p = this.runPersist()
+    this.persistPromise = p
+    p.catch(() => {
+      this.persistPromise = null
+    })
+    return p
   }
 
   private async insertAttachments(
@@ -123,14 +133,30 @@ export class TaskModal extends Modal {
     const header = contentEl.createDiv('pm-modal-header')
     renderStatusDot(header, this.task.status, this.plugin.settings.statuses, 'pm-modal-status-dot')
 
-    const titleInput = header.createEl('input', {
+    const titleWrap = header.createDiv('pm-modal-title-wrap')
+    const titleInput = titleWrap.createEl('input', {
       type: 'text',
       cls: 'pm-modal-title-input',
       value: this.task.title
     })
     titleInput.placeholder = 'Task title\u2026'
+    const titleError = titleWrap.createDiv({ cls: 'pm-modal-title-error', attr: { hidden: '' } })
+    const clearTitleError = () => {
+      if (titleError.hasAttribute('hidden')) return
+      titleError.setAttribute('hidden', '')
+      titleError.setText('')
+      titleInput.classList.remove('pm-input-error')
+    }
+    const showTitleError = (message: string) => {
+      titleError.setText(message)
+      titleError.removeAttribute('hidden')
+      titleInput.classList.add('pm-input-error')
+      titleInput.focus()
+      titleInput.select()
+    }
     titleInput.addEventListener('input', () => {
       this.task.title = titleInput.value
+      clearTitleError()
     })
     titleInput.focus()
     titleInput.select()
@@ -397,25 +423,38 @@ export class TaskModal extends Modal {
       .setButtonText(this.isNew ? 'Create (Shift+Enter)' : 'Save (Shift+Enter)')
       .setCta()
     let saving = false
-    const doSave = safeAsync(async () => {
+    const doSave = async () => {
       if (saving) return
       saving = true
-      if (!this.task.title.trim()) {
+      try {
+        if (!this.task.title.trim()) {
+          titleInput.focus()
+          titleInput.classList.add('pm-input-error')
+          return
+        }
+        clearTitleError()
+        await this.persistTask()
+        this.saved = true
+        this.close()
+      } catch (err) {
+        if (err instanceof TaskFileNameConflictError) {
+          showTitleError(`A note named "${err.fileName}" already exists. Choose a different title.`)
+          return
+        }
+        console.error('[PM]', err)
+        new Notice('Something went wrong. Check the console for details.')
+      } finally {
         saving = false
-        titleInput.focus()
-        titleInput.classList.add('pm-input-error')
-        return
       }
-      await this.persistTask()
-      this.saved = true
-      this.close()
-    })
+    }
 
-    saveBtn.onClick(doSave)
+    saveBtn.onClick(() => {
+      void doSave()
+    })
     this.modalEl.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault()
-        doSave()
+        void doSave()
       }
     })
   }

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.0] - 2026-05-25
 
 ### Added
 
@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Duplicate task entries when creating a task
 - Saved-view pill staying highlighted after the user diverged from its filter
 - Garbled avatar initials when an assignee was stored as `[[Wiki Link]]`; initials, tooltip, and color now derive from the parsed display name ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
+- Renaming a task to a title that's already used by another file in the project now shows an inline error next to the title input
 
 ## [1.4.0] - 2026-04-29
 
