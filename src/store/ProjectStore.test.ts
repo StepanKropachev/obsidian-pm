@@ -162,7 +162,7 @@ describe('ProjectStore dirty-set save efficiency', () => {
 
 describe('ProjectStore round-trip', () => {
   it('reloads tasks created via mutators with the same state', async () => {
-    const { store, vault } = newStore()
+    const { store, vault, app } = newStore()
     const project = await store.createProject('Round', 'Projects')
     const a = await addNamed(store, project, 'Design')
     const b = await addNamed(store, project, 'Build')
@@ -175,10 +175,7 @@ describe('ProjectStore round-trip', () => {
     const childOfA = await addNamed(store, project, 'Sub of design', a.id)
 
     // Fresh store, same vault. Reload from disk.
-    const store2 = new ProjectStore(
-      { vault, fileManager: { trashFile: (f: TFile) => vault.trashFile(f) } } as unknown as App,
-      () => STATUSES
-    )
+    const store2 = new ProjectStore(app, () => STATUSES)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(file)
@@ -239,6 +236,69 @@ describe('ProjectStore round-trip', () => {
     if (!reloaded) throw new Error('reload failed')
     const flat = flattenTasks(reloaded.tasks)
     expect(flat.map((f) => f.task.title).sort()).toEqual(['First', 'Second'])
+  })
+})
+
+describe('ProjectStore metadataCache fast path', () => {
+  it('skips the disk read when metadataCache has the task frontmatter', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Cache', 'Projects')
+    const task = await addNamed(store, project, 'cached task')
+    const taskPath = task.filePath!
+
+    // Wire up the cache to return the task's frontmatter for this path.
+    const cachedFm = { 'pm-task': true, id: task.id, title: 'cached task', description: '' }
+    const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache
+    cache.getFileCache = (f: TFile) => (f.path === taskPath ? { frontmatter: cachedFm } : null)
+
+    // Strip the file so a real read would throw — proving the cache path didn't read.
+    const f = vault.getAbstractFileByPath(taskPath)
+    if (!(f instanceof TFile)) throw new Error('task file missing')
+    await vault.trashFile(f)
+    vault.resetCounts()
+
+    // Build a stub TFile that matches enough of the shape — the store only reads .path.
+    const stub = new TFile()
+    stub.path = taskPath
+    stub.basename = 'cached task'
+    const result = await store.loadTaskFile(stub)
+    expect(result.task?.id).toBe(task.id)
+    expect(result.task?.descriptionLoaded).toBe(false)
+    expect(result.task?.description).toBe('')
+  })
+
+  it('ensureTaskBody fills the description and flips the flag', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Body', 'Projects')
+    const task = await addNamed(store, project, 'task')
+    // Simulate a freshly-loaded task that came in via the cache path.
+    task.description = ''
+    task.descriptionLoaded = false
+    // Also write a real body to disk so ensureTaskBody can read it.
+    await store.updateTask(project, task.id, { description: 'real description' })
+    task.description = ''
+    task.descriptionLoaded = false
+
+    await store.ensureTaskBody(task)
+    expect(task.descriptionLoaded).toBe(true)
+    expect(task.description).toBe('real description')
+  })
+
+  it('saveTaskFile preserves on-disk description when descriptionLoaded is false', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Preserve', 'Projects')
+    const task = await addNamed(store, project, 'preserve me')
+    await store.updateTask(project, task.id, { description: 'keep this' })
+
+    // Simulate the cache-load scenario: in-memory description is empty, flag false.
+    task.description = ''
+    task.descriptionLoaded = false
+
+    // Trigger a save that touches the task (but not the description).
+    await store.updateTask(project, task.id, { priority: 'high' })
+
+    expect(task.descriptionLoaded).toBe(true)
+    expect(task.description).toBe('keep this')
   })
 })
 

@@ -41,6 +41,9 @@ export function updateTaskInTree(tasks: Task[], id: string, patch: Partial<Task>
   for (const t of tasks) {
     if (t.id === id) {
       Object.assign(t, patch, { updatedAt: new Date().toISOString() })
+      // A patch that sets description is the caller's intent — don't let a
+      // later ensureTaskBody overwrite it with the on-disk version.
+      if (patch.description !== undefined) t.descriptionLoaded = true
       return true
     }
     if (updateTaskInTree(t.subtasks, id, patch)) return true

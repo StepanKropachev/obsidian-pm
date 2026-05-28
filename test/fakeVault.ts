@@ -97,6 +97,11 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
     vault,
     fileManager: {
       trashFile: (file: TFile) => vault.trashFile(file)
+    },
+    // Minimal metadataCache: always misses, forcing the store's fallback read+parse path.
+    // Tests that want to exercise the cache hit can override this per-test.
+    metadataCache: {
+      getFileCache: () => null
     }
   }
   return { app, vault }
@@ -105,6 +110,7 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
 export interface FakeAppLike {
   vault: FakeVault
   fileManager: { trashFile: (file: TFile) => Promise<void> }
+  metadataCache: { getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null }
 }
 
 function makeFile(path: string, parent: TFolder): TFile {
