@@ -1,5 +1,6 @@
 import { COLOR_ACCENT } from './constants'
 import { today } from './dates'
+import type { TaskIndex } from './store/TaskIndex'
 
 export type TaskStatus = string
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low'
@@ -52,6 +53,8 @@ export interface Task {
   updatedAt: string
   filePath?: string // vault path to this task's .md file
   archived?: boolean // runtime only — derived from file location in Archive/ subfolder
+  /** Runtime only: false until the file body (description) has been read. New tasks default to true. */
+  descriptionLoaded: boolean
 }
 
 export interface Project {
@@ -67,6 +70,10 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
+  taskIndex: TaskIndex
+  /** Runtime only: false until the project file's body has been read. New projects default to true. */
+  descriptionLoaded: boolean
 }
 
 export interface FilterState {
@@ -184,6 +191,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     collapsed: false,
     createdAt: now,
     updatedAt: now,
+    descriptionLoaded: true,
     ...overrides
   }
 }
@@ -202,7 +210,9 @@ export function makeProject(title: string, filePath: string): Project {
     createdAt: now,
     updatedAt: now,
     filePath,
-    savedViews: []
+    savedViews: [],
+    taskIndex: new Map(),
+    descriptionLoaded: true
   }
 }
 

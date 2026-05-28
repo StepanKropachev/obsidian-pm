@@ -24,5 +24,15 @@ export {
   isFilterActive,
   matchesFilter
 } from './TaskFilter'
+export {
+  buildTaskIndex,
+  findParentId,
+  findTaskById,
+  rebuildTaskIndex,
+  indexAddSubtree,
+  indexRemoveSubtree,
+  indexSetParent
+} from './TaskIndex'
+export type { TaskIndex, TaskIndexEntry } from './TaskIndex'
 export { computeSchedule, wouldCreateCycle } from './Scheduler'
 export { archiveTask, unarchiveTask } from './ArchiveOps'

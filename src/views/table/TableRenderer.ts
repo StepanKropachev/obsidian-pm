@@ -1,6 +1,7 @@
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { type FlatTask, flattenTasks, findTask } from '../../store/TaskTreeOps'
+import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
+import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { compareTask } from './TableFilters'
@@ -119,19 +120,35 @@ function fillTableBody(ctx: TableContext): void {
   const hasActiveFilter = isFilterActive(ctx.state.filter)
   flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.plugin.settings.statuses)
 
-  // Build set of IDs present after filtering
   const filteredIds = new Set(flat.map((f) => f.task.id))
 
-  // Sort with hierarchy
+  // Pre-group by parentId once: O(N) tree walk instead of O(N^2).
+  // Orphans whose parent got filtered out get promoted to root.
+  const childrenByParent = new Map<string | null, FlatTask[]>()
+  for (const f of flat) {
+    let bucket: string | null
+    if (f.parentId === null) {
+      bucket = null
+    } else if (hasActiveFilter && !filteredIds.has(f.parentId)) {
+      bucket = null
+    } else {
+      bucket = f.parentId
+    }
+    let list = childrenByParent.get(bucket)
+    if (!list) {
+      list = []
+      childrenByParent.set(bucket, list)
+    }
+    list.push(f)
+  }
+  for (const list of childrenByParent.values()) {
+    list.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses))
+  }
+
   const sorted: FlatTask[] = []
   const addWithChildren = (parentId: string | null) => {
-    // Include items whose parentId matches, OR whose parent was filtered out (promote to this level)
-    const items = flat.filter(
-      (f) =>
-        f.parentId === parentId ||
-        (hasActiveFilter && f.parentId !== null && !filteredIds.has(f.parentId) && parentId === null)
-    )
-    items.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses))
+    const items = childrenByParent.get(parentId)
+    if (!items) return
     for (const item of items) {
       sorted.push(item)
       addWithChildren(item.task.id)
@@ -218,7 +235,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
     case 'e': {
       if (!ctx.state.selectedTaskId) return
       e.preventDefault()
-      const task = findTask(ctx.project.tasks, ctx.state.selectedTaskId)
+      const task = findTaskById(ctx.project, ctx.state.selectedTaskId)
       if (task) {
         openTaskModal(ctx.plugin, ctx.project, {
           task,

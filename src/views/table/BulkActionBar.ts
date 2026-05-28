@@ -1,6 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
-import { findTask, flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
+import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
+import { findTaskById } from '../../store/TaskIndex'
 import { formatBadgeText } from '../../utils'
 import { today } from '../../dates'
 import { promptText } from '../../ui/ModalFactory'
@@ -177,7 +178,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     // Collect all descendants of selected tasks to prevent circular refs
     const excludedIds = new Set<string>(selectedIdSet)
     for (const id of selectedIdSet) {
-      const task = findTask(ctx.project.tasks, id)
+      const task = findTaskById(ctx.project, id)
       if (task) {
         for (const ft of flattenTasks(task.subtasks)) {
           excludedIds.add(ft.task.id)
@@ -197,7 +198,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   // Archive / Unarchive button — show based on selected tasks' state
   const selectedIds = [...ctx.state.selectedTaskIds]
-  const selectedTasks = selectedIds.map((id) => findTask(ctx.project.tasks, id)).filter(Boolean) as Task[]
+  const selectedTasks = selectedIds.map((id) => findTaskById(ctx.project, id)).filter(Boolean) as Task[]
   const hasArchived = selectedTasks.some((t) => t.archived)
   const hasNonArchived = selectedTasks.some((t) => !t.archived)
 
