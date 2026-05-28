@@ -5,11 +5,18 @@ import {
   updateTaskInTree,
   deleteTaskFromTree,
   addTaskToTree,
-  findTask,
   flattenTasks,
   moveTaskInTree,
   cloneTaskSubtree
 } from './TaskTreeOps'
+import {
+  findParentId,
+  findTaskById,
+  indexAddSubtree,
+  indexRemoveSubtree,
+  indexSetParent,
+  rebuildTaskIndex
+} from './TaskIndex'
 import { computeSchedule } from './Scheduler'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { parseFrontmatter, FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
@@ -94,7 +101,7 @@ export class ProjectStore {
   }
 
   private markSubtreeDirty(project: Project, taskId: string): void {
-    const task = findTask(project.tasks, taskId)
+    const task = findTaskById(project, taskId)
     if (!task) return
     this.markDirty(project, [taskId])
     for (const ft of flattenTasks(task.subtasks)) {
@@ -110,13 +117,6 @@ export class ProjectStore {
 
   private clearDirty(project: Project): void {
     this.dirtyTasks.delete(project.filePath)
-  }
-
-  private findParentId(project: Project, taskId: string): string | null {
-    for (const ft of flattenTasks(project.tasks)) {
-      if (ft.task.id === taskId) return ft.parentId
-    }
-    return null
   }
 
   // ─── Self-write tracking ──────────────────────────────────────────────────
@@ -173,12 +173,14 @@ export class ProjectStore {
 
       if (hasEmbeddedTasks) {
         project.tasks = hydrateTasks((frontmatter.tasks as unknown[]) ?? [])
+        rebuildTaskIndex(project)
         // Old format: no per-task files on disk yet, so mark everything dirty.
         this.markAllDirty(project)
       } else {
         const taskFolder = this.projectTaskFolder(project)
         const taskIds = Array.isArray(frontmatter.taskIds) ? (frontmatter.taskIds as string[]) : []
         project.tasks = await this.loadTasksFromFolder(taskFolder, taskIds)
+        rebuildTaskIndex(project)
         // Memory matches disk now, drop any stale dirty entries.
         this.clearDirty(project)
       }
@@ -433,6 +435,7 @@ export class ProjectStore {
   async addTask(project: Project, parentId: string | null = null): Promise<Task> {
     const task = makeTask()
     addTaskToTree(project.tasks, task, parentId)
+    indexAddSubtree(project, task, parentId)
     this.markDirty(project, [task.id])
     if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
@@ -441,19 +444,21 @@ export class ProjectStore {
 
   async insertTask(project: Project, task: Task, parentId: string | null = null): Promise<void> {
     addTaskToTree(project.tasks, task, parentId)
+    indexAddSubtree(project, task, parentId)
     this.markDirty(project, [task.id])
     if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
   }
 
   async duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null> {
-    const source = findTask(project.tasks, sourceId)
+    const source = findTaskById(project, sourceId)
     if (!source) return null
     const copy = cloneTaskSubtree(source, includeSubtasks)
     copy.title = `${source.title} (copy)`
-    const parentId = flattenTasks(project.tasks).find((f) => f.task.id === sourceId)?.parentId ?? null
+    const parentId = findParentId(project, sourceId)
     addTaskToTree(project.tasks, copy, parentId)
     moveTaskInTree(project.tasks, copy.id, sourceId, 'after')
+    indexAddSubtree(project, copy, parentId)
     // Copy and every cloned descendant are new files.
     this.markSubtreeDirty(project, copy.id)
     if (parentId) this.markDirty(project, [parentId])
@@ -462,11 +467,12 @@ export class ProjectStore {
   }
 
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {
-    const task = findTask(project.tasks, taskId)
+    const task = findTaskById(project, taskId)
     if (!task) return
-    const oldParentId = this.findParentId(project, taskId)
+    const oldParentId = findParentId(project, taskId)
     deleteTaskFromTree(project.tasks, taskId)
     addTaskToTree(project.tasks, task, newParentId)
+    indexSetParent(project, taskId, newParentId)
     // Moved task's parentId and body link both change.
     this.markDirty(project, [taskId])
     if (oldParentId) this.markDirty(project, [oldParentId])
@@ -476,11 +482,12 @@ export class ProjectStore {
 
   async moveTasks(project: Project, taskIds: string[], newParentId: string | null): Promise<void> {
     for (const id of taskIds) {
-      const task = findTask(project.tasks, id)
+      const task = findTaskById(project, id)
       if (!task) continue
-      const oldParentId = this.findParentId(project, id)
+      const oldParentId = findParentId(project, id)
       deleteTaskFromTree(project.tasks, id)
       addTaskToTree(project.tasks, task, newParentId)
+      indexSetParent(project, id, newParentId)
       this.markDirty(project, [id])
       if (oldParentId) this.markDirty(project, [oldParentId])
     }
@@ -489,7 +496,7 @@ export class ProjectStore {
   }
 
   async updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void> {
-    const task = findTask(project.tasks, taskId)
+    const task = findTaskById(project, taskId)
     const oldTitle = task?.title
     updateTaskInTree(project.tasks, taskId, patch)
     this.markDirty(project, [taskId])
@@ -502,7 +509,7 @@ export class ProjectStore {
 
   async updateTasks(project: Project, taskIds: string[], patch: Partial<Task>): Promise<void> {
     for (const id of taskIds) {
-      const task = findTask(project.tasks, id)
+      const task = findTaskById(project, id)
       const oldTitle = task?.title
       updateTaskInTree(project.tasks, id, patch)
       this.markDirty(project, [id])
@@ -517,10 +524,13 @@ export class ProjectStore {
     const folder = this.projectTaskFolder(project)
     const dirtyParents = new Set<string>()
     for (const id of taskIds) {
-      const parentId = this.findParentId(project, id)
+      const parentId = findParentId(project, id)
       if (parentId) dirtyParents.add(parentId)
-      const task = findTask(project.tasks, id)
-      if (task) await this.deleteTaskFiles(task, folder)
+      const task = findTaskById(project, id)
+      if (task) {
+        await this.deleteTaskFiles(task, folder)
+        indexRemoveSubtree(project, task)
+      }
       deleteTaskFromTree(project.tasks, id)
     }
     if (dirtyParents.size) this.markDirty(project, dirtyParents)
@@ -536,10 +546,11 @@ export class ProjectStore {
   }
 
   async deleteTask(project: Project, taskId: string): Promise<void> {
-    const parentId = this.findParentId(project, taskId)
-    const task = findTask(project.tasks, taskId)
+    const parentId = findParentId(project, taskId)
+    const task = findTaskById(project, taskId)
     if (task) {
       await this.deleteTaskFiles(task, this.projectTaskFolder(project))
+      indexRemoveSubtree(project, task)
     }
     deleteTaskFromTree(project.tasks, taskId)
     if (parentId) this.markDirty(project, [parentId])

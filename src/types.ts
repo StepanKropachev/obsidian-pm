@@ -1,5 +1,6 @@
 import { COLOR_ACCENT } from './constants'
 import { today } from './dates'
+import type { TaskIndex } from './store/TaskIndex'
 
 export type TaskStatus = string
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low'
@@ -67,6 +68,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
+  taskIndex: TaskIndex
 }
 
 export interface FilterState {
@@ -202,7 +205,8 @@ export function makeProject(title: string, filePath: string): Project {
     createdAt: now,
     updatedAt: now,
     filePath,
-    savedViews: []
+    savedViews: [],
+    taskIndex: new Map()
   }
 }
 

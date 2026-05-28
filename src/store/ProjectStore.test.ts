@@ -5,6 +5,7 @@ import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
 import { ProjectStore } from './ProjectStore'
 import { makeTask, type StatusConfig, type Task } from '../types'
 import { flattenTasks } from './TaskTreeOps'
+import { buildTaskIndex } from './TaskIndex'
 
 const STATUSES: StatusConfig[] = [
   { id: 'todo', label: 'Todo', color: '#888', icon: 'circle', complete: false },
@@ -238,6 +239,48 @@ describe('ProjectStore round-trip', () => {
     if (!reloaded) throw new Error('reload failed')
     const flat = flattenTasks(reloaded.tasks)
     expect(flat.map((f) => f.task.title).sort()).toEqual(['First', 'Second'])
+  })
+})
+
+describe('ProjectStore task index', () => {
+  it('matches a freshly rebuilt index after a sequence of mutations', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Idx', 'Projects')
+    const a = await addNamed(store, project, 'Alpha')
+    const b = await addNamed(store, project, 'Beta')
+    const c = await addNamed(store, project, 'Gamma', a.id)
+    await store.updateTask(project, b.id, { title: 'Beta renamed' })
+    await store.moveTask(project, c.id, b.id)
+    const d = await addNamed(store, project, 'Delta')
+    await store.duplicateTask(project, a.id, true)
+    await store.deleteTask(project, d.id)
+
+    const fresh = buildTaskIndex(project.tasks)
+    expect(project.taskIndex.size).toBe(fresh.size)
+    for (const [id, entry] of fresh) {
+      expect(project.taskIndex.get(id)?.parentId).toBe(entry.parentId)
+      expect(project.taskIndex.get(id)?.task).toBe(entry.task)
+    }
+  })
+
+  it('survives a reload: rebuilt index after load matches the in-memory tree', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Reload', 'Projects')
+    const a = await addNamed(store, project, 'Alpha')
+    await addNamed(store, project, 'Child', a.id)
+    await addNamed(store, project, 'Beta')
+
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('missing file')
+    const reloaded = await store2.loadProject(file)
+    if (!reloaded) throw new Error('reload failed')
+
+    const fresh = buildTaskIndex(reloaded.tasks)
+    expect(reloaded.taskIndex.size).toBe(fresh.size)
+    for (const [id, entry] of fresh) {
+      expect(reloaded.taskIndex.get(id)?.parentId).toBe(entry.parentId)
+    }
   })
 })
 

@@ -1,6 +1,7 @@
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { type FlatTask, flattenTasks, findTask } from '../../store/TaskTreeOps'
+import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
+import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { compareTask } from './TableFilters'
@@ -234,7 +235,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
     case 'e': {
       if (!ctx.state.selectedTaskId) return
       e.preventDefault()
-      const task = findTask(ctx.project.tasks, ctx.state.selectedTaskId)
+      const task = findTaskById(ctx.project, ctx.state.selectedTaskId)
       if (task) {
         openTaskModal(ctx.plugin, ctx.project, {
           task,
