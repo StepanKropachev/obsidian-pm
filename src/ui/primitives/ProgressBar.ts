@@ -2,6 +2,7 @@ export class ProgressBar {
   el: HTMLDivElement
   private fill: HTMLDivElement
   private labelEl: HTMLElement | null = null
+  private value = 0
 
   constructor(parentEl: HTMLElement) {
     this.el = parentEl.createDiv('pm-progress')
@@ -10,9 +11,9 @@ export class ProgressBar {
   }
 
   setValue(percent: number): this {
-    const clamped = Math.max(0, Math.min(100, percent))
-    this.fill.style.width = `${clamped}%`
-    if (this.labelEl) this.labelEl.setText(`${Math.round(clamped)}%`)
+    this.value = Math.max(0, Math.min(100, percent))
+    this.fill.style.width = `${this.value}%`
+    if (this.labelEl) this.labelEl.setText(`${Math.round(this.value)}%`)
     return this
   }
 
@@ -28,7 +29,7 @@ export class ProgressBar {
 
   setShowLabel(show: boolean): this {
     if (show && !this.labelEl) {
-      this.labelEl = this.el.createSpan({ cls: 'pm-progress-label', text: '0%' })
+      this.labelEl = this.el.createSpan({ cls: 'pm-progress-label', text: `${Math.round(this.value)}%` })
     } else if (!show && this.labelEl) {
       this.labelEl.remove()
       this.labelEl = null
