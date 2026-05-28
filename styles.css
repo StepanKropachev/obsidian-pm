@@ -912,6 +912,16 @@
 }
 .pm-kanban-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
 .pm-kanban-card-title { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.45; }
+.pm-kanban-card-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--pm-text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
 .pm-kanban-card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 
 .pm-kanban-card-footer {
@@ -1966,4 +1976,3 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   font-size: 1.125rem;
   color: var(--text-normal, #2b3438);
 }
-

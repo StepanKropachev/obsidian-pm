@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Saved views remember the view mode they were created in; selecting one switches the project to that mode
 - Gantt lifts a matching task to the top level when its parent is filtered out, so search and filters reveal deeply nested matches
 - Release artifacts carry GitHub build provenance attestations; run `gh attestation verify <file> --owner StepanKropachev` to confirm a download was built from this repo
+- Board view setting to show a plain-text task description preview on kanban cards (3-line clamp, default off)
 
 ### Changed
 

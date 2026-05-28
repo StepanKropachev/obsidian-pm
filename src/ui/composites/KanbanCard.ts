@@ -10,6 +10,7 @@ import { TimeChip } from '../primitives/TimeChip'
 export interface KanbanCardProps {
   task: Task
   priorityColor?: string
+  descriptionPreview?: string
   parentTitle?: string
   subtaskProgress?: { done: number; total: number }
   loggedHours: number
@@ -51,6 +52,13 @@ export class KanbanCard {
     }
     if (task.recurrence) {
       new Badge(titleRow).setLabel('R').setSize('sm').setColor('var(--color-blue)').setTooltip('Recurring')
+    }
+
+    if (props.descriptionPreview) {
+      body.createEl('div', {
+        cls: 'pm-kanban-card-description',
+        text: props.descriptionPreview
+      })
     }
 
     const est = task.timeEstimate ?? 0
