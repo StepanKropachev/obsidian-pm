@@ -64,10 +64,74 @@ export class ProjectStore {
   /** Per-project promise chains to serialize concurrent saves */
   private saveQueues = new Map<string, Promise<void>>()
 
+  /** Task IDs whose .md file needs rewriting on the next save. Tasks with no filePath are always written. */
+  private dirtyTasks = new Map<string, Set<string>>()
+
+  /**
+   * Paths we've just written or trashed ourselves, timestamped. The view's
+   * modify/delete listeners check this to skip reloads on self-writes.
+   * Only mark before vault.modify or fileManager.trashFile. vault.create fires
+   * a different event we don't listen for, so marking creates would leak.
+   * Stale entries (older than the window) are treated as never-consumed.
+   */
+  private selfWrites = new Map<string, number>()
+  private static readonly SELF_WRITE_WINDOW_MS = 5000
+
   constructor(
     private app: App,
     private getStatuses: () => StatusConfig[] = () => []
   ) {}
+
+  // ─── Dirty tracking ───────────────────────────────────────────────────────
+
+  private markDirty(project: Project, taskIds: Iterable<string>): void {
+    let set = this.dirtyTasks.get(project.filePath)
+    if (!set) {
+      set = new Set()
+      this.dirtyTasks.set(project.filePath, set)
+    }
+    for (const id of taskIds) set.add(id)
+  }
+
+  private markSubtreeDirty(project: Project, taskId: string): void {
+    const task = findTask(project.tasks, taskId)
+    if (!task) return
+    this.markDirty(project, [taskId])
+    for (const ft of flattenTasks(task.subtasks)) {
+      this.markDirty(project, [ft.task.id])
+    }
+  }
+
+  private markAllDirty(project: Project): void {
+    const ids: string[] = []
+    for (const ft of flattenTasks(project.tasks)) ids.push(ft.task.id)
+    this.markDirty(project, ids)
+  }
+
+  private clearDirty(project: Project): void {
+    this.dirtyTasks.delete(project.filePath)
+  }
+
+  private findParentId(project: Project, taskId: string): string | null {
+    for (const ft of flattenTasks(project.tasks)) {
+      if (ft.task.id === taskId) return ft.parentId
+    }
+    return null
+  }
+
+  // ─── Self-write tracking ──────────────────────────────────────────────────
+
+  private markSelfWrite(path: string): void {
+    this.selfWrites.set(path, Date.now())
+  }
+
+  /** Returns true if we wrote this path recently. Consumes the marker either way. */
+  consumeSelfWrite(path: string): boolean {
+    const ts = this.selfWrites.get(path)
+    if (ts === undefined) return false
+    this.selfWrites.delete(path)
+    return Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
+  }
 
   // ─── Folder helpers ────────────────────────────────────────────────────────
 
@@ -84,24 +148,22 @@ export class ProjectStore {
 
   async loadAllProjects(folder: string): Promise<Project[]> {
     await this.ensureFolder(folder)
-    const projects: Project[] = []
-    const files = this.app.vault
-      .getMarkdownFiles()
-      .filter((f) => f.path.startsWith(folder + '/') && !this.isTaskFile(f))
-    for (const file of files) {
-      const project = await this.loadProject(file)
-      if (project) projects.push(project)
+    // Walk the projects folder directly. Don't scan the whole vault.
+    const folderObj = this.app.vault.getAbstractFileByPath(folder)
+    const files: TFile[] = []
+    if (folderObj instanceof TFolder) {
+      for (const child of folderObj.children) {
+        if (child instanceof TFile && child.extension === 'md') files.push(child)
+      }
     }
+    const loaded = await Promise.all(files.map((f) => this.loadProject(f)))
+    const projects = loaded.filter((p): p is Project => p !== null)
     return projects.sort((a, b) => a.title.localeCompare(b.title))
-  }
-
-  private isTaskFile(file: TFile): boolean {
-    return /_tasks\//.test(file.path)
   }
 
   async loadProject(file: TFile): Promise<Project | null> {
     try {
-      const content = await this.app.vault.read(file)
+      const content = await this.app.vault.cachedRead(file)
       const { frontmatter, body } = parseFrontmatter(content)
       if (!frontmatter || frontmatter[FRONTMATTER_KEY] !== true) return null
 
@@ -111,10 +173,14 @@ export class ProjectStore {
 
       if (hasEmbeddedTasks) {
         project.tasks = hydrateTasks((frontmatter.tasks as unknown[]) ?? [])
+        // Old format: no per-task files on disk yet, so mark everything dirty.
+        this.markAllDirty(project)
       } else {
         const taskFolder = this.projectTaskFolder(project)
         const taskIds = Array.isArray(frontmatter.taskIds) ? (frontmatter.taskIds as string[]) : []
         project.tasks = await this.loadTasksFromFolder(taskFolder, taskIds)
+        // Memory matches disk now, drop any stale dirty entries.
+        this.clearDirty(project)
       }
 
       return project
@@ -134,11 +200,21 @@ export class ProjectStore {
     const parentIdMap = new Map<string, string>()
     const archivePrefix = normalizePath(folderPath + '/Archive') + '/'
 
-    const files = this.app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/'))
-    for (const file of files) {
-      const { task, subtaskIds, parentId } = await this.loadTaskFile(file)
+    // Walk the task folder directly (plus Archive). Don't scan the whole vault.
+    const files: TFile[] = []
+    const collect = (f: TFolder): void => {
+      for (const child of f.children) {
+        if (child instanceof TFile && child.extension === 'md') files.push(child)
+        else if (child instanceof TFolder) collect(child)
+      }
+    }
+    collect(folder)
+
+    const results = await Promise.all(files.map((file) => this.loadTaskFile(file)))
+    for (let i = 0; i < files.length; i++) {
+      const { task, subtaskIds, parentId } = results[i]
       if (task) {
-        if (file.path.startsWith(archivePrefix)) {
+        if (files[i].path.startsWith(archivePrefix)) {
           task.archived = true
         }
         taskMap.set(task.id, task)
@@ -191,8 +267,7 @@ export class ProjectStore {
     }
     for (const task of taskMap.values()) {
       if (pushed.has(task.id)) continue
-      const isChild = [...taskMap.values()].some((t) => t.subtasks.some((s) => s.id === task.id))
-      if (!isChild) result.push(task)
+      if (!childIds.has(task.id)) result.push(task)
     }
 
     return result
@@ -200,7 +275,7 @@ export class ProjectStore {
 
   async loadTaskFile(file: TFile): Promise<{ task: Task | null; subtaskIds: string[]; parentId: string | null }> {
     try {
-      const content = await this.app.vault.read(file)
+      const content = await this.app.vault.cachedRead(file)
       const { frontmatter, body } = parseFrontmatter(content)
       if (!frontmatter || frontmatter[TASK_FRONTMATTER_KEY] !== true) {
         return { task: null, subtaskIds: [], parentId: null }
@@ -232,22 +307,30 @@ export class ProjectStore {
   }
 
   private async doSaveProject(project: Project): Promise<void> {
+    // Snapshot the dirty set and drop the live entry up front (before any await),
+    // so concurrent markDirty calls land in the next save's set, not this one's.
+    const dirty = this.dirtyTasks.get(project.filePath) ?? new Set<string>()
+    this.dirtyTasks.delete(project.filePath)
+
     try {
       project.updatedAt = new Date().toISOString()
 
       const taskFolder = this.projectTaskFolder(project)
       await this.ensureFolder(taskFolder)
 
-      await this.saveAllTasks(project.tasks, project, null, taskFolder)
+      await this.saveAllTasks(project.tasks, project, null, taskFolder, dirty)
 
       const content = serializeProject(project, this.getStatuses())
       const file = this.app.vault.getAbstractFileByPath(project.filePath)
       if (file instanceof TFile) {
+        this.markSelfWrite(project.filePath)
         await this.app.vault.modify(file, content)
       } else {
         await this.app.vault.create(project.filePath, content)
       }
     } catch (e) {
+      // Save failed. Merge the snapshot back so the next save retries.
+      this.markDirty(project, dirty)
       if (e instanceof TaskFileNameConflictError) throw e
       console.error(`[PM] Failed to save project "${project.title}":`, e)
       new Notice(`Project Manager: Failed to save "${project.title}". Check console for details.`)
@@ -255,18 +338,27 @@ export class ProjectStore {
     }
   }
 
-  private async saveAllTasks(tasks: Task[], project: Project, parentTask: Task | null, folder: string): Promise<void> {
+  private async saveAllTasks(
+    tasks: Task[],
+    project: Project,
+    parentTask: Task | null,
+    folder: string,
+    dirty: Set<string>
+  ): Promise<void> {
     const errors: Error[] = []
     for (const task of tasks) {
       try {
-        let targetFolder = folder
-        if (task.archived) {
-          targetFolder = normalizePath(folder + '/Archive')
-          await this.ensureFolder(targetFolder)
+        const needsWrite = dirty.has(task.id) || !task.filePath
+        if (needsWrite) {
+          let targetFolder = folder
+          if (task.archived) {
+            targetFolder = normalizePath(folder + '/Archive')
+            await this.ensureFolder(targetFolder)
+          }
+          await this.saveTaskFile(task, project, parentTask, targetFolder)
         }
-        await this.saveTaskFile(task, project, parentTask, targetFolder)
         if (task.subtasks.length) {
-          await this.saveAllTasks(task.subtasks, project, task, folder)
+          await this.saveAllTasks(task.subtasks, project, task, folder, dirty)
         }
       } catch (e) {
         errors.push(e instanceof Error ? e : new Error(String(e)))
@@ -291,6 +383,7 @@ export class ProjectStore {
         if (existing.path !== previousPath) {
           throw new TaskFileNameConflictError(filePath)
         }
+        this.markSelfWrite(filePath)
         await this.app.vault.modify(existing, content)
       } else {
         await this.app.vault.create(filePath, content)
@@ -300,6 +393,7 @@ export class ProjectStore {
       if (oldFilePath) {
         const oldFile = this.app.vault.getAbstractFileByPath(oldFilePath)
         if (oldFile instanceof TFile) {
+          this.markSelfWrite(oldFilePath)
           await this.app.fileManager.trashFile(oldFile)
         }
       }
@@ -339,12 +433,16 @@ export class ProjectStore {
   async addTask(project: Project, parentId: string | null = null): Promise<Task> {
     const task = makeTask()
     addTaskToTree(project.tasks, task, parentId)
+    this.markDirty(project, [task.id])
+    if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
     return task
   }
 
   async insertTask(project: Project, task: Task, parentId: string | null = null): Promise<void> {
     addTaskToTree(project.tasks, task, parentId)
+    this.markDirty(project, [task.id])
+    if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
   }
 
@@ -356,6 +454,9 @@ export class ProjectStore {
     const parentId = flattenTasks(project.tasks).find((f) => f.task.id === sourceId)?.parentId ?? null
     addTaskToTree(project.tasks, copy, parentId)
     moveTaskInTree(project.tasks, copy.id, sourceId, 'after')
+    // Copy and every cloned descendant are new files.
+    this.markSubtreeDirty(project, copy.id)
+    if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
     return copy
   }
@@ -363,8 +464,13 @@ export class ProjectStore {
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {
     const task = findTask(project.tasks, taskId)
     if (!task) return
+    const oldParentId = this.findParentId(project, taskId)
     deleteTaskFromTree(project.tasks, taskId)
     addTaskToTree(project.tasks, task, newParentId)
+    // Moved task's parentId and body link both change.
+    this.markDirty(project, [taskId])
+    if (oldParentId) this.markDirty(project, [oldParentId])
+    if (newParentId) this.markDirty(project, [newParentId])
     await this.saveProject(project)
   }
 
@@ -372,31 +478,52 @@ export class ProjectStore {
     for (const id of taskIds) {
       const task = findTask(project.tasks, id)
       if (!task) continue
+      const oldParentId = this.findParentId(project, id)
       deleteTaskFromTree(project.tasks, id)
       addTaskToTree(project.tasks, task, newParentId)
+      this.markDirty(project, [id])
+      if (oldParentId) this.markDirty(project, [oldParentId])
     }
+    if (newParentId) this.markDirty(project, [newParentId])
     await this.saveProject(project)
   }
 
   async updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void> {
+    const task = findTask(project.tasks, taskId)
+    const oldTitle = task?.title
     updateTaskInTree(project.tasks, taskId, patch)
+    this.markDirty(project, [taskId])
+    // Title change renames the file, which breaks direct children's Parent link.
+    if (task && patch.title !== undefined && patch.title !== oldTitle) {
+      for (const sub of task.subtasks) this.markDirty(project, [sub.id])
+    }
     await this.saveProject(project)
   }
 
   async updateTasks(project: Project, taskIds: string[], patch: Partial<Task>): Promise<void> {
     for (const id of taskIds) {
+      const task = findTask(project.tasks, id)
+      const oldTitle = task?.title
       updateTaskInTree(project.tasks, id, patch)
+      this.markDirty(project, [id])
+      if (task && patch.title !== undefined && patch.title !== oldTitle) {
+        for (const sub of task.subtasks) this.markDirty(project, [sub.id])
+      }
     }
     await this.saveProject(project)
   }
 
   async deleteTasks(project: Project, taskIds: string[]): Promise<void> {
     const folder = this.projectTaskFolder(project)
+    const dirtyParents = new Set<string>()
     for (const id of taskIds) {
+      const parentId = this.findParentId(project, id)
+      if (parentId) dirtyParents.add(parentId)
       const task = findTask(project.tasks, id)
       if (task) await this.deleteTaskFiles(task, folder)
       deleteTaskFromTree(project.tasks, id)
     }
+    if (dirtyParents.size) this.markDirty(project, dirtyParents)
     await this.saveProject(project)
   }
 
@@ -409,11 +536,13 @@ export class ProjectStore {
   }
 
   async deleteTask(project: Project, taskId: string): Promise<void> {
+    const parentId = this.findParentId(project, taskId)
     const task = findTask(project.tasks, taskId)
     if (task) {
       await this.deleteTaskFiles(task, this.projectTaskFolder(project))
     }
     deleteTaskFromTree(project.tasks, taskId)
+    if (parentId) this.markDirty(project, [parentId])
     await this.saveProject(project)
   }
 
@@ -423,7 +552,10 @@ export class ProjectStore {
     }
     if (task.filePath) {
       const file = this.app.vault.getAbstractFileByPath(task.filePath)
-      if (file instanceof TFile) await this.app.fileManager.trashFile(file)
+      if (file instanceof TFile) {
+        this.markSelfWrite(task.filePath)
+        await this.app.fileManager.trashFile(file)
+      }
     }
   }
 
@@ -434,12 +566,18 @@ export class ProjectStore {
       await this.deleteFolderRecursive(folder)
     }
     const file = this.app.vault.getAbstractFileByPath(project.filePath)
-    if (file instanceof TFile) await this.app.fileManager.trashFile(file)
+    if (file instanceof TFile) {
+      this.markSelfWrite(project.filePath)
+      await this.app.fileManager.trashFile(file)
+    }
+    this.clearDirty(project)
+    this.saveQueues.delete(project.filePath)
   }
 
   private async deleteFolderRecursive(folder: TFolder): Promise<void> {
     for (const child of [...folder.children]) {
       if (child instanceof TFile) {
+        this.markSelfWrite(child.path)
         await this.app.fileManager.trashFile(child)
       } else if (child instanceof TFolder) {
         await this.deleteFolderRecursive(child)
@@ -461,6 +599,7 @@ export class ProjectStore {
 
     for (const p of patches) {
       updateTaskInTree(project.tasks, p.taskId, { start: p.start, due: p.due })
+      this.markDirty(project, [p.taskId])
     }
     await this.saveProject(project)
     return patches.length
