@@ -565,6 +565,9 @@
 .pm-chip-rm svg { width: 12px; height: 12px; }
 .pm-suggest-create { color: var(--text-accent); font-style: italic; }
 
+/* Virtual-scroll spacer rows: height is set inline by the renderer */
+.pm-table-spacer td { padding: 0; border: 0; }
+
 /* Add task row */
 .pm-table-add-row td { padding: 8px 10px; }
 .pm-table-add-btn {
