@@ -150,6 +150,7 @@ export default class PMPlugin extends Plugin {
     if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
     if (!this.settings.projectFilters) this.settings.projectFilters = {}
+    if (!this.settings.collapsedTasks) this.settings.collapsedTasks = {}
 
     let migrated = false
     for (const s of this.settings.statuses) {
@@ -186,10 +187,40 @@ export default class PMPlugin extends Plugin {
         dirty = true
       }
     }
+    const cleanedCollapsed: typeof this.settings.collapsedTasks = {}
+    for (const [path, ids] of Object.entries(this.settings.collapsedTasks)) {
+      if (this.app.vault.getAbstractFileByPath(path)) {
+        cleanedCollapsed[path] = ids
+      } else {
+        dirty = true
+      }
+    }
     if (dirty) {
       this.settings.projectFilters = cleaned
+      this.settings.collapsedTasks = cleanedCollapsed
       await this.saveSettings()
     }
+  }
+
+  /**
+   * Overlay the persisted collapsed-task state onto a freshly loaded project.
+   * Projects with no record yet keep whatever legacy frontmatter said.
+   */
+  applyCollapsedState(project: Project): void {
+    const ids = this.settings.collapsedTasks[project.filePath]
+    if (!ids) return
+    const set = new Set(ids)
+    for (const { task } of flattenTasks(project.tasks)) {
+      task.collapsed = set.has(task.id)
+    }
+  }
+
+  /** Persist the project's current collapsed flags. Call after toggling task.collapsed. */
+  async persistCollapsedState(project: Project): Promise<void> {
+    this.settings.collapsedTasks[project.filePath] = flattenTasks(project.tasks)
+      .filter((f) => f.task.collapsed)
+      .map((f) => f.task.id)
+    await this.saveSettings()
   }
 
   async saveSettings(): Promise<void> {

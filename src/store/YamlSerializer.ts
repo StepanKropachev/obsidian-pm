@@ -71,7 +71,6 @@ export function buildTaskFrontmatter(task: Task, project: Project, parentTask: T
     tags: task.tags,
     subtaskIds: task.subtasks.map((s) => s.id),
     dependencies: task.dependencies,
-    collapsed: task.collapsed,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt
   }

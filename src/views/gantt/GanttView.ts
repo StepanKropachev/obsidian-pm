@@ -300,6 +300,7 @@ export class GanttView implements SubView {
     for (const { task } of flattenTasks(this.project.tasks)) {
       if (task.subtasks.length > 0) task.collapsed = collapsed
     }
+    void this.plugin.persistCollapsedState(this.project)
     this.render()
   }
 }

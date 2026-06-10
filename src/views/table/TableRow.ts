@@ -76,7 +76,8 @@ export function renderTaskRow(
     hasSubtasks: task.subtasks.length > 0,
     collapsed: task.collapsed,
     onToggle: safeAsync(async () => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+      task.collapsed = !task.collapsed
+      await ctx.plugin.persistCollapsedState(ctx.project)
       await ctx.onRefresh()
     })
   })

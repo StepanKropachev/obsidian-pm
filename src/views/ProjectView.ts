@@ -140,6 +140,7 @@ export class ProjectView extends ItemView {
       this.renderMissingProject()
       return
     }
+    this.plugin.applyCollapsedState(this.project)
     this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()

@@ -65,7 +65,8 @@ export function renderTaskLabel(
     btn.addEventListener(
       'click',
       safeAsync(async () => {
-        await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+        task.collapsed = !task.collapsed
+        await ctx.plugin.persistCollapsedState(ctx.project)
         await ctx.onRefresh()
       })
     )
