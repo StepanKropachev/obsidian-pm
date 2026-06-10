@@ -4,7 +4,7 @@ import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
-import { renderTable, refreshTableBody, handleTableKeyDown } from './TableRenderer'
+import { renderTable, refreshTableBody, handleTableKeyDown, ROW_HEIGHT_ESTIMATE } from './TableRenderer'
 import type { SortKey, SortDir, TableState } from './TableRenderer'
 import { updateSelectAllCheckbox } from './TableRow'
 import { renderBulkActionBar } from './BulkActionBar'
@@ -36,7 +36,11 @@ export class TableView implements SubView {
       selectedTaskId: null,
       selectedTaskIds: new Set(),
       lastCheckedTaskId: null,
-      tableBody: null
+      tableBody: null,
+      wrapper: null,
+      visibleRows: [],
+      rowHeight: ROW_HEIGHT_ESTIMATE,
+      renderWindow: null
     }
   }
 
@@ -67,7 +71,12 @@ export class TableView implements SubView {
 
     if (this.pendingScrollTop !== null) {
       const wrapper = this.container.querySelector('.pm-table-wrapper')
-      if (wrapper) wrapper.scrollTop = this.pendingScrollTop
+      if (wrapper) {
+        wrapper.scrollTop = this.pendingScrollTop
+        // Re-render the virtual window for the restored position synchronously,
+        // instead of waiting for the scroll event's animation frame.
+        this.state.renderWindow?.()
+      }
       this.pendingScrollTop = null
     }
   }
