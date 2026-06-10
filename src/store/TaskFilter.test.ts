@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type FilterState, type Task } from '../types'
 import {
   applyTaskFilter,
   applyTaskFilterFlat,
@@ -8,7 +9,6 @@ import {
   matchesFilter
 } from './TaskFilter'
 import { flattenTasks } from './TaskTreeOps'
-import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type FilterState, type Task } from '../types'
 
 function task(overrides: Partial<Task> & { id: string }): Task {
   return makeTask(overrides)

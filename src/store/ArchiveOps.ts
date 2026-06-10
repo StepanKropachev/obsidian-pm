@@ -1,7 +1,7 @@
-import { TFile, normalizePath } from 'obsidian'
 import type { App } from 'obsidian'
+import { TFile, normalizePath } from 'obsidian'
 import type { Project } from '../types'
-import { findTask } from './TaskTreeOps'
+import { findTaskById } from './TaskIndex'
 import { ensureFolder } from './vaultFs'
 
 /** Get the task subfolder path for a project */
@@ -10,7 +10,7 @@ function projectTaskFolder(project: Project): string {
 }
 
 export async function archiveTask(app: App, project: Project, taskId: string): Promise<void> {
-  const task = findTask(project.tasks, taskId)
+  const task = findTaskById(project, taskId)
   if (!task || !task.filePath) return
 
   const taskFolder = projectTaskFolder(project)
@@ -29,7 +29,7 @@ export async function archiveTask(app: App, project: Project, taskId: string): P
 }
 
 export async function unarchiveTask(app: App, project: Project, taskId: string): Promise<void> {
-  const task = findTask(project.tasks, taskId)
+  const task = findTaskById(project, taskId)
   if (!task || !task.filePath) return
 
   const taskFolder = projectTaskFolder(project)

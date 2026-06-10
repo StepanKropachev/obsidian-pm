@@ -1,21 +1,6 @@
+export { archiveTask, unarchiveTask } from './ArchiveOps'
 export { ProjectStore, TaskFileNameConflictError } from './ProjectStore'
-export { parseFrontmatter, appendYaml, isOldFormat } from './YamlParser'
-export { hydrateTasks } from './YamlHydrator'
-export { serializeProject, serializeTask } from './YamlSerializer'
-export {
-  flattenTasks,
-  findTask,
-  updateTaskInTree,
-  deleteTaskFromTree,
-  addTaskToTree,
-  moveTaskInTree,
-  cloneTaskSubtree,
-  totalLoggedHours,
-  filterArchived,
-  collectAllAssignees,
-  collectAllTags
-} from './TaskTreeOps'
-export type { FlatTask } from './TaskTreeOps'
+export { computeSchedule, wouldCreateCycle } from './Scheduler'
 export {
   applyTaskFilter,
   applyTaskFilterFlat,
@@ -24,5 +9,30 @@ export {
   isFilterActive,
   matchesFilter
 } from './TaskFilter'
-export { computeSchedule, wouldCreateCycle } from './Scheduler'
-export { archiveTask, unarchiveTask } from './ArchiveOps'
+export {
+  buildTaskIndex,
+  findParentId,
+  findTaskById,
+  indexAddSubtree,
+  indexRemoveSubtree,
+  indexSetParent,
+  rebuildTaskIndex
+} from './TaskIndex'
+export type { TaskIndex, TaskIndexEntry } from './TaskIndex'
+export {
+  addTaskToTree,
+  cloneTaskSubtree,
+  collectAllAssignees,
+  collectAllTags,
+  deleteTaskFromTree,
+  filterArchived,
+  findTask,
+  flattenTasks,
+  moveTaskInTree,
+  totalLoggedHours,
+  updateTaskInTree
+} from './TaskTreeOps'
+export type { FlatTask } from './TaskTreeOps'
+export { hydrateTasks } from './YamlHydrator'
+export { appendYaml, isOldFormat, parseFrontmatter } from './YamlParser'
+export { serializeProject, serializeTask } from './YamlSerializer'

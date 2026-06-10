@@ -1,6 +1,7 @@
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { type FlatTask, flattenTasks, findTask } from '../../store/TaskTreeOps'
+import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
+import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { compareTask } from './TableFilters'
@@ -19,6 +20,19 @@ export interface TableState {
   selectedTaskIds: Set<string>
   lastCheckedTaskId: string | null
   tableBody: HTMLElement | null
+  /** Scroll container (.pm-table-wrapper). Set by renderTable. */
+  wrapper: HTMLElement | null
+  /** Display list after filter/sort/collapse. Source of truth for the virtual window and selection. */
+  visibleRows: FlatTask[]
+  /** Row height in px. Starts as an estimate; calibrated once from the first painted row. */
+  rowHeight: number
+  /** True once rowHeight has been measured from a real row. */
+  heightCalibrated: boolean
+  /** Bounds of the currently rendered window into visibleRows. -1 forces a repaint. */
+  windowStart: number
+  windowEnd: number
+  /** Re-renders the current virtual window. Wired by fillTableBody. */
+  renderWindow: (() => void) | null
 }
 
 export interface TableContext {
@@ -33,6 +47,22 @@ export interface TableContext {
 
 export function renderTable(ctx: TableContext): void {
   const wrapper = ctx.container.createDiv('pm-table-wrapper')
+  ctx.state.wrapper = wrapper
+  let scrollScheduled = false
+  wrapper.addEventListener('scroll', () => {
+    if (scrollScheduled) return
+    scrollScheduled = true
+    activeWindow.requestAnimationFrame(() => {
+      scrollScheduled = false
+      // Repaint only when the visible window actually moved. Rebuilding the
+      // tbody can itself nudge scrollTop (clamping near the edges), which
+      // fires another scroll event — without this guard that feeds back into
+      // an endless repaint loop.
+      const { start, end } = computeWindow(ctx.state)
+      if (start === ctx.state.windowStart && end === ctx.state.windowEnd) return
+      ctx.state.renderWindow?.()
+    })
+  })
   const table = wrapper.createEl('table', { cls: 'pm-table' })
 
   // Header
@@ -113,25 +143,40 @@ export function refreshTableBody(ctx: TableContext): void {
 function fillTableBody(ctx: TableContext): void {
   const tbody = ctx.state.tableBody
   if (!tbody) return
-  tbody.empty()
 
   let flat = flattenTasks(ctx.project.tasks)
   const hasActiveFilter = isFilterActive(ctx.state.filter)
   flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.plugin.settings.statuses)
 
-  // Build set of IDs present after filtering
   const filteredIds = new Set(flat.map((f) => f.task.id))
 
-  // Sort with hierarchy
+  // Pre-group by parentId once: O(N) tree walk instead of O(N^2).
+  // Orphans whose parent got filtered out get promoted to root.
+  const childrenByParent = new Map<string | null, FlatTask[]>()
+  for (const f of flat) {
+    let bucket: string | null
+    if (f.parentId === null) {
+      bucket = null
+    } else if (hasActiveFilter && !filteredIds.has(f.parentId)) {
+      bucket = null
+    } else {
+      bucket = f.parentId
+    }
+    let list = childrenByParent.get(bucket)
+    if (!list) {
+      list = []
+      childrenByParent.set(bucket, list)
+    }
+    list.push(f)
+  }
+  for (const list of childrenByParent.values()) {
+    list.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses))
+  }
+
   const sorted: FlatTask[] = []
   const addWithChildren = (parentId: string | null) => {
-    // Include items whose parentId matches, OR whose parent was filtered out (promote to this level)
-    const items = flat.filter(
-      (f) =>
-        f.parentId === parentId ||
-        (hasActiveFilter && f.parentId !== null && !filteredIds.has(f.parentId) && parentId === null)
-    )
-    items.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses))
+    const items = childrenByParent.get(parentId)
+    if (!items) return
     for (const item of items) {
       sorted.push(item)
       addWithChildren(item.task.id)
@@ -139,19 +184,84 @@ function fillTableBody(ctx: TableContext): void {
   }
   addWithChildren(null)
 
-  for (const { task, depth, parentId, visible } of sorted) {
-    // When filtering, show all matches regardless of collapsed parent
-    if (!hasActiveFilter && !visible) continue
-    renderTaskRow(tbody, task, depth, hasActiveFilter ? null : parentId, ctx)
+  // When filtering, show all matches regardless of collapsed parent.
+  ctx.state.visibleRows = hasActiveFilter ? sorted : sorted.filter((f) => f.visible)
+  ctx.state.renderWindow = () => renderWindowRows(ctx)
+  // Data changed: always repaint, even if the window bounds happen to match.
+  ctx.state.windowStart = -1
+  ctx.state.windowEnd = -1
+  renderWindowRows(ctx)
+}
+
+const ROW_OVERSCAN = 8
+export const ROW_HEIGHT_ESTIMATE = 36
+
+/** Compute the [start, end) slice of visibleRows that should be rendered for the current scroll position. */
+function computeWindow(state: TableState): { start: number; end: number } {
+  const wrapper = state.wrapper
+  if (!wrapper) return { start: 0, end: state.visibleRows.length }
+  const thead = wrapper.querySelector('thead')
+  const headerHeight = thead instanceof HTMLElement ? thead.offsetHeight : 0
+  const scrollTop = Math.max(0, wrapper.scrollTop - headerHeight)
+  const viewHeight = wrapper.clientHeight || 600
+
+  let start = Math.floor(scrollTop / state.rowHeight) - ROW_OVERSCAN
+  if (start < 0) start = 0
+  let end = Math.ceil((scrollTop + viewHeight) / state.rowHeight) + ROW_OVERSCAN
+  if (end > state.visibleRows.length) end = state.visibleRows.length
+  return { start, end }
+}
+
+/**
+ * Render only the rows inside the scroll viewport (plus overscan), bracketed
+ * by spacer rows sized to keep the scrollbar honest. Render cost is
+ * O(viewport), independent of project size.
+ */
+function renderWindowRows(ctx: TableContext): void {
+  const { state } = ctx
+  const tbody = state.tableBody
+  if (!tbody) return
+
+  const rows = state.visibleRows
+  const colCount = 10 + ctx.project.customFields.length
+  const { start, end } = computeWindow(state)
+  state.windowStart = start
+  state.windowEnd = end
+
+  tbody.empty()
+  if (start > 0) spacerRow(tbody, colCount, start * state.rowHeight)
+  for (let i = start; i < end; i++) {
+    renderTaskRow(tbody, rows[i].task, rows[i].depth, ctx)
   }
+  if (end < rows.length) spacerRow(tbody, colCount, (rows.length - end) * state.rowHeight)
 
   // "Add task" row
   const addRow = tbody.createEl('tr', { cls: 'pm-table-add-row' })
-  const addCell = addRow.createEl('td', { attr: { colspan: String(10 + ctx.project.customFields.length) } })
+  const addCell = addRow.createEl('td', { attr: { colspan: String(colCount) } })
   const addBtn = addCell.createEl('button', { text: '+ add task', cls: 'pm-table-add-btn' })
   addBtn.addEventListener('click', () => {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() })
   })
+
+  // Calibrate the estimated row height against a real painted row, exactly
+  // once. Re-calibrating on every pass feeds back into the window math (row
+  // heights are not perfectly uniform) and can oscillate forever.
+  if (!state.heightCalibrated) {
+    const first = tbody.querySelector('tr[data-task-id]')
+    if (first instanceof HTMLElement && first.offsetHeight > 0) {
+      state.heightCalibrated = true
+      if (Math.abs(first.offsetHeight - state.rowHeight) > 0.5) {
+        state.rowHeight = first.offsetHeight
+        renderWindowRows(ctx)
+      }
+    }
+  }
+}
+
+function spacerRow(tbody: HTMLElement, colCount: number, height: number): void {
+  const tr = tbody.createEl('tr', { cls: 'pm-table-spacer' })
+  const td = tr.createEl('td', { attr: { colspan: String(colCount) } })
+  td.setCssStyles({ height: `${height}px` })
 }
 
 export function updateSelectCheckboxes(state: TableState): void {
@@ -218,7 +328,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
     case 'e': {
       if (!ctx.state.selectedTaskId) return
       e.preventDefault()
-      const task = findTask(ctx.project.tasks, ctx.state.selectedTaskId)
+      const task = findTaskById(ctx.project, ctx.state.selectedTaskId)
       if (task) {
         openTaskModal(ctx.plugin, ctx.project, {
           task,
@@ -248,9 +358,7 @@ export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
 }
 
 export function getVisibleTaskIds(state: TableState): string[] {
-  if (!state.tableBody) return []
-  const rows = state.tableBody.querySelectorAll('tr[data-task-id]')
-  return Array.from(rows).map((r) => (r as HTMLElement).dataset.taskId!)
+  return state.visibleRows.map((f) => f.task.id)
 }
 
 async function deleteTask(id: string, ctx: TableContext): Promise<void> {

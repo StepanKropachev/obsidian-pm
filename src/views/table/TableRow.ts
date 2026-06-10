@@ -23,13 +23,7 @@ import { TitleCell } from '../../ui/composites/cells/TitleCell'
 
 // ─── Row orchestrator ──────────────────────────────────────────────────────────
 
-export function renderTaskRow(
-  tbody: HTMLElement,
-  task: Task,
-  depth: number,
-  _parentId: string | null,
-  ctx: TableContext
-): void {
+export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx: TableContext): void {
   const isDone = isTerminalStatus(task.status, ctx.plugin.settings.statuses)
   const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
 
@@ -76,7 +70,7 @@ export function renderTaskRow(
     hasSubtasks: task.subtasks.length > 0,
     collapsed: task.collapsed,
     onToggle: safeAsync(async () => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+      await ctx.plugin.toggleTaskCollapsed(ctx.project, task.id)
       await ctx.onRefresh()
     })
   })
@@ -164,9 +158,7 @@ export function updateSelectAllCheckbox(state: TableState): void {
   if (!wrapper) return
   const selectAllCb = wrapper.querySelector<HTMLInputElement>('.pm-select-all-checkbox')
   if (!selectAllCb) return
-  const ids = Array.from(state.tableBody.querySelectorAll('tr[data-task-id]')).map(
-    (r) => (r as HTMLElement).dataset.taskId!
-  )
+  const ids = getVisibleTaskIds(state)
   if (ids.length === 0) {
     selectAllCb.checked = false
     selectAllCb.indeterminate = false
@@ -185,11 +177,21 @@ export function updateSelectAllCheckbox(state: TableState): void {
 export function updateSelectedRow(state: TableState): void {
   if (!state.tableBody) return
   state.tableBody.querySelectorAll('.pm-table-row--selected').forEach((r) => r.removeClass('pm-table-row--selected'))
-  if (state.selectedTaskId) {
-    const row = state.tableBody.querySelector(`tr[data-task-id="${state.selectedTaskId}"]`)
-    if (row) {
-      row.addClass('pm-table-row--selected')
-      ;(row as HTMLElement).scrollIntoView({ block: 'nearest' })
-    }
+  if (!state.selectedTaskId) return
+
+  let row = state.tableBody.querySelector(`tr[data-task-id="${state.selectedTaskId}"]`)
+  if (!row && state.wrapper && state.renderWindow) {
+    // Row is outside the virtual window: scroll it into range and re-render.
+    const idx = state.visibleRows.findIndex((f) => f.task.id === state.selectedTaskId)
+    if (idx === -1) return
+    const thead = state.wrapper.querySelector('thead')
+    const headerHeight = thead instanceof HTMLElement ? thead.offsetHeight : 0
+    state.wrapper.scrollTop = Math.max(0, idx * state.rowHeight + headerHeight - state.wrapper.clientHeight / 2)
+    state.renderWindow()
+    row = state.tableBody.querySelector(`tr[data-task-id="${state.selectedTaskId}"]`)
+  }
+  if (row) {
+    row.addClass('pm-table-row--selected')
+    ;(row as HTMLElement).scrollIntoView({ block: 'nearest' })
   }
 }

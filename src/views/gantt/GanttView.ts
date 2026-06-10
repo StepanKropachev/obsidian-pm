@@ -68,6 +68,11 @@ export class GanttView implements SubView {
     this.pendingScroll = pos
   }
 
+  refresh(): void {
+    this.pendingScroll = this.getScrollPosition()
+    this.render()
+  }
+
   render(): void {
     this.cleanupFns.forEach((fn) => fn())
     this.cleanupFns = []
@@ -295,6 +300,7 @@ export class GanttView implements SubView {
     for (const { task } of flattenTasks(this.project.tasks)) {
       if (task.subtasks.length > 0) task.collapsed = collapsed
     }
+    void this.plugin.persistCollapsedState(this.project)
     this.render()
   }
 }

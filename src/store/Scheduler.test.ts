@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, computeSchedule, daysBetween, wouldCreateCycle } from './Scheduler'
 import { DEFAULT_STATUSES, makeTask, type StatusConfig, type Task } from '../types'
+import { addDays, computeSchedule, daysBetween, wouldCreateCycle } from './Scheduler'
 
 function task(overrides: Partial<Task> & { id: string }): Task {
   return makeTask({

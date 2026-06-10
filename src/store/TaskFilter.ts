@@ -1,7 +1,7 @@
-import type { Task, FilterState, DueDateFilter, StatusConfig } from '../types'
-import type { FlatTask } from './TaskTreeOps'
+import { parsePlainDate, Temporal, today } from '../dates'
+import type { DueDateFilter, FilterState, StatusConfig, Task } from '../types'
 import { isTerminalStatus } from '../utils'
-import { Temporal, today, parsePlainDate } from '../dates'
+import type { FlatTask } from './TaskTreeOps'
 
 export function isFilterActive(filter: FilterState): boolean {
   return !!(

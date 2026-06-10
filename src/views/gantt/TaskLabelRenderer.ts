@@ -1,6 +1,6 @@
 import type PMPlugin from '../../main'
 import type { Project, Task } from '../../types'
-import { moveTaskInTree } from '../../store/TaskTreeOps'
+import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { COLOR_MUTED } from '../../constants'
 import { getStatusConfig, safeAsync } from '../../utils'
@@ -52,25 +52,20 @@ export function renderTaskLabel(
       el.removeClass('pm-gantt-label-row--drop-before', 'pm-gantt-label-row--drop-after')
       const draggedId = e.dataTransfer?.getData('text/plain')
       if (!draggedId || draggedId === task.id) return
-      moveTaskInTree(ctx.project.tasks, draggedId, task.id, dropPosition)
-      await ctx.plugin.store.saveProject(ctx.project)
+      await ctx.plugin.store.reorderTask(ctx.project, draggedId, task.id, dropPosition)
       await ctx.onRefresh()
     })
   )
 
-  // Expand button
+  // Expand toggle
   if (task.subtasks.length > 0) {
-    const btn = el.createEl('button', {
-      text: task.collapsed ? '▶' : '▼',
-      cls: 'pm-gantt-expand-btn'
-    })
-    btn.addEventListener(
-      'click',
-      safeAsync(async () => {
-        await ctx.plugin.store.updateTask(ctx.project, task.id, { collapsed: !task.collapsed })
+    new CollapseToggle(el, {
+      collapsed: task.collapsed,
+      onToggle: safeAsync(async () => {
+        await ctx.plugin.toggleTaskCollapsed(ctx.project, task.id)
         await ctx.onRefresh()
       })
-    )
+    })
   } else {
     el.createSpan({ cls: 'pm-gantt-label-spacer' })
   }

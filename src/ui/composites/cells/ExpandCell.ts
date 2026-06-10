@@ -1,4 +1,4 @@
-import { setIcon } from 'obsidian'
+import { CollapseToggle } from '../../primitives/CollapseToggle'
 
 export interface ExpandCellProps {
   hasSubtasks: boolean
@@ -12,11 +12,7 @@ export class ExpandCell {
   constructor(parentRow: HTMLElement, props: ExpandCellProps) {
     this.el = parentRow.createEl('td', { cls: 'pm-table-cell-expand' })
     if (props.hasSubtasks) {
-      const toggle = this.el.createDiv({ cls: 'tree-item-icon collapse-icon' })
-      setIcon(toggle, 'right-triangle')
-      toggle.toggleClass('is-collapsed', props.collapsed)
-      toggle.setAttr('aria-label', props.collapsed ? 'Expand subtasks' : 'Collapse subtasks')
-      toggle.addEventListener('click', props.onToggle)
+      new CollapseToggle(this.el, { collapsed: props.collapsed, onToggle: props.onToggle })
     }
   }
 }

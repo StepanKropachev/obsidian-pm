@@ -1,5 +1,6 @@
 import { COLOR_ACCENT } from './constants'
 import { today } from './dates'
+import type { TaskIndex } from './store/TaskIndex'
 
 export type TaskStatus = string
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low'
@@ -47,6 +48,7 @@ export interface Task {
   timeEstimate?: number // hours
   timeLogs?: TimeLog[]
   customFields: Record<string, unknown>
+  /** UI state, persisted per project in plugin settings (data.json), not in frontmatter. */
   collapsed: boolean
   createdAt: string
   updatedAt: string
@@ -67,6 +69,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
+  taskIndex: TaskIndex
 }
 
 export interface FilterState {
@@ -123,6 +127,8 @@ export interface PMSettings {
   saveTaskOnClose: boolean
   kanbanShowDescriptionPreview: boolean
   projectFilters: Record<string, PerProjectFilter>
+  /** Collapsed task ids per project file path. UI state — lives here so toggles don't rewrite task files. */
+  collapsedTasks: Record<string, string[]>
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -157,7 +163,8 @@ export const DEFAULT_SETTINGS: PMSettings = {
   notificationLeadDays: 2,
   autoSchedule: true,
   saveTaskOnClose: true,
-  projectFilters: {}
+  projectFilters: {},
+  collapsedTasks: {}
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -204,7 +211,8 @@ export function makeProject(title: string, filePath: string): Project {
     createdAt: now,
     updatedAt: now,
     filePath,
-    savedViews: []
+    savedViews: [],
+    taskIndex: new Map()
   }
 }
 

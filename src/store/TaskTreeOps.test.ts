@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { makeTask, type Task } from '../types'
 import {
   addTaskToTree,
   collectAllAssignees,
@@ -11,7 +12,6 @@ import {
   totalLoggedHours,
   updateTaskInTree
 } from './TaskTreeOps'
-import { makeTask, type Task } from '../types'
 
 function task(overrides: Partial<Task> & { id: string }): Task {
   return makeTask(overrides)

@@ -372,15 +372,18 @@
   pointer-events: auto;
 }
 .pm-table-cell-expand { width: 32px; text-align: center; padding: 0; }
-.pm-table-cell-expand .collapse-icon {
+
+.pm-collapse-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text-muted);
+  flex-shrink: 0;
+  --icon-size: 14px;
 }
-.pm-table-cell-expand .collapse-icon:hover { color: var(--text-normal); }
-.pm-table-cell-expand .collapse-icon.is-collapsed .svg-icon { transform: rotate(-90deg); }
+.pm-collapse-toggle:hover { color: var(--text-normal); }
+.pm-collapse-toggle.is-collapsed .svg-icon { transform: rotate(-90deg); }
 .pm-table-cell-progress { min-width: 120px; }
 .pm-table-cell-actions { width: 40px; text-align: center; }
 .pm-table-cell-assignees { min-width: 80px; }
@@ -565,6 +568,9 @@
 .pm-chip-rm svg { width: 12px; height: 12px; }
 .pm-suggest-create { color: var(--text-accent); font-style: italic; }
 
+/* Virtual-scroll spacer rows: height is set inline by the renderer */
+.pm-table-spacer td { padding: 0; border: 0; }
+
 /* Add task row */
 .pm-table-add-row td { padding: 8px 10px; }
 .pm-table-add-btn {
@@ -669,18 +675,6 @@
 }
 .pm-gantt-label-row:hover { background: var(--pm-bg3); }
 
-.pm-gantt-expand-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 10px;
-  padding: 2px;
-  flex-shrink: 0;
-  transition: color 0.15s;
-  line-height: 1;
-}
-.pm-gantt-expand-btn:hover { color: var(--pm-text); }
 .pm-gantt-label-spacer { width: 16px; flex-shrink: 0; }
 
 .pm-gantt-label-dot {

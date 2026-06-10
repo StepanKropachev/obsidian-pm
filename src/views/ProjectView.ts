@@ -91,6 +91,7 @@ export class ProjectView extends ItemView {
     }
     this.fileModifyRef = this.app.vault.on('modify', (file) => {
       if (!(file instanceof TFile) || !reloadIfRelevant(file.path)) return
+      if (this.plugin.store.consumeSelfWrite(file.path)) return
       if (this.reloadDebounceTimer !== null) activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = activeWindow.setTimeout(
         safeAsync(async () => {
@@ -105,9 +106,9 @@ export class ProjectView extends ItemView {
       this.app.vault.on(
         'delete',
         safeAsync(async (file) => {
-          if (reloadIfRelevant(file.path)) {
-            await this.loadProject()
-          }
+          if (!reloadIfRelevant(file.path)) return
+          if (this.plugin.store.consumeSelfWrite(file.path)) return
+          await this.loadProject()
         })
       )
     )
@@ -139,6 +140,7 @@ export class ProjectView extends ItemView {
       this.renderMissingProject()
       return
     }
+    this.plugin.applyCollapsedState(this.project)
     this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()
@@ -419,16 +421,25 @@ export class ProjectView extends ItemView {
     this.subview?.render()
   }
 
+  /**
+   * Re-render after a plugin-initiated mutation. Store mutators update
+   * project.tasks in place before they await the save, so memory is already
+   * current and no disk reload is needed. External edits come in through the
+   * modify/delete listeners in onOpen. Prefers the subview's in-place refresh
+   * over a full destroy-and-rebuild.
+   */
   async refreshProject(): Promise<void> {
-    if (!this.filePath) return
+    if (!this.project) return
     if (this.reloadDebounceTimer !== null) {
       activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
-    const file = this.app.vault.getAbstractFileByPath(this.filePath)
-    if (file instanceof TFile) {
-      this.project = await this.plugin.store.loadProject(file)
+    if (this.subview?.refresh) {
+      this.subview.refresh()
+    } else if (this.subview) {
+      this.subview.render()
+    } else {
+      this.renderCurrentView()
     }
-    this.renderCurrentView()
   }
 }

@@ -2,10 +2,9 @@ import { Notice } from 'obsidian'
 import { confirmDialog } from '../../ui/ModalFactory'
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { findTask } from '../../store/TaskTreeOps'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
-import { renderTable, refreshTableBody, handleTableKeyDown } from './TableRenderer'
+import { renderTable, refreshTableBody, handleTableKeyDown, ROW_HEIGHT_ESTIMATE } from './TableRenderer'
 import type { SortKey, SortDir, TableState } from './TableRenderer'
 import { updateSelectAllCheckbox } from './TableRow'
 import { renderBulkActionBar } from './BulkActionBar'
@@ -37,7 +36,14 @@ export class TableView implements SubView {
       selectedTaskId: null,
       selectedTaskIds: new Set(),
       lastCheckedTaskId: null,
-      tableBody: null
+      tableBody: null,
+      wrapper: null,
+      visibleRows: [],
+      rowHeight: ROW_HEIGHT_ESTIMATE,
+      heightCalibrated: false,
+      windowStart: -1,
+      windowEnd: -1,
+      renderWindow: null
     }
   }
 
@@ -68,13 +74,23 @@ export class TableView implements SubView {
 
     if (this.pendingScrollTop !== null) {
       const wrapper = this.container.querySelector('.pm-table-wrapper')
-      if (wrapper) wrapper.scrollTop = this.pendingScrollTop
+      if (wrapper) {
+        wrapper.scrollTop = this.pendingScrollTop
+        // Re-render the virtual window for the restored position synchronously,
+        // instead of waiting for the scroll event's animation frame.
+        this.state.renderWindow?.()
+      }
       this.pendingScrollTop = null
     }
   }
 
   handleKeyDown(e: KeyboardEvent): void {
     handleTableKeyDown(e, this.makeTableContext())
+  }
+
+  refresh(): void {
+    this.doRefreshTable()
+    this.updateBulkBar()
   }
 
   private doRefreshTable(): void {
@@ -159,13 +175,9 @@ export class TableView implements SubView {
   }
 
   private async bulkAddToArray(ids: string[], field: 'assignees' | 'tags', value: string): Promise<void> {
-    for (const id of ids) {
-      const task = findTask(this.project.tasks, id)
-      if (task && !task[field].includes(value)) {
-        task[field] = [...task[field], value]
-      }
-    }
-    await this.plugin.store.saveProject(this.project)
+    await this.plugin.store.updateTasks(this.project, ids, (task) =>
+      task[field].includes(value) ? null : { [field]: [...task[field], value] }
+    )
   }
 
   private updateBulkBar(): void {

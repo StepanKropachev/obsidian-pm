@@ -223,15 +223,25 @@ export interface OpenTaskModalOpts {
 }
 
 export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTaskModalOpts): void {
-  new TaskModal(
-    plugin.app,
-    plugin,
-    project,
-    opts.task ?? null,
-    opts.parentId ?? null,
-    opts.onSave,
-    opts.defaults
-  ).open()
+  const open = (): void => {
+    new TaskModal(
+      plugin.app,
+      plugin,
+      project,
+      opts.task ?? null,
+      opts.parentId ?? null,
+      opts.onSave,
+      opts.defaults
+    ).open()
+  }
+  // Tasks loaded via metadataCache have an empty description until the file
+  // body is read. Pre-load (no-op if already hydrated) so the modal renders the
+  // real description in one paint.
+  if (opts.task) {
+    void plugin.store.loadTaskBody(opts.task).then(open)
+  } else {
+    open()
+  }
 }
 
 export interface OpenProjectModalOpts {
@@ -240,7 +250,14 @@ export interface OpenProjectModalOpts {
 }
 
 export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): void {
-  new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave).open()
+  const open = (): void => {
+    new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave).open()
+  }
+  if (opts.project) {
+    void plugin.store.loadProjectBody(opts.project).then(open)
+  } else {
+    open()
+  }
 }
 
 export function openProjectPicker(plugin: PMPlugin, projects: Project[], onChoose: (project: Project) => void): void {
