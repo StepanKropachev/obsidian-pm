@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Saving a task rewrites only the files affected by the change instead of every task file in the project
+- Projects open faster: task data loads from Obsidian's metadata cache and note bodies are read on demand. Previously loaded projects reopen instantly; edits made outside the plugin are still detected and reloaded
+- The table renders only the rows in view, so it stays responsive in large projects
+- Views update in place after an edit, preserving scroll position and selection
+- Select all in the table selects every task matching the current filter, not just the rows in view
+- Collapse state is stored in plugin settings instead of task frontmatter. Collapsing or expanding a subtree no longer modifies task files, and the `collapsed` frontmatter key is no longer written
+
+### Fixed
+
+- Progress bar labels showing 0% instead of the actual value in some views
+
 ## [1.5.0] - 2026-05-25
 
 ### Added
