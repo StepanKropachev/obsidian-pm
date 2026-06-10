@@ -53,8 +53,6 @@ export interface Task {
   updatedAt: string
   filePath?: string // vault path to this task's .md file
   archived?: boolean // runtime only — derived from file location in Archive/ subfolder
-  /** Runtime only: false until the file body (description) has been read. New tasks default to true. */
-  descriptionLoaded: boolean
 }
 
 export interface Project {
@@ -72,8 +70,6 @@ export interface Project {
   savedViews: SavedView[]
   /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
   taskIndex: TaskIndex
-  /** Runtime only: false until the project file's body has been read. New projects default to true. */
-  descriptionLoaded: boolean
 }
 
 export interface FilterState {
@@ -191,7 +187,6 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     collapsed: false,
     createdAt: now,
     updatedAt: now,
-    descriptionLoaded: true,
     ...overrides
   }
 }
@@ -211,8 +206,7 @@ export function makeProject(title: string, filePath: string): Project {
     updatedAt: now,
     filePath,
     savedViews: [],
-    taskIndex: new Map(),
-    descriptionLoaded: true
+    taskIndex: new Map()
   }
 }
 

@@ -240,16 +240,18 @@ describe('ProjectStore round-trip', () => {
 })
 
 describe('ProjectStore metadataCache fast path', () => {
+  function stubTaskCache(app: App, path: string, fm: Record<string, unknown>): void {
+    const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache
+    cache.getFileCache = (f: TFile) => (f.path === path ? { frontmatter: fm } : null)
+  }
+
   it('skips the disk read when metadataCache has the task frontmatter', async () => {
     const { store, vault, app } = newStore()
     const project = await store.createProject('Cache', 'Projects')
     const task = await addNamed(store, project, 'cached task')
     const taskPath = task.filePath!
 
-    // Wire up the cache to return the task's frontmatter for this path.
-    const cachedFm = { 'pm-task': true, id: task.id, title: 'cached task', description: '' }
-    const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache
-    cache.getFileCache = (f: TFile) => (f.path === taskPath ? { frontmatter: cachedFm } : null)
+    stubTaskCache(app, taskPath, { 'pm-task': true, id: task.id, title: 'cached task' })
 
     // Strip the file so a real read would throw — proving the cache path didn't read.
     const f = vault.getAbstractFileByPath(taskPath)
@@ -257,48 +259,96 @@ describe('ProjectStore metadataCache fast path', () => {
     await vault.trashFile(f)
     vault.resetCounts()
 
-    // Build a stub TFile that matches enough of the shape — the store only reads .path.
     const stub = new TFile()
     stub.path = taskPath
     stub.basename = 'cached task'
     const result = await store.loadTaskFile(stub)
     expect(result.task?.id).toBe(task.id)
-    expect(result.task?.descriptionLoaded).toBe(false)
     expect(result.task?.description).toBe('')
   })
 
-  it('ensureTaskBody fills the description and flips the flag', async () => {
-    const { store } = newStore()
+  it('loadTaskBody pulls the description from disk on demand', async () => {
+    const { store, vault, app } = newStore()
     const project = await store.createProject('Body', 'Projects')
     const task = await addNamed(store, project, 'task')
-    // Simulate a freshly-loaded task that came in via the cache path.
-    task.description = ''
-    task.descriptionLoaded = false
-    // Also write a real body to disk so ensureTaskBody can read it.
     await store.updateTask(project, task.id, { description: 'real description' })
-    task.description = ''
-    task.descriptionLoaded = false
+    const taskPath = task.filePath!
 
-    await store.ensureTaskBody(task)
-    expect(task.descriptionLoaded).toBe(true)
-    expect(task.description).toBe('real description')
+    // Reload through a fresh store with cache hits — task arrives unhydrated.
+    stubTaskCache(app, taskPath, {
+      'pm-task': true,
+      id: task.id,
+      title: 'task',
+      projectId: project.id
+    })
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const projectFile = vault.getAbstractFileByPath(project.filePath)
+    if (!(projectFile instanceof TFile)) throw new Error('project file missing')
+    const reloaded = await store2.loadProject(projectFile)
+    if (!reloaded) throw new Error('reload failed')
+    const reloadedTask = reloaded.tasks[0]
+    expect(reloadedTask.description).toBe('')
+
+    await store2.loadTaskBody(reloadedTask)
+    expect(reloadedTask.description).toBe('real description')
   })
 
-  it('saveTaskFile preserves on-disk description when descriptionLoaded is false', async () => {
-    const { store } = newStore()
+  it('an fm-only save on a cache-loaded task preserves the on-disk description', async () => {
+    const { store, vault, app } = newStore()
     const project = await store.createProject('Preserve', 'Projects')
     const task = await addNamed(store, project, 'preserve me')
     await store.updateTask(project, task.id, { description: 'keep this' })
+    const taskPath = task.filePath!
 
-    // Simulate the cache-load scenario: in-memory description is empty, flag false.
-    task.description = ''
-    task.descriptionLoaded = false
+    stubTaskCache(app, taskPath, {
+      'pm-task': true,
+      id: task.id,
+      title: 'preserve me',
+      projectId: project.id
+    })
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const projectFile = vault.getAbstractFileByPath(project.filePath)
+    if (!(projectFile instanceof TFile)) throw new Error('project file missing')
+    const reloaded = await store2.loadProject(projectFile)
+    if (!reloaded) throw new Error('reload failed')
+    const reloadedTask = reloaded.tasks[0]
 
-    // Trigger a save that touches the task (but not the description).
-    await store.updateTask(project, task.id, { priority: 'high' })
+    // priority is frontmatter-only — the body must not be touched.
+    await store2.updateTask(reloaded, reloadedTask.id, { priority: 'high' })
 
-    expect(task.descriptionLoaded).toBe(true)
-    expect(task.description).toBe('keep this')
+    const file = vault.getAbstractFileByPath(taskPath)
+    if (!(file instanceof TFile)) throw new Error('task file gone')
+    const content = await vault.cachedRead(file)
+    expect(content).toContain('keep this')
+  })
+
+  it('a description edit on a cache-loaded task writes the new body atomically', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Edit', 'Projects')
+    const task = await addNamed(store, project, 'editable')
+    await store.updateTask(project, task.id, { description: 'before' })
+    const taskPath = task.filePath!
+
+    stubTaskCache(app, taskPath, {
+      'pm-task': true,
+      id: task.id,
+      title: 'editable',
+      projectId: project.id
+    })
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const projectFile = vault.getAbstractFileByPath(project.filePath)
+    if (!(projectFile instanceof TFile)) throw new Error('project file missing')
+    const reloaded = await store2.loadProject(projectFile)
+    if (!reloaded) throw new Error('reload failed')
+    const reloadedTask = reloaded.tasks[0]
+
+    await store2.updateTask(reloaded, reloadedTask.id, { description: 'after' })
+
+    const file = vault.getAbstractFileByPath(taskPath)
+    if (!(file instanceof TFile)) throw new Error('task file gone')
+    const content = await vault.cachedRead(file)
+    expect(content).toContain('after')
+    expect(content).not.toContain('before')
   })
 })
 

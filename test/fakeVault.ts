@@ -1,4 +1,5 @@
-import { TAbstractFile, TFile, TFolder, normalizePath } from 'obsidian'
+import { TAbstractFile, TFile, TFolder, normalizePath, parseYaml } from 'obsidian'
+import { appendYaml } from '../src/store/YamlParser'
 
 interface FileContent {
   file: TFile
@@ -36,6 +37,15 @@ export class FakeVault {
     if (!entry) throw new Error(`modify: ${file.path} does not exist`)
     entry.content = content
     bump(this.modifyCount, file.path)
+  }
+
+  async process(file: TFile, fn: (data: string) => string): Promise<string> {
+    const entry = this.files.get(file.path)
+    if (!entry) throw new Error(`process: ${file.path} does not exist`)
+    const next = fn(entry.content)
+    entry.content = next
+    bump(this.modifyCount, file.path)
+    return next
   }
 
   async create(path: string, content: string): Promise<TFile> {
@@ -96,7 +106,18 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
   const app: FakeAppLike = {
     vault,
     fileManager: {
-      trashFile: (file: TFile) => vault.trashFile(file)
+      trashFile: (file: TFile) => vault.trashFile(file),
+      processFrontMatter: async (file: TFile, fn: (fm: Record<string, unknown>) => void): Promise<void> => {
+        await vault.process(file, (content) => {
+          const { frontmatter, body } = splitFrontmatter(content)
+          const fm = frontmatter ?? {}
+          fn(fm)
+          const lines: string[] = ['---']
+          appendYaml(lines, fm, 0)
+          lines.push('---', '', body)
+          return lines.join('\n')
+        })
+      }
     },
     // Minimal metadataCache: always misses, forcing the store's fallback read+parse path.
     // Tests that want to exercise the cache hit can override this per-test.
@@ -107,9 +128,25 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
   return { app, vault }
 }
 
+function splitFrontmatter(content: string): { frontmatter: Record<string, unknown> | null; body: string } {
+  if (!content.startsWith('---')) return { frontmatter: null, body: content }
+  const end = content.indexOf('\n---', 4)
+  if (end === -1) return { frontmatter: null, body: content }
+  const raw = content.slice(4, end)
+  const body = content.slice(end + 4).replace(/^\n+/, '')
+  try {
+    return { frontmatter: parseYaml(raw) as Record<string, unknown>, body }
+  } catch {
+    return { frontmatter: null, body: content }
+  }
+}
+
 export interface FakeAppLike {
   vault: FakeVault
-  fileManager: { trashFile: (file: TFile) => Promise<void> }
+  fileManager: {
+    trashFile: (file: TFile) => Promise<void>
+    processFrontMatter: (file: TFile, fn: (fm: Record<string, unknown>) => void) => Promise<void>
+  }
   metadataCache: { getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null }
 }
 

@@ -234,10 +234,11 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
       opts.defaults
     ).open()
   }
-  // Tasks loaded via metadataCache have an empty description until the file body is read.
-  // Pre-load before opening so the modal renders the real description in one paint.
-  if (opts.task && !opts.task.descriptionLoaded) {
-    void plugin.store.ensureTaskBody(opts.task).then(open)
+  // Tasks loaded via metadataCache have an empty description until the file
+  // body is read. Pre-load (no-op if already hydrated) so the modal renders the
+  // real description in one paint.
+  if (opts.task) {
+    void plugin.store.loadTaskBody(opts.task).then(open)
   } else {
     open()
   }
@@ -252,8 +253,8 @@ export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): 
   const open = (): void => {
     new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave).open()
   }
-  if (opts.project && !opts.project.descriptionLoaded) {
-    void plugin.store.ensureProjectBody(opts.project).then(open)
+  if (opts.project) {
+    void plugin.store.loadProjectBody(opts.project).then(open)
   } else {
     open()
   }

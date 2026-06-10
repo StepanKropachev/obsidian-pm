@@ -54,13 +54,7 @@ export function serializeProject(project: Project, statuses: StatusConfig[] = []
   return yamlLines.join('\n')
 }
 
-export function serializeTask(
-  task: Task,
-  project: Project,
-  parentTask: Task | null,
-  statuses: StatusConfig[] = []
-): string {
-  const subtaskIds = task.subtasks.map((s) => s.id)
+export function buildTaskFrontmatter(task: Task, project: Project, parentTask: Task | null): Record<string, unknown> {
   const fm: Record<string, unknown> = {
     [TASK_FRONTMATTER_KEY]: true,
     projectId: project.id,
@@ -75,7 +69,7 @@ export function serializeTask(
     progress: task.progress,
     assignees: task.assignees,
     tags: task.tags,
-    subtaskIds,
+    subtaskIds: task.subtasks.map((s) => s.id),
     dependencies: task.dependencies,
     collapsed: task.collapsed,
     createdAt: task.createdAt,
@@ -85,6 +79,16 @@ export function serializeTask(
   if (task.timeEstimate !== undefined) fm.timeEstimate = task.timeEstimate
   if (task.timeLogs?.length) fm.timeLogs = task.timeLogs
   if (Object.keys(task.customFields).length) fm.customFields = task.customFields
+  return fm
+}
+
+export function serializeTask(
+  task: Task,
+  project: Project,
+  parentTask: Task | null,
+  statuses: StatusConfig[] = []
+): string {
+  const fm = buildTaskFrontmatter(task, project, parentTask)
 
   const yamlLines: string[] = ['---']
   appendYaml(yamlLines, fm, 0)
