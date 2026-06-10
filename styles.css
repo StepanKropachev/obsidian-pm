@@ -673,17 +673,17 @@
 .pm-gantt-label-row:hover { background: var(--pm-bg3); }
 
 .pm-gantt-expand-btn {
-  background: transparent;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 10px;
-  padding: 2px;
+  color: var(--text-muted);
   flex-shrink: 0;
-  transition: color 0.15s;
-  line-height: 1;
+  padding: 2px;
+  --icon-size: 14px;
 }
-.pm-gantt-expand-btn:hover { color: var(--pm-text); }
+.pm-gantt-expand-btn:hover { color: var(--text-normal); }
+.pm-gantt-expand-btn.is-collapsed .svg-icon { transform: rotate(-90deg); }
 .pm-gantt-label-spacer { width: 16px; flex-shrink: 0; }
 
 .pm-gantt-label-dot {
