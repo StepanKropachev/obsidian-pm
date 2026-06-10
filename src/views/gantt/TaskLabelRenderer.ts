@@ -1,7 +1,6 @@
-import { setIcon } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Project, Task } from '../../types'
-import { findTask } from '../../store/TaskTreeOps'
+import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { COLOR_MUTED } from '../../constants'
 import { getStatusConfig, safeAsync } from '../../utils'
@@ -58,22 +57,15 @@ export function renderTaskLabel(
     })
   )
 
-  // Expand button
+  // Expand toggle
   if (task.subtasks.length > 0) {
-    const toggle = el.createDiv({ cls: 'tree-item-icon collapse-icon pm-gantt-expand-btn' })
-    setIcon(toggle, 'right-triangle')
-    toggle.toggleClass('is-collapsed', task.collapsed)
-    toggle.setAttr('aria-label', task.collapsed ? 'Expand subtasks' : 'Collapse subtasks')
-    toggle.addEventListener(
-      'click',
-      safeAsync(async () => {
-        const real = findTask(ctx.project.tasks, task.id)
-        if (!real) return
-        real.collapsed = !real.collapsed
-        await ctx.plugin.persistCollapsedState(ctx.project)
+    new CollapseToggle(el, {
+      collapsed: task.collapsed,
+      onToggle: safeAsync(async () => {
+        await ctx.plugin.toggleTaskCollapsed(ctx.project, task.id)
         await ctx.onRefresh()
       })
-    )
+    })
   } else {
     el.createSpan({ cls: 'pm-gantt-label-spacer' })
   }
