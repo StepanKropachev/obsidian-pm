@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { makeProject, makeTask, type Project, type SavedView, type Task } from '../types'
 import { hydrateProjectFromFrontmatter, hydrateTaskFromFile } from './YamlHydrator'
 import { parseFrontmatter } from './YamlParser'
 import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
-import { makeProject, makeTask, type Project, type SavedView, type Task } from '../types'
 
 function roundTripTask(
   t: Task,

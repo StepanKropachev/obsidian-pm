@@ -1,7 +1,7 @@
-import { Task, StatusConfig } from '../types'
-import { flattenTasks } from './TaskTreeOps'
-import { isTerminalStatus } from '../utils'
 import { Temporal } from '../dates'
+import { StatusConfig, Task } from '../types'
+import { isTerminalStatus } from '../utils'
+import { flattenTasks } from './TaskTreeOps'
 
 /* ── Types ─────────────────────────────────────────────────────── */
 

@@ -1,5 +1,5 @@
-import { TFile, normalizePath } from 'obsidian'
 import type { App } from 'obsidian'
+import { TFile, normalizePath } from 'obsidian'
 import type { Project } from '../types'
 import { findTaskById } from './TaskIndex'
 import { ensureFolder } from './vaultFs'

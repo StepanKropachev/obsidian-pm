@@ -1,5 +1,5 @@
-import { TFolder, normalizePath } from 'obsidian'
 import type { App } from 'obsidian'
+import { TFolder, normalizePath } from 'obsidian'
 
 /**
  * Idempotently ensure a folder exists at `folderPath`.

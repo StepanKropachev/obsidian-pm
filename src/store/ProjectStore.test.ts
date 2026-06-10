@@ -2,10 +2,10 @@ import type { App } from 'obsidian'
 import { TFile } from 'obsidian'
 import { describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
-import { ProjectStore } from './ProjectStore'
 import { makeTask, type StatusConfig, type Task } from '../types'
-import { flattenTasks } from './TaskTreeOps'
+import { ProjectStore } from './ProjectStore'
 import { buildTaskIndex } from './TaskIndex'
+import { flattenTasks } from './TaskTreeOps'
 
 const STATUSES: StatusConfig[] = [
   { id: 'todo', label: 'Todo', color: '#888', icon: 'circle', complete: false },
