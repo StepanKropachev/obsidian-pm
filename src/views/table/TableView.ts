@@ -77,6 +77,11 @@ export class TableView implements SubView {
     handleTableKeyDown(e, this.makeTableContext())
   }
 
+  refresh(): void {
+    this.doRefreshTable()
+    this.updateBulkBar()
+  }
+
   private doRefreshTable(): void {
     if (this.state.tableBody) {
       refreshTableBody(this.makeTableContext())

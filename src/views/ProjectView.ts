@@ -424,7 +424,8 @@ export class ProjectView extends ItemView {
    * Re-render after a plugin-initiated mutation. Store mutators update
    * project.tasks in place before they await the save, so memory is already
    * current and no disk reload is needed. External edits come in through the
-   * modify/delete listeners in onOpen.
+   * modify/delete listeners in onOpen. Prefers the subview's in-place refresh
+   * over a full destroy-and-rebuild.
    */
   async refreshProject(): Promise<void> {
     if (!this.project) return
@@ -432,6 +433,12 @@ export class ProjectView extends ItemView {
       activeWindow.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
-    this.renderCurrentView()
+    if (this.subview?.refresh) {
+      this.subview.refresh()
+    } else if (this.subview) {
+      this.subview.render()
+    } else {
+      this.renderCurrentView()
+    }
   }
 }

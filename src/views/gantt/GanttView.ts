@@ -68,6 +68,11 @@ export class GanttView implements SubView {
     this.pendingScroll = pos
   }
 
+  refresh(): void {
+    this.pendingScroll = this.getScrollPosition()
+    this.render()
+  }
+
   render(): void {
     this.cleanupFns.forEach((fn) => fn())
     this.cleanupFns = []
