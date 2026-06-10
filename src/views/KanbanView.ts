@@ -21,6 +21,13 @@ export class KanbanView implements SubView {
   ) {}
 
   render(): void {
+    this.renderBoard()
+    if (this.plugin.settings.kanbanShowDescriptionPreview) {
+      void this.hydrateDescriptions()
+    }
+  }
+
+  private renderBoard(): void {
     this.container.empty()
     this.container.addClass('pm-kanban-view')
 
@@ -43,6 +50,22 @@ export class KanbanView implements SubView {
         onDrop: (taskId, newStatus) => this.handleDrop(taskId, newStatus)
       })
     }
+  }
+
+  /**
+   * Task descriptions live in the note body, which loads lazily. Pull the bodies
+   * for the cards on the board, then re-render once so previews fill in.
+   */
+  private async hydrateDescriptions(): Promise<void> {
+    const candidates = this.plugin.settings.kanbanShowSubtasks
+      ? flattenTasks(this.project.tasks).map((ft) => ft.task)
+      : this.project.tasks
+    const pending = candidates.filter(
+      (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.plugin.settings.statuses)
+    )
+    if (!pending.length) return
+    await Promise.all(pending.map((t) => this.plugin.store.loadTaskBody(t)))
+    if (pending.some((t) => t.description)) this.renderBoard()
   }
 
   private getTasksForStatus(status: TaskStatus): Task[] {

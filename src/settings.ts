@@ -93,6 +93,7 @@ export class PMSettingTab extends PluginSettingTab {
         t.setValue(this.plugin.settings.kanbanShowDescriptionPreview).onChange(async (v) => {
           this.plugin.settings.kanbanShowDescriptionPreview = v
           await this.plugin.saveSettings()
+          this.plugin.refreshProjectViews()
         })
       )
 

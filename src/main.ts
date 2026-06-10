@@ -243,6 +243,13 @@ export default class PMPlugin extends Plugin {
     new Notice(msg, duration)
   }
 
+  /** Re-render every open project view, e.g. after a settings change affects rendering. */
+  refreshProjectViews(): void {
+    for (const leaf of this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)) {
+      if (leaf.view instanceof ProjectView) void leaf.view.refreshProject()
+    }
+  }
+
   /** Show project picker, then open TaskModal to create a task (optionally pick parent for subtask) */
   private async pickProjectThenCreateTask(mode: null | 'pick-parent'): Promise<void> {
     const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
