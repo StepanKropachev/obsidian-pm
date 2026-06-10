@@ -124,8 +124,8 @@ export interface PMSettings {
   notificationLeadDays: number
   autoSchedule: boolean
   kanbanShowSubtasks: boolean
-  saveTaskOnClose: boolean
   kanbanShowDescriptionPreview: boolean
+  saveTaskOnClose: boolean
   projectFilters: Record<string, PerProjectFilter>
   /** Collapsed task ids per project file path. UI state — lives here so toggles don't rewrite task files. */
   collapsedTasks: Record<string, string[]>

@@ -87,21 +87,21 @@ export class PMSettingTab extends PluginSettingTab {
       )
 
     new Setting(containerEl)
-      .setName('Save tasks on close')
-      .setDesc('Automatically save tasks when you close the task modal. When off, only clicking save persists changes.')
+      .setName('Show description preview on board')
+      .setDesc('Display the first few lines of each task description on kanban cards.')
       .addToggle((t) =>
-        t.setValue(this.plugin.settings.saveTaskOnClose).onChange(async (v) => {
-          this.plugin.settings.saveTaskOnClose = v
+        t.setValue(this.plugin.settings.kanbanShowDescriptionPreview).onChange(async (v) => {
+          this.plugin.settings.kanbanShowDescriptionPreview = v
           await this.plugin.saveSettings()
         })
       )
 
     new Setting(containerEl)
-      .setName('Show description preview')
-      .setDesc('Display a short task description preview on kanban cards.')
+      .setName('Save tasks on close')
+      .setDesc('Automatically save tasks when you close the task modal. When off, only clicking save persists changes.')
       .addToggle((t) =>
-        t.setValue(this.plugin.settings.kanbanShowDescriptionPreview).onChange(async (v) => {
-          this.plugin.settings.kanbanShowDescriptionPreview = v
+        t.setValue(this.plugin.settings.saveTaskOnClose).onChange(async (v) => {
+          this.plugin.settings.saveTaskOnClose = v
           await this.plugin.saveSettings()
         })
       )

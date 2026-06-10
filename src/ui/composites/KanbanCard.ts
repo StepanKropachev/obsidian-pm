@@ -55,10 +55,7 @@ export class KanbanCard {
     }
 
     if (props.descriptionPreview) {
-      body.createEl('div', {
-        cls: 'pm-kanban-card-description',
-        text: props.descriptionPreview
-      })
+      body.createDiv({ cls: 'pm-kanban-card-description', text: props.descriptionPreview })
     }
 
     const est = task.timeEstimate ?? 0

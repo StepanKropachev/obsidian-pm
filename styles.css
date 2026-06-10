@@ -910,11 +910,12 @@
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 .pm-kanban-card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 
@@ -1970,3 +1971,4 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   font-size: 1.125rem;
   color: var(--text-normal, #2b3438);
 }
+
