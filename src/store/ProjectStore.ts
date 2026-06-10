@@ -416,7 +416,7 @@ export class ProjectStore {
       const taskFolder = this.projectTaskFolder(project)
       await this.ensureFolder(taskFolder)
 
-      await this.saveAllTasks(project.tasks, project, null, taskFolder, dirty)
+      await this.saveDirtyTasks(project, taskFolder, dirty)
 
       const file = this.app.vault.getAbstractFileByPath(project.filePath)
       if (file instanceof TFile) {
@@ -447,30 +447,46 @@ export class ProjectStore {
     }
   }
 
-  private async saveAllTasks(
-    tasks: Task[],
-    project: Project,
-    parentTask: Task | null,
-    folder: string,
-    dirty: Map<string, DirtyKind>
-  ): Promise<void> {
+  /**
+   * Write exactly the dirty tasks, located through the O(1) task index instead
+   * of walking the whole tree. Writes target distinct files, so they run
+   * concurrently — batched so a 2000-task migration doesn't flood the platform
+   * with in-flight writes.
+   */
+  private async saveDirtyTasks(project: Project, folder: string, dirty: Map<string, DirtyKind>): Promise<void> {
+    // Safety net: a task that has never been written to disk must get a file
+    // even if no mutator marked it.
+    for (const [id, entry] of project.taskIndex) {
+      if (!entry.task.filePath && !dirty.has(id)) dirty.set(id, 'full')
+    }
+    if (dirty.size === 0) return
+
+    const jobs: { task: Task; parentTask: Task | null; folder: string; kind: DirtyKind }[] = []
+    const targetPaths = new Set<string>()
+    let hasArchived = false
+    for (const [id, kind] of dirty) {
+      const entry = project.taskIndex.get(id)
+      if (!entry) continue // deleted after being marked dirty
+      const { task, parentId } = entry
+      const targetFolder = task.archived ? normalizePath(folder + '/Archive') : folder
+      if (task.archived) hasArchived = true
+      // Two dirty tasks resolving to the same file would race below and surface
+      // as a generic create error; detect it up front and keep the typed error.
+      const path = normalizePath(resolveTaskPath(task, targetFolder, task.filePath))
+      if (targetPaths.has(path)) throw new TaskFileNameConflictError(path)
+      targetPaths.add(path)
+      jobs.push({ task, parentTask: parentId ? findTaskById(project, parentId) : null, folder: targetFolder, kind })
+    }
+    if (hasArchived) await this.ensureFolder(normalizePath(folder + '/Archive'))
+
     const errors: Error[] = []
-    for (const task of tasks) {
-      try {
-        const kind = dirty.get(task.id) ?? (task.filePath ? null : 'full')
-        if (kind) {
-          let targetFolder = folder
-          if (task.archived) {
-            targetFolder = normalizePath(folder + '/Archive')
-            await this.ensureFolder(targetFolder)
-          }
-          await this.saveTaskFile(task, project, parentTask, targetFolder, kind)
-        }
-        if (task.subtasks.length) {
-          await this.saveAllTasks(task.subtasks, project, task, folder, dirty)
-        }
-      } catch (e) {
-        errors.push(e instanceof Error ? e : new Error(String(e)))
+    const batchSize = 16
+    for (let i = 0; i < jobs.length; i += batchSize) {
+      const results = await Promise.allSettled(
+        jobs.slice(i, i + batchSize).map((j) => this.saveTaskFile(j.task, project, j.parentTask, j.folder, j.kind))
+      )
+      for (const r of results) {
+        if (r.status === 'rejected') errors.push(r.reason instanceof Error ? r.reason : new Error(String(r.reason)))
       }
     }
     if (errors.length) {
@@ -666,19 +682,42 @@ export class ProjectStore {
     await this.saveProject(project)
   }
 
-  async updateTasks(project: Project, taskIds: string[], patch: Partial<Task>): Promise<void> {
+  /**
+   * Apply a patch to several tasks in one save. `patch` may be a function
+   * producing a per-task patch; return null to leave that task untouched.
+   */
+  async updateTasks(
+    project: Project,
+    taskIds: string[],
+    patch: Partial<Task> | ((task: Task) => Partial<Task> | null)
+  ): Promise<void> {
     for (const id of taskIds) {
       const task = findTaskById(project, id)
-      const oldTitle = task?.title
-      updateTaskInTree(project.tasks, id, patch)
-      const titleChanged = task && patch.title !== undefined && patch.title !== oldTitle
-      const kind: DirtyKind = patchNeedsBodyRewrite(patch) || titleChanged ? 'full' : 'fm'
+      if (!task) continue
+      const p = typeof patch === 'function' ? patch(task) : patch
+      if (!p) continue
+      const oldTitle = task.title
+      updateTaskInTree(project.tasks, id, p)
+      const titleChanged = p.title !== undefined && p.title !== oldTitle
+      const kind: DirtyKind = patchNeedsBodyRewrite(p) || titleChanged ? 'full' : 'fm'
       this.markDirty(project, [id], kind)
-      if (task && patch.description !== undefined) this.hydratedBodies.add(task)
-      if (task && titleChanged) {
+      if (p.description !== undefined) this.hydratedBodies.add(task)
+      if (titleChanged) {
         for (const sub of task.subtasks) this.markDirty(project, [sub.id], 'full')
       }
     }
+    await this.saveProject(project)
+  }
+
+  /**
+   * Move a task before/after a sibling. Sibling order persists in the parent's
+   * subtaskIds (or the project file's taskIds for top-level tasks), so only the
+   * parent needs a rewrite.
+   */
+  async reorderTask(project: Project, taskId: string, targetId: string, position: 'before' | 'after'): Promise<void> {
+    if (!moveTaskInTree(project.tasks, taskId, targetId, position)) return
+    const parentId = findParentId(project, targetId)
+    if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
   }
 

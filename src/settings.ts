@@ -217,18 +217,12 @@ export class PMSettingTab extends PluginSettingTab {
     const projects = await this.plugin.store.loadAllProjects(folder)
     let remapped = 0
     for (const project of projects) {
-      const flat = flattenTasks(project.tasks)
-      let modified = false
-      for (const { task } of flat) {
-        if (task.status === deletedId) {
-          task.status = defaultStatus.id
-          task.updatedAt = new Date().toISOString()
-          remapped++
-          modified = true
-        }
-      }
-      if (modified) {
-        await this.plugin.store.saveProject(project)
+      const ids = flattenTasks(project.tasks)
+        .filter(({ task }) => task.status === deletedId)
+        .map(({ task }) => task.id)
+      if (ids.length) {
+        await this.plugin.store.updateTasks(project, ids, { status: defaultStatus.id })
+        remapped += ids.length
       }
     }
     if (remapped > 0) {

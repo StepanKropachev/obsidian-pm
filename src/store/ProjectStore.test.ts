@@ -418,3 +418,58 @@ describe('ProjectStore concurrent-save race', () => {
     expect(vault.getAbstractFileByPath(bOldPath)).toBeNull()
   })
 })
+
+describe('ProjectStore bulk mutators', () => {
+  it('updateTasks with a function patch writes only the patched task files', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Bulk', 'Projects')
+    const a = await addNamed(store, project, 'alpha')
+    const b = await addNamed(store, project, 'beta')
+    await store.updateTask(project, b.id, { assignees: ['sam'] })
+    vault.resetCounts()
+
+    await store.updateTasks(project, [a.id, b.id], (t) =>
+      t.assignees.includes('sam') ? null : { assignees: [...t.assignees, 'sam'] }
+    )
+
+    expect(a.assignees).toEqual(['sam'])
+    expect(vault.modifyCount.get(a.filePath!)).toBe(1)
+    expect(vault.modifyCount.get(b.filePath!)).toBeUndefined()
+    const file = vault.getAbstractFileByPath(a.filePath!)
+    if (!(file instanceof TFile)) throw new Error('task file missing')
+    expect(await vault.cachedRead(file)).toContain('sam')
+  })
+
+  it('reorderTask persists sibling order through the parent file only', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Order', 'Projects')
+    const parent = await addNamed(store, project, 'parent')
+    const one = await addNamed(store, project, 'one', parent.id)
+    const two = await addNamed(store, project, 'two', parent.id)
+    vault.resetCounts()
+
+    await store.reorderTask(project, two.id, one.id, 'before')
+
+    expect(parent.subtasks.map((t) => t.id)).toEqual([two.id, one.id])
+    expect(vault.modifyCount.get(parent.filePath!)).toBe(1)
+    expect(vault.modifyCount.get(one.filePath!)).toBeUndefined()
+    expect(vault.modifyCount.get(two.filePath!)).toBeUndefined()
+    const file = vault.getAbstractFileByPath(parent.filePath!)
+    if (!(file instanceof TFile)) throw new Error('parent file missing')
+    const content = await vault.cachedRead(file)
+    expect(content.indexOf(two.id)).toBeLessThan(content.indexOf(one.id))
+  })
+
+  it('writes tasks that have no file yet even when nothing marked them dirty', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Net', 'Projects')
+    const rogue = makeTask({ title: 'rogue' })
+    project.tasks.push(rogue)
+    project.taskIndex.set(rogue.id, { task: rogue, parentId: null })
+
+    await store.saveProject(project)
+
+    expect(rogue.filePath).toBeDefined()
+    expect(vault.getAbstractFileByPath(rogue.filePath!)).not.toBeNull()
+  })
+})

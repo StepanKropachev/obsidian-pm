@@ -1,6 +1,5 @@
 import type PMPlugin from '../../main'
 import type { Project, Task } from '../../types'
-import { moveTaskInTree } from '../../store/TaskTreeOps'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { COLOR_MUTED } from '../../constants'
 import { getStatusConfig, safeAsync } from '../../utils'
@@ -52,8 +51,7 @@ export function renderTaskLabel(
       el.removeClass('pm-gantt-label-row--drop-before', 'pm-gantt-label-row--drop-after')
       const draggedId = e.dataTransfer?.getData('text/plain')
       if (!draggedId || draggedId === task.id) return
-      moveTaskInTree(ctx.project.tasks, draggedId, task.id, dropPosition)
-      await ctx.plugin.store.saveProject(ctx.project)
+      await ctx.plugin.store.reorderTask(ctx.project, draggedId, task.id, dropPosition)
       await ctx.onRefresh()
     })
   )

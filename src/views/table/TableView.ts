@@ -2,7 +2,6 @@ import { Notice } from 'obsidian'
 import { confirmDialog } from '../../ui/ModalFactory'
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { findTaskById } from '../../store/TaskIndex'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
 import { renderTable, refreshTableBody, handleTableKeyDown } from './TableRenderer'
@@ -164,13 +163,9 @@ export class TableView implements SubView {
   }
 
   private async bulkAddToArray(ids: string[], field: 'assignees' | 'tags', value: string): Promise<void> {
-    for (const id of ids) {
-      const task = findTaskById(this.project, id)
-      if (task && !task[field].includes(value)) {
-        task[field] = [...task[field], value]
-      }
-    }
-    await this.plugin.store.saveProject(this.project)
+    await this.plugin.store.updateTasks(this.project, ids, (task) =>
+      task[field].includes(value) ? null : { [field]: [...task[field], value] }
+    )
   }
 
   private updateBulkBar(): void {
