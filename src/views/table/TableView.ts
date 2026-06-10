@@ -40,6 +40,9 @@ export class TableView implements SubView {
       wrapper: null,
       visibleRows: [],
       rowHeight: ROW_HEIGHT_ESTIMATE,
+      heightCalibrated: false,
+      windowStart: -1,
+      windowEnd: -1,
       renderWindow: null
     }
   }

@@ -24,8 +24,13 @@ export interface TableState {
   wrapper: HTMLElement | null
   /** Display list after filter/sort/collapse. Source of truth for the virtual window and selection. */
   visibleRows: FlatTask[]
-  /** Row height in px. Starts as an estimate; calibrated from the first painted row. */
+  /** Row height in px. Starts as an estimate; calibrated once from the first painted row. */
   rowHeight: number
+  /** True once rowHeight has been measured from a real row. */
+  heightCalibrated: boolean
+  /** Bounds of the currently rendered window into visibleRows. -1 forces a repaint. */
+  windowStart: number
+  windowEnd: number
   /** Re-renders the current virtual window. Wired by fillTableBody. */
   renderWindow: (() => void) | null
 }
@@ -49,6 +54,12 @@ export function renderTable(ctx: TableContext): void {
     scrollScheduled = true
     activeWindow.requestAnimationFrame(() => {
       scrollScheduled = false
+      // Repaint only when the visible window actually moved. Rebuilding the
+      // tbody can itself nudge scrollTop (clamping near the edges), which
+      // fires another scroll event — without this guard that feeds back into
+      // an endless repaint loop.
+      const { start, end } = computeWindow(ctx.state)
+      if (start === ctx.state.windowStart && end === ctx.state.windowEnd) return
       ctx.state.renderWindow?.()
     })
   })
@@ -176,11 +187,30 @@ function fillTableBody(ctx: TableContext): void {
   // When filtering, show all matches regardless of collapsed parent.
   ctx.state.visibleRows = hasActiveFilter ? sorted : sorted.filter((f) => f.visible)
   ctx.state.renderWindow = () => renderWindowRows(ctx)
+  // Data changed: always repaint, even if the window bounds happen to match.
+  ctx.state.windowStart = -1
+  ctx.state.windowEnd = -1
   renderWindowRows(ctx)
 }
 
 const ROW_OVERSCAN = 8
 export const ROW_HEIGHT_ESTIMATE = 36
+
+/** Compute the [start, end) slice of visibleRows that should be rendered for the current scroll position. */
+function computeWindow(state: TableState): { start: number; end: number } {
+  const wrapper = state.wrapper
+  if (!wrapper) return { start: 0, end: state.visibleRows.length }
+  const thead = wrapper.querySelector('thead')
+  const headerHeight = thead instanceof HTMLElement ? thead.offsetHeight : 0
+  const scrollTop = Math.max(0, wrapper.scrollTop - headerHeight)
+  const viewHeight = wrapper.clientHeight || 600
+
+  let start = Math.floor(scrollTop / state.rowHeight) - ROW_OVERSCAN
+  if (start < 0) start = 0
+  let end = Math.ceil((scrollTop + viewHeight) / state.rowHeight) + ROW_OVERSCAN
+  if (end > state.visibleRows.length) end = state.visibleRows.length
+  return { start, end }
+}
 
 /**
  * Render only the rows inside the scroll viewport (plus overscan), bracketed
@@ -190,20 +220,13 @@ export const ROW_HEIGHT_ESTIMATE = 36
 function renderWindowRows(ctx: TableContext): void {
   const { state } = ctx
   const tbody = state.tableBody
-  const wrapper = state.wrapper
-  if (!tbody || !wrapper) return
+  if (!tbody) return
 
   const rows = state.visibleRows
   const colCount = 10 + ctx.project.customFields.length
-  const thead = wrapper.querySelector('thead')
-  const headerHeight = thead instanceof HTMLElement ? thead.offsetHeight : 0
-  const scrollTop = Math.max(0, wrapper.scrollTop - headerHeight)
-  const viewHeight = wrapper.clientHeight || 600
-
-  let start = Math.floor(scrollTop / state.rowHeight) - ROW_OVERSCAN
-  if (start < 0) start = 0
-  let end = Math.ceil((scrollTop + viewHeight) / state.rowHeight) + ROW_OVERSCAN
-  if (end > rows.length) end = rows.length
+  const { start, end } = computeWindow(state)
+  state.windowStart = start
+  state.windowEnd = end
 
   tbody.empty()
   if (start > 0) spacerRow(tbody, colCount, start * state.rowHeight)
@@ -220,12 +243,18 @@ function renderWindowRows(ctx: TableContext): void {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() })
   })
 
-  // Calibrate the estimated row height against a real painted row, once it
-  // differs; the re-render is stable because the next pass measures equal.
-  const first = tbody.querySelector('tr[data-task-id]')
-  if (first instanceof HTMLElement && first.offsetHeight > 0 && Math.abs(first.offsetHeight - state.rowHeight) > 0.5) {
-    state.rowHeight = first.offsetHeight
-    renderWindowRows(ctx)
+  // Calibrate the estimated row height against a real painted row, exactly
+  // once. Re-calibrating on every pass feeds back into the window math (row
+  // heights are not perfectly uniform) and can oscillate forever.
+  if (!state.heightCalibrated) {
+    const first = tbody.querySelector('tr[data-task-id]')
+    if (first instanceof HTMLElement && first.offsetHeight > 0) {
+      state.heightCalibrated = true
+      if (Math.abs(first.offsetHeight - state.rowHeight) > 0.5) {
+        state.rowHeight = first.offsetHeight
+        renderWindowRows(ctx)
+      }
+    }
   }
 }
 
