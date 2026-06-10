@@ -203,3 +203,66 @@ describe('project round-trip', () => {
     expect(project.id).toBe('Fallback')
   })
 })
+
+// On the metadataCache fast path the store passes Obsidian's live frontmatter
+// object straight into these hydrators, so the result must not share container
+// references with the input or an in-place edit would corrupt the cache.
+describe('hydration does not alias the source frontmatter', () => {
+  it('copies task array and object containers', () => {
+    const fm: Record<string, unknown> = {
+      id: 't1',
+      title: 'Task',
+      assignees: ['Alice'],
+      tags: ['api'],
+      dependencies: ['dep-1'],
+      customFields: { sprint: 'S1' },
+      recurrence: { interval: 'weekly', every: 1 },
+      timeLogs: [{ date: '2026-04-01', hours: 2, note: 'init' }]
+    }
+
+    const { task } = hydrateTaskFromFile(fm, '', 'Projects/P_tasks/task.md')
+    const logs = task.timeLogs
+    if (!logs) throw new Error('timeLogs missing')
+    const srcLogs = fm.timeLogs as { hours: number }[]
+
+    expect(task.assignees).not.toBe(fm.assignees)
+    expect(task.tags).not.toBe(fm.tags)
+    expect(task.dependencies).not.toBe(fm.dependencies)
+    expect(task.customFields).not.toBe(fm.customFields)
+    expect(task.recurrence).not.toBe(fm.recurrence)
+    expect(logs).not.toBe(fm.timeLogs)
+    expect(logs[0]).not.toBe(srcLogs[0])
+
+    task.assignees.push('Bob')
+    task.tags.push('design')
+    task.dependencies.push('dep-2')
+    task.customFields.priority = 'high'
+    logs[0].hours = 99
+
+    expect(fm.assignees).toEqual(['Alice'])
+    expect(fm.tags).toEqual(['api'])
+    expect(fm.dependencies).toEqual(['dep-1'])
+    expect(fm.customFields).toEqual({ sprint: 'S1' })
+    expect(srcLogs[0].hours).toBe(2)
+  })
+
+  it('copies project array containers', () => {
+    const fm: Record<string, unknown> = {
+      id: 'p1',
+      title: 'Project',
+      customFields: [{ id: 'cf1', name: 'Sprint', type: 'text' }],
+      teamMembers: ['Alice']
+    }
+
+    const project = hydrateProjectFromFrontmatter(fm, '', 'Projects/P.md', 'P')
+
+    expect(project.customFields).not.toBe(fm.customFields)
+    expect(project.teamMembers).not.toBe(fm.teamMembers)
+
+    project.customFields.push({ id: 'cf2', name: 'Points', type: 'number' })
+    project.teamMembers.push('Bob')
+
+    expect((fm.customFields as unknown[]).length).toBe(1)
+    expect(fm.teamMembers).toEqual(['Alice'])
+  })
+})

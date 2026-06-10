@@ -46,15 +46,25 @@ export function mapRawToTask(r: Record<string, unknown>, overrides?: Partial<Tas
     start: (r.start as string) ?? '',
     due: (r.due as string) ?? '',
     progress: typeof r.progress === 'number' ? r.progress : 0,
-    assignees: Array.isArray(r.assignees) ? r.assignees : [],
-    tags: Array.isArray(r.tags) ? r.tags : [],
+    // Copy container fields rather than aliasing them. On the metadataCache
+    // fast path `r` is Obsidian's live frontmatter object, so a shared array or
+    // object would let an in-place task mutation corrupt the cache.
+    assignees: Array.isArray(r.assignees) ? [...(r.assignees as string[])] : [],
+    tags: Array.isArray(r.tags) ? [...(r.tags as string[])] : [],
     subtasks: [],
-    dependencies: Array.isArray(r.dependencies) ? r.dependencies : [],
-    recurrence: r.recurrence && typeof r.recurrence === 'object' ? (r.recurrence as Task['recurrence']) : undefined,
+    dependencies: Array.isArray(r.dependencies) ? [...(r.dependencies as string[])] : [],
+    recurrence:
+      r.recurrence && typeof r.recurrence === 'object'
+        ? ({ ...(r.recurrence as Task['recurrence']) } as Task['recurrence'])
+        : undefined,
     timeEstimate: typeof r.timeEstimate === 'number' ? r.timeEstimate : undefined,
-    timeLogs: Array.isArray(r.timeLogs) ? (r.timeLogs as { date: string; hours: number; note: string }[]) : undefined,
+    timeLogs: Array.isArray(r.timeLogs)
+      ? (r.timeLogs as { date: string; hours: number; note: string }[]).map((log) => ({ ...log }))
+      : undefined,
     customFields:
-      typeof r.customFields === 'object' && r.customFields !== null ? (r.customFields as Record<string, unknown>) : {},
+      typeof r.customFields === 'object' && r.customFields !== null
+        ? { ...(r.customFields as Record<string, unknown>) }
+        : {},
     collapsed: r.collapsed === true,
     createdAt: (r.createdAt as string) ?? new Date().toISOString(),
     updatedAt: (r.updatedAt as string) ?? new Date().toISOString(),
@@ -101,8 +111,10 @@ export function hydrateProjectFromFrontmatter(
     color: (frontmatter.color as string) ?? COLOR_ACCENT,
     icon: (frontmatter.icon as string) ?? '\u{1F4CB}',
     tasks: [],
-    customFields: (frontmatter.customFields as CustomFieldDef[]) ?? [],
-    teamMembers: (frontmatter.teamMembers as string[]) ?? [],
+    // Copy containers: on the metadataCache fast path `frontmatter` is Obsidian's
+    // live object, so sharing these arrays would let an in-place edit corrupt the cache.
+    customFields: Array.isArray(frontmatter.customFields) ? [...(frontmatter.customFields as CustomFieldDef[])] : [],
+    teamMembers: Array.isArray(frontmatter.teamMembers) ? [...(frontmatter.teamMembers as string[])] : [],
     createdAt: (frontmatter.createdAt as string) ?? new Date().toISOString(),
     updatedAt: (frontmatter.updatedAt as string) ?? new Date().toISOString(),
     filePath,
