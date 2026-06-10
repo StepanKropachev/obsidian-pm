@@ -1,4 +1,5 @@
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
+import type { Plugin, TAbstractFile } from 'obsidian'
 import type { Project, Task, StatusConfig } from '../types'
 import { makeProject, makeTask } from '../types'
 import {
@@ -101,11 +102,18 @@ export class ProjectStore {
   private hydratedBodies = new WeakSet<Task | Project>()
 
   /**
-   * Paths we've just written or trashed ourselves, timestamped. The view's
-   * modify/delete listeners check this to skip reloads on self-writes.
-   * Only mark before vault.modify or fileManager.trashFile. vault.create fires
-   * a different event we don't listen for, so marking creates would leak.
-   * Stale entries (older than the window) are treated as never-consumed.
+   * Projects already loaded this session, keyed by file path. The cached
+   * object is the in-memory canonical copy: mutators keep it current, every
+   * successful save re-points the entry at the saved object, and external
+   * (non-self-write) vault events drop the entry so the next load re-reads.
+   */
+  private projectCache = new Map<string, Project>()
+
+  /**
+   * Paths we've just written, created, or trashed ourselves, timestamped.
+   * The view's modify/delete listeners consume markers to skip reloads; the
+   * cache invalidation listeners peek at them without consuming.
+   * Stale entries (older than the window) are treated as never-marked.
    */
   private selfWrites = new Map<string, number>()
   private static readonly SELF_WRITE_WINDOW_MS = 5000
@@ -152,6 +160,13 @@ export class ProjectStore {
   // ─── Self-write tracking ──────────────────────────────────────────────────
 
   private markSelfWrite(path: string): void {
+    // Created files have no consumer, so sweep expired markers before they pile up.
+    if (this.selfWrites.size > 256) {
+      const cutoff = Date.now() - ProjectStore.SELF_WRITE_WINDOW_MS
+      for (const [p, t] of this.selfWrites) {
+        if (t < cutoff) this.selfWrites.delete(p)
+      }
+    }
     this.selfWrites.set(path, Date.now())
   }
 
@@ -161,6 +176,40 @@ export class ProjectStore {
     if (ts === undefined) return false
     this.selfWrites.delete(path)
     return Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
+  }
+
+  /** Like consumeSelfWrite, but non-destructive — view listeners still need the marker. */
+  private peekSelfWrite(path: string): boolean {
+    const ts = this.selfWrites.get(path)
+    return ts !== undefined && Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
+  }
+
+  /**
+   * Wire vault events that drop cached projects on external changes. Call once
+   * from onload, before any view registers listeners — these must run first so
+   * a view's reload after an external edit misses the stale cache entry.
+   */
+  registerCacheInvalidation(plugin: Plugin): void {
+    const onChange = (file: TAbstractFile): void => this.invalidateForPath(file.path)
+    plugin.registerEvent(this.app.vault.on('create', onChange))
+    plugin.registerEvent(this.app.vault.on('modify', onChange))
+    plugin.registerEvent(this.app.vault.on('delete', onChange))
+    plugin.registerEvent(
+      this.app.vault.on('rename', (file, oldPath) => {
+        this.invalidateForPath(file.path)
+        this.invalidateForPath(oldPath)
+      })
+    )
+  }
+
+  private invalidateForPath(path: string): void {
+    if (this.projectCache.size === 0) return
+    if (this.peekSelfWrite(path)) return
+    for (const key of this.projectCache.keys()) {
+      if (path === key || path.startsWith(key.replace(/\.md$/, '_tasks') + '/')) {
+        this.projectCache.delete(key)
+      }
+    }
   }
 
   // ─── Folder helpers ────────────────────────────────────────────────────────
@@ -192,6 +241,8 @@ export class ProjectStore {
   }
 
   async loadProject(file: TFile): Promise<Project | null> {
+    const cachedProject = this.projectCache.get(file.path)
+    if (cachedProject) return cachedProject
     try {
       // Fast path: pull frontmatter from Obsidian's metadataCache, skip the disk read.
       // Only safe for new-format projects (taskIds in frontmatter, no embedded tasks).
@@ -234,6 +285,7 @@ export class ProjectStore {
         this.clearDirty(project)
       }
 
+      this.projectCache.set(file.path, project)
       return project
     } catch (e) {
       console.error(`[PM] Failed to load project ${file.path}:`, e)
@@ -434,9 +486,13 @@ export class ProjectStore {
         this.hydratedBodies.add(project)
       } else {
         const content = serializeProject(project, this.getStatuses())
+        this.markSelfWrite(project.filePath)
         await this.app.vault.create(project.filePath, content)
         this.hydratedBodies.add(project)
       }
+      // The object we just saved is the canonical in-memory copy (it may be a
+      // clone of a previously cached project, e.g. from the project modal).
+      this.projectCache.set(project.filePath, project)
     } catch (e) {
       // Save failed. Merge the snapshot back so the next save retries.
       for (const [id, kind] of dirty) this.markDirty(project, [id], kind)
@@ -547,6 +603,7 @@ export class ProjectStore {
           }
         }
         const content = serializeTask(task, project, parentTask, this.getStatuses())
+        this.markSelfWrite(filePath)
         await this.app.vault.create(filePath, content)
       }
       task.filePath = filePath
@@ -786,6 +843,7 @@ export class ProjectStore {
     }
     this.clearDirty(project)
     this.saveQueues.delete(project.filePath)
+    this.projectCache.delete(project.filePath)
   }
 
   private async deleteFolderRecursive(folder: TFolder): Promise<void> {

@@ -1,6 +1,7 @@
 import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, CustomFieldDef, makeId, makeProject } from '../types'
+import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
 import { COLOR_DANGER } from '../constants'
@@ -41,6 +42,8 @@ export class ProjectModal extends Modal {
     super(app)
     if (existingProject) {
       this.project = JSON.parse(JSON.stringify(existingProject)) as Project
+      // The JSON round-trip turns the taskIndex Map into a plain object.
+      rebuildTaskIndex(this.project)
       this.isNew = false
     } else {
       this.project = makeProject('New Project', '')

@@ -44,6 +44,7 @@ export default class PMPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings()
     this.store = new ProjectStore(this.app, () => this.settings.statuses)
+    this.store.registerCacheInvalidation(this)
     this.notifier = new Notifier(this)
     this.router = new PMViewRouter(this)
 

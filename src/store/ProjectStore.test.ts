@@ -34,7 +34,7 @@ describe('ProjectStore self-write tracking', () => {
   it('marks the project file as self-written after save', async () => {
     const { store, vault } = newStore()
     const project = await store.createProject('Self', 'Projects')
-    expect(store.consumeSelfWrite(project.filePath)).toBe(false) // initial create does not mark
+    expect(store.consumeSelfWrite(project.filePath)).toBe(true) // creates mark too (cache invalidation peeks them)
 
     await store.updateTask(project, 'nope', {}) // no-op (id not found)
     // Project file is rewritten on every saveProject, which marks it.
@@ -63,17 +63,19 @@ describe('ProjectStore self-write tracking', () => {
 
     await store.updateTask(project, task.id, { title: 'Renamed' })
 
-    // New file gets created (not modify), so no self-write marker for the new path.
-    // The old path is trashed, which fires delete, so it must be marked.
+    // The new path is created (marked for cache invalidation) and the old
+    // path is trashed (marked so the delete listener skips the reload).
+    expect(store.consumeSelfWrite(task.filePath!)).toBe(true)
     expect(store.consumeSelfWrite(oldPath)).toBe(true)
   })
 
   it('treats markers older than the window as stale', async () => {
     const { store } = newStore()
-    const project = await store.createProject('Stale', 'Projects')
 
     try {
       vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+      const project = await store.createProject('Stale', 'Projects')
       vi.setSystemTime(new Date('2026-01-01T00:00:05.001Z')) // > 5s after marker
       expect(store.consumeSelfWrite(project.filePath)).toBe(false)
     } finally {
@@ -471,5 +473,38 @@ describe('ProjectStore bulk mutators', () => {
 
     expect(rogue.filePath).toBeDefined()
     expect(vault.getAbstractFileByPath(rogue.filePath!)).not.toBeNull()
+  })
+})
+
+describe('ProjectStore project cache', () => {
+  it('returns the cached instance on repeated loads', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Cached', 'Projects')
+    await addNamed(store, project, 'task')
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+
+    const first = await store.loadProject(file)
+    const second = await store.loadProject(file)
+
+    expect(first).toBe(project)
+    expect(second).toBe(first)
+  })
+
+  it('saving a cloned project makes the clone the canonical cached copy', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Clone me', 'Projects')
+    await addNamed(store, project, 'task')
+
+    // Same shape as ProjectModal: JSON round-trip plus index rebuild.
+    const clone = JSON.parse(JSON.stringify(project)) as typeof project
+    clone.taskIndex = buildTaskIndex(clone.tasks)
+    clone.description = 'edited in modal'
+    await store.saveProject(clone)
+
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = await store.loadProject(file)
+    expect(reloaded).toBe(clone)
   })
 })
