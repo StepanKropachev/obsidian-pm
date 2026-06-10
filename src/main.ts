@@ -1,6 +1,6 @@
 import { MarkdownView, Plugin, Notice } from 'obsidian'
 import { DEFAULT_SETTINGS, PMSettings, Project } from './types'
-import { flattenTasks } from './store/TaskTreeOps'
+import { flattenTasks, findTask } from './store/TaskTreeOps'
 import { ProjectStore } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
@@ -222,6 +222,17 @@ export default class PMPlugin extends Plugin {
       .filter((f) => f.task.collapsed)
       .map((f) => f.task.id)
     await this.saveSettings()
+  }
+
+  /**
+   * Flip a task's collapsed flag and persist. Resolves the task by id against
+   * the live tree so it works even when a view renders filtered clones.
+   */
+  async toggleTaskCollapsed(project: Project, taskId: string): Promise<void> {
+    const task = findTask(project.tasks, taskId)
+    if (!task) return
+    task.collapsed = !task.collapsed
+    await this.persistCollapsedState(project)
   }
 
   async saveSettings(): Promise<void> {
