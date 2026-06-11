@@ -46,6 +46,7 @@ export function mapRawToTask(r: Record<string, unknown>, overrides?: Partial<Tas
     start: (r.start as string) ?? '',
     due: (r.due as string) ?? '',
     progress: typeof r.progress === 'number' ? r.progress : 0,
+    completed: (r.completed as string) ?? '',
     // Copy container fields rather than aliasing them. On the metadataCache
     // fast path `r` is Obsidian's live frontmatter object, so a shared array or
     // object would let an in-place task mutation corrupt the cache.

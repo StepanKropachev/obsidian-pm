@@ -2,6 +2,8 @@ import type { Plugin, TAbstractFile } from 'obsidian'
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { Project, StatusConfig, Task } from '../types'
 import { makeProject, makeTask } from '../types'
+import { today } from '../dates'
+import { isTerminalStatus } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { computeSchedule } from './Scheduler'
 import {
@@ -662,6 +664,9 @@ export class ProjectStore {
   }
 
   async insertTask(project: Project, task: Task, parentId: string | null = null): Promise<void> {
+    if (!task.completed && isTerminalStatus(task.status, this.getStatuses())) {
+      task.completed = today().toString()
+    }
     this.hydratedBodies.add(task)
     addTaskToTree(project.tasks, task, parentId)
     indexAddSubtree(project, task, parentId)
@@ -750,9 +755,25 @@ export class ProjectStore {
     await this.saveProject(project)
   }
 
+  /**
+   * Stamp or clear `completed` based on a status transition. Mutates `patch` so the
+   * date lands in the same save as the status change. Only fires when the patch
+   * changes status across the complete/incomplete boundary, so an explicit
+   * `completed` already in the patch (e.g. an import) is left untouched.
+   */
+  private stampCompletion(oldStatus: string, patch: Partial<Task>): void {
+    if (patch.status === undefined || patch.completed !== undefined) return
+    const statuses = this.getStatuses()
+    const wasComplete = isTerminalStatus(oldStatus, statuses)
+    const nowComplete = isTerminalStatus(patch.status, statuses)
+    if (nowComplete && !wasComplete) patch.completed = today().toString()
+    else if (!nowComplete && wasComplete) patch.completed = ''
+  }
+
   async updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void> {
     const task = findTaskById(project, taskId)
     const oldTitle = task?.title
+    if (task) this.stampCompletion(task.status, patch)
     updateTaskInTree(project.tasks, taskId, patch)
     const titleChanged = task && patch.title !== undefined && patch.title !== oldTitle
     // Title change renames the file, which forces the rename branch in saveTaskFile
@@ -780,8 +801,12 @@ export class ProjectStore {
     for (const id of taskIds) {
       const task = findTaskById(project, id)
       if (!task) continue
-      const p = typeof patch === 'function' ? patch(task) : patch
-      if (!p) continue
+      const raw = typeof patch === 'function' ? patch(task) : patch
+      if (!raw) continue
+      // Copy a shared patch object before stamping so one task's completion date
+      // doesn't bleed onto the next iteration through the same reference.
+      const p = { ...raw }
+      this.stampCompletion(task.status, p)
       const oldTitle = task.title
       updateTaskInTree(project.tasks, id, p)
       const titleChanged = p.title !== undefined && p.title !== oldTitle

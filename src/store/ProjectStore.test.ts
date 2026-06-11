@@ -241,6 +241,73 @@ describe('ProjectStore round-trip', () => {
   })
 })
 
+describe('ProjectStore completion date', () => {
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+  it('stamps completed when a task enters a complete status and clears it on exit', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Done dates', 'Projects')
+    const task = await addNamed(store, project, 'Ship it')
+    expect(task.completed).toBe('')
+
+    await store.updateTask(project, task.id, { status: 'done' })
+    expect(task.completed).toMatch(ISO_DATE)
+
+    await store.updateTask(project, task.id, { status: 'in-progress' })
+    expect(task.completed).toBe('')
+  })
+
+  it('does not restamp when status changes between two complete statuses or stays put', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Stable', 'Projects')
+    const task = await addNamed(store, project, 'Edit me')
+    await store.updateTask(project, task.id, { status: 'done' })
+    const stamped = task.completed
+    expect(stamped).toMatch(ISO_DATE)
+
+    // A non-status edit leaves the date alone.
+    await store.updateTask(project, task.id, { title: 'Edited' })
+    expect(task.completed).toBe(stamped)
+  })
+
+  it('persists the completion date across a reload', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Persisted', 'Projects')
+    const task = await addNamed(store, project, 'Archive me')
+    await store.updateTask(project, task.id, { status: 'done' })
+
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = await store2.loadProject(file)
+    if (!reloaded) throw new Error('reload failed')
+    const reloadedTask = flattenTasks(reloaded.tasks).find((f) => f.task.id === task.id)!.task
+    expect(reloadedTask.completed).toMatch(ISO_DATE)
+  })
+
+  it('stamps a task inserted directly in a complete status', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Insert done', 'Projects')
+    const task = makeTask({ title: 'Born done', status: 'done' })
+    await store.insertTask(project, task)
+    expect(task.completed).toMatch(ISO_DATE)
+  })
+
+  it('does not bleed one task completion date onto another in a bulk update', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Bulk', 'Projects')
+    const open = await addNamed(store, project, 'Still open')
+    const finishing = await addNamed(store, project, 'Finishing')
+    await store.updateTask(project, finishing.id, { status: 'done' })
+    open.completed = ''
+
+    // A shared patch object applied to a task that is already done must not carry
+    // a stamped date onto the open task in the same call.
+    await store.updateTasks(project, [finishing.id, open.id], { priority: 'high' })
+    expect(open.completed).toBe('')
+  })
+})
+
 describe('ProjectStore metadataCache fast path', () => {
   function stubTaskCache(app: App, path: string, fm: Record<string, unknown>): void {
     const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache
