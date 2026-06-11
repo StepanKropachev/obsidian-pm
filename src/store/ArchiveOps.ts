@@ -2,7 +2,7 @@ import type { App } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
 import type { Project } from '../types'
 import { findTaskById } from './TaskIndex'
-import { ensureFolder } from './vaultFs'
+import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
 
 /** Get the task subfolder path for a project */
 function projectTaskFolder(project: Project): string {
@@ -22,7 +22,9 @@ export async function archiveTask(app: App, project: Project, taskId: string): P
 
   const file = app.vault.getAbstractFileByPath(task.filePath)
   if (file instanceof TFile) {
+    const oldPath = task.filePath
     await app.vault.rename(file, newPath)
+    await moveTaskAttachmentFolder(app, oldPath, newPath)
     task.filePath = newPath
     task.archived = true
   }
@@ -38,7 +40,9 @@ export async function unarchiveTask(app: App, project: Project, taskId: string):
 
   const file = app.vault.getAbstractFileByPath(task.filePath)
   if (file instanceof TFile) {
+    const oldPath = task.filePath
     await app.vault.rename(file, newPath)
+    await moveTaskAttachmentFolder(app, oldPath, newPath)
     task.filePath = newPath
     task.archived = false
   }

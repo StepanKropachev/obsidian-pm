@@ -361,6 +361,33 @@ describe('ProjectStore task attachments', () => {
     expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).toBeNull()
     expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot')).toBeNull()
   })
+
+  it('moves the attachments folder when the task is renamed', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Imgs', 'Projects')
+    const task = await addNamed(store, project, 'Shot')
+    await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+
+    await store.updateTask(project, task.id, { title: 'Photo' })
+
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).toBeNull()
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/photo/attachments/pic.png')).not.toBeNull()
+  })
+
+  it('moves the attachments folder when the task is archived and back when unarchived', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Imgs', 'Projects')
+    const task = await addNamed(store, project, 'Shot')
+    await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+
+    await store.archiveTask(project, task.id)
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).toBeNull()
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/Archive/shot/attachments/pic.png')).not.toBeNull()
+
+    await store.unarchiveTask(project, task.id)
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/Archive/shot/attachments/pic.png')).toBeNull()
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).not.toBeNull()
+  })
 })
 
 describe('ProjectStore metadataCache fast path', () => {
