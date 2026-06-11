@@ -887,7 +887,44 @@ export class ProjectStore {
         this.markSelfWrite(task.filePath)
         await this.app.fileManager.trashFile(file)
       }
+      // Trash the task's own folder (its attachments) alongside the note.
+      const taskDir = this.app.vault.getAbstractFileByPath(this.taskFolder(task.filePath))
+      if (taskDir instanceof TFolder) {
+        await this.deleteFolderRecursive(taskDir)
+      }
     }
+  }
+
+  /** A task's own folder, holding its attachments: the task file path minus `.md`. */
+  private taskFolder(taskFilePath: string): string {
+    return taskFilePath.replace(/\.md$/, '')
+  }
+
+  /**
+   * Save a pasted or dropped file under the task's own `attachments` folder,
+   * keeping it with the task instead of Obsidian's vault-wide default attachment
+   * location. Returns the created file so the caller can embed it.
+   */
+  async saveTaskAttachment(project: Project, task: Task, fileName: string, data: ArrayBuffer): Promise<TFile> {
+    const taskPath = task.filePath ?? taskFilePath(task.title, this.projectTaskFolder(project))
+    const dir = normalizePath(`${this.taskFolder(taskPath)}/attachments`)
+    this.markSelfWrite(this.taskFolder(taskPath))
+    this.markSelfWrite(dir)
+    await this.ensureFolder(dir)
+    const path = this.uniqueChildPath(dir, fileName)
+    this.markSelfWrite(path)
+    return this.app.vault.createBinary(path, data)
+  }
+
+  private uniqueChildPath(folder: string, fileName: string): string {
+    const dot = fileName.lastIndexOf('.')
+    const base = dot > 0 ? fileName.slice(0, dot) : fileName
+    const ext = dot > 0 ? fileName.slice(dot) : ''
+    let candidate = normalizePath(`${folder}/${base}${ext}`)
+    for (let n = 1; this.app.vault.getAbstractFileByPath(candidate); n++) {
+      candidate = normalizePath(`${folder}/${base} ${n}${ext}`)
+    }
+    return candidate
   }
 
   async deleteProject(project: Project): Promise<void> {

@@ -326,6 +326,43 @@ describe('ProjectStore completion date', () => {
   })
 })
 
+describe('ProjectStore task attachments', () => {
+  it('saves an attachment under the task own attachments folder', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Imgs', 'Projects')
+    const task = await addNamed(store, project, 'Shot')
+
+    const file = await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+
+    expect(file.path).toBe('Projects/Imgs_tasks/shot/attachments/pic.png')
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).not.toBeNull()
+  })
+
+  it('disambiguates a colliding attachment name', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Imgs', 'Projects')
+    const task = await addNamed(store, project, 'Shot')
+
+    const first = await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+    const second = await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+
+    expect(first.path).toBe('Projects/Imgs_tasks/shot/attachments/pic.png')
+    expect(second.path).toBe('Projects/Imgs_tasks/shot/attachments/pic 1.png')
+  })
+
+  it('trashes the attachments folder when the task is deleted', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Imgs', 'Projects')
+    const task = await addNamed(store, project, 'Shot')
+    await store.saveTaskAttachment(project, task, 'pic.png', new ArrayBuffer(4))
+
+    await store.deleteTask(project, task.id)
+
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot/attachments/pic.png')).toBeNull()
+    expect(vault.getAbstractFileByPath('Projects/Imgs_tasks/shot')).toBeNull()
+  })
+})
+
 describe('ProjectStore metadataCache fast path', () => {
   function stubTaskCache(app: App, path: string, fm: Record<string, unknown>): void {
     const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache

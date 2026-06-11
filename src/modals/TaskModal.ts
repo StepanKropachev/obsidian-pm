@@ -91,14 +91,12 @@ export class TaskModal extends Modal {
   private async insertAttachments(
     descArea: HTMLTextAreaElement,
     items: { blob: Blob; name: string }[],
-    sourcePath: string,
     autoResize: () => void
   ): Promise<void> {
     for (const { blob, name } of items) {
       try {
-        const path = await this.app.fileManager.getAvailablePathForAttachment(name, sourcePath)
         const buffer = await blob.arrayBuffer()
-        const file = await this.app.vault.createBinary(path, buffer)
+        const file = await this.plugin.store.saveTaskAttachment(this.project, this.task, name, buffer)
         const snippet = `![[${file.name}]]`
         descArea.setRangeText(snippet, descArea.selectionStart, descArea.selectionEnd, 'end')
         this.task.description = descArea.value
@@ -287,7 +285,7 @@ export class TaskModal extends Modal {
       }
       if (attachments.length === 0) return
       e.preventDefault()
-      void this.insertAttachments(descArea, attachments, sourcePath, autoResize)
+      void this.insertAttachments(descArea, attachments, autoResize)
     })
 
     descSection.addEventListener('dragover', (e) => {
@@ -305,7 +303,7 @@ export class TaskModal extends Modal {
         descArea.selectionStart = descArea.selectionEnd = descArea.value.length
       }
       const attachments = Array.from(files).map((f) => ({ blob: f, name: f.name }))
-      void this.insertAttachments(descArea, attachments, sourcePath, autoResize)
+      void this.insertAttachments(descArea, attachments, autoResize)
     })
 
     // Note link suggest (inline [[ autocomplete)

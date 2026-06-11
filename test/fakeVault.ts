@@ -59,6 +59,17 @@ export class FakeVault {
     return file
   }
 
+  async createBinary(path: string, _data: ArrayBuffer): Promise<TFile> {
+    const n = normalizePath(path)
+    if (this.files.has(n)) throw new Error(`createBinary: ${n} already exists`)
+    const parent = this.ensureFolderForPath(n)
+    const file = makeFile(n, parent)
+    this.files.set(n, { file, content: '' })
+    parent.children.push(file)
+    bump(this.createCount, n)
+    return file
+  }
+
   async createFolder(path: string): Promise<void> {
     const n = normalizePath(path)
     if (this.folders.has(n)) throw new Error('Folder already exists')
@@ -68,15 +79,18 @@ export class FakeVault {
     parent.children.push(folder)
   }
 
-  async trashFile(file: TFile): Promise<void> {
+  async trashFile(file: TAbstractFile): Promise<void> {
+    if (file instanceof TFolder) {
+      for (const child of [...file.children]) await this.trashFile(child)
+      this.folders.delete(file.path)
+      detachFromParent(file)
+      bump(this.trashCount, file.path)
+      return
+    }
     const entry = this.files.get(file.path)
     if (!entry) return
     this.files.delete(file.path)
-    if (entry.file.parent) {
-      const arr = entry.file.parent.children
-      const idx = arr.indexOf(entry.file)
-      if (idx >= 0) arr.splice(idx, 1)
-    }
+    detachFromParent(entry.file)
     bump(this.trashCount, file.path)
   }
 
@@ -106,7 +120,7 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
   const app: FakeAppLike = {
     vault,
     fileManager: {
-      trashFile: (file: TFile) => vault.trashFile(file),
+      trashFile: (file: TAbstractFile) => vault.trashFile(file),
       processFrontMatter: async (file: TFile, fn: (fm: Record<string, unknown>) => void): Promise<void> => {
         await vault.process(file, (content) => {
           const { frontmatter, body } = splitFrontmatter(content)
@@ -144,7 +158,7 @@ function splitFrontmatter(content: string): { frontmatter: Record<string, unknow
 export interface FakeAppLike {
   vault: FakeVault
   fileManager: {
-    trashFile: (file: TFile) => Promise<void>
+    trashFile: (file: TAbstractFile) => Promise<void>
     processFrontMatter: (file: TFile, fn: (fm: Record<string, unknown>) => void) => Promise<void>
   }
   metadataCache: { getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null }
@@ -171,6 +185,13 @@ function makeFolder(path: string, parent: TFolder | null): TFolder {
   f.parent = parent
   f.children = []
   return f
+}
+
+function detachFromParent(file: TAbstractFile): void {
+  if (!file.parent) return
+  const arr = file.parent.children
+  const idx = arr.indexOf(file)
+  if (idx >= 0) arr.splice(idx, 1)
 }
 
 function bump(map: Map<string, number>, key: string): void {
