@@ -674,11 +674,24 @@ export class ProjectStore {
     const source = findTaskById(project, sourceId)
     if (!source) return null
     const copy = cloneTaskSubtree(source, includeSubtasks)
-    copy.title = `${source.title} (copy)`
+    // Every task in a project shares one flat folder and its filename comes from
+    // the title slug, so a clone that keeps the source title would write over the
+    // original. Reserve a free "(copy)" title for the whole subtree, not just the
+    // root, and across the clones we're about to add so siblings don't collide.
+    const baseFolder = this.projectTaskFolder(project)
+    const claimed = new Set<string>()
+    const claimTitle = (task: Task): void => {
+      const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
+      task.title = this.freeCopyTitle(task.title, folder, claimed)
+    }
     // Clones don't have a filePath yet; their description in memory is whatever
     // came from the source. We need to write that body verbatim.
+    claimTitle(copy)
     this.hydratedBodies.add(copy)
-    for (const ft of flattenTasks(copy.subtasks)) this.hydratedBodies.add(ft.task)
+    for (const ft of flattenTasks(copy.subtasks)) {
+      claimTitle(ft.task)
+      this.hydratedBodies.add(ft.task)
+    }
     const parentId = findParentId(project, sourceId)
     addTaskToTree(project.tasks, copy, parentId)
     moveTaskInTree(project.tasks, copy.id, sourceId, 'after')
@@ -688,6 +701,23 @@ export class ProjectStore {
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
     return copy
+  }
+
+  /**
+   * Pick a "(copy)" title for a duplicated task whose file isn't already taken,
+   * neither on disk nor by an earlier clone in the same duplication (`claimed`).
+   * A duplicate never reuses the bare source title, so the sequence starts at
+   * "(copy)" and counts up.
+   */
+  private freeCopyTitle(base: string, folder: string, claimed: Set<string>): string {
+    for (let n = 1; ; n++) {
+      const title = n === 1 ? `${base} (copy)` : `${base} (copy ${n})`
+      const path = normalizePath(taskFilePath(title, folder))
+      if (!claimed.has(path) && !(this.app.vault.getAbstractFileByPath(path) instanceof TFile)) {
+        claimed.add(path)
+        return title
+      }
+    }
   }
 
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks. Copies of a subtree now get distinct file names ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
 - Progress bar labels showing 0% instead of the actual value in some views
 - Subtasks toggle not working in the Gantt view
 

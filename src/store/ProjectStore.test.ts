@@ -375,6 +375,35 @@ describe('ProjectStore task index', () => {
     }
   })
 
+  it('duplicates a task with subtasks without colliding on filenames', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Dup', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    await addNamed(store, project, 'subtask', parent.id)
+
+    const copy = await store.duplicateTask(project, parent.id, true)
+    expect(copy).not.toBeNull()
+
+    const paths = flattenTasks(project.tasks).map((f) => f.task.filePath)
+    expect(new Set(paths).size).toBe(paths.length)
+    for (const p of paths) {
+      expect(p).toBeTruthy()
+      expect(vault.getAbstractFileByPath(p!)).toBeInstanceOf(TFile)
+    }
+  })
+
+  it('disambiguates the copy title when the same task is duplicated twice', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Dup2', 'Projects')
+    const task = await addNamed(store, project, 'Task')
+
+    const first = await store.duplicateTask(project, task.id, false)
+    const second = await store.duplicateTask(project, task.id, false)
+
+    expect(first?.title).toBe('Task (copy)')
+    expect(second?.title).toBe('Task (copy 2)')
+  })
+
   it('survives a reload: rebuilt index after load matches the in-memory tree', async () => {
     const { store, vault, app } = newStore()
     const project = await store.createProject('Reload', 'Projects')
