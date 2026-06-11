@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Completing a task records a completion date, shown in the task modal and stored in frontmatter ([#93](https://github.com/StepanKropachev/obsidian-pm/issues/93))
+- Completing a task records a completion date, editable in the task modal and stored in frontmatter ([#93](https://github.com/StepanKropachev/obsidian-pm/issues/93))
 - Setting "Show description preview on board" (default off) shows the first few lines of each task description on kanban cards, with markdown stripped and clamped to three lines ([#59](https://github.com/StepanKropachev/obsidian-pm/issues/59))
 
 ### Changed

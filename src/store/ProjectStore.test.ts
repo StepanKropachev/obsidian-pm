@@ -270,6 +270,24 @@ describe('ProjectStore completion date', () => {
     expect(task.completed).toBe(stamped)
   })
 
+  it('stamps from a full-task patch that already carries the unchanged completed field', async () => {
+    // The task modal saves the whole task as the patch, so `completed` is present
+    // and equal to the stored value. Auto-stamping must still fire on the status flip.
+    const { store } = newStore()
+    const project = await store.createProject('Modal', 'Projects')
+    const task = await addNamed(store, project, 'Via modal')
+    await store.updateTask(project, task.id, { ...task, status: 'done', completed: '' })
+    expect(task.completed).toMatch(ISO_DATE)
+  })
+
+  it('respects an explicit completion date in the patch over auto-stamping', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Manual', 'Projects')
+    const task = await addNamed(store, project, 'Backdated')
+    await store.updateTask(project, task.id, { status: 'done', completed: '2025-01-15' })
+    expect(task.completed).toBe('2025-01-15')
+  })
+
   it('persists the completion date across a reload', async () => {
     const { store, vault, app } = newStore()
     const project = await store.createProject('Persisted', 'Projects')

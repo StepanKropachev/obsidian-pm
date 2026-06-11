@@ -1096,8 +1096,6 @@
 }
 .pm-prop-date:focus { border-color: var(--pm-accent); outline: none; }
 
-.pm-prop-completed { color: var(--text-muted); font-size: 13px; }
-
 .pm-prop-text, .pm-prop-select {
   padding: 5px 8px;
   border: 1px solid var(--pm-border);

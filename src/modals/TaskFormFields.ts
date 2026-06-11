@@ -7,7 +7,7 @@ import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormF
 import { Badge } from '../ui/primitives/Badge'
 import { SegmentedControl } from '../ui/primitives/SegmentedControl'
 import { COLOR_MUTED } from '../constants'
-import { getStatusConfig, getPriorityConfig, formatBadgeText } from '../utils'
+import { getStatusConfig, getPriorityConfig, formatBadgeText, isTerminalStatus } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import { TaskPickerModal, TagPickerModal } from './PickerModals'
 
@@ -154,11 +154,16 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     return input
   })
 
-  // Completed date — read-only, auto-stamped when the task enters a complete status.
-  if (task.completed) {
+  // Completed date — auto-stamped when the task enters a complete status, but editable.
+  // Shown once the task is in a complete status or already carries a date.
+  if (task.completed || isTerminalStatus(task.status, plugin.settings.statuses)) {
     renderPropRow(container, 'Completed', () => {
-      const span = createSpan({ text: task.completed, cls: 'pm-prop-value pm-prop-completed' })
-      return span
+      const input = createEl('input', { type: 'date', cls: 'pm-prop-value pm-prop-date' })
+      input.value = task.completed
+      input.addEventListener('change', () => {
+        task.completed = input.value
+      })
+      return input
     })
   }
 

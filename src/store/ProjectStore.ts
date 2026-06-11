@@ -757,14 +757,20 @@ export class ProjectStore {
 
   /**
    * Stamp or clear `completed` based on a status transition. Mutates `patch` so the
-   * date lands in the same save as the status change. Only fires when the patch
-   * changes status across the complete/incomplete boundary, so an explicit
-   * `completed` already in the patch (e.g. an import) is left untouched.
+   * date lands in the same save as the status change. A patch that changes
+   * `completed` away from the task's current value (a manual edit in the modal, or
+   * an import) wins and is left untouched; otherwise crossing the
+   * complete/incomplete boundary stamps today's date or clears it.
+   *
+   * The modal saves the whole task as the patch, so `patch.completed` is almost
+   * always present and equal to the stored value — comparing against the task,
+   * not just checking presence, is what lets auto-stamping fire from the modal.
    */
-  private stampCompletion(oldStatus: string, patch: Partial<Task>): void {
-    if (patch.status === undefined || patch.completed !== undefined) return
+  private stampCompletion(task: Task, patch: Partial<Task>): void {
+    if (patch.status === undefined) return
+    if (patch.completed !== undefined && patch.completed !== task.completed) return
     const statuses = this.getStatuses()
-    const wasComplete = isTerminalStatus(oldStatus, statuses)
+    const wasComplete = isTerminalStatus(task.status, statuses)
     const nowComplete = isTerminalStatus(patch.status, statuses)
     if (nowComplete && !wasComplete) patch.completed = today().toString()
     else if (!nowComplete && wasComplete) patch.completed = ''
@@ -773,7 +779,7 @@ export class ProjectStore {
   async updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void> {
     const task = findTaskById(project, taskId)
     const oldTitle = task?.title
-    if (task) this.stampCompletion(task.status, patch)
+    if (task) this.stampCompletion(task, patch)
     updateTaskInTree(project.tasks, taskId, patch)
     const titleChanged = task && patch.title !== undefined && patch.title !== oldTitle
     // Title change renames the file, which forces the rename branch in saveTaskFile
@@ -806,7 +812,7 @@ export class ProjectStore {
       // Copy a shared patch object before stamping so one task's completion date
       // doesn't bleed onto the next iteration through the same reference.
       const p = { ...raw }
-      this.stampCompletion(task.status, p)
+      this.stampCompletion(task, p)
       const oldTitle = task.title
       updateTaskInTree(project.tasks, id, p)
       const titleChanged = p.title !== undefined && p.title !== oldTitle
