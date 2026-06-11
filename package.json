@@ -27,7 +27,7 @@
     "@vitest/coverage-v8": "4.1.8",
     "eslint": "9.39.4",
     "eslint-plugin-obsidianmd": "0.2.4",
-    "npm-run-all2": "8.0.4",
+    "npm-run-all2": "9.0.1",
     "obsidian": "1.12.3",
     "oxfmt": "0.54.0",
     "oxlint": "1.61.0",
