@@ -96,21 +96,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     )
   }
 
-  // Subtask stripe
-  if (task.subtasks.length > 0) {
-    barGroup.appendChild(
-      svgEl('rect', {
-        x,
-        y: y + height - 3,
-        width,
-        height: 3,
-        rx: 1.5,
-        fill: color,
-        opacity: 0.5
-      })
-    )
-  }
-
   // Recurrence indicator
   if (task.recurrence) {
     const icon = svgEl('text', {

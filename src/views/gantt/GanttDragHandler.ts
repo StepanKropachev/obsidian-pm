@@ -276,7 +276,7 @@ export function attachBarMove(
 
 const HANDLE_W = 8
 
-/** Reposition label, handles, progress overlay, and stripe to match new bar x/width during resize. */
+/** Reposition label, handles, and progress overlay to match new bar x/width during resize. */
 function repositionBarChildren(barGroup: SVGGElement, newX: number, newW: number): void {
   const label = barGroup.querySelector('.pm-gantt-bar-label')
   if (label) {
@@ -297,14 +297,6 @@ function repositionBarChildren(barGroup: SVGGElement, newX: number, newW: number
   const progress = barGroup.querySelector('.pm-gantt-bar-progress')
   if (progress) {
     progress.setAttribute('x', String(newX))
-  }
-
-  // Subtask stripe — classless rect with height=3
-  for (const el of Array.from(barGroup.children)) {
-    if (el.instanceOf(SVGRectElement) && !el.classList.length && el.getAttribute('height') === '3') {
-      el.setAttribute('x', String(newX))
-      el.setAttribute('width', String(newW))
-    }
   }
 
   const icon = barGroup.querySelector('.pm-gantt-bar-icon')
