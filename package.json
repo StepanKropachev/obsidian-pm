@@ -22,7 +22,7 @@
   "devDependencies": {
     "@2bad/axiom": "2.0.0",
     "@2bad/tsconfig": "3.0.2",
-    "@types/node": "25.9.3",
+    "@types/node": "25.9.2",
     "@typescript-eslint/parser": "8.61.0",
     "@vitest/coverage-v8": "4.1.8",
     "eslint": "10.4.1",
@@ -38,17 +38,12 @@
     "vitest": "4.1.8",
     "yaml": "2.9.0"
   },
-  "pnpm": {
-    "overrides": {
-      "shell-quote@<1.8.4": "1.8.4"
-    }
-  },
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.5.3",
   "engines": {
     "node": ">=24"
   },
   "volta": {
     "node": "24.15.0",
-    "pnpm": "10.33.0"
+    "pnpm": "11.5.3"
   }
 }
