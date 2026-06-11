@@ -27,7 +27,7 @@ export default defineConfig({
     'obsidianmd/platform': 'error',
     'obsidianmd/prefer-abstract-input-suggest': 'error',
     'obsidianmd/prefer-active-doc': 'warn',
-    'obsidianmd/prefer-active-window-timers': 'warn',
+    'obsidianmd/prefer-window-timers': 'warn',
     'obsidianmd/prefer-get-language': 'error',
     'obsidianmd/regex-lookbehind': 'error',
     'obsidianmd/settings-tab/no-manual-html-headings': 'error',

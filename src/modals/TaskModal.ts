@@ -251,7 +251,7 @@ export class TaskModal extends Modal {
       descPreview.classList.add('pm-hidden')
       descArea.classList.remove('pm-hidden')
       descArea.value = this.task.description
-      activeWindow.setTimeout(() => {
+      window.setTimeout(() => {
         autoResize()
         descArea.focus()
       }, 0)
@@ -347,7 +347,7 @@ export class TaskModal extends Modal {
       void renderPreview()
     } else {
       descPreview.classList.add('pm-hidden')
-      activeWindow.setTimeout(autoResize, 0)
+      window.setTimeout(autoResize, 0)
     }
 
     // ── Properties ─────────────────────────────────────────────────────────

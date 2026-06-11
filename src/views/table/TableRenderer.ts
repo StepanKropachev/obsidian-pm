@@ -52,7 +52,7 @@ export function renderTable(ctx: TableContext): void {
   wrapper.addEventListener('scroll', () => {
     if (scrollScheduled) return
     scrollScheduled = true
-    activeWindow.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       scrollScheduled = false
       // Repaint only when the visible window actually moved. Rebuilding the
       // tbody can itself nudge scrollTop (clamping near the edges), which

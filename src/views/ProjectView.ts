@@ -92,8 +92,8 @@ export class ProjectView extends ItemView {
     this.fileModifyRef = this.app.vault.on('modify', (file) => {
       if (!(file instanceof TFile) || !reloadIfRelevant(file.path)) return
       if (this.plugin.store.consumeSelfWrite(file.path)) return
-      if (this.reloadDebounceTimer !== null) activeWindow.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = activeWindow.setTimeout(
+      if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
+      this.reloadDebounceTimer = window.setTimeout(
         safeAsync(async () => {
           this.reloadDebounceTimer = null
           await this.loadProject()
@@ -116,7 +116,7 @@ export class ProjectView extends ItemView {
 
   onClose(): Promise<void> {
     if (this.reloadDebounceTimer !== null) {
-      activeWindow.clearTimeout(this.reloadDebounceTimer)
+      window.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
     if (this.keydownHandler) {
@@ -431,7 +431,7 @@ export class ProjectView extends ItemView {
   async refreshProject(): Promise<void> {
     if (!this.project) return
     if (this.reloadDebounceTimer !== null) {
-      activeWindow.clearTimeout(this.reloadDebounceTimer)
+      window.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = null
     }
     if (this.subview?.refresh) {

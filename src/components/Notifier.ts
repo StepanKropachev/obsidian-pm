@@ -15,7 +15,7 @@ export class Notifier {
 
   start(): void {
     void this.check()
-    this.intervalId = activeWindow.setInterval(() => {
+    this.intervalId = window.setInterval(() => {
       void this.check()
     }, CHECK_INTERVAL_MS)
     this.plugin.registerInterval(this.intervalId)
@@ -23,7 +23,7 @@ export class Notifier {
 
   stop(): void {
     if (this.intervalId !== null) {
-      activeWindow.clearInterval(this.intervalId)
+      window.clearInterval(this.intervalId)
       this.intervalId = null
     }
   }

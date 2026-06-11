@@ -154,7 +154,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
           if (input.value) onAction({ type: 'set-due-date', due: input.value })
           input.remove()
         })
-        input.addEventListener('blur', () => activeWindow.setTimeout(() => input.remove(), 200))
+        input.addEventListener('blur', () => window.setTimeout(() => input.remove(), 200))
         input.showPicker()
       })
     )

@@ -95,7 +95,7 @@ export class KanbanCard {
     card.addEventListener('dragstart', (e) => {
       e.dataTransfer?.setData('text/plain', task.id)
       card.addClass('pm-kanban-card--dragging')
-      activeWindow.setTimeout(() => card.addClass('pm-dragging'), 0)
+      window.setTimeout(() => card.addClass('pm-dragging'), 0)
       props.onDragStart()
     })
 

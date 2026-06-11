@@ -240,7 +240,7 @@ export class GanttView implements SubView {
       leftBody.scrollTop = rightPanel.scrollTop
     })
 
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       syncSpacer()
       if (this.pendingScroll) {
         this.scrollEl.scrollTop = this.pendingScroll.top

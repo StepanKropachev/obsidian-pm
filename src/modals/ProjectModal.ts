@@ -105,7 +105,7 @@ export class ProjectModal extends Modal {
     titleInput.addEventListener('input', () => {
       this.project.title = titleInput.value
     })
-    activeWindow.setTimeout(() => {
+    window.setTimeout(() => {
       titleInput.focus()
       titleInput.select()
     }, 50)
@@ -175,7 +175,7 @@ export class ProjectModal extends Modal {
       addBtn.addEventListener('click', () => {
         this.project.teamMembers.push('')
         renderMembers()
-        activeWindow.setTimeout(() => {
+        window.setTimeout(() => {
           const inputs = memberWrap.querySelectorAll('input')
           inputs[inputs.length - 1]?.focus()
         }, 50)

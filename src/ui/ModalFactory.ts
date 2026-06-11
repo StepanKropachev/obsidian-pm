@@ -99,7 +99,7 @@ class TextPromptModal extends Modal {
       }
     })
 
-    activeWindow.setTimeout(() => input.focus(), 10)
+    window.setTimeout(() => input.focus(), 10)
   }
 
   onClose(): void {

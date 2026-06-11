@@ -52,7 +52,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     const newSub = makeTask({ title: 'New subtask' })
     task.subtasks.push(newSub)
     renderSubtasks()
-    activeWindow.setTimeout(() => {
+    window.setTimeout(() => {
       const rows = subList.querySelectorAll('.pm-subtask-title')
       const last = rows[rows.length - 1] as HTMLElement
       if (last) {

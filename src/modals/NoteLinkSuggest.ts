@@ -103,7 +103,7 @@ export class NoteLinkSuggest {
 
   private onBlur = (): void => {
     // Delay to allow click on suggestion item
-    activeWindow.setTimeout(() => this.hide(), 150)
+    window.setTimeout(() => this.hide(), 150)
   }
 
   private onScroll = (): void => {
