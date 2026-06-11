@@ -79,6 +79,44 @@ export class FakeVault {
     parent.children.push(folder)
   }
 
+  async rename(file: TAbstractFile, newPath: string): Promise<void> {
+    const to = normalizePath(newPath)
+    const from = file.path
+    if (this.getAbstractFileByPath(to)) throw new Error(`rename: ${to} already exists`)
+    if (file instanceof TFolder) {
+      const folders = [file, ...[...this.folders.values()].filter((f) => f.path.startsWith(from + '/'))]
+      const entries = [...this.files.values()].filter((e) => e.file.path.startsWith(from + '/'))
+      for (const f of folders) this.folders.delete(f.path)
+      for (const e of entries) this.files.delete(e.file.path)
+      detachFromParent(file)
+      for (const f of folders) {
+        const np = to + f.path.slice(from.length)
+        const parent = this.ensureFolderForPath(np)
+        f.path = np
+        f.name = np.slice(np.lastIndexOf('/') + 1)
+        f.parent = parent
+        this.folders.set(np, f)
+        parent.children.push(f)
+      }
+      for (const e of entries) {
+        const np = to + e.file.path.slice(from.length)
+        const parent = this.ensureFolderForPath(np)
+        relocateFile(e.file, np, parent)
+        this.files.set(np, e)
+        parent.children.push(e.file)
+      }
+      return
+    }
+    const entry = this.files.get(from)
+    if (!entry) throw new Error(`rename: ${from} does not exist`)
+    this.files.delete(from)
+    detachFromParent(entry.file)
+    const parent = this.ensureFolderForPath(to)
+    relocateFile(entry.file, to, parent)
+    this.files.set(to, entry)
+    parent.children.push(entry.file)
+  }
+
   async trashFile(file: TAbstractFile): Promise<void> {
     if (file instanceof TFolder) {
       for (const child of [...file.children]) await this.trashFile(child)
@@ -166,6 +204,11 @@ export interface FakeAppLike {
 
 function makeFile(path: string, parent: TFolder): TFile {
   const f = new TFile()
+  relocateFile(f, path, parent)
+  return f
+}
+
+function relocateFile(f: TFile, path: string, parent: TFolder): void {
   f.path = path
   const slash = path.lastIndexOf('/')
   const name = slash >= 0 ? path.slice(slash + 1) : path
@@ -174,7 +217,6 @@ function makeFile(path: string, parent: TFolder): TFile {
   f.basename = dot > 0 ? name.slice(0, dot) : name
   f.extension = dot > 0 ? name.slice(dot + 1) : ''
   f.parent = parent
-  return f
 }
 
 function makeFolder(path: string, parent: TFolder | null): TFolder {

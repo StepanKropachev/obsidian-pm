@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Images pasted or dropped onto a task are saved in the task's own folder instead of the vault root, and are removed when the task is deleted
+- Images pasted or dropped onto a task are saved in the task's own folder instead of the vault root. The folder follows the task when it's renamed or archived, and is removed when the task is deleted
 - Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks. Copies of a subtree now get distinct file names ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
 - Progress bar labels showing 0% instead of the actual value in some views
 - Subtasks toggle not working in the Gantt view
