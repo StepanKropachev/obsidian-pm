@@ -40,6 +40,7 @@ export interface Task {
   start: string // YYYY-MM-DD, empty string = unset
   due: string // YYYY-MM-DD, empty string = unset
   progress: number // 0–100
+  completed: string // YYYY-MM-DD, empty string = not completed; stamped when status becomes complete
   assignees: string[]
   tags: string[]
   subtasks: Task[]
@@ -185,6 +186,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     start: today().toString(),
     due: '',
     progress: 0,
+    completed: '',
     assignees: [],
     tags: [],
     subtasks: [],

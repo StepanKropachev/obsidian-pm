@@ -154,6 +154,14 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     return input
   })
 
+  // Completed date — read-only, auto-stamped when the task enters a complete status.
+  if (task.completed) {
+    renderPropRow(container, 'Completed', () => {
+      const span = createSpan({ text: task.completed, cls: 'pm-prop-value pm-prop-completed' })
+      return span
+    })
+  }
+
   // Recurrence
   renderPropRow(container, 'Repeat', () => {
     const wrap = createDiv('pm-prop-value pm-prop-recurrence')

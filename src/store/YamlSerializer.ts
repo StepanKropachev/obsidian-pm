@@ -74,6 +74,7 @@ export function buildTaskFrontmatter(task: Task, project: Project, parentTask: T
     createdAt: task.createdAt,
     updatedAt: task.updatedAt
   }
+  if (task.completed) fm.completed = task.completed
   if (task.recurrence) fm.recurrence = task.recurrence
   if (task.timeEstimate !== undefined) fm.timeEstimate = task.timeEstimate
   if (task.timeLogs?.length) fm.timeLogs = task.timeLogs
