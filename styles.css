@@ -771,7 +771,7 @@
   cursor: pointer;
   transition: filter 0.15s;
 }
-.pm-gantt-bar:hover { opacity: 0.9 !important; }
+.pm-gantt-bar:hover { filter: brightness(1.15); }
 .pm-gantt-bar-sheen { pointer-events: none; }
 .pm-gantt-bar-progress { pointer-events: none; }
 .pm-gantt-bar-label {
@@ -782,6 +782,7 @@
   letter-spacing: 0.03em;
   pointer-events: none;
   dominant-baseline: central;
+  text-shadow: 0 0 3px rgba(0,0,0,0.55);
 }
 
 /* Today line */

@@ -73,13 +73,13 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     rx: BAR_BORDER_RADIUS,
     ry: BAR_BORDER_RADIUS,
     fill: color,
-    opacity: 0.75,
+    opacity: 0.4,
     class: 'pm-gantt-bar'
   })
   barGroup.appendChild(rect)
 
-  // Progress overlay
-  if (task.progress > 0 && task.progress < 100) {
+  // Completed portion — solid fill over the faint track so progress reads at a glance
+  if (task.progress > 0) {
     const pw = (task.progress / 100) * width
     barGroup.appendChild(
       svgEl('rect', {
@@ -90,7 +90,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
         rx: BAR_BORDER_RADIUS,
         ry: BAR_BORDER_RADIUS,
         fill: color,
-        opacity: 0.35,
+        opacity: 0.9,
         class: 'pm-gantt-bar-progress'
       })
     )
