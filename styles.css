@@ -527,7 +527,6 @@
 .pm-table-row:hover .pm-icon-btn--hover-only { opacity: 1; }
 .pm-icon-btn--hover-only:focus-visible { opacity: 1; }
 
-/* Tags */
 /* ── Chip ─────────────────────────────────────────────────────────────── */
 .pm-chip {
   display: inline-flex;
@@ -772,7 +771,6 @@
   transition: filter 0.15s;
 }
 .pm-gantt-bar:hover { filter: brightness(1.15); }
-.pm-gantt-bar-sheen { pointer-events: none; }
 .pm-gantt-bar-progress { pointer-events: none; }
 .pm-gantt-bar-label {
   font-size: 10px;
@@ -1287,7 +1285,7 @@
   transition: background 0.1s;
   line-height: 1;
 }
-.pm-icon-option:hover, .pm-icon-option--selected { background: var(--pm-bg3); }
+.pm-icon-option:hover { background: var(--pm-bg3); }
 
 .pm-project-title-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 
@@ -1496,13 +1494,6 @@
 .pm-time-chip--sm { font-size: 10px; padding: 1px 6px; }
 .pm-time-chip--over { background: rgba(196,112,112,0.15); color: var(--pm-danger); }
 
-/* ── Task icon (milestone/recurrence indicators) ───────────────────────── */
-.pm-task-icon {
-  font-size: 13px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
 /* ── Kanban title row ──────────────────────────────────────────────────── */
 .pm-kanban-card-title-row {
   display: flex; align-items: center; gap: 5px;
@@ -1571,8 +1562,6 @@
 .pm-gantt-milestone:hover {
   filter: brightness(1.2);
 }
-.pm-gantt-milestone-sheen { pointer-events: none; }
-
 .pm-gantt-milestone-label {
   font-size: 10px;
   font-weight: 600;
@@ -1594,23 +1583,6 @@
   --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
   border-color: rgba(255,255,255,0.06) !important;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
-}
-
-/* ── Kanban column surface ─────────────────────────────────────────────── */
-.pm-kanban-col {
-  background: var(--pm-surface-raised);
-  border-color: var(--pm-ghost-border);
-}
-
-/* ── Modal section separators ─────────────────────────────────────────── */
-.pm-modal-section { border-top-color: var(--pm-border, var(--background-modifier-border)); }
-.pm-modal-footer {
-  background: var(--background-secondary);
-  border-top-color: var(--pm-border, var(--background-modifier-border));
-}
-.pm-modal-header {
-  background: var(--background-primary);
-  border-bottom-color: var(--pm-border, var(--background-modifier-border));
 }
 
 /* ── Properties container ────────────────────────────────────────────── */
