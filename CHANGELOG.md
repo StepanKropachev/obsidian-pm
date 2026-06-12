@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-06-12
+
 ### Added
 
 - Completing a task records a completion date, editable in the task modal and stored in frontmatter ([#93](https://github.com/StepanKropachev/obsidian-pm/issues/93))
@@ -22,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collapse state is stored in plugin settings instead of task frontmatter. Collapsing or expanding a subtree no longer modifies task files, and the `collapsed` frontmatter key is no longer written
 - Expand/collapse subtasks toggle is styled consistently across the table and Gantt views
 - Gantt task bars use stronger contrast between completed and remaining work ([#87](https://github.com/StepanKropachev/obsidian-pm/issues/87))
+- Gantt task bars no longer overlay a stripe on tasks that have subtasks
 
 ### Fixed
 
