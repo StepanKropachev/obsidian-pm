@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Status, priority, and tag labels follow Obsidian's native styling more closely
+- The accent color matches the Obsidian theme accent instead of a fixed purple
+- Kanban cards align the assignee and due date to the bottom of the card
+
 ## [1.6.0] - 2026-06-12
 
 ### Added

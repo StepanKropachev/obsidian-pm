@@ -1,5 +1,4 @@
 import type { Task } from '../../../types'
-import { Badge } from '../../primitives/Badge'
 import { Chip } from '../../primitives/Chip'
 import { IconButton } from '../../primitives/IconButton'
 import { makeInlineEdit } from './inlineEdit'
@@ -43,22 +42,42 @@ export class TitleCell {
       })
 
     if (task.type === 'milestone') {
-      new Badge(this.el).setLabel('M').setSize('sm').setColor('var(--color-purple)').setTooltip('Milestone')
+      new Chip(this.el)
+        .setLabel('M')
+        .setVariant('solid')
+        .setSize('sm')
+        .setColor('var(--color-purple)')
+        .setTooltip('Milestone')
     }
     if (task.type === 'subtask') {
-      new Badge(this.el).setLabel('Sub').setSize('sm').setColor('var(--color-green)').setTooltip('Subtask')
+      new Chip(this.el)
+        .setLabel('Sub')
+        .setVariant('solid')
+        .setSize('sm')
+        .setColor('var(--color-green)')
+        .setTooltip('Subtask')
     }
     if (task.recurrence) {
-      new Badge(this.el).setLabel('R').setSize('sm').setColor('var(--color-blue)').setTooltip('Recurring')
+      new Chip(this.el)
+        .setLabel('R')
+        .setVariant('solid')
+        .setSize('sm')
+        .setColor('var(--color-blue)')
+        .setTooltip('Recurring')
     }
     if (task.archived) {
-      new Badge(this.el).setLabel('Archived').setSize('sm').setColor('var(--text-muted)').setTooltip('Archived')
+      new Chip(this.el)
+        .setLabel('Archived')
+        .setVariant('solid')
+        .setSize('sm')
+        .setColor('var(--text-muted)')
+        .setTooltip('Archived')
     }
 
     if (task.tags.length) {
       const tagRow = this.el.createDiv('pm-table-tags')
       for (const tag of task.tags) {
-        new Chip(tagRow).setLabel(tag).setShape('pill')
+        new Chip(tagRow).setLabel(tag).setVariant('outline').setTag()
       }
     }
   }

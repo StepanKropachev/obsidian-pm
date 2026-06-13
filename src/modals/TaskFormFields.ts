@@ -4,7 +4,7 @@ import { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField'
-import { Badge } from '../ui/primitives/Badge'
+import { Chip } from '../ui/primitives/Chip'
 import { SegmentedControl } from '../ui/primitives/SegmentedControl'
 import { COLOR_MUTED } from '../constants'
 import { getStatusConfig, getPriorityConfig, formatBadgeText, isTerminalStatus } from '../utils'
@@ -31,9 +31,11 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Status', () => {
     const statusConfig = getStatusConfig(plugin.settings.statuses, task.status)
     const wrap = createDiv('pm-prop-value')
-    new Badge(wrap)
+    new Chip(wrap)
       .setLabel(formatBadgeText(statusConfig?.icon, statusConfig?.label ?? task.status))
       .setColor(statusConfig?.color ?? COLOR_MUTED)
+      .setVariant('solid')
+      .setDot(!statusConfig?.icon)
       .onClick((e) => {
         const menu = new Menu()
         for (const s of plugin.settings.statuses) {
@@ -56,9 +58,11 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   renderPropRow(container, 'Priority', () => {
     const prioConfig = getPriorityConfig(plugin.settings.priorities, task.priority)
     const wrap = createDiv('pm-prop-value')
-    new Badge(wrap)
+    new Chip(wrap)
       .setLabel(formatBadgeText(prioConfig?.icon, prioConfig?.label ?? task.priority))
       .setColor(prioConfig?.color ?? COLOR_MUTED)
+      .setVariant('plain')
+      .setDot(!prioConfig?.icon)
       .onClick((e) => {
         const menu = new Menu()
         for (const p of plugin.settings.priorities) {

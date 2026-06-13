@@ -1,5 +1,5 @@
 const ROW_IGNORE_SELECTOR =
-  'button, input, .pm-badge--interactive, .pm-task-title-text, .pm-due-chip, .pm-table-cell-select, .pm-icon-btn'
+  'button, input, .pm-chip--interactive, .pm-task-title-text, .pm-table-cell-select, .pm-icon-btn'
 
 export interface TaskRowProps {
   taskId: string

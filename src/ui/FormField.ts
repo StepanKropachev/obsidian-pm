@@ -24,11 +24,12 @@ export function renderChipList(container: HTMLElement, items: string[], opts: Ch
   const variant = opts.variant ?? 'default'
   const shape = opts.shape ?? 'pill'
   for (const item of items) {
-    new Chip(container)
+    const chip = new Chip(container)
       .setLabel(opts.labelFn ? opts.labelFn(item) : item)
-      .setVariant(variant)
       .setShape(shape)
       .setRemovable(() => opts.onRemove(item))
+    if (variant === 'accent') chip.setVariant('solid').setColor('var(--interactive-accent)')
+    else chip.setVariant('outline')
   }
   if (opts.renderAdd) {
     opts.renderAdd(container)

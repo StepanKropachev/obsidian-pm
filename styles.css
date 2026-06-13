@@ -18,12 +18,12 @@
   --pm-text-muted:   var(--text-muted);
   --pm-text-faint:   var(--text-faint);
 
-  --pm-accent:       #8b72be;
-  --pm-accent-dim:   #7a63ad;
-  --pm-accent-light: rgba(139,114,190,0.10);
-  --pm-danger:       #c47070;
-  --pm-success:      #79b58d;
-  --pm-warning:      #b8a06b;
+  --pm-accent:       var(--interactive-accent);
+  --pm-accent-dim:   var(--interactive-accent-hover);
+  --pm-accent-light: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  --pm-danger:       var(--color-red);
+  --pm-success:      var(--color-green);
+  --pm-warning:      var(--color-yellow);
 
   /* Surfaces — no glassmorphism, use tonal stacking */
   --pm-surface:         var(--background-primary);
@@ -397,36 +397,6 @@
 
 .pm-table-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
 
-/* ── Badge ────────────────────────────────────────────────────────────── */
-.pm-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: var(--radius-s);
-  font-size: var(--font-ui-smaller);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border: 1px solid color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 30%, transparent);
-  background: color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 8%, transparent);
-  color: var(--pm-badge-color, var(--text-muted));
-  white-space: nowrap;
-  line-height: 1.2;
-  transition: background 0.15s;
-}
-.pm-badge--interactive { cursor: pointer; }
-.pm-badge--interactive:hover {
-  background: color-mix(in srgb, var(--pm-badge-color, var(--text-muted)) 16%, transparent);
-}
-.pm-badge--sm {
-  padding: 1px 5px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 /* ── Avatar ───────────────────────────────────────────────────────────── */
 .pm-avatar {
   display: inline-flex;
@@ -449,49 +419,6 @@
 }
 .pm-avatar-stack { display: inline-flex; align-items: center; }
 .pm-avatar-stack > .pm-avatar:not(:first-child) { margin-left: -6px; }
-
-/* ── DueDateChip ──────────────────────────────────────────────────────── */
-.pm-due-chip {
-  display: inline-block;
-  padding: 3px 7px;
-  border-radius: var(--radius-s);
-  font-size: var(--font-ui-smaller);
-  background: var(--background-secondary);
-  color: var(--text-muted);
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-.pm-due-chip--interactive { cursor: pointer; }
-.pm-due-chip--interactive:hover { background: var(--background-modifier-hover); }
-.pm-due-chip--placeholder {
-  background: transparent;
-  color: var(--text-faint);
-}
-.pm-due-chip--placeholder.pm-due-chip--interactive:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-muted);
-}
-.pm-due-chip--near {
-  background: color-mix(in srgb, var(--color-orange) 18%, transparent);
-  color: var(--color-orange);
-}
-.pm-due-chip--near.pm-due-chip--interactive:hover {
-  background: color-mix(in srgb, var(--color-orange) 28%, transparent);
-}
-.pm-due-chip--overdue {
-  background: color-mix(in srgb, var(--color-red) 18%, transparent);
-  color: var(--color-red);
-  font-weight: 600;
-}
-.pm-due-chip--overdue.pm-due-chip--interactive:hover {
-  background: color-mix(in srgb, var(--color-red) 28%, transparent);
-}
-.pm-due-chip--label {
-  display: inline;
-  padding: 0;
-  background: transparent;
-  font-size: var(--font-ui-smaller);
-}
 
 /* ── ProgressBar ──────────────────────────────────────────────────────── */
 .pm-progress {
@@ -527,25 +454,53 @@
 .pm-table-row:hover .pm-icon-btn--hover-only { opacity: 1; }
 .pm-icon-btn--hover-only:focus-visible { opacity: 1; }
 
-/* ── Chip ─────────────────────────────────────────────────────────────── */
+/* ── Chip (unified label primitive: status, priority, tags, due, badges) ── */
 .pm-chip {
+  --pm-chip-color: var(--text-muted);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: 6px;
+  padding: 2px 9px;
   border-radius: var(--radius-s);
   font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-  background: var(--background-modifier-hover);
-  border: 1px solid transparent;
+  font-weight: 500;
+  line-height: 1.5;
   white-space: nowrap;
+  color: var(--pm-chip-color);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.15s;
 }
+.pm-chip--solid {
+  background: color-mix(in srgb, var(--pm-chip-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--pm-chip-color) 20%, transparent);
+}
+.pm-chip--outline {
+  border-color: var(--background-modifier-border);
+}
+.pm-chip--plain {
+  color: var(--text-normal);
+}
+.pm-chip--tag {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  gap: 4px;
+}
+.pm-chip--sm { padding: 1px 5px; font-size: 10px; font-weight: 600; }
 .pm-chip--pill { border-radius: 99px; }
-.pm-chip--sm { padding: 1px 6px; font-size: 10px; }
-.pm-chip--accent {
-  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
-  color: var(--text-accent);
-  border-color: color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+.pm-chip--strong { font-weight: 600; }
+.pm-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pm-chip-color);
+  flex-shrink: 0;
+}
+.pm-chip--interactive { cursor: pointer; }
+.pm-chip--interactive:hover { background: var(--background-modifier-hover); }
+.pm-chip--solid.pm-chip--interactive:hover {
+  background: color-mix(in srgb, var(--pm-chip-color) 18%, transparent);
 }
 .pm-chip-rm {
   display: inline-flex;
@@ -880,6 +835,9 @@
 
 .pm-kanban-card {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 112px;
   background: var(--pm-bg);
   border: 1px solid var(--pm-ghost-border);
   border-radius: var(--pm-radius);
@@ -903,7 +861,7 @@
   flex-shrink: 0;
   opacity: 0.5;
 }
-.pm-kanban-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.pm-kanban-card-body { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
 .pm-kanban-card-title { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.45; }
 .pm-kanban-card-description {
   margin: 0;
@@ -923,6 +881,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 2px;
 }
 
 .pm-kanban-card-subtasks { font-size: 11px; color: var(--pm-text-muted); }
@@ -952,12 +912,12 @@
   --pm-text:         var(--text-normal);
   --pm-text-muted:   var(--text-muted);
   --pm-text-faint:   var(--text-faint);
-  --pm-accent:       #8b72be;
-  --pm-accent-dim:   #7a63ad;
-  --pm-accent-light: rgba(139,114,190,0.10);
-  --pm-danger:       #c47070;
-  --pm-success:      #79b58d;
-  --pm-warning:      #b8a06b;
+  --pm-accent:       var(--interactive-accent);
+  --pm-accent-dim:   var(--interactive-accent-hover);
+  --pm-accent-light: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  --pm-danger:       var(--color-red);
+  --pm-success:      var(--color-green);
+  --pm-warning:      var(--color-yellow);
   --pm-ghost-border: rgba(0, 0, 0, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
 
@@ -1489,10 +1449,10 @@
 
 .pm-time-chip {
   display: inline-block; padding: 2px 7px; border-radius: 99px;
-  font-size: 11px; background: var(--pm-bg3); color: var(--pm-text-muted);
+  font-size: 11px; background: var(--background-modifier-hover); color: var(--text-muted);
 }
 .pm-time-chip--sm { font-size: 10px; padding: 1px 6px; }
-.pm-time-chip--over { background: rgba(196,112,112,0.15); color: var(--pm-danger); }
+.pm-time-chip--over { background: color-mix(in srgb, var(--color-red) 15%, transparent); color: var(--color-red); }
 
 /* ── Kanban title row ──────────────────────────────────────────────────── */
 .pm-kanban-card-title-row {
