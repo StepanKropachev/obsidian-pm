@@ -307,7 +307,7 @@
 
 /* ── Selected Row ─────────────────────────────────────────────────────────── */
 .pm-table-row--selected {
-  background: color-mix(in srgb, var(--pm-accent) 10%, transparent) !important;
+  background: color-mix(in srgb, var(--pm-accent) 10%, transparent);
   box-shadow: inset 3px 0 0 var(--pm-accent);
 }
 
@@ -342,7 +342,7 @@
   border-bottom: 1px solid var(--pm-border);
   transition: background 0.1s;
 }
-.pm-table-row:hover { background: color-mix(in srgb, var(--pm-accent) 5%, transparent); }
+.pm-table-row:not(.pm-table-row--selected):hover { background: color-mix(in srgb, var(--pm-accent) 5%, transparent); }
 .pm-table-row--done { opacity: 0.55; }
 .pm-table-row--archived { opacity: 0.45; font-style: italic; }
 
@@ -924,12 +924,6 @@
   max-width: 680px;
   width: 90vw;
   max-height: 88vh;
-  background: var(--background-primary) !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
-  border-radius: var(--pm-radius-lg) !important;
-  font-family: var(--pm-font);
-  color: var(--pm-text);
 }
 
 .pm-task-modal {
@@ -1179,7 +1173,7 @@
   gap: 14px;
   max-height: 85vh;
   overflow-y: auto;
-  color: var(--text-normal) !important;
+  color: var(--text-normal);
 }
 .pm-project-modal * {
   color: inherit;
@@ -1416,19 +1410,19 @@
 
 /* ── Recurrence picker ─────────────────────────────────────────────────── */
 .pm-prop-recurrence { flex-wrap: wrap; gap: 6px; }
-.pm-recur-every { width: 52px !important; text-align: center; }
-.pm-recur-interval { width: 110px !important; }
+.pm-recur-every { width: 52px; text-align: center; }
+.pm-recur-interval { width: 110px; }
 .pm-recur-end { display: flex; align-items: center; gap: 6px; }
 .pm-recur-label { font-size: 12px; color: var(--pm-text-muted); }
-.pm-recur-end-input { width: 130px !important; }
-.pm-recur-rm { color: var(--pm-danger) !important; border-color: color-mix(in srgb, var(--color-red) 30%, transparent) !important; }
+.pm-recur-end-input { width: 130px; }
+.pm-prop-add-btn.pm-recur-rm { color: var(--pm-danger); border-color: color-mix(in srgb, var(--color-red) 30%, transparent); }
 
 /* ── Time tracking ─────────────────────────────────────────────────────── */
 .pm-time-est-row {
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
 }
 .pm-time-label { font-size: 12px; color: var(--pm-text-muted); }
-.pm-time-est-input { width: 80px !important; }
+.pm-time-est-input { width: 80px; }
 
 .pm-time-bar {
   height: 4px; background: var(--pm-bg3); border-radius: 99px;
@@ -1443,9 +1437,9 @@
   background: var(--pm-bg3);
   border: 1px solid var(--pm-ghost-border);
 }
-.pm-time-log-date { width: 120px !important; }
-.pm-time-log-hours { width: 60px !important; text-align: center; }
-.pm-time-log-note { flex: 1 !important; }
+.pm-time-log-date { width: 120px; }
+.pm-time-log-hours { width: 60px; text-align: center; }
+.pm-time-log-note { flex: 1; }
 
 .pm-time-chip {
   display: inline-block; padding: 2px 7px; border-radius: 99px;
@@ -1485,11 +1479,11 @@
   opacity: 1;
   fill: rgba(255,255,255,0.25);
 }
-.pm-gantt-drag-handle:hover {
-  fill: rgba(255,255,255,0.45) !important;
+.pm-gantt-bar-group .pm-gantt-drag-handle:hover {
+  fill: rgba(255,255,255,0.45);
 }
 .pm-gantt-bar-grabbing {
-  cursor: grabbing !important;
+  cursor: grabbing;
 }
 
 /* ── Gantt link dots (dependency connectors) ──────────────────────────── */
@@ -1504,12 +1498,12 @@
 .pm-gantt-bar-group:hover .pm-gantt-link-dot {
   opacity: 0.5;
 }
-.pm-gantt-link-dot:hover {
-  opacity: 1 !important;
+.pm-gantt-bar-group .pm-gantt-link-dot:hover {
+  opacity: 1;
   fill: var(--pm-accent);
 }
-.pm-gantt-link-dot--active {
-  opacity: 1 !important;
+.pm-gantt-bar-group .pm-gantt-link-dot--active {
+  opacity: 1;
   fill: var(--pm-accent);
   stroke-width: 2;
   filter: drop-shadow(0 0 3px var(--pm-accent));
@@ -1541,8 +1535,6 @@
 .theme-dark .pm-modal {
   --pm-ghost-border:  rgba(255, 255, 255, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
-  border-color: rgba(255,255,255,0.06) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
 }
 
 /* ── Properties container ────────────────────────────────────────────── */
@@ -1676,19 +1668,22 @@
 /* ── Utility classes ─────────────────────────────────────────────────────── */
 .pm-hidden { display: none !important; }
 .pm-dragging { opacity: 0.5; }
-.pm-subtask-rm--visible { opacity: 1 !important; }
+.pm-subtask-rm--visible { opacity: 1; }
 .pm-offscreen { position: fixed; opacity: 0; pointer-events: none; }
 .pm-no-shrink { flex-shrink: 0; }
 body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; user-select: none !important; }
 
 /* Prompt / Confirm modal typography */
-.pm-prompt-text,
-.pm-confirm-text {
+.pm-prompt-text {
   margin: 0 0 0.75rem 0;
   color: var(--text-normal);
   font-size: var(--font-ui-medium);
 }
-.pm-confirm-text { margin-bottom: 1rem; }
+.pm-confirm-text {
+  margin: 0 0 1rem 0;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+}
 .pm-prompt-input {
   width: 100%;
   padding: 0.5rem;
