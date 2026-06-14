@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Task and project modals use Obsidian's native border, shadow, and corner styling instead of custom values
 - Status, priority, and tag labels follow Obsidian's native styling more closely
 - The accent color matches the Obsidian theme accent instead of a fixed purple
 - The Gantt today marker, milestone and subtask buttons, and row selection and hover highlights take their colors from the theme instead of fixed values
