@@ -574,7 +574,7 @@
 .pm-gantt-zoom-btn:hover { background: var(--pm-bg3); color: var(--pm-text); }
 .pm-gantt-zoom-btn--active {
   background: var(--pm-accent);
-  color: #fff;
+  color: var(--text-on-accent);
   border-color: var(--pm-accent);
 }
 
@@ -711,12 +711,12 @@
 .theme-dark .pm-gantt-weekend { fill: rgba(255,255,255,0.025); }
 
 .pm-gantt-row-hover { fill: transparent; cursor: default; }
-.pm-gantt-row-hover:hover { fill: rgba(139,114,190,0.03); }
+.pm-gantt-row-hover:hover { fill: color-mix(in srgb, var(--interactive-accent) 3%, transparent); }
 
 /* Empty row click-to-set-dates */
-.pm-gantt-empty-row-hit:hover { fill: rgba(139,114,190,0.03); }
+.pm-gantt-empty-row-hit:hover { fill: color-mix(in srgb, var(--interactive-accent) 3%, transparent); }
 .pm-gantt-empty-row-preview {
-  fill: var(--interactive-accent, #7b6ba8);
+  fill: var(--interactive-accent);
   opacity: 0.25;
 }
 
@@ -740,12 +740,12 @@
 
 /* Today line */
 .pm-gantt-today-line {
-  stroke: rgba(196,112,112,0.65);
+  stroke: color-mix(in srgb, var(--color-red) 65%, transparent);
   stroke-width: 1.5;
   stroke-dasharray: 5 4;
 }
 .pm-gantt-today-diamond {
-  fill: rgba(196,112,112,0.65);
+  fill: color-mix(in srgb, var(--color-red) 65%, transparent);
 }
 
 /* Dependency arrows */
@@ -888,7 +888,7 @@
 .pm-kanban-card-subtasks { font-size: 11px; color: var(--pm-text-muted); }
 .pm-kanban-card-parent {
   font-size: 10px;
-  color: var(--text-muted, #888);
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1034,7 +1034,7 @@
   border-radius: 50%;
   background: var(--pm-accent);
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(139,114,190,0.4);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
 }
 .pm-progress-slider-label {
   font-size: 12px;
@@ -1179,7 +1179,7 @@
   gap: 14px;
   max-height: 85vh;
   overflow-y: auto;
-  color: var(--text-normal, #dcddde) !important;
+  color: var(--text-normal) !important;
 }
 .pm-project-modal * {
   color: inherit;
@@ -1276,7 +1276,7 @@
 .pm-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted, var(--pm-text-muted, #a6a7ab));
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: block;
@@ -1285,10 +1285,10 @@
 .pm-input {
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid var(--background-modifier-border, var(--pm-border, #4a4a4f));
-  border-radius: var(--pm-radius-sm, 5px);
-  background: var(--background-secondary, var(--pm-bg2, #2b2b30));
-  color: var(--text-normal, var(--pm-text, #dcddde));
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--background-secondary);
+  color: var(--text-normal);
   font-size: 13px;
   box-sizing: border-box;
 }
@@ -1338,7 +1338,7 @@
   padding: 3px 6px;
   border-radius: 4px;
 }
-.pm-settings-del:hover { background: rgba(196,112,112,0.1); color: var(--pm-danger); }
+.pm-settings-del:hover { background: color-mix(in srgb, var(--color-red) 10%, transparent); color: var(--pm-danger); }
 .pm-settings-drag-handle {
   cursor: grab;
   color: var(--text-muted);
@@ -1401,14 +1401,14 @@
 }
 .pm-segmented-btn:hover { background: var(--pm-bg3); }
 .pm-segmented-btn--milestone {
-  background: rgba(139,114,190,0.15);
-  border-color: rgba(139,114,190,0.4);
-  color: #69519a;
+  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+  color: var(--text-accent);
 }
 .pm-segmented-btn--subtask {
-  background: rgba(121,181,141,0.15);
-  border-color: rgba(121,181,141,0.4);
-  color: #79b58d;
+  background: color-mix(in srgb, var(--color-green) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-green) 40%, transparent);
+  color: var(--color-green);
 }
 .pm-segmented-btn--active {
   box-shadow: 0 0 0 2px var(--pm-accent);
@@ -1421,7 +1421,7 @@
 .pm-recur-end { display: flex; align-items: center; gap: 6px; }
 .pm-recur-label { font-size: 12px; color: var(--pm-text-muted); }
 .pm-recur-end-input { width: 130px !important; }
-.pm-recur-rm { color: var(--pm-danger) !important; border-color: rgba(196,112,112,0.3) !important; }
+.pm-recur-rm { color: var(--pm-danger) !important; border-color: color-mix(in srgb, var(--color-red) 30%, transparent) !important; }
 
 /* ── Time tracking ─────────────────────────────────────────────────────── */
 .pm-time-est-row {
@@ -1471,7 +1471,7 @@
   color: var(--pm-text);
   font-size: 13px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(139,114,190,0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
   width: 100%;
 }
 
@@ -1576,17 +1576,17 @@
   margin-bottom: 0;
 }
 .pm-modal-desc-preview a {
-  color: var(--interactive-accent, var(--pm-accent, #8b72be));
+  color: var(--interactive-accent);
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.15s;
 }
 .pm-modal-desc-preview a:hover {
-  color: var(--interactive-accent-hover, var(--pm-accent-dim, #7a63ad));
+  color: var(--interactive-accent-hover);
   text-decoration-thickness: 2px;
 }
 .pm-modal-desc-preview a.external-link {
-  color: var(--interactive-accent, var(--pm-accent, #8b72be));
+  color: var(--interactive-accent);
 }
 
 /* ── Note link suggest dropdown ───────────────────────────────────── */
@@ -1736,7 +1736,7 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
 
 .import-modal-header {
   padding: 1rem;
-  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1745,24 +1745,24 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
 .import-modal-header h2 {
   margin: 0;
   font-size: 1.125rem;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
 }
 .import-counter {
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 0.875rem;
 }
 
 .import-search-container {
   padding: 1rem;
-  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 .import-search-input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid var(--background-modifier-border, #e0e0e0);
+  border: 1px solid var(--background-modifier-border);
   border-radius: 0.25rem;
-  background-color: var(--background-primary, #fff);
-  color: var(--text-normal, #2b3438);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
 }
 
 .import-list-wrapper {
@@ -1779,26 +1779,26 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
-  background-color: var(--background-secondary, #f5f5f5);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-secondary);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 .import-select-all-row input[type="checkbox"] {
   cursor: pointer;
-  accent-color: var(--interactive-accent, #0066cc);
+  accent-color: var(--interactive-accent);
 }
 .import-select-all-row label {
   cursor: pointer;
   flex: 1;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
   margin-bottom: 0;
 }
 
 .import-modal-footer {
   padding: 1rem;
-  border-top: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-top: 1px solid var(--background-modifier-border);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -1809,9 +1809,9 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   cursor: pointer;
 }
 .import-btn--secondary {
-  border: 1px solid var(--background-modifier-border, #e0e0e0);
-  background-color: var(--background-primary, #fff);
-  color: var(--text-normal, #2b3438);
+  border: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
 }
 .import-btn--disabled {
   cursor: not-allowed;
@@ -1829,16 +1829,16 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
 }
 .import-option-group select {
   padding: 0.5rem;
   height: 2.25rem;
   line-height: 1.25rem;
   border-radius: 0.25rem;
-  border: 1px solid var(--background-modifier-border, #e0e0e0);
-  background-color: var(--background-primary, #fff);
-  color: var(--text-normal, #2b3438);
+  border: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
   cursor: pointer;
   width: 100%;
 }
@@ -1852,7 +1852,7 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
 }
 .import-radio-group input[type="radio"] {
   cursor: pointer;
@@ -1863,7 +1863,7 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border);
   cursor: pointer;
   transition: background-color 0.15s;
   padding-left: 0.75rem;
@@ -1871,37 +1871,37 @@ body.pm-resize-active, body.pm-resize-active * { cursor: col-resize !important; 
   border-left: none;
 }
 .import-file-item:hover {
-  background-color: var(--background-secondary, #f5f5f5);
+  background-color: var(--background-secondary);
 }
 .import-file-item--selected {
-  background-color: var(--background-secondary, #2a2a2a);
-  border-left: 3px solid var(--interactive-accent, #0066cc);
+  background-color: var(--background-secondary);
+  border-left: 3px solid var(--interactive-accent);
   padding-left: calc(1rem - 3px);
 }
 .import-file-item--selected:hover {
-  background-color: var(--background-secondary, #2a2a2a);
+  background-color: var(--background-secondary);
 }
 .import-file-item input[type="checkbox"] {
   cursor: pointer;
-  accent-color: var(--interactive-accent, #0066cc);
+  accent-color: var(--interactive-accent);
 }
 .import-file-name {
   flex: 1;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
   font-weight: 500;
 }
 .import-file-folder {
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 0.875rem;
 }
 
 .import-options-header {
   padding: 1rem;
-  border-bottom: 1px solid var(--background-modifier-border, #e0e0e0);
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 .import-options-header h2 {
   margin: 0;
   font-size: 1.125rem;
-  color: var(--text-normal, #2b3438);
+  color: var(--text-normal);
 }
 
