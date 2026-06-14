@@ -36,7 +36,12 @@
   gap: 6px;
 }
 .pm-segmented-btn {
-  all: unset;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
   padding: 4px 12px;
   border-radius: var(--pm-radius-sm);
@@ -296,7 +301,7 @@
 }
 .pm-modal-desc-preview a {
   color: var(--interactive-accent);
-  text-decoration: underline;
+  text-decoration-line: underline;
   cursor: pointer;
   transition: color 0.15s;
 }
@@ -383,7 +388,13 @@
 
 /* -- Gantt add task button --------------------------------------------- */
 .pm-gantt-add-task-btn {
-  all: unset;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
   font-size: 12px;
   color: var(--pm-text-muted);

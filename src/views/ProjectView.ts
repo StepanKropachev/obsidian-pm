@@ -418,6 +418,7 @@ export class ProjectView extends ItemView {
         this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
         break
     }
+    this.bodyEl.toggleClass('pm-content--kanban', this.currentView === 'kanban')
     this.subview?.render()
   }
 

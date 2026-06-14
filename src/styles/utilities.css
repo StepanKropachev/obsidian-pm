@@ -63,7 +63,13 @@ body.pm-resize-active * {
 
 /* -- Gantt label "+" subtask button ------------------------------------ */
 .pm-gantt-label-add-btn {
-  all: unset;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;

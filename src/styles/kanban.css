@@ -2,7 +2,7 @@
    KANBAN BOARD
    --------------------------------------------------------------------------- */
 /* When kanban is active, prevent parent from scrolling so flex height works */
-.pm-content:has(.pm-kanban-view) {
+.pm-content--kanban {
   overflow: hidden;
 }
 

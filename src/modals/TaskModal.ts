@@ -276,7 +276,7 @@ export class TaskModal extends Modal {
       const items = e.clipboardData?.items
       if (!items) return
       const attachments: { blob: Blob; name: string }[] = []
-      for (const item of items) {
+      for (const item of Array.from(items)) {
         if (item.kind === 'file' && item.type.startsWith('image/')) {
           const file = item.getAsFile()
           if (file) {
