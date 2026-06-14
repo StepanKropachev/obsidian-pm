@@ -10,6 +10,13 @@ export function normalizePath(p: string): string {
   return p.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '').replace(/\/+$/, '')
 }
 
+export function parseLinktext(linktext: string): { path: string; subpath: string } {
+  const hash = linktext.indexOf('#')
+  return hash < 0
+    ? { path: linktext, subpath: '' }
+    : { path: linktext.slice(0, hash), subpath: linktext.slice(hash) }
+}
+
 export class TAbstractFile {
   path = ''
   name = ''

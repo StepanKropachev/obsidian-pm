@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Subtasks created from a task's subtasks list or the add-subtask buttons are set to the subtask type automatically ([#82](https://github.com/StepanKropachev/obsidian-pm/issues/82))
+- Assignees written as note links (`[[People/Jane Doe]]`) show the person's name on their avatar instead of the link path ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
 
 ## [1.6.0] - 2026-06-12
 
