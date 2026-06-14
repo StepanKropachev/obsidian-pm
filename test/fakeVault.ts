@@ -1,6 +1,11 @@
 import { TAbstractFile, TFile, TFolder, normalizePath, parseYaml } from 'obsidian'
 import { appendYaml } from '../src/store/YamlParser'
 
+const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
+  if (value == null) throw new Error(message)
+  return value
+}
+
 interface FileContent {
   file: TFile
   content: string
@@ -119,7 +124,7 @@ export class FakeVault {
 
   async trashFile(file: TAbstractFile): Promise<void> {
     if (file instanceof TFolder) {
-      for (const child of [...file.children]) await this.trashFile(child)
+      for (const child of file.children.slice()) await this.trashFile(child)
       this.folders.delete(file.path)
       detachFromParent(file)
       bump(this.trashCount, file.path)
@@ -140,7 +145,7 @@ export class FakeVault {
 
   private ensureFolderForPath(path: string): TFolder {
     const idx = path.lastIndexOf('/')
-    if (idx < 0) return this.folders.get('')!
+    if (idx < 0) return expectDefined(this.folders.get(''))
     const parentPath = path.slice(0, idx)
     const existing = this.folders.get(parentPath)
     if (existing) return existing

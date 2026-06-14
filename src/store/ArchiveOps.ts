@@ -17,7 +17,8 @@ export async function archiveTask(app: App, project: Project, taskId: string): P
   const archiveFolder = normalizePath(taskFolder + '/Archive')
   await ensureFolder(app, archiveFolder)
 
-  const fileName = task.filePath.split('/').pop()!
+  const fileName = task.filePath.split('/').pop()
+  if (!fileName) return
   const newPath = normalizePath(archiveFolder + '/' + fileName)
 
   const file = app.vault.getAbstractFileByPath(task.filePath)
@@ -35,7 +36,8 @@ export async function unarchiveTask(app: App, project: Project, taskId: string):
   if (!task || !task.filePath) return
 
   const taskFolder = projectTaskFolder(project)
-  const fileName = task.filePath.split('/').pop()!
+  const fileName = task.filePath.split('/').pop()
+  if (!fileName) return
   const newPath = normalizePath(taskFolder + '/' + fileName)
 
   const file = app.vault.getAbstractFileByPath(task.filePath)

@@ -20,7 +20,6 @@ export class ImportModal extends Modal {
   private nextButton: HTMLButtonElement | null = null
   private fileListContainer: HTMLDivElement | null = null
   private counterLabel: HTMLDivElement | null = null
-  private onConfirm: ((selectedFiles: TFile[]) => void) | null = null
 
   // Phase 2 state
   private phase: 1 | 2 = 1
@@ -223,14 +222,15 @@ export class ImportModal extends Modal {
   }
 
   private renderFileList(): void {
-    if (!this.fileListContainer) return
+    const fileListContainer = this.fileListContainer
+    if (!fileListContainer) return
 
     // Clear existing items (keep the select-all row)
-    const items = this.fileListContainer.querySelectorAll('.import-file-item')
+    const items = fileListContainer.querySelectorAll('.import-file-item')
     items.forEach((item) => item.remove())
 
     this.filteredFiles.forEach((item) => {
-      const row = this.fileListContainer!.createDiv('import-file-item suggestion-item')
+      const row = fileListContainer.createDiv('import-file-item suggestion-item')
       this.applyRowStyles(row, item.selected)
 
       const checkbox = row.createEl('input', { type: 'checkbox' })
@@ -405,15 +405,11 @@ export class ImportModal extends Modal {
     }
   }
 
-  setOnConfirm(callback: (selectedFiles: TFile[]) => void): void {
-    this.onConfirm = callback
-  }
-
   setProject(project: Project): void {
     this.project = project
   }
 
-  setOnImportComplete(callback: () => void): void {
-    this.onImportComplete = callback
+  setOnImportComplete(handler: () => void): void {
+    this.onImportComplete = handler
   }
 }

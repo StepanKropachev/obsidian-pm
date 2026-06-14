@@ -450,10 +450,19 @@ export class ProjectStore {
   async saveProject(project: Project): Promise<void> {
     const key = project.filePath
     const prev = this.saveQueues.get(key) ?? Promise.resolve()
-    const next = prev.then(() => this.doSaveProject(project))
+    const next = (async () => {
+      await prev
+      await this.doSaveProject(project)
+    })()
     this.saveQueues.set(
       key,
-      next.catch(() => {})
+      (async () => {
+        try {
+          await next
+        } catch {
+          // swallow so the next queued save still runs after a failure
+        }
+      })()
     )
     return next
   }
@@ -948,7 +957,7 @@ export class ProjectStore {
   }
 
   private async deleteFolderRecursive(folder: TFolder): Promise<void> {
-    for (const child of [...folder.children]) {
+    for (const child of folder.children.slice()) {
       if (child instanceof TFile) {
         this.markSelfWrite(child.path)
         await this.app.fileManager.trashFile(child)

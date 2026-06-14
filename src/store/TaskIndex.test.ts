@@ -10,6 +10,11 @@ import {
   rebuildTaskIndex
 } from './TaskIndex'
 
+const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
+  if (value == null) throw new Error(message)
+  return value
+}
+
 function tree(): Task[] {
   return [
     makeTask({
@@ -86,7 +91,7 @@ describe('indexAddSubtree / indexRemoveSubtree / indexSetParent', () => {
     const project = makeProject('P', 'P.md')
     project.tasks = tree()
     rebuildTaskIndex(project)
-    const a = findTaskById(project, 'a')!
+    const a = expectDefined(findTaskById(project, 'a'))
     indexRemoveSubtree(project, a)
     expect(findTaskById(project, 'a')).toBeNull()
     expect(findTaskById(project, 'a1')).toBeNull()

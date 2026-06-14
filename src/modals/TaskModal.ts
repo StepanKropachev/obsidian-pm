@@ -80,11 +80,15 @@ export class TaskModal extends Modal {
 
   private persistTask(): Promise<void> {
     if (this.persistPromise) return this.persistPromise
-    const p = this.runPersist()
+    const p = (async () => {
+      try {
+        await this.runPersist()
+      } catch (err) {
+        this.persistPromise = null
+        throw err
+      }
+    })()
     this.persistPromise = p
-    p.catch(() => {
-      this.persistPromise = null
-    })
     return p
   }
 

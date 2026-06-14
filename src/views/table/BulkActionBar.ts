@@ -224,8 +224,8 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
       ctx.state.selectedTaskIds.clear()
       if (ctx.state.tableBody) {
         const cbs = ctx.state.tableBody.querySelectorAll('.pm-select-checkbox')
-        cbs.forEach((cb) => {
-          ;(cb as HTMLInputElement).checked = false
+        cbs.forEach((checkbox) => {
+          ;(checkbox as HTMLInputElement).checked = false
         })
       }
       updateSelectAllCheckbox(ctx.state)

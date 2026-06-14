@@ -34,7 +34,8 @@ export function renderChipList(container: HTMLElement, items: string[], opts: Ch
   if (opts.renderAdd) {
     opts.renderAdd(container)
   } else if (opts.onAdd) {
-    new ButtonComponent(container).setButtonText(opts.addLabel ?? '+ Add').onClick((e) => opts.onAdd!(e))
+    const onAdd = opts.onAdd
+    new ButtonComponent(container).setButtonText(opts.addLabel ?? '+ Add').onClick((e) => onAdd(e))
   }
 }
 

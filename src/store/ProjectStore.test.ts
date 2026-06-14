@@ -7,6 +7,11 @@ import { ProjectStore } from './ProjectStore'
 import { buildTaskIndex } from './TaskIndex'
 import { flattenTasks } from './TaskTreeOps'
 
+const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
+  if (value == null) throw new Error(message)
+  return value
+}
+
 const STATUSES: StatusConfig[] = [
   { id: 'todo', label: 'Todo', color: '#888', icon: 'circle', complete: false },
   { id: 'in-progress', label: 'In progress', color: '#88f', icon: 'loader', complete: false },
@@ -50,22 +55,22 @@ describe('ProjectStore self-write tracking', () => {
 
     await store.updateTask(project, task.id, { status: 'in-progress' })
 
-    expect(store.consumeSelfWrite(task.filePath!)).toBe(true)
-    expect(store.consumeSelfWrite(task.filePath!)).toBe(false) // single-use
+    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(true)
+    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(false) // single-use
   })
 
   it('marks both old and new path on title rename (modify new, trash old)', async () => {
     const { store, vault } = newStore()
     const project = await store.createProject('R', 'Projects')
     const task = await addNamed(store, project, 'Before')
-    const oldPath = task.filePath!
+    const oldPath = expectDefined(task.filePath)
     vault.resetCounts()
 
     await store.updateTask(project, task.id, { title: 'Renamed' })
 
     // The new path is created (marked for cache invalidation) and the old
     // path is trashed (marked so the delete listener skips the reload).
-    expect(store.consumeSelfWrite(task.filePath!)).toBe(true)
+    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(true)
     expect(store.consumeSelfWrite(oldPath)).toBe(true)
   })
 
@@ -95,8 +100,8 @@ describe('ProjectStore dirty-set save efficiency', () => {
     // No mutations, but force a save by updating a non-existent id.
     await store.updateTask(project, 'missing-id', {})
 
-    expect(vault.modifyCount.get(a.filePath!) ?? 0).toBe(0)
-    expect(vault.modifyCount.get(b.filePath!) ?? 0).toBe(0)
+    expect(vault.modifyCount.get(expectDefined(a.filePath)) ?? 0).toBe(0)
+    expect(vault.modifyCount.get(expectDefined(b.filePath)) ?? 0).toBe(0)
     expect(vault.modifyCount.get(project.filePath)).toBe(1)
   })
 
@@ -110,9 +115,9 @@ describe('ProjectStore dirty-set save efficiency', () => {
 
     await store.updateTask(project, b.id, { priority: 'high' })
 
-    expect(vault.modifyCount.get(a.filePath!) ?? 0).toBe(0)
-    expect(vault.modifyCount.get(b.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(c.filePath!) ?? 0).toBe(0)
+    expect(vault.modifyCount.get(expectDefined(a.filePath)) ?? 0).toBe(0)
+    expect(vault.modifyCount.get(expectDefined(b.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(c.filePath)) ?? 0).toBe(0)
   })
 
   it('rewrites direct children when a parent title changes', async () => {
@@ -126,10 +131,10 @@ describe('ProjectStore dirty-set save efficiency', () => {
     await store.updateTask(project, parent.id, { title: 'New parent' })
 
     // Parent file is renamed (create new + trash old), not modified.
-    expect(vault.modifyCount.get(parent.filePath!) ?? 0).toBe(0)
+    expect(vault.modifyCount.get(expectDefined(parent.filePath)) ?? 0).toBe(0)
     // Children stay at the same path but get rewritten because their Parent link broke.
-    expect(vault.modifyCount.get(child1.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(child2.filePath!)).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(child1.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(child2.filePath))).toBe(1)
   })
 
   it('rewrites both old and new parent on moveTask', async () => {
@@ -142,9 +147,9 @@ describe('ProjectStore dirty-set save efficiency', () => {
 
     await store.moveTask(project, child.id, p2.id)
 
-    expect(vault.modifyCount.get(p1.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(p2.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(child.filePath!)).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(p1.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(p2.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(child.filePath))).toBe(1)
   })
 
   it('rewrites the parent (not the deleted task) on deleteTask', async () => {
@@ -152,13 +157,13 @@ describe('ProjectStore dirty-set save efficiency', () => {
     const project = await store.createProject('Delete', 'Projects')
     const parent = await addNamed(store, project, 'Keep')
     const child = await addNamed(store, project, 'Goner', parent.id)
-    const childPath = child.filePath!
+    const childPath = expectDefined(child.filePath)
     vault.resetCounts()
 
     await store.deleteTask(project, child.id)
 
     expect(vault.trashCount.get(childPath)).toBe(1)
-    expect(vault.modifyCount.get(parent.filePath!)).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(parent.filePath))).toBe(1)
   })
 })
 
@@ -190,14 +195,14 @@ describe('ProjectStore round-trip', () => {
     expect(ids.has(b.id)).toBe(true)
     expect(ids.has(childOfA.id)).toBe(true)
 
-    const reloadedA = flat.find((f) => f.task.id === a.id)!.task
+    const reloadedA = expectDefined(flat.find((f) => f.task.id === a.id)).task
     expect(reloadedA.title).toBe('Design')
     expect(reloadedA.priority).toBe('high')
     expect(reloadedA.assignees).toEqual(['Alice'])
     expect(reloadedA.tags).toEqual(['design'])
     expect(reloadedA.subtasks.map((s) => s.id)).toEqual([childOfA.id])
 
-    const reloadedB = flat.find((f) => f.task.id === b.id)!.task
+    const reloadedB = expectDefined(flat.find((f) => f.task.id === b.id)).task
     expect(reloadedB.status).toBe('in-progress')
   })
 
@@ -299,7 +304,7 @@ describe('ProjectStore completion date', () => {
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(file)
     if (!reloaded) throw new Error('reload failed')
-    const reloadedTask = flattenTasks(reloaded.tasks).find((f) => f.task.id === task.id)!.task
+    const reloadedTask = expectDefined(flattenTasks(reloaded.tasks).find((f) => f.task.id === task.id)).task
     expect(reloadedTask.completed).toMatch(ISO_DATE)
   })
 
@@ -400,7 +405,7 @@ describe('ProjectStore metadataCache fast path', () => {
     const { store, vault, app } = newStore()
     const project = await store.createProject('Cache', 'Projects')
     const task = await addNamed(store, project, 'cached task')
-    const taskPath = task.filePath!
+    const taskPath = expectDefined(task.filePath)
 
     stubTaskCache(app, taskPath, { 'pm-task': true, id: task.id, title: 'cached task' })
 
@@ -423,7 +428,7 @@ describe('ProjectStore metadataCache fast path', () => {
     const project = await store.createProject('Body', 'Projects')
     const task = await addNamed(store, project, 'task')
     await store.updateTask(project, task.id, { description: 'real description' })
-    const taskPath = task.filePath!
+    const taskPath = expectDefined(task.filePath)
 
     // Reload through a fresh store with cache hits — task arrives unhydrated.
     stubTaskCache(app, taskPath, {
@@ -449,7 +454,7 @@ describe('ProjectStore metadataCache fast path', () => {
     const project = await store.createProject('Preserve', 'Projects')
     const task = await addNamed(store, project, 'preserve me')
     await store.updateTask(project, task.id, { description: 'keep this' })
-    const taskPath = task.filePath!
+    const taskPath = expectDefined(task.filePath)
 
     stubTaskCache(app, taskPath, {
       'pm-task': true,
@@ -478,7 +483,7 @@ describe('ProjectStore metadataCache fast path', () => {
     const project = await store.createProject('Edit', 'Projects')
     const task = await addNamed(store, project, 'editable')
     await store.updateTask(project, task.id, { description: 'before' })
-    const taskPath = task.filePath!
+    const taskPath = expectDefined(task.filePath)
 
     stubTaskCache(app, taskPath, {
       'pm-task': true,
@@ -537,7 +542,7 @@ describe('ProjectStore task index', () => {
     expect(new Set(paths).size).toBe(paths.length)
     for (const p of paths) {
       expect(p).toBeTruthy()
-      expect(vault.getAbstractFileByPath(p!)).toBeInstanceOf(TFile)
+      expect(vault.getAbstractFileByPath(expectDefined(p))).toBeInstanceOf(TFile)
     }
   })
 
@@ -580,8 +585,8 @@ describe('ProjectStore concurrent-save race', () => {
     const project = await store.createProject('Race', 'Projects')
     const a = await addNamed(store, project, 'Alpha')
     const b = await addNamed(store, project, 'Beta')
-    const aOldPath = a.filePath!
-    const bOldPath = b.filePath!
+    const aOldPath = expectDefined(a.filePath)
+    const bOldPath = expectDefined(b.filePath)
     vault.resetCounts()
 
     // Kick off two updates back-to-back without awaiting the first.
@@ -613,9 +618,9 @@ describe('ProjectStore bulk mutators', () => {
     )
 
     expect(a.assignees).toEqual(['sam'])
-    expect(vault.modifyCount.get(a.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(b.filePath!)).toBeUndefined()
-    const file = vault.getAbstractFileByPath(a.filePath!)
+    expect(vault.modifyCount.get(expectDefined(a.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(b.filePath))).toBeUndefined()
+    const file = vault.getAbstractFileByPath(expectDefined(a.filePath))
     if (!(file instanceof TFile)) throw new Error('task file missing')
     expect(await vault.cachedRead(file)).toContain('sam')
   })
@@ -631,10 +636,10 @@ describe('ProjectStore bulk mutators', () => {
     await store.reorderTask(project, two.id, one.id, 'before')
 
     expect(parent.subtasks.map((t) => t.id)).toEqual([two.id, one.id])
-    expect(vault.modifyCount.get(parent.filePath!)).toBe(1)
-    expect(vault.modifyCount.get(one.filePath!)).toBeUndefined()
-    expect(vault.modifyCount.get(two.filePath!)).toBeUndefined()
-    const file = vault.getAbstractFileByPath(parent.filePath!)
+    expect(vault.modifyCount.get(expectDefined(parent.filePath))).toBe(1)
+    expect(vault.modifyCount.get(expectDefined(one.filePath))).toBeUndefined()
+    expect(vault.modifyCount.get(expectDefined(two.filePath))).toBeUndefined()
+    const file = vault.getAbstractFileByPath(expectDefined(parent.filePath))
     if (!(file instanceof TFile)) throw new Error('parent file missing')
     const content = await vault.cachedRead(file)
     expect(content.indexOf(two.id)).toBeLessThan(content.indexOf(one.id))
@@ -650,7 +655,7 @@ describe('ProjectStore bulk mutators', () => {
     await store.saveProject(project)
 
     expect(rogue.filePath).toBeDefined()
-    expect(vault.getAbstractFileByPath(rogue.filePath!)).not.toBeNull()
+    expect(vault.getAbstractFileByPath(expectDefined(rogue.filePath))).not.toBeNull()
   })
 })
 

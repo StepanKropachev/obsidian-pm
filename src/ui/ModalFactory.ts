@@ -238,7 +238,11 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
   // body is read. Pre-load (no-op if already hydrated) so the modal renders the
   // real description in one paint.
   if (opts.task) {
-    void plugin.store.loadTaskBody(opts.task).then(open)
+    const task = opts.task
+    void (async () => {
+      await plugin.store.loadTaskBody(task)
+      open()
+    })()
   } else {
     open()
   }
@@ -254,7 +258,11 @@ export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): 
     new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave).open()
   }
   if (opts.project) {
-    void plugin.store.loadProjectBody(opts.project).then(open)
+    const project = opts.project
+    void (async () => {
+      await plugin.store.loadProjectBody(project)
+      open()
+    })()
   } else {
     open()
   }

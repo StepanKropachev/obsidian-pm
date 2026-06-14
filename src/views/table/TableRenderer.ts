@@ -268,7 +268,8 @@ export function updateSelectCheckboxes(state: TableState): void {
   if (!state.tableBody) return
   const rows = state.tableBody.querySelectorAll('tr[data-task-id]')
   for (const row of Array.from(rows)) {
-    const id = (row as HTMLElement).dataset.taskId!
+    const id = (row as HTMLElement).dataset.taskId
+    if (id === undefined) continue
     const cb = row.querySelector('.pm-select-checkbox')
     if (cb) (cb as HTMLInputElement).checked = state.selectedTaskIds.has(id)
   }
