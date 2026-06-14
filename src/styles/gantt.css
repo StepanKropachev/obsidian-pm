@@ -1,0 +1,300 @@
+/* ---------------------------------------------------------------------------
+   GANTT VIEW
+   --------------------------------------------------------------------------- */
+.pm-gantt-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pm-gantt-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--pm-border);
+  flex-shrink: 0;
+  background: var(--pm-bg);
+  flex-wrap: wrap;
+}
+.pm-gantt-sep {
+  flex: 1;
+}
+
+.pm-gantt-zoom-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  background: transparent;
+  color: var(--pm-text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.pm-gantt-zoom-btn:hover {
+  background: var(--pm-bg3);
+  color: var(--pm-text);
+}
+.pm-gantt-zoom-btn--active {
+  background: var(--pm-accent);
+  color: var(--text-on-accent);
+  border-color: var(--pm-accent);
+}
+
+/* Main Gantt layout */
+.pm-gantt-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left panel: task labels */
+.pm-gantt-left {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--pm-surface-raised);
+  z-index: 5;
+}
+
+.pm-gantt-left-header {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 12px 10px;
+  box-shadow: inset 0 -2px 0 var(--pm-border);
+  flex-shrink: 0;
+  background: var(--pm-bg);
+  box-sizing: border-box;
+}
+.pm-gantt-left-header-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pm-text-muted);
+}
+
+.pm-gantt-left-body {
+  flex: 1;
+  overflow: hidden; /* synced by JS */
+}
+
+.pm-gantt-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  box-shadow: inset 0 -1px 0 var(--pm-border);
+  cursor: default;
+  transition: background 0.1s;
+  box-sizing: border-box;
+}
+.pm-gantt-label-row:hover {
+  background: var(--pm-bg3);
+}
+
+.pm-gantt-label-spacer {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.pm-gantt-label-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pm-gantt-label-title {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.pm-gantt-label-title:hover {
+  color: var(--pm-accent);
+}
+
+.pm-gantt-label-progress {
+  font-size: 11px;
+  color: var(--pm-text-muted);
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+/* Resize handle between left and right panels */
+.pm-gantt-resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 6;
+  transition: background 0.15s;
+}
+.pm-gantt-resize-handle:hover,
+.pm-gantt-resize-handle:active {
+  background: var(--pm-accent);
+}
+
+/* Right panel: scrollable SVG */
+.pm-gantt-right {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.pm-gantt-svg-container {
+  position: relative;
+}
+.pm-gantt-svg {
+  display: block;
+}
+
+/* SVG elements */
+.pm-gantt-header-bg {
+  fill: var(--pm-bg2);
+}
+.pm-gantt-band-even {
+  fill: rgba(0, 0, 0, 0);
+}
+.pm-gantt-band-odd {
+  fill: rgba(0, 0, 0, 0.025);
+}
+.theme-dark .pm-gantt-band-odd {
+  fill: rgba(255, 255, 255, 0.025);
+}
+
+.pm-gantt-header-month-top {
+  font-size: 10px;
+  fill: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pm-gantt-header-year {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-weight: 600;
+}
+.pm-gantt-header-day {
+  font-size: 10px;
+  fill: var(--text-muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.pm-gantt-header-week {
+  font-size: 10px;
+  fill: var(--text-muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 600;
+}
+.pm-gantt-header-month {
+  font-size: 11px;
+  fill: var(--text-normal);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 600;
+}
+.pm-gantt-header-quarter {
+  font-size: 12px;
+  fill: var(--text-normal);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 700;
+}
+.pm-gantt-header-tick {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+}
+
+.pm-gantt-weekend-header {
+  fill: rgba(0, 0, 0, 0.04);
+}
+.theme-dark .pm-gantt-weekend-header {
+  fill: rgba(255, 255, 255, 0.04);
+}
+
+.pm-gantt-gridline-v {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.pm-gantt-gridline-h {
+  stroke: var(--background-modifier-border);
+  stroke-width: 0.5;
+}
+.pm-gantt-weekend {
+  fill: rgba(0, 0, 0, 0.025);
+}
+.theme-dark .pm-gantt-weekend {
+  fill: rgba(255, 255, 255, 0.025);
+}
+
+.pm-gantt-row-hover {
+  fill: transparent;
+  cursor: default;
+}
+.pm-gantt-row-hover:hover {
+  fill: color-mix(in srgb, var(--interactive-accent) 3%, transparent);
+}
+
+/* Empty row click-to-set-dates */
+.pm-gantt-empty-row-hit:hover {
+  fill: color-mix(in srgb, var(--interactive-accent) 3%, transparent);
+}
+.pm-gantt-empty-row-preview {
+  fill: var(--interactive-accent);
+  opacity: 0.25;
+}
+
+/* Gantt bars */
+.pm-gantt-bar {
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.pm-gantt-bar:hover {
+  filter: brightness(1.15);
+}
+.pm-gantt-bar-progress {
+  pointer-events: none;
+}
+.pm-gantt-bar-label {
+  font-size: 10px;
+  fill: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  dominant-baseline: central;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Today line */
+.pm-gantt-today-line {
+  stroke: color-mix(in srgb, var(--color-red) 65%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+.pm-gantt-today-diamond {
+  fill: color-mix(in srgb, var(--color-red) 65%, transparent);
+}
+
+/* Dependency arrows */
+.pm-gantt-arrow {
+  fill: none;
+  stroke: var(--pm-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  opacity: 0.4;
+}
+.pm-gantt-arrowhead {
+  fill: var(--pm-accent);
+  opacity: 0.5;
+}

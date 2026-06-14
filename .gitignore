@@ -1,5 +1,6 @@
 node_modules/
 main.js
+styles.css
 .claude/
 preview/
 CLAUDE.md

@@ -1,0 +1,398 @@
+/* -- Scrollbar polish ------------------------------------------------------- */
+.pm-gantt-right::-webkit-scrollbar,
+.pm-kanban-board::-webkit-scrollbar,
+.pm-kanban-cards::-webkit-scrollbar,
+.pm-task-modal::-webkit-scrollbar,
+.pm-project-modal::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pm-gantt-right::-webkit-scrollbar-track,
+.pm-kanban-board::-webkit-scrollbar-track,
+.pm-kanban-cards::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pm-gantt-right::-webkit-scrollbar-thumb,
+.pm-kanban-board::-webkit-scrollbar-thumb,
+.pm-kanban-cards::-webkit-scrollbar-thumb,
+.pm-task-modal::-webkit-scrollbar-thumb,
+.pm-project-modal::-webkit-scrollbar-thumb {
+  background: var(--pm-border);
+  border-radius: 99px;
+}
+.pm-gantt-right::-webkit-scrollbar-thumb:hover {
+  background: var(--pm-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   NEW: Milestone, Time Tracking, Recurrence, Drag Handles, Inline Edit
+   --------------------------------------------------------------------------- */
+
+/* -- SegmentedControl ---------------------------------------------------- */
+.pm-segmented {
+  display: flex;
+  gap: 6px;
+}
+.pm-segmented-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: var(--pm-radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pm-text-muted);
+  border: 1px solid var(--pm-border);
+  transition: all 0.15s;
+}
+.pm-segmented-btn:hover {
+  background: var(--pm-bg3);
+}
+.pm-segmented-btn--milestone {
+  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+  color: var(--text-accent);
+}
+.pm-segmented-btn--subtask {
+  background: color-mix(in srgb, var(--color-green) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-green) 40%, transparent);
+  color: var(--color-green);
+}
+.pm-segmented-btn--active {
+  box-shadow: 0 0 0 2px var(--pm-accent);
+}
+
+/* -- Recurrence picker --------------------------------------------------- */
+.pm-prop-recurrence {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pm-recur-every {
+  width: 52px;
+  text-align: center;
+}
+.pm-recur-interval {
+  width: 110px;
+}
+.pm-recur-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pm-recur-label {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}
+.pm-recur-end-input {
+  width: 130px;
+}
+.pm-prop-add-btn.pm-recur-rm {
+  color: var(--pm-danger);
+  border-color: color-mix(in srgb, var(--color-red) 30%, transparent);
+}
+
+/* -- Time tracking ------------------------------------------------------- */
+.pm-time-est-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pm-time-label {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}
+.pm-time-est-input {
+  width: 80px;
+}
+
+.pm-time-bar {
+  height: 4px;
+  background: var(--pm-bg3);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.pm-time-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.pm-time-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pm-time-log-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 6px;
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg3);
+  border: 1px solid var(--pm-ghost-border);
+}
+.pm-time-log-date {
+  width: 120px;
+}
+.pm-time-log-hours {
+  width: 60px;
+  text-align: center;
+}
+.pm-time-log-note {
+  flex: 1;
+}
+
+.pm-time-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+.pm-time-chip--sm {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+.pm-time-chip--over {
+  background: color-mix(in srgb, var(--color-red) 15%, transparent);
+  color: var(--color-red);
+}
+
+/* -- Kanban title row ---------------------------------------------------- */
+.pm-kanban-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pm-kanban-card-title-row .pm-kanban-card-title {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* -- Inline edit input --------------------------------------------------- */
+.pm-inline-edit {
+  padding: 3px 6px;
+  border: 1px solid var(--pm-accent);
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg2);
+  color: var(--pm-text);
+  font-size: 13px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+  width: 100%;
+}
+
+/* -- Gantt drag handles -------------------------------------------------- */
+.pm-gantt-drag-handle {
+  fill: rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    fill 0.15s;
+}
+.pm-gantt-bar-group:hover .pm-gantt-drag-handle {
+  opacity: 1;
+  fill: rgba(255, 255, 255, 0.25);
+}
+.pm-gantt-bar-group .pm-gantt-drag-handle:hover {
+  fill: rgba(255, 255, 255, 0.45);
+}
+.pm-gantt-bar-grabbing {
+  cursor: grabbing;
+}
+
+/* -- Gantt link dots (dependency connectors) ---------------------------- */
+.pm-gantt-link-dot {
+  fill: transparent;
+  stroke: var(--pm-accent);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    fill 0.15s;
+  pointer-events: all;
+}
+.pm-gantt-bar-group:hover .pm-gantt-link-dot {
+  opacity: 0.5;
+}
+.pm-gantt-bar-group .pm-gantt-link-dot:hover {
+  opacity: 1;
+  fill: var(--pm-accent);
+}
+.pm-gantt-bar-group .pm-gantt-link-dot--active {
+  opacity: 1;
+  fill: var(--pm-accent);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px var(--pm-accent));
+}
+
+/* -- Gantt milestone ----------------------------------------------------- */
+.pm-gantt-milestone {
+  transition:
+    transform 0.15s,
+    filter 0.15s;
+}
+.pm-gantt-milestone:hover {
+  filter: brightness(1.2);
+}
+.pm-gantt-milestone-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.pm-gantt-bar-icon {
+  font-size: 11px;
+  pointer-events: none;
+}
+
+/* -- Dark theme surface overrides ---------------------------------------- */
+.theme-dark .pm-root {
+  --pm-ghost-border: rgba(255, 255, 255, 0.06);
+  --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
+}
+.theme-dark .pm-modal {
+  --pm-ghost-border: rgba(255, 255, 255, 0.06);
+  --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
+}
+
+/* -- Properties container ---------------------------------------------- */
+.pm-modal-props-container {
+  padding: 0 24px;
+}
+.pm-modal-desc-section {
+  border-top: none;
+  position: relative;
+}
+.pm-modal-desc-preview {
+  padding: 8px 10px;
+  background: var(--pm-bg2);
+  border-radius: var(--pm-radius-sm);
+  border: 1px solid var(--pm-border);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 40px;
+  max-height: 300px;
+  overflow-y: auto;
+  cursor: text;
+  transition: border-color 0.15s;
+}
+.pm-modal-desc-preview:hover {
+  border-color: var(--pm-accent);
+}
+.pm-modal-desc-preview p {
+  margin: 0 0 0.5em;
+}
+.pm-modal-desc-preview p:last-child {
+  margin-bottom: 0;
+}
+.pm-modal-desc-preview a {
+  color: var(--interactive-accent);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.pm-modal-desc-preview a:hover {
+  color: var(--interactive-accent-hover);
+  text-decoration-thickness: 2px;
+}
+.pm-modal-desc-preview a.external-link {
+  color: var(--interactive-accent);
+}
+
+/* -- Note link suggest dropdown ------------------------------------- */
+.pm-note-suggest {
+  position: absolute;
+  z-index: 300;
+  width: 280px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--pm-bg);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  box-shadow: 0 4px 16px var(--pm-shadow-ambient);
+  padding: 4px;
+  display: none;
+}
+.pm-note-suggest--visible {
+  display: block;
+}
+.pm-note-suggest-mirror {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  visibility: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+.pm-note-suggest-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  border-radius: var(--pm-radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pm-note-suggest-item:hover {
+  background: var(--pm-bg3);
+}
+.pm-note-suggest-item--active {
+  background: var(--pm-accent-light);
+}
+.pm-note-suggest-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.pm-note-suggest-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pm-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pm-note-suggest-type {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pm-text-faint);
+  background: var(--pm-bg3);
+  padding: 1px 5px;
+  border-radius: var(--pm-radius-sm);
+}
+.pm-note-suggest-path {
+  font-size: 11px;
+  color: var(--pm-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -- Gantt add task button --------------------------------------------- */
+.pm-gantt-add-task-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  padding: 4px 8px;
+  margin-left: 20px;
+  border-radius: var(--pm-radius-sm);
+  transition: all 0.15s;
+}
+.pm-gantt-add-task-btn:hover {
+  background: var(--pm-bg3);
+  color: var(--pm-accent);
+}

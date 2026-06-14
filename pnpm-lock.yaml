@@ -32,6 +32,9 @@ importers:
       eslint-plugin-obsidianmd:
         specifier: 0.3.0
         version: 0.3.0(@eslint/js@9.39.4)(@eslint/json@0.14.0)(@typescript-eslint/parser@8.61.0(eslint@10.4.1)(typescript@6.0.3))(eslint@10.4.1)(obsidian@1.12.3(@codemirror/state@6.5.0)(@codemirror/view@6.38.6))(typescript-eslint@8.59.0(eslint@10.4.1)(typescript@6.0.3))
+      lightningcss:
+        specifier: ^1.32.0
+        version: 1.32.0
       npm-run-all2:
         specifier: 9.0.1
         version: 9.0.1
