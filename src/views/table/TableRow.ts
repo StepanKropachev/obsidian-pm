@@ -2,7 +2,6 @@ import { Menu } from 'obsidian'
 import { getStatusConfig, isTaskOverdue, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
 import { today, parsePlainDate } from '../../dates'
-import { COLOR_ACCENT } from '../../constants'
 import type { Task } from '../../types'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext, TableState } from './TableRenderer'
@@ -133,7 +132,7 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx
     }
   })
 
-  new ProgressCell(row, { value: task.progress, color: statusConfig?.color ?? COLOR_ACCENT })
+  new ProgressCell(row, { value: task.progress, color: statusConfig?.color ?? 'var(--interactive-accent)' })
   new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
 
   for (const cf of ctx.project.customFields) {

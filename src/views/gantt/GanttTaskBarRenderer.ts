@@ -1,7 +1,6 @@
 import { Notice } from 'obsidian'
 import type { Task } from '../../types'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { COLOR_ACCENT } from '../../constants'
 import { svgEl, getStatusConfig, safeAsync } from '../../utils'
 import { parsePlainDate } from '../../dates'
 import {
@@ -29,7 +28,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   }
 
   const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
-  const color = statusConfig?.color ?? COLOR_ACCENT
+  const color = statusConfig?.color ?? getComputedStyle(ctx.svgEl).getPropertyValue('--interactive-accent').trim()
   const rowY = HEADER_HEIGHT + row * ROW_HEIGHT
   const y = rowY + BAR_PADDING
   const height = ROW_HEIGHT - BAR_PADDING * 2
@@ -332,7 +331,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
     if (!date) continue
     const x = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2
     const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
-    const color = statusConfig?.color ?? COLOR_ACCENT
+    const color = statusConfig?.color ?? getComputedStyle(ctx.svgEl).getPropertyValue('--interactive-accent').trim()
 
     const totalH = HEADER_HEIGHT + ctx.flatTasks.filter((f) => f.visible || f.depth === 0).length * ROW_HEIGHT
     labelsG.appendChild(

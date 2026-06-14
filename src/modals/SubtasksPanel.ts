@@ -2,7 +2,6 @@ import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task } from '../types'
 import { makeTask } from '../types'
-import { COLOR_MUTED } from '../constants'
 import { getStatusConfig, isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
 /**
@@ -31,7 +30,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
       })
 
       const dot = row.createSpan({ cls: 'pm-subtask-dot' })
-      dot.setCssStyles({ background: subStatus?.color ?? COLOR_MUTED })
+      dot.setCssStyles({ background: subStatus?.color ?? 'var(--text-muted)' })
 
       const titleEl = row.createSpan({ text: sub.title, cls: 'pm-subtask-title' })
       titleEl.contentEditable = 'true'

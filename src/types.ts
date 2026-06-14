@@ -1,4 +1,3 @@
-import { COLOR_ACCENT } from './constants'
 import { today } from './dates'
 import type { TaskIndex } from './store/TaskIndex'
 
@@ -205,7 +204,7 @@ export function makeProject(title: string, filePath: string): Project {
     id: makeId(),
     title,
     description: '',
-    color: COLOR_ACCENT,
+    color: '#8b72be',
     icon: '📋',
     tasks: [],
     customFields: [],

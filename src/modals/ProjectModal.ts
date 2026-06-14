@@ -4,13 +4,12 @@ import { Project, CustomFieldDef, makeId, makeProject } from '../types'
 import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
-import { COLOR_DANGER } from '../constants'
 
 const PROJECT_COLORS = [
   '#8b72be',
   '#7c6b9a',
   '#b07d9e',
-  COLOR_DANGER,
+  '#c47070',
   '#b8a06b',
   '#79b58d',
   '#6ba8a0',
