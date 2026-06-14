@@ -50,7 +50,8 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
   const visited = new Set<string>()
   const queue = [fromId]
   while (queue.length > 0) {
-    const current = queue.shift()!
+    const current = queue.shift()
+    if (current === undefined) break
     if (current === toId) return true
     if (visited.has(current)) continue
     visited.add(current)
@@ -101,7 +102,8 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
     scopeIds = new Set<string>()
     const queue = [changedTaskId]
     while (queue.length > 0) {
-      const id = queue.shift()!
+      const id = queue.shift()
+      if (id === undefined) break
       if (scopeIds.has(id)) continue
       scopeIds.add(id)
       for (const depId of dependentsOf.get(id) ?? []) {
@@ -128,11 +130,13 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
 
   const topoOrder: string[] = []
   while (queue.length > 0) {
-    const id = queue.shift()!
+    const id = queue.shift()
+    if (id === undefined) break
     topoOrder.push(id)
     for (const depId of dependentsOf.get(id) ?? []) {
-      if (!inDegree.has(depId)) continue
-      const newDeg = inDegree.get(depId)! - 1
+      const currentDeg = inDegree.get(depId)
+      if (currentDeg === undefined) continue
+      const newDeg = currentDeg - 1
       inDegree.set(depId, newDeg)
       if (newDeg === 0) queue.push(depId)
     }
@@ -155,7 +159,8 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
   const patches: SchedulePatch[] = []
 
   for (const id of topoOrder) {
-    const task = taskById.get(id)!
+    const task = taskById.get(id)
+    if (!task) continue
 
     // Skip done/cancelled tasks
     if (isTerminalStatus(task.status, statuses)) continue

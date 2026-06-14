@@ -92,10 +92,14 @@ export function formatBadgeText(icon: string | undefined, label: string): string
 /** Wrap an async callback so unhandled rejections show a Notice and log to console */
 export function safeAsync<A extends unknown[]>(fn: (...args: A) => Promise<void>): (...args: A) => void {
   return (...args: A) => {
-    fn(...args).catch((err: unknown) => {
-      console.error('[PM]', err)
-      new Notice('Something went wrong. Check the console for details.')
-    })
+    void (async () => {
+      try {
+        await fn(...args)
+      } catch (err: unknown) {
+        console.error('[PM]', err)
+        new Notice('Something went wrong. Check the console for details.')
+      }
+    })()
   }
 }
 

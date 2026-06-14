@@ -52,7 +52,8 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
 
   // Normal task bar. A task with end date E occupies the day E, so the bar
   // right edge sits at the start of E+1.
-  const effectiveStart = startDate ?? endDate!
+  const effectiveStart = startDate ?? endDate
+  if (!effectiveStart) return
   const effectiveEnd = (endDate ?? effectiveStart).add({ days: 1 })
 
   const x = Math.max(0, dateToX(ctx.cfg, effectiveStart))

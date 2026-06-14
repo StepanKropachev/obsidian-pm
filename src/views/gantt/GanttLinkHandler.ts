@@ -54,6 +54,12 @@ export function handleLinkDotClick(
     return
   }
 
+  const otherTaskId = link.taskId
+  if (otherTaskId === null) {
+    cancelLink(link)
+    return
+  }
+
   // Same side — invalid (need one left + one right)
   if (link.side === side) {
     new Notice('Connect a right dot (output) to a left dot (input).')
@@ -62,8 +68,8 @@ export function handleLinkDotClick(
 
   // Determine predecessor (right dot) and successor (left dot)
   // Finish-to-start: successor.dependencies includes predecessor.id
-  const predecessorId = side === 'right' ? taskId : link.taskId!
-  const successorId = side === 'left' ? taskId : link.taskId!
+  const predecessorId = side === 'right' ? taskId : otherTaskId
+  const successorId = side === 'left' ? taskId : otherTaskId
 
   cancelLink(link)
 
