@@ -1,0 +1,245 @@
+/* -- Project Header -------------------------------------------------------- */
+.pm-project-header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.pm-project-header-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-search {
+  flex: 1 1 200px;
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+.pm-project-header-search:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.pm-project-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-saved-views {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pm-project-header-save-input {
+  display: inline-flex;
+  align-items: center;
+}
+.pm-project-header-save-input-field {
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+
+.pm-project-header-filter-toggle {
+  margin-left: auto;
+}
+
+.pm-project-header-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 8px;
+  flex-wrap: wrap;
+}
+
+/* -- Toolbar --------------------------------------------------------------- */
+.pm-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--pm-surface-raised);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.pm-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.pm-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pm-toolbar-icon {
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px;
+  border-radius: var(--pm-radius-sm);
+  transition: transform 0.15s;
+}
+.pm-toolbar-icon:hover {
+  transform: scale(1.15);
+}
+
+.pm-toolbar-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: var(--pm-radius-sm);
+  outline: none;
+  min-width: 40px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+}
+.pm-toolbar-title:focus {
+  background: var(--pm-bg3);
+  box-shadow: 0 0 0 2px var(--pm-accent);
+}
+
+/* -- View switcher --------------------------------------------------------- */
+.pm-view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--background-modifier-hover);
+  border-radius: var(--radius-s);
+  padding: 2px;
+  gap: 2px;
+}
+
+/* override clickable-icon defaults to get a segmented control shape */
+.pm-view-switcher .pm-view-btn.clickable-icon {
+  border-radius: calc(var(--radius-s) - 2px);
+  background: transparent;
+  color: var(--text-muted);
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.pm-view-switcher .pm-view-btn.clickable-icon:hover {
+  background: transparent;
+  color: var(--text-normal);
+}
+.pm-view-switcher .pm-view-btn--active.clickable-icon,
+.pm-view-switcher .pm-view-btn--active.clickable-icon:hover {
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.pm-prop-add-btn {
+  background: transparent;
+  border: 1px dashed var(--pm-border);
+  color: var(--pm-text-muted);
+  padding: 3px 10px;
+  border-radius: var(--pm-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.pm-prop-add-btn:hover {
+  border-color: var(--pm-accent);
+  color: var(--pm-accent);
+  background: var(--pm-accent-light);
+}
+
+/* -- Content --------------------------------------------------------------- */
+.pm-content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* -- Empty state ----------------------------------------------------------- */
+.pm-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--pm-text-muted);
+  padding: 40px;
+}
+.pm-empty-icon {
+  font-size: 48px;
+}
+
+/* ---------------------------------------------------------------------------
+   PROJECT LIST / CARDS
+   --------------------------------------------------------------------------- */
+.pm-project-list-container {
+  padding: 24px;
+}
+
+.pm-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.pm-project-card {
+  border: 1px solid var(--pm-ghost-border);
+  border-radius: var(--pm-radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--pm-surface-raised);
+  transition: all 0.2s;
+  position: relative;
+}
+.pm-project-card:hover {
+  box-shadow: 0 4px 16px var(--pm-shadow-ambient);
+  border-color: var(--pm-border);
+}
+
+.pm-project-card-bar {
+  height: 4px;
+}
+.pm-project-card-body {
+  padding: 16px;
+}
+.pm-project-card-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+.pm-project-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pm-project-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pm-project-card-tasks {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}

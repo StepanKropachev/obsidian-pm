@@ -1,0 +1,37 @@
+/* CSS custom properties and root layout */
+.pm-root {
+  --pm-radius: 0.375rem;
+  --pm-radius-sm: 0.25rem;
+  --pm-radius-lg: 0.5rem;
+  --pm-font: var(--font-interface);
+  --pm-mono: var(--font-monospace);
+
+  --pm-bg: var(--background-primary);
+  --pm-bg2: var(--background-secondary);
+  --pm-bg3: var(--background-modifier-hover);
+  --pm-border: var(--background-modifier-border);
+  --pm-text: var(--text-normal);
+  --pm-text-muted: var(--text-muted);
+  --pm-text-faint: var(--text-faint);
+
+  --pm-accent: var(--interactive-accent);
+  --pm-accent-dim: var(--interactive-accent-hover);
+  --pm-accent-light: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  --pm-danger: var(--color-red);
+  --pm-success: var(--color-green);
+  --pm-warning: var(--color-yellow);
+
+  /* Surfaces - no glassmorphism, use tonal stacking */
+  --pm-surface: var(--background-primary);
+  --pm-surface-raised: var(--background-secondary);
+  --pm-surface-overlay: var(--background-secondary);
+  --pm-ghost-border: rgba(0, 0, 0, 0.06);
+  --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
+
+  font-family: var(--pm-font);
+  color: var(--pm-text);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}

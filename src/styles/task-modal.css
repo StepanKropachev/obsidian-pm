@@ -1,0 +1,323 @@
+/* ---------------------------------------------------------------------------
+   TASK MODAL
+   --------------------------------------------------------------------------- */
+.pm-modal {
+  /* Inherit CSS variables since modals render outside .pm-root */
+  --pm-radius: 0.375rem;
+  --pm-radius-sm: 0.25rem;
+  --pm-radius-lg: 0.5rem;
+  --pm-font: var(--font-interface);
+  --pm-mono: var(--font-monospace);
+  --pm-bg: var(--background-primary);
+  --pm-bg2: var(--background-secondary);
+  --pm-bg3: var(--background-modifier-hover);
+  --pm-border: var(--background-modifier-border);
+  --pm-text: var(--text-normal);
+  --pm-text-muted: var(--text-muted);
+  --pm-text-faint: var(--text-faint);
+  --pm-accent: var(--interactive-accent);
+  --pm-accent-dim: var(--interactive-accent-hover);
+  --pm-accent-light: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  --pm-danger: var(--color-red);
+  --pm-success: var(--color-green);
+  --pm-warning: var(--color-yellow);
+  --pm-ghost-border: rgba(0, 0, 0, 0.06);
+  --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
+
+  max-width: 680px;
+  width: 90vw;
+  max-height: 88vh;
+}
+
+.pm-task-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  max-height: calc(88vh - 40px);
+  padding: 0;
+}
+
+.pm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--pm-border);
+  position: sticky;
+  top: 0;
+  background: var(--background-primary);
+  z-index: 10;
+}
+
+.pm-modal-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pm-modal-title-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.pm-modal-title-input {
+  width: 100%;
+  font-size: 20px;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--pm-text);
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+.pm-modal-title-input::placeholder {
+  color: var(--pm-text-faint);
+}
+.pm-input-error {
+  box-shadow: 0 0 0 2px var(--text-error);
+  border-radius: 4px;
+}
+
+.pm-modal-title-error {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-error);
+}
+.pm-modal-title-error[hidden] {
+  display: none;
+}
+
+/* Property rows */
+.pm-modal-props {
+  padding: 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pm-prop-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  min-height: 34px;
+}
+.pm-prop-label {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pm-prop-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pm-prop-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.pm-progress-slider {
+  flex: 1;
+  appearance: none;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--pm-bg3);
+  cursor: pointer;
+}
+.pm-progress-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pm-accent);
+  cursor: pointer;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+}
+.pm-progress-slider-label {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+  min-width: 32px;
+  text-align: right;
+}
+
+.pm-prop-date {
+  padding: 4px 8px;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg2);
+  color: var(--pm-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.pm-prop-date:focus {
+  border-color: var(--pm-accent);
+  outline: none;
+}
+
+.pm-prop-text,
+.pm-prop-select {
+  padding: 5px 8px;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg2);
+  color: var(--pm-text);
+  font-size: 13px;
+  width: 100%;
+}
+.pm-prop-text:focus,
+.pm-prop-select:focus {
+  border-color: var(--pm-accent);
+  outline: none;
+}
+
+.pm-prop-assignees,
+.pm-prop-tags,
+.pm-prop-deps {
+  flex-wrap: wrap;
+}
+
+/* Modal sections */
+.pm-modal-section {
+  padding: 14px 24px;
+  border-top: 1px solid var(--pm-border);
+}
+.pm-modal-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pm-modal-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pm-text-muted);
+  margin: 0 0 10px;
+}
+.pm-modal-section-header .pm-modal-section-title {
+  margin-bottom: 0;
+}
+
+.pm-modal-description {
+  width: 100%;
+  min-height: 80px;
+  /* Add the CSS variable for Obsidian bot compliance: */
+  height: var(--desc-height, auto);
+  padding: 8px 10px;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg2);
+  color: var(--pm-text);
+  font-size: 13px;
+  resize: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.pm-modal-description:focus {
+  border-color: var(--pm-accent);
+  outline: none;
+}
+
+/* Subtasks */
+.pm-modal-subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pm-modal-subtask-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--pm-radius-sm);
+  transition: background 0.1s;
+}
+.pm-modal-subtask-row:hover {
+  background: var(--pm-bg3);
+}
+
+.pm-subtask-checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pm-border);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.pm-subtask-checkbox:checked {
+  background: var(--pm-success);
+  border-color: var(--pm-success);
+}
+
+.pm-subtask-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pm-subtask-title {
+  flex: 1;
+  font-size: 13px;
+  outline: none;
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+.pm-subtask-title:focus {
+  background: var(--pm-bg3);
+}
+
+.pm-subtask-rm {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--pm-text-muted);
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.pm-modal-subtask-row:hover .pm-subtask-rm {
+  opacity: 1;
+}
+.pm-subtask-rm:hover {
+  color: var(--pm-danger);
+}
+
+/* Modal footer */
+.pm-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--pm-border);
+  background: var(--pm-bg2);
+  position: sticky;
+  bottom: 0;
+}
+.pm-footer-spacer {
+  flex: 1;
+}
+
+/* Confirm dialog */
+.pm-confirm-modal .modal-content {
+  padding: 1rem 1.25rem;
+}
+.pm-confirm-modal {
+  max-width: 380px;
+}

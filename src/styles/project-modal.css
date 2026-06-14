@@ -1,0 +1,311 @@
+/* ---------------------------------------------------------------------------
+   PROJECT MODAL
+   --------------------------------------------------------------------------- */
+.pm-modal--project {
+  max-width: 560px;
+}
+
+.pm-project-modal {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 85vh;
+  overflow-y: auto;
+  color: var(--text-normal);
+}
+.pm-project-modal * {
+  color: inherit;
+}
+.pm-modal-heading {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.pm-modal-subheading {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pm-project-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.pm-project-modal-header-icon {
+  font-size: 18px;
+  color: var(--pm-accent);
+}
+.pm-project-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pm-input--lg {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 14px;
+}
+.pm-prop-add-btn--sm {
+  font-size: 11px;
+}
+.pm-modal-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}
+
+.pm-project-top-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* Icon picker */
+.pm-icon-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+.pm-icon-picker-btn {
+  font-size: 32px;
+  background: var(--pm-bg2);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1;
+}
+.pm-icon-picker-btn:hover {
+  background: var(--pm-bg3);
+}
+.pm-icon-grid {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  background: var(--pm-bg);
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.pm-icon-option {
+  font-size: 20px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: var(--pm-radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+  line-height: 1;
+}
+.pm-icon-option:hover {
+  background: var(--pm-bg3);
+}
+
+.pm-project-title-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Color palette */
+.pm-color-palette {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pm-color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.pm-color-swatch:hover {
+  transform: scale(1.15);
+}
+.pm-color-swatch--selected {
+  border-color: var(--pm-text);
+  box-shadow: 0 0 0 2px var(--pm-bg);
+}
+.pm-color-custom {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--pm-border);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+}
+
+/* Labels & inputs */
+.pm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 4px;
+}
+.pm-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.pm-input:focus {
+  border-color: var(--pm-accent);
+  outline: none;
+}
+.pm-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 26px;
+}
+
+.pm-project-desc {
+  min-height: 72px;
+  resize: vertical;
+}
+.pm-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pm-member-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pm-member-input {
+  flex: 1;
+}
+
+/* Custom field editor */
+.pm-cf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pm-cf-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px;
+  background: var(--pm-bg2);
+  border-radius: var(--pm-radius);
+  border: 1px solid var(--pm-border);
+  flex-wrap: wrap;
+}
+.pm-cf-name {
+  flex: 1;
+  min-width: 120px;
+}
+.pm-cf-type {
+  flex: 0 0 130px;
+}
+.pm-cf-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.pm-cf-opt-row {
+  display: flex;
+  gap: 6px;
+}
+.pm-cf-opt-input {
+  flex: 1;
+}
+
+/* Settings */
+.pm-settings h3 {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.pm-settings-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.pm-settings-members,
+.pm-settings-statuses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pm-settings-member-row,
+.pm-settings-status-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pm-settings-member-row input[type='text'] {
+  flex: 1;
+}
+.pm-settings-status-icon {
+  width: 40px;
+  text-align: center;
+  flex: 0 0 40px;
+}
+.pm-settings-status-label {
+  flex: 1;
+}
+.pm-settings-del {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.pm-settings-del:hover {
+  background: color-mix(in srgb, var(--color-red) 10%, transparent);
+  color: var(--pm-danger);
+}
+.pm-settings-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: 14px;
+  flex: 0 0 16px;
+  text-align: center;
+}
+.pm-settings-row--dragging {
+  opacity: 0.4;
+}
+.pm-settings-complete-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.pm-settings-complete-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}

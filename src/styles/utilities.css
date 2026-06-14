@@ -1,0 +1,263 @@
+/* -- Utility classes ------------------------------------------------------- */
+.pm-hidden {
+  display: none !important;
+}
+.pm-dragging {
+  opacity: 0.5;
+}
+.pm-subtask-rm--visible {
+  opacity: 1;
+}
+.pm-offscreen {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+}
+.pm-no-shrink {
+  flex-shrink: 0;
+}
+body.pm-resize-active,
+body.pm-resize-active * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* Prompt / Confirm modal typography */
+.pm-prompt-text {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+}
+.pm-confirm-text {
+  margin: 0 0 1rem 0;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+}
+.pm-prompt-input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  box-sizing: border-box;
+}
+.pm-modal-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* -- Gantt label drag reorder ------------------------------------------ */
+.pm-gantt-label-row--dragging {
+  opacity: 0.4;
+}
+.pm-gantt-label-row--drop-before {
+  box-shadow: inset 0 2px 0 var(--pm-accent);
+}
+.pm-gantt-label-row--drop-after {
+  box-shadow: inset 0 -2px 0 var(--pm-accent);
+}
+
+/* -- Gantt label "+" subtask button ------------------------------------ */
+.pm-gantt-label-add-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pm-text-muted);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+.pm-gantt-label-row:hover .pm-gantt-label-add-btn {
+  opacity: 1;
+}
+.pm-gantt-label-add-btn:hover {
+  background: var(--pm-bg3);
+  color: var(--pm-accent);
+}
+
+/* -- Import Modal ----------------------------------------------------------- */
+/* Note: modals render outside .pm-root, so use Obsidian native vars only.   */
+
+.import-modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.import-modal-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-normal);
+}
+.import-counter {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.import-search-container {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.import-search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.25rem;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.import-list-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.import-select-all-row {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.import-select-all-row input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+.import-select-all-row label {
+  cursor: pointer;
+  flex: 1;
+  color: var(--text-normal);
+  margin-bottom: 0;
+}
+
+.import-modal-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.import-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.import-btn--secondary {
+  border: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+}
+.import-btn--disabled {
+  cursor: not-allowed;
+}
+
+.import-options-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.import-option-group > label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.import-option-group select {
+  padding: 0.5rem;
+  height: 2.25rem;
+  line-height: 1.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+  width: 100%;
+}
+.import-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.import-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-normal);
+}
+.import-radio-group input[type='radio'] {
+  cursor: pointer;
+}
+
+.import-file-item {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  padding-left: 0.75rem;
+  background-color: transparent;
+  border-left: none;
+}
+.import-file-item:hover {
+  background-color: var(--background-secondary);
+}
+.import-file-item--selected {
+  background-color: var(--background-secondary);
+  border-left: 3px solid var(--interactive-accent);
+  padding-left: calc(1rem - 3px);
+}
+.import-file-item--selected:hover {
+  background-color: var(--background-secondary);
+}
+.import-file-item input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+.import-file-name {
+  flex: 1;
+  color: var(--text-normal);
+  font-weight: 500;
+}
+.import-file-folder {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.import-options-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.import-options-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-normal);
+}
