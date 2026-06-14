@@ -43,6 +43,7 @@ export class TaskModal extends Modal {
       this.task = makeTask({
         status: getDefaultStatusId(plugin.settings.statuses),
         priority: 'medium',
+        type: parentId ? 'subtask' : 'task',
         ...defaults
       })
       this.isNew = true

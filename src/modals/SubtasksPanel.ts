@@ -48,7 +48,7 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
   renderSubtasks()
 
   addSubBtn.onClick(() => {
-    const newSub = makeTask({ title: 'New subtask' })
+    const newSub = makeTask({ title: 'New subtask', type: 'subtask' })
     task.subtasks.push(newSub)
     renderSubtasks()
     window.setTimeout(() => {
