@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gantt today marker, milestone and subtask buttons, and row selection and hover highlights take their colors from the theme instead of fixed values
 - Kanban cards align the assignee and due date to the bottom of the card
 
+### Fixed
+
+- Subtasks created from a task's subtasks list or the add-subtask buttons are set to the subtask type automatically ([#82](https://github.com/StepanKropachev/obsidian-pm/issues/82))
+
 ## [1.6.0] - 2026-06-12
 
 ### Added
