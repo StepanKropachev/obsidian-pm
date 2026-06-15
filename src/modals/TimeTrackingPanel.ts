@@ -81,7 +81,9 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   }
   renderLogs()
 
-  const addLogBtn = timeSection.createEl('button', { text: '+ log time', cls: 'pm-prop-add-btn' })
+  const addLogBtn = timeSection.createEl('button', { cls: 'pm-prop-add' })
+  setIcon(addLogBtn.createSpan({ cls: 'pm-glyph-icon' }), 'plus')
+  addLogBtn.createSpan({ cls: 'pm-prop-add-label', text: 'Log time' })
   addLogBtn.addEventListener('click', () => {
     if (!task.timeLogs) task.timeLogs = []
     task.timeLogs.push({
