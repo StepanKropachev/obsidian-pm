@@ -263,20 +263,20 @@
   position: relative;
 }
 .pm-modal-desc-preview {
-  padding: 8px 10px;
-  background: var(--pm-bg2);
+  padding: 6px 8px;
+  background: transparent;
   border-radius: var(--pm-radius-sm);
-  border: 1px solid var(--pm-border);
+  border: 1px solid transparent;
   font-size: 13px;
   line-height: 1.6;
-  min-height: 40px;
+  min-height: 32px;
   max-height: 300px;
   overflow-y: auto;
   cursor: text;
-  transition: border-color 0.15s;
+  transition: background 0.15s;
 }
 .pm-modal-desc-preview:hover {
-  border-color: var(--pm-accent);
+  background: var(--background-modifier-hover);
 }
 .pm-modal-desc-preview p {
   margin: 0 0 0.5em;

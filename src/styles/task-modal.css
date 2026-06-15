@@ -168,18 +168,26 @@
   min-height: 80px;
   /* Add the CSS variable for Obsidian bot compliance: */
   height: var(--desc-height, auto);
-  padding: 8px 10px;
-  border: 1px solid var(--pm-border);
+  padding: 6px 8px;
+  border: 1px solid transparent;
   border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg2);
+  background: transparent;
   color: var(--pm-text);
   font-size: 13px;
+  line-height: 1.6;
   resize: none;
   overflow: hidden;
   box-sizing: border-box;
+  transition: background 0.15s;
 }
-.pm-modal-description:focus {
-  border-color: var(--pm-accent);
+.pm-modal-description:hover {
+  background: var(--background-modifier-hover);
+}
+/* The description edits in place, so it stays borderless on focus rather than
+   taking core app.css's textarea focus ring (textarea:focus, 0,1,1). */
+textarea.pm-modal-description:focus {
+  background: var(--background-modifier-hover);
+  box-shadow: none;
   outline: none;
 }
 
