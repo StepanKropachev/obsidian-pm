@@ -91,7 +91,7 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
       for (const it of items) {
         renderOptionRow(listEl, {
           label: it.label,
-          color: it.color,
+          color: it.color ?? opts.colorFor?.(it.id),
           icon: it.icon,
           selected: selectedIds.has(it.id),
           onPick: () => {

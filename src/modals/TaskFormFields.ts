@@ -3,7 +3,7 @@ import { Project, Task, TaskType, TaskPriority, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
-import { isTerminalStatus } from '../utils'
+import { isTerminalStatus, stringToColor } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
   renderSelectControl,
@@ -248,6 +248,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         addLabel: 'Add tags',
         placeholder: 'Find or create…',
         tag: true,
+        colorFor: (t) => stringToColor(t),
         selected: () => task.tags,
         options: () => projectTags.map((t) => ({ id: t, label: t })),
         add: (id) => {

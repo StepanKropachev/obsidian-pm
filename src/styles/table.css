@@ -318,10 +318,16 @@
   color: var(--text-normal);
 }
 .pm-chip--tag {
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 5px;
   font-size: 11px;
   gap: 4px;
+  /* the dot carries the tag color; the label stays quiet */
+  color: var(--text-muted);
+}
+.pm-chip--tag .pm-chip-dot {
+  width: 5px;
+  height: 5px;
 }
 .pm-chip--sm {
   padding: 1px 5px;
