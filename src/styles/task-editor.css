@@ -313,6 +313,12 @@ button.pm-pop-item--danger {
   gap: 10px;
   margin-bottom: 8px;
 }
+/* The heading is a flex item here, not inside .pm-modal-section-header, so it keeps the
+   section title's default bottom margin. Zero it so its box matches the text height and
+   the progress bar centers against the text rather than dropping below it. */
+.pm-subtasks-header .pm-modal-section-title {
+  margin: 0;
+}
 .pm-subtasks-progress {
   display: inline-flex;
   align-items: center;
