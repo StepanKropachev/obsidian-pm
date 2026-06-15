@@ -316,6 +316,15 @@ button.pm-pop-item--danger {
   padding: 0;
 }
 
+/* Obsidian's .modal insets its content with 16px of padding; drop it so the
+   header and footer backgrounds bleed to both modal edges (the body keeps its
+   own horizontal padding). overflow:hidden re-clips the bled bands to the
+   modal's rounded corners. */
+.pm-modal--task {
+  padding: 0;
+  overflow: hidden;
+}
+
 /* The editor draws its own close button in the header row (matching the design),
    so suppress Obsidian's native corner close button to avoid two X's. */
 .pm-modal--task .modal-close-button {
@@ -323,13 +332,11 @@ button.pm-pop-item--danger {
 }
 
 .pm-te-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px 10px 16px;
+  gap: 12px;
+  padding: 12px 16px 12px 18px;
   background: var(--background-primary);
   border-bottom: 1px solid var(--background-modifier-border);
 }
@@ -384,7 +391,18 @@ button.pm-pop-item--danger {
 }
 
 .pm-te-body {
-  padding: 18px 22px 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 8px;
+}
+/* The body sections (description, subtasks, time, custom fields) reuse the shared
+   .pm-modal-section, whose 24px horizontal padding would indent their content past
+   the title and property grid. Inside the editor they align to the body inset; their
+   full-width top borders still divide the sections. */
+.pm-task-modal .pm-modal-section {
+  padding-left: 0;
+  padding-right: 0;
 }
 .pm-te-title-wrap {
   margin-bottom: 16px;
@@ -421,13 +439,10 @@ button.pm-pop-item--danger {
 }
 
 .pm-te-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   background: var(--background-secondary);
   border-top: 1px solid var(--background-modifier-border);
 }
