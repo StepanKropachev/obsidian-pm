@@ -10,7 +10,9 @@
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
-  box-shadow: var(--shadow-l);
+  /* shadow-s matches Obsidian's native menu/dropdown shadow; shadow-l is modal-scale
+     and reads as an oversized drop on a small popover */
+  box-shadow: var(--shadow-s);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -73,8 +75,10 @@
   background: var(--pm-glyph-color, var(--text-muted));
 }
 
-/* Inline property value control */
-.pm-prop-inline {
+/* Inline property value control. The `button` prefix is required: Obsidian's core
+   `button:not(.clickable-icon)` rule outranks a bare class, so without it these
+   controls inherit the default grey button fill and inset shadow. */
+button.pm-prop-inline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -96,7 +100,7 @@
 .pm-prop-inline:hover {
   background: var(--background-modifier-hover);
 }
-.pm-prop-inline--empty {
+button.pm-prop-inline--empty {
   color: var(--text-faint);
 }
 .pm-prop-inline-label {
@@ -126,8 +130,9 @@
   color: var(--text-muted);
 }
 
-/* Ghost add affordance (add property / add value) */
-.pm-prop-add {
+/* Ghost add affordance (add property / add value). `button` prefix outranks core
+   button chrome (see pm-prop-inline). */
+button.pm-prop-add {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -179,7 +184,7 @@
   text-transform: uppercase;
   color: var(--text-faint);
 }
-.pm-pop-item {
+button.pm-pop-item {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -203,10 +208,10 @@
   flex: 1;
   justify-content: center;
 }
-.pm-pop-item--accent {
+button.pm-pop-item--accent {
   color: var(--text-accent);
 }
-.pm-pop-item--danger {
+button.pm-pop-item--danger {
   color: var(--color-red);
 }
 .pm-pop-item-label {
@@ -304,6 +309,12 @@
   padding: 0;
 }
 
+/* The editor draws its own close button in the header row (matching the design),
+   so suppress Obsidian's native corner close button to avoid two X's. */
+.pm-modal--task .modal-close-button {
+  display: none;
+}
+
 .pm-te-header {
   position: sticky;
   top: 0;
@@ -342,7 +353,10 @@
   color: var(--text-muted);
 }
 .pm-te-crumb-icon {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  --icon-size: 14px;
 }
 .pm-te-crumb-name {
   overflow: hidden;
@@ -458,18 +472,6 @@
 @media (max-width: 520px) {
   .pm-prop-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-/* Touch devices have no hover, so give the inline controls a resting affordance
-   instead of revealing it only on hover. */
-@media (hover: none) {
-  .pm-prop-inline,
-  .pm-prop-add {
-    background: var(--background-modifier-hover);
-  }
-  .pm-prop-add {
-    border-color: var(--background-modifier-border);
   }
 }
 

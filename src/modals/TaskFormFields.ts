@@ -247,7 +247,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         search: true,
         addLabel: 'Add tags',
         placeholder: 'Find or create…',
-        chipShape: 'pill',
+        tag: true,
         selected: () => task.tags,
         options: () => projectTags.map((t) => ({ id: t, label: t })),
         add: (id) => {

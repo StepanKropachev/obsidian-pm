@@ -25,6 +25,7 @@ export interface MultiSelectOpts {
   create?: (label: string) => void
   avatar?: boolean
   chipShape?: 'pill' | 'rounded'
+  tag?: boolean
 }
 
 /**
@@ -56,12 +57,13 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
       } else {
         const chip = new Chip(chipsEl)
           .setLabel(labelOf(id))
-          .setShape(opts.chipShape ?? 'pill')
           .setVariant('outline')
           .setRemovable(() => {
             opts.remove(id)
             renderChips()
           })
+        if (opts.tag) chip.setTag()
+        else chip.setShape(opts.chipShape ?? 'pill')
         const color = opts.colorFor?.(id)
         if (color) chip.setDot(true).setColor(color)
       }

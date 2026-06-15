@@ -66,7 +66,7 @@ export class TaskModal extends Modal {
     const { contentEl } = this
     contentEl.empty()
     contentEl.addClass('pm-task-modal')
-    this.modalEl.addClass('pm-modal')
+    this.modalEl.addClass('pm-modal', 'pm-modal--task')
     this.render()
   }
 
@@ -220,7 +220,12 @@ export class TaskModal extends Modal {
     const prio = getPriorityConfig(this.plugin.settings.priorities, this.task.priority)
     if (prio?.color) header.setCssProps({ '--pm-accent-strip': prio.color })
     const crumb = header.createDiv('pm-te-crumb')
-    if (this.project.icon) crumb.createSpan({ cls: 'pm-te-crumb-icon', text: this.project.icon })
+    if (this.project.icon) {
+      const iconEl = crumb.createSpan({ cls: 'pm-te-crumb-icon' })
+      // project.icon is either an emoji or a Lucide icon name; render names as icons.
+      if (/^[a-z0-9-]+$/.test(this.project.icon)) setIcon(iconEl, this.project.icon)
+      else iconEl.setText(this.project.icon)
+    }
     crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.project.title })
     const crumbSep = crumb.createSpan({ cls: 'pm-te-crumb-sep' })
     setIcon(crumbSep, 'chevron-right')
