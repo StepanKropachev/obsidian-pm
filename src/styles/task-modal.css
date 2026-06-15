@@ -209,17 +209,18 @@ textarea.pm-modal-description:focus {
   background: var(--pm-bg3);
 }
 
-.pm-subtask-checkbox {
+/* element-prefixed to beat core's input[type=checkbox] sizing (0,1,1) */
+input.pm-subtask-checkbox {
   appearance: none;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--pm-border);
-  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--background-modifier-border-focus);
+  border-radius: 4px;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s;
 }
-.pm-subtask-checkbox:checked {
+input.pm-subtask-checkbox:checked {
   background: var(--pm-success);
   border-color: var(--pm-success);
 }

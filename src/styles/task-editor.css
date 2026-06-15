@@ -273,7 +273,13 @@ button.pm-pop-item--danger {
   --icon-size: 15px;
 }
 
-/* Subtasks: derived progress + inline add */
+/* Subtasks: heading with inline count + derived progress + inline add */
+.pm-subtasks-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
 .pm-subtasks-progress {
   display: inline-flex;
   align-items: center;
@@ -285,9 +291,11 @@ button.pm-pop-item--danger {
 .pm-subtasks-progress .pm-progress {
   flex: 1;
 }
+/* The count lives inside the heading (Subtasks 1/4); keep it quiet next to the label. */
 .pm-subtasks-count {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
+  margin-left: 2px;
+  color: var(--text-faint);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 .pm-subtask-add-row {

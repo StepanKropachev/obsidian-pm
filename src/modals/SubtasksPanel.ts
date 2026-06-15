@@ -2,7 +2,7 @@ import { setIcon } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task } from '../types'
 import { makeTask } from '../types'
-import { getStatusConfig, isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
+import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 import { ProgressBar } from '../ui/primitives/ProgressBar'
 
 /**
@@ -13,8 +13,9 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
   const statuses = plugin.settings.statuses
   const subSection = container.createDiv('pm-modal-section')
 
-  const subHeader = subSection.createDiv('pm-modal-section-header')
-  subHeader.createEl('h4', { text: 'Subtasks', cls: 'pm-modal-section-title' })
+  const subHeader = subSection.createDiv('pm-subtasks-header')
+  const heading = subHeader.createEl('h4', { text: 'Subtasks ', cls: 'pm-modal-section-title' })
+  const countEl = heading.createSpan({ cls: 'pm-subtasks-count' })
   const progressWrap = subHeader.createDiv('pm-subtasks-progress')
 
   const subList = subSection.createDiv('pm-modal-subtask-list')
@@ -22,9 +23,12 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
   const renderProgress = () => {
     progressWrap.empty()
     const total = task.subtasks.length
-    if (total === 0) return
+    if (total === 0) {
+      countEl.setText('')
+      return
+    }
     const done = task.subtasks.filter((s) => isTerminalStatus(s.status, statuses)).length
-    progressWrap.createSpan({ cls: 'pm-subtasks-count', text: `${done}/${total}` })
+    countEl.setText(`${done}/${total}`)
     new ProgressBar(progressWrap).setValue(Math.round((done / total) * 100)).setSize('sm')
   }
 
@@ -32,7 +36,6 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     subList.empty()
     for (const sub of task.subtasks) {
       const row = subList.createDiv('pm-modal-subtask-row')
-      const subStatus = getStatusConfig(statuses, sub.status)
 
       const check = row.createEl('input', { type: 'checkbox', cls: 'pm-subtask-checkbox' })
       check.checked = isTerminalStatus(sub.status, statuses)
@@ -42,9 +45,6 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
         renderSubtasks()
         renderProgress()
       })
-
-      const dot = row.createSpan({ cls: 'pm-subtask-dot' })
-      dot.setCssProps({ '--pm-glyph-color': subStatus?.color ?? 'var(--text-muted)' })
 
       const titleEl = row.createSpan({ text: sub.title, cls: 'pm-subtask-title' })
       titleEl.contentEditable = 'true'
