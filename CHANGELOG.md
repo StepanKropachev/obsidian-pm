@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The task editor leads with the title and a compact property list; status, priority, type, and dates are inline controls that open a picker on click
+- Rarely used task fields (start date, repeat, dependencies) stay hidden until added from an "Add property" menu instead of showing empty rows
+- Tags, assignees, and dependencies are edited through a searchable picker that stays open while adding several at once
+- Archive, delete, and "Open as note" moved into an overflow menu in the task editor header, leaving Cancel and Save in the footer
+- The subtasks section shows progress derived from completed subtasks, replacing the manual progress slider
+
+### Fixed
+
+- Time tracking shows the over-estimate state once logged time passes the estimate
+
 ## [1.6.3] - 2026-06-17
 
 ### Fixed

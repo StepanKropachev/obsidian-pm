@@ -1,6 +1,8 @@
+import { setIcon } from 'obsidian'
 import type { Task } from '../types'
 import { totalLoggedHours } from '../store/TaskTreeOps'
 import { today } from '../dates'
+import { ProgressBar } from '../ui/primitives/ProgressBar'
 
 /**
  * Renders the time tracking section (estimate, progress bar, log entries)
@@ -29,12 +31,12 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
     task.timeEstimate = isNaN(v) || v <= 0 ? undefined : v
   })
 
-  // Progress bar
+  // Progress bar (red once logged time exceeds the estimate)
   if (est > 0) {
-    const pct = Math.min(100, Math.round((logged / est) * 100))
-    const timeBar = timeSection.createDiv('pm-time-bar')
-    const timeFill = timeBar.createDiv('pm-time-bar-fill')
-    timeFill.setCssStyles({ width: `${pct}%`, background: pct > 100 ? 'var(--pm-danger)' : 'var(--pm-accent)' })
+    const over = logged > est
+    const bar = new ProgressBar(timeSection.createDiv('pm-time-progress'))
+    bar.setValue(Math.round((logged / est) * 100)).setSize('sm')
+    if (over) bar.setColor('var(--color-red)')
   }
 
   // Log entries
@@ -69,8 +71,9 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
         log.note = noteInput.value
       })
 
-      const rmBtn = row.createEl('button', { text: '\u2715', cls: 'pm-subtask-rm' })
+      const rmBtn = row.createEl('button', { cls: 'pm-subtask-rm' })
       rmBtn.addClass('pm-subtask-rm--visible')
+      setIcon(rmBtn, 'x')
       rmBtn.addEventListener('click', () => {
         logs.splice(i, 1)
         renderLogs()

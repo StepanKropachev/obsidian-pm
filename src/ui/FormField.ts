@@ -1,9 +1,22 @@
-import { ButtonComponent } from 'obsidian'
+import { ButtonComponent, setIcon } from 'obsidian'
 import { Chip } from './primitives/Chip'
 
-export function renderPropRow(container: HTMLElement, label: string, valueBuilder: () => HTMLElement): HTMLElement {
+export function renderPropRow(
+  container: HTMLElement,
+  label: string,
+  valueBuilder: () => HTMLElement,
+  icon?: string
+): HTMLElement {
   const row = container.createDiv('pm-prop-row')
-  row.createSpan({ text: label, cls: 'pm-prop-label' })
+  const labelEl = row.createSpan({ cls: 'pm-prop-label' })
+  if (icon) {
+    labelEl.addClass('pm-prop-label--with-icon')
+    const iconEl = labelEl.createSpan({ cls: 'pm-prop-label-icon' })
+    setIcon(iconEl, icon)
+    labelEl.createSpan({ text: label })
+  } else {
+    labelEl.setText(label)
+  }
   const valueEl = valueBuilder()
   row.appendChild(valueEl)
   return row

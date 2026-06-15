@@ -1,14 +1,18 @@
-import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, TaskType, Recurrence } from '../types'
+import { Project, Task, TaskType, TaskPriority, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
-import { renderPropRow, renderProgressSlider, renderChipList } from '../ui/FormField'
-import { Chip } from '../ui/primitives/Chip'
-import { SegmentedControl } from '../ui/primitives/SegmentedControl'
-import { getStatusConfig, getPriorityConfig, formatBadgeText, isTerminalStatus } from '../utils'
+import { renderPropRow } from '../ui/FormField'
+import { isTerminalStatus } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
-import { TaskPickerModal, TagPickerModal } from './PickerModals'
+import {
+  renderSelectControl,
+  renderDateControl,
+  renderMultiSelect,
+  renderAddProperty,
+  type SelectItem,
+  type HiddenProperty
+} from '../ui/composites/properties'
 
 export interface TaskFormFieldsContext {
   task: Task
@@ -17,337 +21,345 @@ export interface TaskFormFieldsContext {
   parentId: string | null
   setParentId: (id: string | null) => void
   rerender: () => void
+  shownExtras: Set<string>
 }
 
+const TYPE_OPTIONS: SelectItem[] = [
+  { id: 'task', label: 'Task', icon: 'square-check-big' },
+  { id: 'subtask', label: 'Subtask', icon: 'git-branch' },
+  { id: 'milestone', label: 'Milestone', icon: 'diamond' }
+]
+
+const REPEAT_OPTIONS: SelectItem[] = [
+  { id: 'none', label: 'Does not repeat', icon: 'repeat' },
+  { id: 'daily', label: 'Daily', icon: 'repeat' },
+  { id: 'weekly', label: 'Weekly', icon: 'repeat' },
+  { id: 'monthly', label: 'Monthly', icon: 'repeat' },
+  { id: 'yearly', label: 'Yearly', icon: 'repeat' }
+]
+
 /**
- * Renders all property rows (status, priority, type, dates, assignees, tags, deps, custom fields)
- * into the given container.
+ * Renders the compact property grid: core properties (status, priority, type, assignees, due,
+ * tags) always show; rarely-used ones (start, repeat, depends on) hide when empty behind
+ * "Add property". Single-selects and dates re-render the form on change; multi-selects mutate
+ * the task in place and refresh their own chips.
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
-  const { task, project, plugin, rerender } = ctx
+  const { task, project, plugin, rerender, shownExtras } = ctx
+  const statuses = plugin.settings.statuses
+  const priorities = plugin.settings.priorities
+  const grid = container.createDiv('pm-prop-grid')
 
   // Status
-  renderPropRow(container, 'Status', () => {
-    const statusConfig = getStatusConfig(plugin.settings.statuses, task.status)
-    const wrap = createDiv('pm-prop-value')
-    new Chip(wrap)
-      .setLabel(formatBadgeText(statusConfig?.icon, statusConfig?.label ?? task.status))
-      .setColor(statusConfig?.color ?? 'var(--text-muted)')
-      .setVariant('solid')
-      .setDot(!statusConfig?.icon)
-      .onClick((e) => {
-        const menu = new Menu()
-        for (const s of plugin.settings.statuses) {
-          menu.addItem((item) =>
-            item
-              .setTitle(formatBadgeText(s.icon, s.label))
-              .setChecked(s.id === task.status)
-              .onClick(() => {
-                task.status = s.id
-                rerender()
-              })
-          )
+  renderPropRow(
+    grid,
+    'Status',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderSelectControl({
+        container: cell,
+        value: task.status,
+        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color })),
+        menuLabel: 'Set status',
+        onChange: (id) => {
+          task.status = id
+          rerender()
         }
-        menu.showAtMouseEvent(e)
       })
-    return wrap
-  })
+      return cell
+    },
+    'circle-dot'
+  )
 
   // Priority
-  renderPropRow(container, 'Priority', () => {
-    const prioConfig = getPriorityConfig(plugin.settings.priorities, task.priority)
-    const wrap = createDiv('pm-prop-value')
-    new Chip(wrap)
-      .setLabel(formatBadgeText(prioConfig?.icon, prioConfig?.label ?? task.priority))
-      .setColor(prioConfig?.color ?? 'var(--text-muted)')
-      .setVariant('plain')
-      .setDot(!prioConfig?.icon)
-      .onClick((e) => {
-        const menu = new Menu()
-        for (const p of plugin.settings.priorities) {
-          menu.addItem((item) =>
-            item
-              .setTitle(formatBadgeText(p.icon, p.label))
-              .setChecked(p.id === task.priority)
-              .onClick(() => {
-                task.priority = p.id
-                rerender()
-              })
-          )
+  renderPropRow(
+    grid,
+    'Priority',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderSelectControl({
+        container: cell,
+        value: task.priority,
+        options: priorities.map((p) => ({ id: p.id, label: p.label, color: p.color })),
+        menuLabel: 'Set priority',
+        onChange: (id) => {
+          task.priority = id as TaskPriority
+          rerender()
         }
-        menu.showAtMouseEvent(e)
       })
-    return wrap
-  })
+      return cell
+    },
+    'flag'
+  )
 
   // Type
-  renderPropRow(container, 'Type', () => {
-    const wrap = createDiv('pm-prop-value')
-    new SegmentedControl<TaskType>(wrap, {
-      options: [
-        { id: 'task', label: 'Task' },
-        { id: 'subtask', label: 'Subtask', cls: 'pm-segmented-btn--subtask' },
-        { id: 'milestone', label: 'Milestone', cls: 'pm-segmented-btn--milestone' }
-      ],
-      active: task.type,
-      onChange: (type) => {
-        task.type = type
-        if (type === 'milestone') {
-          task.start = ''
-          task.progress = 0
+  renderPropRow(
+    grid,
+    'Type',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderSelectControl({
+        container: cell,
+        value: task.type,
+        options: TYPE_OPTIONS,
+        menuLabel: 'Task type',
+        onChange: (id) => {
+          task.type = id as TaskType
+          if (id === 'milestone') {
+            task.start = ''
+            task.progress = 0
+          }
+          if (id !== 'subtask') ctx.setParentId(null)
+          rerender()
         }
-        if (type !== 'subtask') {
-          ctx.setParentId(null)
-        }
-        rerender()
-      }
-    })
-    return wrap
-  })
+      })
+      return cell
+    },
+    'shapes'
+  )
 
-  // Parent task selector (subtask type only)
+  // Parent task (subtask only)
   if (task.type === 'subtask') {
-    renderPropRow(container, 'Parent task', () => {
-      const wrap = createDiv('pm-prop-value')
-      const allTasks = flattenTasks(project.tasks)
-        .map((f) => f.task)
-        .filter((t) => t.id !== task.id)
-      const sel = wrap.createEl('select', { cls: 'pm-prop-select' })
-      sel.createEl('option', { value: '', text: ctx.parentId ? '' : '— Select parent —' })
-      for (const t of allTasks) {
-        const opt = sel.createEl('option', { value: t.id, text: t.title })
-        if (t.id === ctx.parentId) opt.selected = true
-      }
-      sel.addEventListener('change', () => {
-        ctx.setParentId(sel.value || null)
-      })
-      return wrap
-    })
-  }
-
-  // Progress (hidden for milestones)
-  if (task.type !== 'milestone') {
-    renderPropRow(container, 'Progress', () => {
-      const wrap = createDiv()
-      return renderProgressSlider(wrap, task.progress, (v) => {
-        task.progress = v
-      })
-    })
-  }
-
-  // Start date (hidden for milestones)
-  if (task.type !== 'milestone') {
-    renderPropRow(container, 'Start', () => {
-      const input = createEl('input', { type: 'date', cls: 'pm-prop-value pm-prop-date' })
-      input.value = task.start
-      input.addEventListener('change', () => {
-        task.start = input.value
-      })
-      return input
-    })
-  }
-
-  // Due date
-  renderPropRow(container, task.type === 'milestone' ? 'Date' : 'Due', () => {
-    const input = createEl('input', { type: 'date', cls: 'pm-prop-value pm-prop-date' })
-    input.value = task.due
-    input.addEventListener('change', () => {
-      task.due = input.value
-    })
-    return input
-  })
-
-  // Completed date — auto-stamped when the task enters a complete status, but editable.
-  // Shown once the task is in a complete status or already carries a date.
-  if (task.completed || isTerminalStatus(task.status, plugin.settings.statuses)) {
-    renderPropRow(container, 'Completed', () => {
-      const input = createEl('input', { type: 'date', cls: 'pm-prop-value pm-prop-date' })
-      input.value = task.completed
-      input.addEventListener('change', () => {
-        task.completed = input.value
-      })
-      return input
-    })
-  }
-
-  // Recurrence
-  renderPropRow(container, 'Repeat', () => {
-    const wrap = createDiv('pm-prop-value pm-prop-recurrence')
-    const renderRecurrence = () => {
-      wrap.empty()
-      if (!task.recurrence) {
-        const addBtn = wrap.createEl('button', { text: '+ set recurrence', cls: 'pm-prop-add-btn' })
-        addBtn.addEventListener('click', () => {
-          task.recurrence = { interval: 'weekly', every: 1 }
-          renderRecurrence()
-        })
-      } else {
-        const rec = task.recurrence
-        const everyInput = wrap.createEl('input', { type: 'number', cls: 'pm-prop-text pm-recur-every' })
-        everyInput.value = String(rec.every)
-        everyInput.min = '1'
-        everyInput.max = '365'
-        everyInput.addEventListener('change', () => {
-          rec.every = parseInt(everyInput.value) || 1
-        })
-
-        const sel = wrap.createEl('select', { cls: 'pm-prop-select pm-recur-interval' })
-        for (const opt of ['daily', 'weekly', 'monthly', 'yearly'] as const) {
-          const o = sel.createEl('option', { value: opt, text: opt })
-          if (opt === rec.interval) o.selected = true
+    renderPropRow(
+      grid,
+      'Parent task',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        const allTasks = flattenTasks(project.tasks)
+          .map((f) => f.task)
+          .filter((t) => t.id !== task.id)
+        const sel = cell.createEl('select', { cls: 'pm-prop-select' })
+        sel.createEl('option', { value: '', text: ctx.parentId ? '' : '— Select parent —' })
+        for (const t of allTasks) {
+          const opt = sel.createEl('option', { value: t.id, text: t.title })
+          if (t.id === ctx.parentId) opt.selected = true
         }
-        sel.addEventListener('change', () => {
-          rec.interval = sel.value as Recurrence['interval']
-        })
-
-        const endWrap = wrap.createDiv('pm-recur-end')
-        endWrap.createSpan({ text: 'Until', cls: 'pm-recur-label' })
-        const endInput = endWrap.createEl('input', { type: 'date', cls: 'pm-prop-date pm-recur-end-input' })
-        endInput.value = rec.endDate ?? ''
-        endInput.addEventListener('change', () => {
-          rec.endDate = endInput.value || undefined
-        })
-
-        const rmBtn = wrap.createEl('button', { text: '\u2715', cls: 'pm-prop-add-btn pm-recur-rm' })
-        rmBtn.addEventListener('click', () => {
-          task.recurrence = undefined
-          renderRecurrence()
-        })
-      }
-    }
-    renderRecurrence()
-    return wrap
-  })
+        sel.addEventListener('change', () => ctx.setParentId(sel.value || null))
+        return cell
+      },
+      'corner-up-right'
+    )
+  }
 
   // Assignees
-  renderPropRow(container, 'Assignees', () => {
-    const wrap = createDiv('pm-prop-value pm-prop-assignees')
-    const render = () => {
-      const all = [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
-      const remaining = all.filter((m) => !task.assignees.includes(m))
-      renderChipList(wrap, task.assignees, {
-        variant: 'accent',
-        shape: 'pill',
-        onRemove: (a) => {
-          task.assignees = task.assignees.filter((x) => x !== a)
-          render()
+  renderPropRow(
+    grid,
+    'Assignees',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      const allMembers = () => [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
+      renderMultiSelect({
+        container: cell,
+        avatar: true,
+        search: true,
+        addLabel: 'Assign',
+        placeholder: 'Search people…',
+        selected: () => task.assignees,
+        options: () => allMembers().map((m) => ({ id: m, label: m })),
+        add: (id) => {
+          if (!task.assignees.includes(id)) task.assignees.push(id)
         },
-        renderAdd: (el) => {
-          const addBtn = el.createEl('button', { text: '+ add', cls: 'pm-prop-add-btn' })
-          const showNameInput = () => {
-            addBtn.addClass('pm-hidden')
-            const input = el.createEl('input', { type: 'text', cls: 'pm-tag-input', placeholder: 'Name\u2026' })
-            input.focus()
-            const commit = () => {
-              const name = input.value.trim()
-              if (name && !task.assignees.includes(name)) task.assignees.push(name)
-              render()
-            }
-            input.addEventListener('keydown', (ev) => {
-              if (ev.key === 'Enter') commit()
-              if (ev.key === 'Escape') render()
-            })
-            input.addEventListener('blur', commit)
-          }
-          addBtn.addEventListener('click', (ev) => {
-            if (remaining.length) {
-              const menu = new Menu()
-              for (const m of remaining) {
-                menu.addItem((item) =>
-                  item.setTitle(m).onClick(() => {
-                    task.assignees.push(m)
-                    render()
-                  })
-                )
-              }
-              menu.addSeparator()
-              menu.addItem((item) => item.setTitle('Type a name\u2026').onClick(() => showNameInput()))
-              menu.showAtMouseEvent(ev)
-            } else {
-              showNameInput()
-            }
-          })
+        remove: (id) => {
+          task.assignees = task.assignees.filter((a) => a !== id)
+        },
+        create: (label) => {
+          if (!task.assignees.includes(label)) task.assignees.push(label)
         }
       })
-    }
-    render()
-    return wrap
-  })
+      return cell
+    },
+    'users'
+  )
+
+  // Due (Date for milestones)
+  renderPropRow(
+    grid,
+    task.type === 'milestone' ? 'Date' : 'Due',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderDateControl({
+        container: cell,
+        value: task.due,
+        emptyLabel: 'Set due date',
+        onChange: (v) => {
+          task.due = v
+          rerender()
+        }
+      })
+      return cell
+    },
+    'calendar-clock'
+  )
+
+  // Start (extra; hidden for milestones)
+  if (task.type !== 'milestone' && (task.start || shownExtras.has('start'))) {
+    renderPropRow(
+      grid,
+      'Start',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderDateControl({
+          container: cell,
+          value: task.start,
+          emptyLabel: 'Set start',
+          onChange: (v) => {
+            task.start = v
+            rerender()
+          }
+        })
+        return cell
+      },
+      'play'
+    )
+  }
+
+  // Completed (when complete or in a terminal status)
+  if (task.completed || isTerminalStatus(task.status, statuses)) {
+    renderPropRow(
+      grid,
+      'Completed',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderDateControl({
+          container: cell,
+          value: task.completed,
+          emptyLabel: 'Set date',
+          onChange: (v) => {
+            task.completed = v
+            rerender()
+          }
+        })
+        return cell
+      },
+      'circle-check-big'
+    )
+  }
 
   // Tags
-  renderPropRow(container, 'Tags', () => {
-    const wrap = createDiv('pm-prop-value pm-prop-tags')
-    const render = () => {
-      const allProjectTags = [...new Set(flattenTasks(project.tasks).flatMap((f) => f.task.tags))].filter(
-        (t) => !task.tags.includes(t)
-      )
-      renderChipList(wrap, task.tags, {
-        shape: 'pill',
-        onRemove: (tag) => {
-          task.tags = task.tags.filter((x) => x !== tag)
-          render()
+  const tagsRow = renderPropRow(
+    grid,
+    'Tags',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      const projectTags = [...new Set(flattenTasks(project.tasks).flatMap((f) => f.task.tags))]
+      renderMultiSelect({
+        container: cell,
+        search: true,
+        addLabel: 'Add tags',
+        placeholder: 'Find or create…',
+        chipShape: 'pill',
+        selected: () => task.tags,
+        options: () => projectTags.map((t) => ({ id: t, label: t })),
+        add: (id) => {
+          if (!task.tags.includes(id)) task.tags.push(id)
         },
-        onAdd: () => {
-          new TagPickerModal(plugin.app, allProjectTags, (tag) => {
-            if (!task.tags.includes(tag)) {
-              task.tags.push(tag)
-              render()
-            }
-          }).open()
+        remove: (id) => {
+          task.tags = task.tags.filter((t) => t !== id)
         },
-        addLabel: '+ tag'
+        create: (label) => {
+          if (!task.tags.includes(label)) task.tags.push(label)
+        }
       })
-    }
-    render()
-    return wrap
-  })
+      return cell
+    },
+    'tag'
+  )
+  tagsRow.addClass('pm-prop-row--wide')
 
-  // Dependencies
-  renderPropRow(container, 'Depends on', () => {
-    const wrap = createDiv('pm-prop-value pm-prop-deps')
+  // Repeat (extra)
+  if (task.recurrence || shownExtras.has('repeat')) {
+    renderPropRow(
+      grid,
+      'Repeat',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderSelectControl({
+          container: cell,
+          value: task.recurrence?.interval ?? 'none',
+          options: REPEAT_OPTIONS,
+          menuLabel: 'Recurrence',
+          onChange: (id) => {
+            if (id === 'none') {
+              task.recurrence = undefined
+            } else {
+              task.recurrence = {
+                interval: id as Recurrence['interval'],
+                every: task.recurrence?.every ?? 1,
+                endDate: task.recurrence?.endDate
+              }
+            }
+            rerender()
+          }
+        })
+        return cell
+      },
+      'repeat'
+    )
+  }
+
+  // Depends on (extra)
+  if (task.dependencies.length > 0 || shownExtras.has('depends')) {
     const allTasks = flattenTasks(project.tasks)
       .map((f) => f.task)
       .filter((t) => t.id !== task.id)
-    const render = () => {
-      renderChipList(
-        wrap,
-        task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
-        {
-          shape: 'rounded',
-          labelFn: (depId) => allTasks.find((t) => t.id === depId)?.title ?? depId,
-          onRemove: (depId) => {
-            task.dependencies = task.dependencies.filter((x) => x !== depId)
-            render()
+    const titleOf = (id: string) => allTasks.find((t) => t.id === id)?.title ?? id
+    const depRow = renderPropRow(
+      grid,
+      'Depends on',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderMultiSelect({
+          container: cell,
+          search: true,
+          addLabel: 'Add dependency',
+          placeholder: 'Search tasks…',
+          chipShape: 'rounded',
+          labelFor: titleOf,
+          selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
+          options: () =>
+            allTasks
+              .filter((t) => task.dependencies.includes(t.id) || !wouldCreateCycle(project.tasks, task.id, t.id))
+              .map((t) => ({ id: t.id, label: t.title })),
+          add: (id) => {
+            if (!task.dependencies.includes(id)) task.dependencies.push(id)
           },
-          onAdd: () => {
-            const available = allTasks.filter(
-              (t) => !task.dependencies.includes(t.id) && !wouldCreateCycle(project.tasks, task.id, t.id)
-            )
-            new TaskPickerModal(
-              plugin.app,
-              available,
-              (t) => {
-                task.dependencies.push(t.id)
-                render()
-              },
-              'Search tasks to add as dependency…'
-            ).open()
-          },
-          addLabel: '+ Add dependency'
-        }
-      )
-    }
-    render()
-    return wrap
-  })
+          remove: (id) => {
+            task.dependencies = task.dependencies.filter((d) => d !== id)
+          }
+        })
+        return cell
+      },
+      'link-2'
+    )
+    depRow.addClass('pm-prop-row--wide')
+  }
+
+  // Progressive disclosure for the remaining empty extras
+  const hidden: HiddenProperty[] = []
+  if (task.type !== 'milestone' && !task.start && !shownExtras.has('start')) {
+    hidden.push({ id: 'start', label: 'Start', icon: 'play' })
+  }
+  if (!task.recurrence && !shownExtras.has('repeat')) {
+    hidden.push({ id: 'repeat', label: 'Repeat', icon: 'repeat' })
+  }
+  if (task.dependencies.length === 0 && !shownExtras.has('depends')) {
+    hidden.push({ id: 'depends', label: 'Depends on', icon: 'link-2' })
+  }
+  if (hidden.length > 0) {
+    const addCell = grid.createDiv('pm-prop-add-cell')
+    renderAddProperty(addCell, hidden, (id) => {
+      shownExtras.add(id)
+      rerender()
+    })
+  }
 
   // Custom fields
   if (project.customFields.length > 0) {
     const cfSection = container.createDiv('pm-modal-section')
     cfSection.createEl('h4', { text: 'Custom fields', cls: 'pm-modal-section-title' })
-    const cfProps = cfSection.createDiv('pm-modal-props')
+    const cfGrid = cfSection.createDiv('pm-prop-grid')
     for (const cf of project.customFields) {
-      renderPropRow(cfProps, cf.name, () => renderCustomFieldInput(cf, task, project, plugin))
+      renderPropRow(cfGrid, cf.name, () => renderCustomFieldInput(cf, task, project, plugin))
     }
   }
 }

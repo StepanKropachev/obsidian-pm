@@ -1,10 +1,19 @@
-import { App, ButtonComponent, Component, ExtraButtonComponent, Modal, MarkdownRenderer, Notice } from 'obsidian'
+import {
+  App,
+  ButtonComponent,
+  Component,
+  ExtraButtonComponent,
+  Menu,
+  Modal,
+  MarkdownRenderer,
+  Notice,
+  setIcon
+} from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
 import { safeAsync, getDefaultStatusId } from '../utils'
-import { renderStatusDot } from '../ui/StatusBadge'
 import { confirmDialog } from '../ui/ModalFactory'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
@@ -19,6 +28,8 @@ export class TaskModal extends Modal {
   private saved = false
   private persistPromise: Promise<void> | null = null
   private noteSuggest: NoteLinkSuggest | null = null
+  private shownExtras = new Set<string>()
+  private saveKeyHandler: ((e: KeyboardEvent) => void) | null = null
 
   constructor(
     app: App,
@@ -74,6 +85,10 @@ export class TaskModal extends Modal {
         void this.persistTask()
       }
     }
+    if (this.saveKeyHandler) {
+      this.modalEl.removeEventListener('keydown', this.saveKeyHandler)
+      this.saveKeyHandler = null
+    }
     this.noteSuggest?.destroy()
     this.noteSuggest = null
     this.contentEl.empty()
@@ -128,21 +143,115 @@ export class TaskModal extends Modal {
     await this.onSave(this.task)
   }
 
+  private openOverflowMenu(anchorEl: HTMLElement): void {
+    const menu = new Menu()
+    if (this.task.filePath) {
+      const filePath = this.task.filePath
+      menu.addItem((item) =>
+        item
+          .setTitle('Open as note')
+          .setIcon('file-text')
+          .onClick(() => {
+            this.saved = false
+            this.cancelled = false
+            this.close()
+            void this.app.workspace.openLinkText(filePath, '', true)
+          })
+      )
+      menu.addSeparator()
+    }
+    if (this.task.archived) {
+      menu.addItem((item) =>
+        item
+          .setTitle('Unarchive')
+          .setIcon('archive-restore')
+          .onClick(
+            safeAsync(async () => {
+              await this.plugin.store.unarchiveTask(this.project, this.task.id)
+              new Notice('Task unarchived')
+              await this.onSave(this.task)
+              this.cancelled = true
+              this.close()
+            })
+          )
+      )
+    } else {
+      menu.addItem((item) =>
+        item
+          .setTitle('Archive')
+          .setIcon('archive')
+          .onClick(
+            safeAsync(async () => {
+              await this.plugin.store.archiveTask(this.project, this.task.id)
+              new Notice('Task archived')
+              await this.onSave(this.task)
+              this.cancelled = true
+              this.close()
+            })
+          )
+      )
+    }
+    menu.addItem((item) =>
+      item
+        .setTitle('Delete')
+        .setIcon('trash-2')
+        .setWarning(true)
+        .onClick(
+          safeAsync(async () => {
+            if (await confirmDialog(this.app, `Delete "${this.task.title}"?`)) {
+              await this.plugin.store.deleteTask(this.project, this.task.id)
+              await this.onSave(this.task)
+              this.cancelled = true
+              this.close()
+            }
+          })
+        )
+    )
+    const rect = anchorEl.getBoundingClientRect()
+    menu.showAtPosition({ x: rect.left, y: rect.bottom + 4 })
+  }
+
   private render(): void {
     const { contentEl } = this
     contentEl.empty()
 
-    // ── Header ──────────────────────────────────────────────────────────────
-    const header = contentEl.createDiv('pm-modal-header')
-    renderStatusDot(header, this.task.status, this.plugin.settings.statuses, 'pm-modal-status-dot')
+    // ── Header: breadcrumb · overflow · close ───────────────────────────────
+    const header = contentEl.createDiv('pm-te-header')
+    const crumb = header.createDiv('pm-te-crumb')
+    if (this.project.icon) crumb.createSpan({ cls: 'pm-te-crumb-icon', text: this.project.icon })
+    crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.project.title })
+    const crumbSep = crumb.createSpan({ cls: 'pm-te-crumb-sep' })
+    setIcon(crumbSep, 'chevron-right')
+    crumb.createSpan({ cls: 'pm-te-crumb-id', text: this.task.id })
 
-    const titleWrap = header.createDiv('pm-modal-title-wrap')
-    const titleInput = titleWrap.createEl('input', {
-      type: 'text',
-      cls: 'pm-modal-title-input',
-      value: this.task.title
+    header.createDiv('pm-te-header-spacer')
+
+    if (!this.isNew) {
+      const moreBtn = new ExtraButtonComponent(header).setIcon('more-horizontal').setTooltip('More actions')
+      moreBtn.extraSettingsEl.addClass('pm-te-header-btn')
+      moreBtn.onClick(() => this.openOverflowMenu(moreBtn.extraSettingsEl))
+    }
+    const closeBtn = new ExtraButtonComponent(header).setIcon('x').setTooltip('Close')
+    closeBtn.extraSettingsEl.addClass('pm-te-header-btn')
+    closeBtn.onClick(() => {
+      this.cancelled = true
+      this.close()
     })
-    titleInput.placeholder = 'Task title\u2026'
+
+    // ── Body ────────────────────────────────────────────────────────────────
+    const body = contentEl.createDiv('pm-te-body')
+
+    // Title hero
+    const titleWrap = body.createDiv('pm-te-title-wrap')
+    const titleInput = titleWrap.createEl('textarea', { cls: 'pm-te-title' })
+    titleInput.rows = 1
+    titleInput.value = this.task.title
+    titleInput.placeholder = 'Task title'
+    titleInput.spellcheck = false
+    const autosizeTitle = () => {
+      titleInput.setCssProps({ '--te-title-height': 'auto' })
+      titleInput.setCssProps({ '--te-title-height': titleInput.scrollHeight + 'px' })
+    }
     const titleError = titleWrap.createDiv({ cls: 'pm-modal-title-error', attr: { hidden: '' } })
     const clearTitleError = () => {
       if (titleError.hasAttribute('hidden')) return
@@ -160,30 +269,38 @@ export class TaskModal extends Modal {
     titleInput.addEventListener('input', () => {
       this.task.title = titleInput.value
       clearTitleError()
+      autosizeTitle()
     })
+    titleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) e.preventDefault()
+    })
+    window.setTimeout(autosizeTitle, 0)
     titleInput.focus()
-    titleInput.select()
+    if (this.isNew) titleInput.select()
 
-    if (!this.isNew && this.task.filePath) {
-      const filePath = this.task.filePath
-      new ExtraButtonComponent(header)
-        .setIcon('file-text')
-        .setTooltip('Open as note')
-        .onClick(() => {
-          this.saved = false
-          this.cancelled = false
-          this.close()
-          void this.app.workspace.openLinkText(filePath, '', true)
-        })
-    }
+    // Properties
+    const props = body.createDiv('pm-te-props')
+    renderTaskFormFields(props, {
+      task: this.task,
+      project: this.project,
+      plugin: this.plugin,
+      parentId: this.parentId,
+      setParentId: (id) => {
+        this.parentId = id
+      },
+      rerender: () => this.render(),
+      shownExtras: this.shownExtras
+    })
+
+    body.createEl('hr', { cls: 'pm-te-divider' })
 
     // ── Description (preview / edit) ─────────────────────────────────────────
-    const descSection = contentEl.createDiv('pm-modal-section pm-modal-desc-section')
+    const descSection = body.createDiv('pm-modal-section pm-modal-desc-section')
     descSection.createEl('h4', { text: 'Description', cls: 'pm-modal-section-title' })
 
     const descPreview = descSection.createDiv('pm-modal-desc-preview')
     const descArea = descSection.createEl('textarea', { cls: 'pm-modal-description' })
-    descArea.placeholder = 'Add a description\u2026'
+    descArea.placeholder = 'Add a description…'
     descArea.value = this.task.description
 
     const autoResize = () => {
@@ -353,66 +470,20 @@ export class TaskModal extends Modal {
       window.setTimeout(autoResize, 0)
     }
 
-    // ── Properties ─────────────────────────────────────────────────────────
-    const propsContainer = contentEl.createDiv('pm-modal-props-container')
-    const props = propsContainer.createDiv('pm-modal-props')
-
-    renderTaskFormFields(props, {
-      task: this.task,
-      project: this.project,
-      plugin: this.plugin,
-      parentId: this.parentId,
-      setParentId: (id) => {
-        this.parentId = id
-      },
-      rerender: () => this.render()
-    })
-
-    // ── Time Tracking ───────────────────────────────────────────────────────
-    renderTimeTrackingPanel(contentEl, this.task)
-
     // ── Subtasks ────────────────────────────────────────────────────────────
-    renderSubtasksPanel(contentEl, this.task, this.plugin)
+    renderSubtasksPanel(body, this.task, this.plugin)
+
+    // ── Time tracking ─────────────────────────────────────────────────────────
+    renderTimeTrackingPanel(body, this.task)
 
     // ── Footer ──────────────────────────────────────────────────────────────
-    const footer = contentEl.createDiv('pm-modal-footer')
+    const footer = contentEl.createDiv('pm-te-footer')
 
-    if (!this.isNew) {
-      if (this.task.archived) {
-        new ButtonComponent(footer).setButtonText('Unarchive').onClick(
-          safeAsync(async () => {
-            await this.plugin.store.unarchiveTask(this.project, this.task.id)
-            new Notice('Task unarchived')
-            await this.onSave(this.task)
-            this.cancelled = true
-            this.close()
-          })
-        )
-      } else {
-        new ButtonComponent(footer).setButtonText('Archive').onClick(
-          safeAsync(async () => {
-            await this.plugin.store.archiveTask(this.project, this.task.id)
-            new Notice('Task archived')
-            await this.onSave(this.task)
-            this.cancelled = true
-            this.close()
-          })
-        )
-      }
-
-      new ButtonComponent(footer)
-        .setButtonText('Delete')
-        .setWarning()
-        .onClick(
-          safeAsync(async () => {
-            if (await confirmDialog(this.app, `Delete "${this.task.title}"?`)) {
-              await this.plugin.store.deleteTask(this.project, this.task.id)
-              await this.onSave(this.task)
-              this.cancelled = true
-              this.close()
-            }
-          })
-        )
+    if (!this.isNew && this.task.filePath) {
+      const pathHint = footer.createSpan({ cls: 'pm-te-footer-path' })
+      const fileIcon = pathHint.createSpan({ cls: 'pm-te-footer-icon' })
+      setIcon(fileIcon, 'file-text')
+      pathHint.createSpan({ text: this.task.filePath })
     }
 
     footer.createDiv('pm-footer-spacer')
@@ -454,11 +525,14 @@ export class TaskModal extends Modal {
     saveBtn.onClick(() => {
       void doSave()
     })
-    this.modalEl.addEventListener('keydown', (e: KeyboardEvent) => {
+
+    if (this.saveKeyHandler) this.modalEl.removeEventListener('keydown', this.saveKeyHandler)
+    this.saveKeyHandler = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault()
         void doSave()
       }
-    })
+    }
+    this.modalEl.addEventListener('keydown', this.saveKeyHandler)
   }
 }

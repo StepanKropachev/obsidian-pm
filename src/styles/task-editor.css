@@ -1,0 +1,450 @@
+.pm-pop {
+  position: fixed;
+  top: var(--pop-top, 0);
+  left: var(--pop-left, 0);
+  z-index: var(--layer-menu);
+  min-width: var(--pop-width, 180px);
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+  padding: 5px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-l);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pm-pop {
+    animation: pm-pop-in 0.12s ease;
+  }
+}
+
+@keyframes pm-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pm-pop--sheet {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  min-width: 0;
+  max-height: 70vh;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  border-bottom: none;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pm-pop--sheet {
+    animation: pm-sheet-in 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+}
+
+@keyframes pm-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Leading glyph (shared by inline triggers and popover rows) */
+.pm-glyph-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--pm-glyph-color, var(--text-muted));
+  --icon-size: 14px;
+}
+.pm-glyph-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--pm-glyph-color, var(--text-muted));
+}
+
+/* Inline property value control */
+.pm-prop-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin: -1px -4px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  font-family: inherit;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+.pm-prop-inline:hover {
+  background: var(--background-modifier-hover);
+}
+.pm-prop-inline--empty {
+  color: var(--text-faint);
+}
+.pm-prop-inline-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pm-prop-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  --icon-size: 13px;
+}
+
+/* Relative-due hint */
+.pm-due {
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+}
+.pm-due--overdue {
+  color: var(--color-red);
+}
+.pm-due--today {
+  color: var(--color-orange);
+}
+.pm-due--soon {
+  color: var(--text-muted);
+}
+
+/* Ghost add affordance (add property / add value) */
+.pm-prop-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+.pm-prop-add:hover {
+  color: var(--text-accent);
+  background: var(--background-modifier-hover);
+}
+
+/* Multi-value (chips + add) */
+.pm-prop-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.pm-assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px 2px 2px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  font-size: var(--font-ui-smaller);
+}
+.pm-assignee-name {
+  color: var(--text-normal);
+}
+
+/* Popover contents */
+.pm-pop-list {
+  display: flex;
+  flex-direction: column;
+}
+.pm-pop-label {
+  padding: 6px 9px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pm-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+.pm-pop-item:hover {
+  background: var(--background-modifier-hover);
+}
+.pm-pop-item--center {
+  flex: 1;
+  justify-content: center;
+}
+.pm-pop-item--accent {
+  color: var(--text-accent);
+}
+.pm-pop-item--danger {
+  color: var(--color-red);
+}
+.pm-pop-item-label {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pm-pop-check {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--interactive-accent);
+  --icon-size: 14px;
+}
+.pm-pop-field {
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  font-family: inherit;
+}
+.pm-pop-field:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+.pm-pop-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Property-row label with leading icon */
+.pm-prop-label--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pm-prop-label-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  --icon-size: 15px;
+}
+
+/* Subtasks: derived progress + inline add */
+.pm-subtasks-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 90px;
+  max-width: 180px;
+  flex: 1;
+}
+.pm-subtasks-progress .pm-progress {
+  flex: 1;
+}
+.pm-subtasks-count {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pm-subtask-add-row {
+  margin-top: 6px;
+}
+.pm-subtask-add-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  font-family: inherit;
+}
+.pm-subtask-add-input:hover {
+  background: var(--background-modifier-hover);
+}
+.pm-subtask-add-input:focus {
+  border-color: var(--background-modifier-border-focus);
+  background: var(--background-primary);
+  outline: none;
+}
+
+/* Time tracking progress bar spacing */
+.pm-time-progress {
+  margin-bottom: 10px;
+}
+
+/* ── Task editor shell ──────────────────────────────────────────────────── */
+.pm-task-modal {
+  padding: 0;
+}
+
+.pm-te-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 10px 16px;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pm-te-header-spacer {
+  flex: 1;
+}
+.pm-te-header-btn {
+  color: var(--text-muted);
+}
+.pm-te-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.pm-te-crumb-icon {
+  flex-shrink: 0;
+}
+.pm-te-crumb-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pm-te-crumb-sep {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  --icon-size: 13px;
+}
+.pm-te-crumb-id {
+  flex-shrink: 0;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.pm-te-body {
+  padding: 18px 22px 8px;
+}
+.pm-te-title-wrap {
+  margin-bottom: 16px;
+}
+.pm-te-title {
+  width: 100%;
+  height: var(--te-title-height, auto);
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  color: var(--text-normal);
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.pm-te-title::placeholder {
+  color: var(--text-faint);
+  font-weight: 600;
+}
+.pm-te-props {
+  margin-bottom: 14px;
+}
+.pm-te-divider {
+  height: 1px;
+  margin: 14px 0;
+  border: none;
+  background: var(--background-modifier-border);
+}
+
+.pm-te-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+.pm-te-footer-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.pm-te-footer-path > span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pm-te-footer-icon {
+  display: inline-flex;
+  --icon-size: 13px;
+}
+
+/* ── Compact property grid ──────────────────────────────────────────────── */
+.pm-prop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 22px;
+  row-gap: 2px;
+  align-items: start;
+}
+.pm-prop-grid .pm-prop-row {
+  grid-template-columns: 104px 1fr;
+  min-height: 30px;
+  padding: 2px 0;
+  align-items: start;
+}
+.pm-prop-grid .pm-prop-label {
+  padding-top: 6px;
+  color: var(--text-muted);
+}
+.pm-prop-row--wide {
+  grid-column: 1 / -1;
+}
+.pm-prop-add-cell {
+  grid-column: 1 / -1;
+  padding-top: 4px;
+}
+
+@media (max-width: 520px) {
+  .pm-prop-grid {
+    grid-template-columns: 1fr;
+  }
+}
