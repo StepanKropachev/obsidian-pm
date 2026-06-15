@@ -315,6 +315,18 @@
   background: var(--background-primary);
   border-bottom: 1px solid var(--background-modifier-border);
 }
+/* Priority-tinted accent strip pinned to the top of the header */
+.pm-te-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--pm-accent-strip, transparent);
+  opacity: 0.7;
+  pointer-events: none;
+}
 .pm-te-header-spacer {
   flex: 1;
 }
@@ -447,4 +459,25 @@
   .pm-prop-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Touch devices have no hover, so give the inline controls a resting affordance
+   instead of revealing it only on hover. */
+@media (hover: none) {
+  .pm-prop-inline,
+  .pm-prop-add {
+    background: var(--background-modifier-hover);
+  }
+  .pm-prop-add {
+    border-color: var(--background-modifier-border);
+  }
+}
+
+/* Keyboard focus affordance for the custom inline controls */
+.pm-prop-inline:focus-visible,
+.pm-prop-add:focus-visible,
+.pm-pop-item:focus-visible,
+.pm-pop-field:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -1px;
 }

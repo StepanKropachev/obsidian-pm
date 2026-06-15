@@ -13,7 +13,7 @@ import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
-import { safeAsync, getDefaultStatusId } from '../utils'
+import { safeAsync, getDefaultStatusId, getPriorityConfig } from '../utils'
 import { confirmDialog } from '../ui/ModalFactory'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
@@ -217,6 +217,8 @@ export class TaskModal extends Modal {
 
     // ── Header: breadcrumb · overflow · close ───────────────────────────────
     const header = contentEl.createDiv('pm-te-header')
+    const prio = getPriorityConfig(this.plugin.settings.priorities, this.task.priority)
+    if (prio?.color) header.setCssProps({ '--pm-accent-strip': prio.color })
     const crumb = header.createDiv('pm-te-crumb')
     if (this.project.icon) crumb.createSpan({ cls: 'pm-te-crumb-icon', text: this.project.icon })
     crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.project.title })
