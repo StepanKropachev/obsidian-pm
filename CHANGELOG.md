@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The task editor leads with the title and a compact property list; status, priority, type, and dates are inline controls that open a picker on click
-- Rarely used task fields (start date, repeat, dependencies) stay hidden until added from an "Add property" menu instead of showing empty rows
-- Tags, assignees, and dependencies are edited through a searchable picker that stays open while adding several at once
-- Archive, delete, and "Open as note" moved into an overflow menu in the task editor header, leaving Cancel and Save in the footer
-- The subtasks section shows progress derived from completed subtasks, replacing the manual progress slider
+- Status, priority, type, and dates on a task are changed via value picker
+- Start date, repeat, and dependencies are hidden by default and added to a task on demand from an "Add property"
+- Tags, assignees, and dependencies are edited through a new searchable picker
+- Archive, delete, and opening a task as a note are grouped under a single menu in the task editor
+- Subtask progress is calculated from completed subtasks
 
 ### Fixed
 
