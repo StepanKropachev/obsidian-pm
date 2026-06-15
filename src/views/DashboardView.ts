@@ -10,6 +10,7 @@ export class DashboardView extends ItemView {
   private toolbarEl!: HTMLElement
   private bodyEl!: HTMLElement
   private renderToken = 0
+  private reloadDebounceTimer: number | null = null
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf)
@@ -35,7 +36,40 @@ export class DashboardView extends ItemView {
     this.toolbarEl = root.createDiv('pm-toolbar')
     this.bodyEl = root.createDiv('pm-content')
     this.render()
+    this.registerVaultListeners()
     return Promise.resolve()
+  }
+
+  onClose(): Promise<void> {
+    if (this.reloadDebounceTimer !== null) {
+      window.clearTimeout(this.reloadDebounceTimer)
+      this.reloadDebounceTimer = null
+    }
+    return Promise.resolve()
+  }
+
+  private registerVaultListeners(): void {
+    const isRelevant = (path: string) => {
+      const folder = this.plugin.settings.projectsFolder
+      return path === folder || path.startsWith(`${folder}/`)
+    }
+    const scheduleReload = (path: string) => {
+      if (!isRelevant(path)) return
+      if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
+      this.reloadDebounceTimer = window.setTimeout(() => {
+        this.reloadDebounceTimer = null
+        this.render()
+      }, 300)
+    }
+    this.registerEvent(this.app.vault.on('create', (file) => scheduleReload(file.path)))
+    this.registerEvent(this.app.vault.on('modify', (file) => scheduleReload(file.path)))
+    this.registerEvent(this.app.vault.on('delete', (file) => scheduleReload(file.path)))
+    this.registerEvent(
+      this.app.vault.on('rename', (file, oldPath) => {
+        scheduleReload(file.path)
+        scheduleReload(oldPath)
+      })
+    )
   }
 
   render(): void {
