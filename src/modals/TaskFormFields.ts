@@ -150,7 +150,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       const allMembers = () => [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
       renderMultiSelect({
         container: cell,
-        avatar: true,
+        avatarStack: true,
         search: true,
         addLabel: 'Assign',
         placeholder: 'Search people…',

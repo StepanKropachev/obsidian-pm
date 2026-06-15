@@ -171,16 +171,16 @@ button.pm-prop-add {
   flex-wrap: wrap;
   gap: 5px;
 }
-.pm-assignee-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 6px 2px 2px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 999px;
-  font-size: var(--font-ui-smaller);
+
+/* Assignees: a single trigger holding an overlapping avatar stack + a name / "N people"
+   label. Two classes beat the element-prefixed .pm-prop-inline base (0,1,1) for the gap. */
+.pm-prop-inline.pm-assignees-trigger {
+  gap: 8px;
 }
-.pm-assignee-name {
+.pm-assignees-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--text-normal);
 }
 

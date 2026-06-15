@@ -23,61 +23,82 @@ export interface MultiSelectOpts {
   search?: boolean
   placeholder?: string
   create?: (label: string) => void
-  avatar?: boolean
   chipShape?: 'pill' | 'rounded'
   tag?: boolean
+  /** Render the value as a single trigger holding an overlapping avatar stack plus
+      a name / "N people" label, instead of one chip per value. Backs Assignees. */
+  avatarStack?: boolean
 }
 
 /**
- * Multi-value inline control: renders the current values as chips (or avatars) and an add
- * affordance that opens a searchable picker popover. The popover stays open across toggles so
- * several values can be added at once. Backs Tags, Assignees, and Depends on.
+ * Multi-value inline control: shows the current values and an add affordance that opens a
+ * searchable picker popover. The popover stays open across toggles so several values can be
+ * added at once. Backs Tags, Assignees, and Depends on.
+ *
+ * Two value displays: chips (default) with a trailing add ghost, or a single avatar-stack
+ * trigger (`avatarStack`) that doubles as the picker anchor.
  */
 export function renderMultiSelect(opts: MultiSelectOpts): void {
   const labelOf = (id: string) => (opts.labelFor ? opts.labelFor(id) : id)
-  const chipsEl = opts.container.createDiv('pm-prop-chips')
-  const addBtn = opts.container.createEl('button', { cls: 'pm-prop-add' })
-  const addIcon = addBtn.createSpan({ cls: 'pm-glyph-icon' })
-  setIcon(addIcon, 'plus')
-  addBtn.createSpan({ cls: 'pm-prop-add-label', text: opts.addLabel })
+  const stackMode = !!opts.avatarStack
+
+  // The picker anchor. In stack mode the trigger itself is the anchor and the value display;
+  // otherwise the chips sit in their own row and a trailing ghost anchors the picker.
+  const chipsEl = stackMode ? null : opts.container.createDiv('pm-prop-chips')
+  const anchorBtn = stackMode
+    ? opts.container.createEl('button')
+    : opts.container.createEl('button', { cls: 'pm-prop-add' })
+  if (!stackMode) {
+    setIcon(anchorBtn.createSpan({ cls: 'pm-glyph-icon' }), 'plus')
+    anchorBtn.createSpan({ cls: 'pm-prop-add-label', text: opts.addLabel })
+  }
+
+  const renderStackTrigger = () => {
+    anchorBtn.empty()
+    const ids = opts.selected()
+    if (ids.length === 0) {
+      anchorBtn.className = 'pm-prop-add'
+      setIcon(anchorBtn.createSpan({ cls: 'pm-glyph-icon' }), 'plus')
+      anchorBtn.createSpan({ cls: 'pm-prop-add-label', text: opts.addLabel })
+      return
+    }
+    anchorBtn.className = 'pm-prop-inline pm-assignees-trigger'
+    const stack = anchorBtn.createSpan({ cls: 'pm-avatar-stack' })
+    for (const id of ids) new Avatar(stack).setName(labelOf(id)).setSize('sm')
+    anchorBtn.createSpan({
+      cls: 'pm-assignees-label',
+      text: ids.length === 1 ? labelOf(ids[0]) : `${ids.length} people`
+    })
+  }
 
   const renderChips = () => {
+    if (!chipsEl) return
     chipsEl.empty()
     for (const id of opts.selected()) {
-      if (opts.avatar) {
-        const chip = chipsEl.createDiv('pm-assignee-chip')
-        new Avatar(chip).setName(labelOf(id)).setSize('sm')
-        chip.createSpan({ cls: 'pm-assignee-name', text: labelOf(id) })
-        const rm = chip.createEl('button', { cls: 'pm-chip-rm' })
-        setIcon(rm, 'x')
-        rm.addEventListener('click', () => {
+      const chip = new Chip(chipsEl)
+        .setLabel(labelOf(id))
+        .setVariant('outline')
+        .setRemovable(() => {
           opts.remove(id)
-          renderChips()
+          renderValues()
         })
-      } else {
-        const chip = new Chip(chipsEl)
-          .setLabel(labelOf(id))
-          .setVariant('outline')
-          .setRemovable(() => {
-            opts.remove(id)
-            renderChips()
-          })
-        if (opts.tag) chip.setTag()
-        else chip.setShape(opts.chipShape ?? 'pill')
-        const color = opts.colorFor?.(id)
-        if (color) chip.setDot(true).setColor(color)
-      }
+      if (opts.tag) chip.setTag()
+      else chip.setShape(opts.chipShape ?? 'pill')
+      const color = opts.colorFor?.(id)
+      if (color) chip.setDot(true).setColor(color)
     }
   }
-  renderChips()
+
+  const renderValues = stackMode ? renderStackTrigger : renderChips
+  renderValues()
 
   let pop: Popover | null = null
-  addBtn.addEventListener('click', () => {
+  anchorBtn.addEventListener('click', () => {
     if (pop?.isOpen) {
       pop.close()
       return
     }
-    const popover = new Popover({ anchor: addBtn, width: 230, onClose: () => (pop = null) })
+    const popover = new Popover({ anchor: anchorBtn, width: 230, onClose: () => (pop = null) })
     pop = popover
     let query = ''
     let searchInput: HTMLInputElement | null = null
@@ -93,11 +114,12 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
           label: it.label,
           color: it.color ?? opts.colorFor?.(it.id),
           icon: it.icon,
+          avatar: stackMode ? it.label : undefined,
           selected: selectedIds.has(it.id),
           onPick: () => {
             if (selectedIds.has(it.id)) opts.remove(it.id)
             else opts.add(it.id)
-            renderChips()
+            renderValues()
             renderList()
           }
         })
@@ -113,7 +135,7 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
             create(label)
             query = ''
             if (searchInput) searchInput.value = ''
-            renderChips()
+            renderValues()
             renderList()
           }
         })
