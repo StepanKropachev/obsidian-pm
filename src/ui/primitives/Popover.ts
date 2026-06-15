@@ -57,6 +57,7 @@ export class Popover {
   open(): void {
     if (this.opened) return
     this.opened = true
+    this.anchor.setAttribute('aria-expanded', 'true')
     this.host.appendChild(this.el)
     this.reposition()
     this.doc.addEventListener('mousedown', this.onOutsideDown, true)
@@ -68,6 +69,7 @@ export class Popover {
   close(): void {
     if (!this.opened) return
     this.opened = false
+    this.anchor.setAttribute('aria-expanded', 'false')
     this.doc.removeEventListener('mousedown', this.onOutsideDown, true)
     this.doc.removeEventListener('keydown', this.onKeyDown, true)
     this.win.removeEventListener('scroll', this.reposition, true)

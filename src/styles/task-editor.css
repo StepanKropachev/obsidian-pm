@@ -107,6 +107,12 @@ button.pm-prop-inline {
 .pm-prop-inline:hover {
   background: var(--background-modifier-hover);
 }
+/* Open state: while the trigger's popover is up it holds the hover fill plus a
+   hairline inset ring, so the active control reads as engaged. */
+.pm-prop-inline[aria-expanded='true'] {
+  background: var(--background-modifier-hover);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
 button.pm-prop-inline--empty {
   color: var(--text-faint);
 }
