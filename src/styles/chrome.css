@@ -150,8 +150,11 @@
   color: var(--text-normal);
 }
 
-.pm-prop-add-btn {
+/* `button` prefix outranks Obsidian's core button chrome (grey fill + inset shadow),
+   which otherwise overrides this transparent dashed-button look. */
+button.pm-prop-add-btn {
   background: transparent;
+  box-shadow: none;
   border: 1px dashed var(--pm-border);
   color: var(--pm-text-muted);
   padding: 3px 10px;
