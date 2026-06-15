@@ -123,7 +123,7 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     if (opts.search) {
       const input = popover.contentEl.createEl('input', {
         cls: 'pm-pop-field',
-        attr: { placeholder: opts.placeholder ?? 'Search…' }
+        attr: { placeholder: opts.placeholder ?? 'Search…', spellcheck: 'false' }
       })
       input.addEventListener('input', () => {
         query = input.value
