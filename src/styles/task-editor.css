@@ -60,6 +60,13 @@
   }
 }
 
+/* The title is a borderless heading-style textarea. Core app.css gives every
+   textarea a focus box-shadow ring (textarea:focus, 0,1,1) that outranks a bare
+   class; the element-prefixed selector cancels it so focus stays chrome-free. */
+textarea.pm-te-title:focus {
+  box-shadow: none;
+}
+
 /* Leading glyph (shared by inline triggers and popover rows) */
 .pm-glyph-icon {
   display: inline-flex;
