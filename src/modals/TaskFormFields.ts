@@ -313,8 +313,10 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           container: cell,
           search: true,
           addLabel: 'Add dependency',
+          addLabelMore: 'Add another',
           placeholder: 'Search tasks…',
-          chipShape: 'rounded',
+          menuLabel: 'Blocked by',
+          depsList: true,
           labelFor: titleOf,
           selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
           options: () =>

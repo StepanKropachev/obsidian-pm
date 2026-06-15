@@ -184,6 +184,39 @@ button.pm-prop-add {
   color: var(--text-normal);
 }
 
+/* Depends on: a vertical list of id + title-link rows */
+.pm-prop-deps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+.pm-dep-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-ui-smaller);
+}
+.pm-dep-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  --icon-size: 13px;
+}
+.pm-dep-id {
+  flex-shrink: 0;
+  font-family: var(--font-monospace);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.pm-dep-title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-accent);
+}
+
 /* Popover contents */
 .pm-pop-list {
   display: flex;

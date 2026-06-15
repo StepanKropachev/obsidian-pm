@@ -18,16 +18,21 @@ export interface MultiSelectOpts {
   add: (id: string) => void
   remove: (id: string) => void
   addLabel: string
+  /** Add-ghost label once at least one value is present (e.g. "Add another"). */
+  addLabelMore?: string
   labelFor?: (id: string) => string
   colorFor?: (id: string) => string
   search?: boolean
   placeholder?: string
+  /** Header shown above the picker options. */
+  menuLabel?: string
   create?: (label: string) => void
-  chipShape?: 'pill' | 'rounded'
   tag?: boolean
   /** Render the value as a single trigger holding an overlapping avatar stack plus
       a name / "N people" label, instead of one chip per value. Backs Assignees. */
   avatarStack?: boolean
+  /** Render the values as a vertical list of id + title-link rows. Backs Depends on. */
+  depsList?: boolean
 }
 
 /**
@@ -41,16 +46,20 @@ export interface MultiSelectOpts {
 export function renderMultiSelect(opts: MultiSelectOpts): void {
   const labelOf = (id: string) => (opts.labelFor ? opts.labelFor(id) : id)
   const stackMode = !!opts.avatarStack
+  const listMode = !!opts.depsList
 
   // The picker anchor. In stack mode the trigger itself is the anchor and the value display;
-  // otherwise the chips sit in their own row and a trailing ghost anchors the picker.
-  const chipsEl = stackMode ? null : opts.container.createDiv('pm-prop-chips')
+  // otherwise the values sit in their own row (chips, or a deps list) above a trailing ghost
+  // that anchors the picker.
+  const chipsEl = stackMode || listMode ? null : opts.container.createDiv('pm-prop-chips')
+  const depsEl = listMode ? opts.container.createDiv('pm-prop-deps') : null
   const anchorBtn = stackMode
     ? opts.container.createEl('button')
     : opts.container.createEl('button', { cls: 'pm-prop-add' })
+  let addLabelEl: HTMLElement | null = null
   if (!stackMode) {
     setIcon(anchorBtn.createSpan({ cls: 'pm-glyph-icon' }), 'plus')
-    anchorBtn.createSpan({ cls: 'pm-prop-add-label', text: opts.addLabel })
+    addLabelEl = anchorBtn.createSpan({ cls: 'pm-prop-add-label', text: opts.addLabel })
   }
 
   const renderStackTrigger = () => {
@@ -83,13 +92,38 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
           renderValues()
         })
       if (opts.tag) chip.setTag()
-      else chip.setShape(opts.chipShape ?? 'pill')
+      else chip.setShape('pill')
       const color = opts.colorFor?.(id)
       if (color) chip.setDot(true).setColor(color)
     }
   }
 
-  const renderValues = stackMode ? renderStackTrigger : renderChips
+  // Depends on: one row per value (link icon + mono id + title link + remove).
+  const renderDepsList = () => {
+    if (!depsEl) return
+    depsEl.empty()
+    for (const id of opts.selected()) {
+      const row = depsEl.createDiv('pm-dep-row')
+      setIcon(row.createSpan({ cls: 'pm-dep-icon' }), 'link-2')
+      row.createSpan({ cls: 'pm-dep-id', text: id })
+      row.createSpan({ cls: 'pm-dep-title', text: labelOf(id) })
+      const rm = row.createEl('button', { cls: 'pm-chip-rm' })
+      setIcon(rm, 'x')
+      rm.addEventListener('click', () => {
+        opts.remove(id)
+        renderValues()
+      })
+    }
+  }
+
+  const renderValues = () => {
+    if (stackMode) renderStackTrigger()
+    else if (listMode) renderDepsList()
+    else renderChips()
+    if (addLabelEl) {
+      addLabelEl.setText(opts.selected().length && opts.addLabelMore ? opts.addLabelMore : opts.addLabel)
+    }
+  }
   renderValues()
 
   let pop: Popover | null = null
@@ -101,7 +135,13 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     const popover = new Popover({ anchor: anchorBtn, width: 230, onClose: () => (pop = null) })
     pop = popover
     let query = ''
-    let searchInput: HTMLInputElement | null = null
+    if (opts.menuLabel) popover.contentEl.createDiv({ cls: 'pm-pop-label', text: opts.menuLabel })
+    const searchInput = opts.search
+      ? popover.contentEl.createEl('input', {
+          cls: 'pm-pop-field',
+          attr: { placeholder: opts.placeholder ?? 'Search…', spellcheck: 'false' }
+        })
+      : null
     const listEl = popover.contentEl.createDiv('pm-pop-list')
 
     const renderList = () => {
@@ -142,17 +182,11 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
       }
     }
 
-    if (opts.search) {
-      const input = popover.contentEl.createEl('input', {
-        cls: 'pm-pop-field',
-        attr: { placeholder: opts.placeholder ?? 'Search…', spellcheck: 'false' }
-      })
-      input.addEventListener('input', () => {
-        query = input.value
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        query = searchInput.value
         renderList()
       })
-      popover.contentEl.prepend(input)
-      searchInput = input
     }
 
     renderList()
