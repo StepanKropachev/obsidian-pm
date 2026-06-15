@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The project list updates its task counts when tasks are added, changed, or removed instead of staying stale until the view is reopened ([#121](https://github.com/StepanKropachev/obsidian-pm/issues/121))
+
 ## [1.6.1] - 2026-06-15
 
 ### Changed
