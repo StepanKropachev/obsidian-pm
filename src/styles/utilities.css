@@ -5,9 +5,6 @@
 .pm-dragging {
   opacity: 0.5;
 }
-.pm-subtask-rm--visible {
-  opacity: 1;
-}
 .pm-offscreen {
   position: fixed;
   opacity: 0;

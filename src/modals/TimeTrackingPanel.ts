@@ -72,7 +72,6 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
       })
 
       const rmBtn = row.createEl('button', { cls: 'pm-subtask-rm' })
-      rmBtn.addClass('pm-subtask-rm--visible')
       setIcon(rmBtn, 'x')
       rmBtn.addEventListener('click', () => {
         logs.splice(i, 1)

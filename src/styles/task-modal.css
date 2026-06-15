@@ -233,16 +233,27 @@
   background: var(--pm-bg3);
 }
 
-.pm-subtask-rm {
-  background: transparent;
+/* `button` prefix outranks core button chrome (grey fill + inset shadow + fixed
+   height), which otherwise paints over this ghost icon button. */
+button.pm-subtask-rm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  padding: 2px;
   border: none;
-  cursor: pointer;
+  border-radius: var(--pm-radius-sm);
+  background: transparent;
+  box-shadow: none;
   color: var(--pm-text-muted);
-  font-size: 11px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  opacity: 0;
+  cursor: pointer;
   transition: opacity 0.15s;
+  --icon-size: 14px;
+}
+/* Subtask rows reveal the remove button on hover; time-log rows keep it shown.
+   The row-scoped selectors (0,2,0) outrank the element-prefixed base (0,1,1). */
+.pm-modal-subtask-row .pm-subtask-rm {
+  opacity: 0;
 }
 .pm-modal-subtask-row:hover .pm-subtask-rm {
   opacity: 1;
