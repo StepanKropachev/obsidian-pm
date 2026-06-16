@@ -9,100 +9,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The project list updates its task counts when tasks are added, changed, or removed instead of staying stale until the view is reopened ([#121](https://github.com/StepanKropachev/obsidian-pm/issues/121))
+- The project list showed stale task counts until the view was reopened ([#121](https://github.com/StepanKropachev/obsidian-pm/issues/121))
 
 ## [1.6.1] - 2026-06-15
 
 ### Changed
 
-- Task and project modals use Obsidian's native border, shadow, and corner styling instead of custom values
-- Status, priority, and tag labels follow Obsidian's native styling more closely
-- The accent color matches the Obsidian theme accent instead of a fixed purple
-- The Gantt today marker, milestone and subtask buttons, and row selection and hover highlights take their colors from the theme instead of fixed values
+- Task and project modals follow Obsidian's native border, shadow, and corner styling
+- Status, priority, and tag labels follow Obsidian's native styling
+- The accent color follows the Obsidian theme
+- Gantt elements follow the Obsidian theme: the today marker, the milestone and subtask buttons, and the row selection and hover highlights
 - Kanban cards align the assignee and due date to the bottom of the card
 
 ### Fixed
 
-- Subtasks created from a task's subtasks list or the add-subtask buttons are set to the subtask type automatically ([#82](https://github.com/StepanKropachev/obsidian-pm/issues/82))
-- Assignees written as note links (`[[People/Jane Doe]]`) show the person's name on their avatar instead of the link path ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
+- Subtasks created from the subtasks list or the add-subtask buttons were not set to the subtask type ([#82](https://github.com/StepanKropachev/obsidian-pm/issues/82))
+- An assignee written as a note link (`[[People/Jane Doe]]`) showed the link path on its avatar instead of the person's name ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
 
 ## [1.6.0] - 2026-06-12
 
 ### Added
 
-- Completing a task records a completion date, editable in the task modal and stored in frontmatter ([#93](https://github.com/StepanKropachev/obsidian-pm/issues/93))
-- Setting "Show description preview on board" (default off) shows the first few lines of each task description on kanban cards, with markdown stripped and clamped to three lines ([#59](https://github.com/StepanKropachev/obsidian-pm/issues/59))
+- Completing a task records a completion date that can be edited in the task modal ([#93](https://github.com/StepanKropachev/obsidian-pm/issues/93))
+- Setting "Show description preview on board" (default off) shows the first three lines of each task's description on its kanban card ([#59](https://github.com/StepanKropachev/obsidian-pm/issues/59))
 
 ### Changed
 
-- Saving a task rewrites only the files affected by the change instead of every task file in the project
-- Projects open faster: task data loads from Obsidian's metadata cache and note bodies are read on demand. Previously loaded projects reopen instantly; edits made outside the plugin are still detected and reloaded
-- The table renders only the rows in view, so it stays responsive in large projects
-- Views update in place after an edit, preserving scroll position and selection
-- Select all in the table selects every task matching the current filter, not just the rows in view
-- Collapse state is stored in plugin settings instead of task frontmatter. Collapsing or expanding a subtree no longer modifies task files, and the `collapsed` frontmatter key is no longer written
-- Expand/collapse subtasks toggle is styled consistently across the table and Gantt views
-- Gantt task bars use stronger contrast between completed and remaining work ([#87](https://github.com/StepanKropachev/obsidian-pm/issues/87))
-- Gantt task bars no longer overlay a stripe on tasks that have subtasks
+- Saving a task updates only the affected task notes instead of every note in the project
+- Projects open faster, and reopening a project is instant. Edits made outside the plugin are still detected and reloaded
+- The table stays responsive in large projects
+- Views update in place after an edit, keeping the scroll position and selection
+- Select all in the table selects every task matching the current filter, not just the visible rows
+- Collapsing or expanding a subtree no longer changes any task notes
+- The expand/collapse subtasks toggle looks the same in the table and Gantt views
+- Gantt task bars show stronger contrast between completed and remaining work ([#87](https://github.com/StepanKropachev/obsidian-pm/issues/87))
+- Gantt task bars no longer show a stripe on tasks that have subtasks
 
 ### Fixed
 
-- Images pasted or dropped onto a task are saved in the task's own folder instead of the vault root. The folder follows the task when it's renamed or archived, and is removed when the task is deleted
-- Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks. Copies of a subtree now get distinct file names ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
-- Progress bar labels showing 0% instead of the actual value in some views
-- Subtasks toggle not working in the Gantt view
+- Images pasted or dropped onto a task were saved to the vault root instead of the task's own folder. The folder follows the task when it is renamed or archived, and is removed with the task
+- Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
+- Progress bar labels showed 0% instead of the actual value in some views
+- The subtasks toggle did not respond in the Gantt view
 
 ## [1.5.0] - 2026-05-25
 
 ### Added
 
-- Setting "Save tasks on close" (default on). Turn off to make closing the task modal via X or click-outside discard edits, so only the Save button persists changes ([#62](https://github.com/StepanKropachev/obsidian-pm/issues/62))
-- "Open as note" button in the task modal header opens the task's underlying note in a new tab. Handy when the modal is too small to read the full description
-- Paste a screenshot or drag any file onto the task modal description to save it under the vault's attachments folder and embed it as `![[...]]` at the cursor
-- Search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
+- Setting "Save tasks on close" (default on). When off, closing the task modal by X or click-outside discards edits, so only the Save button keeps them ([#62](https://github.com/StepanKropachev/obsidian-pm/issues/62))
+- "Open as note" button in the task modal header opens the task's note in a new tab
+- Pasting a screenshot or dragging a file onto the task description saves it to the vault attachments folder and embeds it at the cursor
+- Search box, filters (status, priority, assignee, tag, due date, archived), and saved views appear above every view, not just the table
 - Filter state persists per project across plugin reloads
-- Saved views remember the view mode they were created in; selecting one switches the project to that mode
-- Gantt lifts a matching task to the top level when its parent is filtered out, so search and filters reveal deeply nested matches
-- Release artifacts carry GitHub build provenance attestations; run `gh attestation verify <file> --owner StepanKropachev` to confirm a download was built from this repo
+- Saved views remember the view mode they were created in, and selecting one switches the project to that mode
+- Gantt lifts a matching task to the top level when its parent is filtered out, so search reveals deeply nested matches
+- Release artifacts carry GitHub build provenance attestations; `gh attestation verify <file> --owner StepanKropachev` confirms a download was built from this repo
 
 ### Changed
 
-- UI follows the Obsidian theme: accent color, near/overdue colors, badge palette, and avatars all read from Obsidian CSS variables instead of the previous hardcoded purple
-- Toolbar, gantt, filter, and bulk-action buttons render at native size (previously compact)
-- Saved-view tabs share the soft accent treatment with filter pills (previously filled accent)
-- `+ save view` and inline chip-list add buttons are native buttons (no longer dashed pills)
-- Status and priority badges in the task modal are spans, no longer keyboard-focusable
-- Confirm "Delete" uses Obsidian's native warning style
-- Light-theme primary buttons use solid accent (`mod-cta`) instead of the bordered variant
-- Project view header gear, bulk-action clear, chip remove, and table row icon buttons use lucide icons
-- Chip remove buttons turn red on hover across tags, assignees, and dependencies
+- The UI follows the Obsidian theme: accent color, near and overdue colors, badges, and avatars
+- Toolbar, Gantt, filter, and bulk-action buttons render at Obsidian's native size
+- Saved-view tabs match the styling of the filter pills
+- The "save view" and inline add buttons render as native Obsidian buttons
+- Status and priority badges in the task modal are no longer keyboard-focusable
+- The delete confirmation uses Obsidian's native warning style
+- Primary buttons in light theme use a solid accent fill
+- The project header gear, bulk-action clear, remove, and table row buttons use Obsidian's icons
+- Remove buttons on tags, assignees, and dependencies turn red on hover
 - Project-card and kanban-card progress bars are 3px tall
-- The filter row collapses when no filters are active; click the `Filter` pill to expand
-- Toggling a filter pill no longer steals focus from the search input
-- Gantt milestone labels and dependency arrows now respect the active filter
-- View switcher buttons are icon-only (previously icon + label)
-- Assignee avatar initials combine the first letter of the first two words (e.g., "Michael Jordan" becomes "MJ" instead of "MI"), so people who share a first name don't collide as often
-- New task files save as `<slug>.md` instead of `<slug>-<id>.md`. Existing files keep their current name until the title changes or you rename them yourself
+- The filter row collapses when no filters are active, and the Filter pill expands it
+- Toggling a filter pill no longer moves focus out of the search box
+- Gantt milestone labels and dependency arrows follow the active filter
+- View switcher buttons show only an icon
+- Assignee avatar initials use the first letter of the first two words, so "Michael Jordan" shows "MJ" instead of "MI"
+- New task notes are named after the task title. Existing notes keep their name until the task is renamed
 
 ### Removed
 
-- The gantt "Hide completed" button. Use the Status filter to exclude `Done` and `Cancelled` instead; existing `ganttHideDone: true` settings are migrated automatically into each project's status filter
-- The inline quick-add task input above the table. Use the toolbar `+ add task` button (which opens the task modal) instead
+- The Gantt "Hide completed" button; the Status filter excludes Done and Cancelled instead, and existing settings migrate automatically
+- The inline quick-add input above the table; the toolbar "add task" button opens the task modal instead
 
 ### Fixed
 
-- Phantom 6px right margin on solo avatars (visible in the project edit modal)
-- Kanban cards silently dropping the 4th+ assignee (now shown as `+N`)
-- Duplicate task entries when creating a task
-- Saved-view pill staying highlighted after the user diverged from its filter
-- Garbled avatar initials when an assignee was stored as `[[Wiki Link]]`; initials, tooltip, and color now derive from the parsed display name ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
-- Renaming a task to a title that's already used by another file in the project now shows an inline error next to the title input
+- A solo avatar had extra spacing on its right in the project edit modal
+- Kanban cards dropped the fourth and later assignees
+- Duplicate task entries appeared when creating a task
+- A saved-view pill stayed highlighted after its filter was changed
+- An assignee stored as a wiki link (`[[Wiki Link]]`) showed garbled avatar initials ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
+- Renaming a task to a title already used by another note shows an inline error instead of failing silently
 
 ## [1.4.0] - 2026-04-29
 
 ### Breaking Changes
 
-- Clicking a project file no longer auto-opens the PM view. Bind the new "Open current file as project" command to a hotkey for the old behavior.
+- Clicking a project file no longer auto-opens the project view. The new "Open current file as project" command restores the old behavior when bound to a hotkey
 
 ### Added
 
@@ -111,18 +111,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- "Today" rolling over in the evening west of UTC
-- Tab hijack when clicking a project from a task tab
-- Duplicate tabs when opening a project
-- Duplicate project list pane from the ribbon button
-- Table scroll position not preserved across task modal open/close
-- Project folder errors on case-insensitive vaults
+- "Today" rolled over in the evening west of UTC
+- Clicking a project from a task tab hijacked the tab
+- Opening a project created duplicate tabs
+- The ribbon button opened a duplicate project list pane
+- The table scroll position was lost across opening and closing the task modal
+- Project folders errored on case-insensitive vaults
 
 ## [1.3.2] - 2026-04-21
 
 ### Fixed
 
-- `file://` links in task descriptions now open on click
+- `file://` links in task descriptions did not open on click
 
 ## [1.3.1] - 2026-04-21
 
@@ -138,53 +138,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Custom task statuses, add/remove from settings
+- Custom task statuses, added and removed from settings
 - Subtasks as draggable cards on the Kanban board
 - Undo for Gantt drag operations (Ctrl/Cmd+Z)
-- Interactive checkboxes in task description preview
+- Interactive checkboxes in the task description preview
 - "Hide completed tasks" toggle in Gantt
-- Bulk set-parent and remove-parent in table view
-
-### Fixed
-
-- Bulk action bar no longer flickers when toggling filters
-- Orphaned subtasks reattach to their parent on load
-- Orphans get remapped when a custom status is deleted
+- Bulk set-parent and remove-parent in the table view
 
 ### Removed
 
-- Emoji placeholder in the custom status icon input
+- The emoji placeholder in the custom status icon input
+
+### Fixed
+
+- The bulk action bar flickered when toggling filters
+- Orphaned subtasks reattach to their parent on load
+- Orphaned tasks are remapped when a custom status is deleted
 
 ## [1.2.0] - 2026-04-14
 
 ### Added
 
-- Import notes as tasks: batch-import vault notes into a project via a multi-file picker
+- Import notes as tasks: batch-import vault notes into a project through a multi-file picker
 - Click-to-link dependencies on Gantt
 - Drag Gantt task bars to reposition them
-- Click an empty Gantt row to set start/due dates
+- Click an empty Gantt row to set start and due dates
 - Dependency-based auto-scheduling
 - Type `[[` in the description field to link vault notes
-- Markdown preview in task descriptions, toggle between edit and rendered
+- Markdown preview in task descriptions, with a toggle between edit and rendered
 - Shift+click range selection for table checkboxes
 - Gantt week labels: week number, date range, or both
 
-### Fixed
-
-- Dependent tasks losing 1 day per reschedule
-- Gantt scroll position not preserved on re-render
-- Import modal writing tasks to the wrong folder
-- Subtasks not rendering when added via the parent task modal
-- Crash after deleting dependent tasks
-- Task modal scroll jump when typing long descriptions
-- Import modal checkbox responsiveness and double-toggle
-
 ### Changed
 
-- Dependency picker filters out cycles
+- The dependency picker filters out cycles
 - Cross-links to canvases and databases work in task descriptions
-- Bulk checkboxes hidden until row hover
-- Shift+Enter shortcut hint on task modal buttons
+- Bulk checkboxes stay hidden until the row is hovered
+- Task modal buttons show the Shift+Enter shortcut hint
+
+### Fixed
+
+- Dependent tasks lost a day on each reschedule
+- The Gantt scroll position was lost on re-render
+- The import modal wrote tasks to the wrong folder
+- Subtasks did not render when added through the parent task modal
+- Deleting dependent tasks crashed the plugin
+- The task modal jumped while typing long descriptions
+- Import modal checkboxes responded slowly and double-toggled
 
 ## [1.1.1] - 2026-04-11
 
@@ -196,15 +196,15 @@ First stable release.
 
 ### Added
 
-- Gantt: drag-to-reschedule, snap-to-grid, resizable sidebar, milestones, week/month/quarter scales
+- Gantt: drag-to-reschedule, snap-to-grid, resizable sidebar, milestones, and week/month/quarter scales
 - Kanban: drag-and-drop board grouped by status
-- Table: sort, filter, saved views, inline date editing, quick-add bar
-- Task modal: subtasks panel, time tracking, custom fields, auto-save on dismiss
-- Bulk actions: multi-select for status changes, deletion, archive/unarchive
-- Custom fields per project: text, number, date, checkbox, select, multi-select
+- Table: sort, filter, saved views, inline date editing, and a quick-add bar
+- Task modal: subtasks panel, time tracking, custom fields, and auto-save on dismiss
+- Bulk actions: multi-select for status changes, deletion, and archive/unarchive
+- Custom fields per project: text, number, date, checkbox, select, and multi-select
 - Archive system with a toggle to show archived tasks
 - Command palette: create tasks and open projects from anywhere
-- Data stored as YAML frontmatter in Markdown files
+- Tasks stored as YAML frontmatter in Markdown files
 
 ## [1.0.0-beta] - 2026-03-30
 
