@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Images pasted or dropped onto a task are saved in the task's own folder instead of the vault root. The folder follows the task when it's renamed or archived, and is removed when the task is deleted
-- Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks. Copies of a subtree now get distinct file names ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
+- Duplicating a task with its subtasks failed with a "note already exists" error and dropped the subtasks. Copies of a subtree get distinct file names ([#90](https://github.com/StepanKropachev/obsidian-pm/issues/90))
 - Progress bar labels showing 0% instead of the actual value in some views
 - Subtasks toggle not working in the Gantt view
 
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Setting "Save tasks on close" (default on). Turn off to make closing the task modal via X or click-outside discard edits, so only the Save button persists changes ([#62](https://github.com/StepanKropachev/obsidian-pm/issues/62))
 - "Open as note" button in the task modal header opens the task's underlying note in a new tab. Handy when the modal is too small to read the full description
 - Paste a screenshot or drag any file onto the task modal description to save it under the vault's attachments folder and embed it as `![[...]]` at the cursor
-- Search box, filters (status, priority, assignee, tag, due date, archived), and saved views now appear above every view, not just the table
+- Search box, filters (status, priority, assignee, tag, due date, archived), and saved views appear above every view, not just the table
 - Filter state persists per project across plugin reloads
 - Saved views remember the view mode they were created in; selecting one switches the project to that mode
 - Gantt lifts a matching task to the top level when its parent is filtered out, so search and filters reveal deeply nested matches
@@ -79,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project-card and kanban-card progress bars are 3px tall
 - The filter row collapses when no filters are active; click the `Filter` pill to expand
 - Toggling a filter pill no longer steals focus from the search input
-- Gantt milestone labels and dependency arrows now respect the active filter
+- Gantt milestone labels and dependency arrows respect the active filter
 - View switcher buttons are icon-only (previously icon + label)
 - Assignee avatar initials combine the first letter of the first two words (e.g., "Michael Jordan" becomes "MJ" instead of "MI"), so people who share a first name don't collide as often
 - New task files save as `<slug>.md` instead of `<slug>-<id>.md`. Existing files keep their current name until the title changes or you rename them yourself
@@ -92,11 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Phantom 6px right margin on solo avatars (visible in the project edit modal)
-- Kanban cards silently dropping the 4th+ assignee (now shown as `+N`)
+- Kanban cards silently dropping the 4th+ assignee (shown as `+N`)
 - Duplicate task entries when creating a task
 - Saved-view pill staying highlighted after the user diverged from its filter
-- Garbled avatar initials when an assignee was stored as `[[Wiki Link]]`; initials, tooltip, and color now derive from the parsed display name ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
-- Renaming a task to a title that's already used by another file in the project now shows an inline error next to the title input
+- Garbled avatar initials when an assignee was stored as `[[Wiki Link]]`; initials, tooltip, and color derive from the parsed display name ([#64](https://github.com/StepanKropachev/obsidian-pm/issues/64))
+- Renaming a task to a title that's already used by another file in the project shows an inline error next to the title input
 
 ## [1.4.0] - 2026-04-29
 
@@ -122,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `file://` links in task descriptions now open on click
+- `file://` links in task descriptions open on click
 
 ## [1.3.1] - 2026-04-21
 
