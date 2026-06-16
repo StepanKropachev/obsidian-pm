@@ -636,12 +636,15 @@ describe('ProjectStore duplicate long titles', () => {
   it('duplicates a long-titled task without hanging and keeps filenames unique', async () => {
     const { store, vault } = newStore()
     const project = await store.createProject('Dup3', 'Projects')
-    const longTitle = 'This is a very long task title that exceeds forty characters for sure'
+    const longTitle = 'This is a very long task title that comfortably exceeds the sixty character filename slug cap'
     const parent = await addNamed(store, project, longTitle)
     await addNamed(store, project, 'subtask', parent.id)
 
-    const copy = await store.duplicateTask(project, parent.id, true)
-    expect(copy).not.toBeNull()
+    // Duplicate twice: the base is trimmed so the "(copy N)" suffix survives the
+    // slug cap, so both copies get distinct titles and distinct files.
+    expect(await store.duplicateTask(project, parent.id, true)).not.toBeNull()
+    expect(await store.duplicateTask(project, parent.id, true)).not.toBeNull()
+
     const paths = flattenTasks(project.tasks).map((f) => f.task.filePath)
     expect(new Set(paths).size).toBe(paths.length)
     for (const p of paths) {

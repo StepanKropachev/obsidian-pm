@@ -121,8 +121,11 @@ export function serializeTask(
   return yamlLines.join('\n')
 }
 
+/** Slug length cap, for path-length safety (Windows MAX_PATH, mobile, sync). */
+export const TASK_SLUG_MAX_LENGTH = 60
+
 function taskSlug(title: string): string {
-  return sanitizeFileName(title).toLowerCase().replace(/\s+/g, '-').slice(0, 40)
+  return sanitizeFileName(title).toLowerCase().replace(/\s+/g, '-').slice(0, TASK_SLUG_MAX_LENGTH)
 }
 
 /** Build the file path for a task .md file */
