@@ -739,15 +739,17 @@ export class ProjectStore {
   }
 
   /**
-   * Name a freshly cloned task "<title> (copy N)". The base is trimmed so the
-   * "(copy N)" suffix always survives the slug cap — a long title would otherwise
-   * truncate it away and collide with its source. Counting up (against titles
-   * already in use, on disk, or claimed by earlier clones in this duplication)
-   * keeps both the title and the file distinct, and always terminates: every
-   * counter yields a distinct slug, and the taken sets are finite.
+   * Name a freshly cloned task "<title> (copy N)". Any existing "(copy N)" suffix
+   * is stripped first, so duplicating a copy counts up ("Task (copy 2)") instead
+   * of stacking suffixes ("Task (copy) (copy)"). The base is trimmed so the suffix
+   * always survives the slug cap — a long title would otherwise truncate it away
+   * and collide with its source. Counting up (against titles already in use, on
+   * disk, or claimed by earlier clones in this duplication) keeps both the title
+   * and the file distinct, and always terminates: every counter yields a distinct
+   * slug, and the taken sets are finite.
    */
   private assignCopyName(task: Task, folder: string, usedTitles: Set<string>, claimed: Set<string>): void {
-    const base = task.title
+    const base = task.title.replace(/(?: \(copy(?: \d+)?\))+$/, '')
     for (let n = 1; ; n++) {
       const suffix = n === 1 ? ' (copy)' : ` (copy ${n})`
       const room = TASK_SLUG_MAX_LENGTH - suffix.length

@@ -558,6 +558,20 @@ describe('ProjectStore task index', () => {
     expect(second?.title).toBe('Task (copy 2)')
   })
 
+  it('counts up instead of stacking suffixes when a copy is duplicated', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Dup4', 'Projects')
+    const task = await addNamed(store, project, 'Task')
+
+    const first = expectDefined(await store.duplicateTask(project, task.id, false))
+    const second = await store.duplicateTask(project, first.id, false)
+    const third = await store.duplicateTask(project, second?.id ?? '', false)
+
+    expect(first.title).toBe('Task (copy)')
+    expect(second?.title).toBe('Task (copy 2)')
+    expect(third?.title).toBe('Task (copy 3)')
+  })
+
   it('survives a reload: rebuilt index after load matches the in-memory tree', async () => {
     const { store, vault, app } = newStore()
     const project = await store.createProject('Reload', 'Projects')
