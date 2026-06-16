@@ -38,7 +38,8 @@ type DirtyKind = 'fm' | 'full'
 
 /** Patches that touch any of these require rewriting the body, not just the frontmatter. */
 function patchNeedsBodyRewrite(patch: Partial<Task>): boolean {
-  return patch.description !== undefined || patch.archived !== undefined
+  // `subtasks` changes the parent's `## Subtasks` list, which lives in the body.
+  return patch.description !== undefined || patch.archived !== undefined || patch.subtasks !== undefined
 }
 
 /**
@@ -698,16 +699,16 @@ export class ProjectStore {
     // root, and across the clones we're about to add so siblings don't collide.
     const baseFolder = this.projectTaskFolder(project)
     const claimed = new Set<string>()
-    const claimTitle = (task: Task): void => {
+    const claimName = (task: Task): void => {
       const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
-      task.title = this.freeCopyTitle(task.title, folder, claimed)
+      this.assignCopyName(task, folder, claimed)
     }
     // Clones don't have a filePath yet; their description in memory is whatever
     // came from the source. We need to write that body verbatim.
-    claimTitle(copy)
+    claimName(copy)
     this.hydratedBodies.add(copy)
     for (const ft of flattenTasks(copy.subtasks)) {
-      claimTitle(ft.task)
+      claimName(ft.task)
       this.hydratedBodies.add(ft.task)
     }
     const parentId = findParentId(project, sourceId)
@@ -722,20 +723,32 @@ export class ProjectStore {
   }
 
   /**
-   * Pick a "(copy)" title for a duplicated task whose file isn't already taken,
-   * neither on disk nor by an earlier clone in the same duplication (`claimed`).
-   * A duplicate never reuses the bare source title, so the sequence starts at
-   * "(copy)" and counts up.
+   * Give a freshly cloned task a free filename. Prefers a readable "(copy N)"
+   * title whose slug isn't already taken, on disk or by an earlier clone in this
+   * same duplication (`claimed`). Long titles are truncated to a fixed-length
+   * slug, which can swallow the "(copy N)" suffix so every counter maps to the
+   * same path; once the path stops changing, no counter can free one up, so it
+   * keeps the "(copy)" title and pins an explicit `<slug>-<id8>` filePath instead
+   * — the legacy scheme `resolveTaskPath` preserves, unique per clone.
    */
-  private freeCopyTitle(base: string, folder: string, claimed: Set<string>): string {
+  private assignCopyName(task: Task, folder: string, claimed: Set<string>): void {
+    const base = task.title
+    let lastPath: string | null = null
     for (let n = 1; ; n++) {
       const title = n === 1 ? `${base} (copy)` : `${base} (copy ${n})`
       const path = normalizePath(taskFilePath(title, folder))
       if (!claimed.has(path) && !(this.app.vault.getAbstractFileByPath(path) instanceof TFile)) {
         claimed.add(path)
-        return title
+        task.title = title
+        return
       }
+      if (path === lastPath) break
+      lastPath = path
     }
+    task.title = `${base} (copy)`
+    const fallback = normalizePath(taskFilePath(task.title, folder).replace(/\.md$/, '') + `-${task.id.slice(0, 8)}.md`)
+    claimed.add(fallback)
+    task.filePath = fallback
   }
 
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {
@@ -793,19 +806,62 @@ export class ProjectStore {
     const task = findTaskById(project, taskId)
     const oldTitle = task?.title
     if (task) this.stampCompletion(task, patch)
+    // The task editor saves the whole task, so a patch can add, rename, remove,
+    // or reorder subtasks. Snapshot the pre-edit subtree to diff against once the
+    // tree has the new one.
+    const oldSubtree = task && patch.subtasks !== undefined ? flattenTasks(task.subtasks).map((f) => f.task) : []
     updateTaskInTree(project.tasks, taskId, patch)
     const titleChanged = task && patch.title !== undefined && patch.title !== oldTitle
     // Title change renames the file, which forces the rename branch in saveTaskFile
-    // (body rewrite). Description/archived patches require a body rewrite too.
+    // (body rewrite). Description/archived/subtasks patches require a body rewrite too.
     const kind: DirtyKind = patchNeedsBodyRewrite(patch) || titleChanged ? 'full' : 'fm'
     this.markDirty(project, [taskId], kind)
     // Patch-set description is the caller's intent; trust it as the new body.
     if (task && patch.description !== undefined) this.hydratedBodies.add(task)
-    // Title change renames the file, which breaks direct children's Parent link.
-    if (task && titleChanged) {
+    if (task && patch.subtasks !== undefined) {
+      // Re-index the saved subtree and create/rename/trash the affected subtask
+      // files; this also covers the children's Parent-link rewrite on a rename.
+      await this.reconcileSubtasks(project, task, oldSubtree)
+    } else if (task && titleChanged) {
+      // Title change renames the file, which breaks direct children's Parent link.
       for (const sub of task.subtasks) this.markDirty(project, [sub.id], 'full')
     }
     await this.saveProject(project)
+  }
+
+  /**
+   * After a save that carries a task's whole subtree (the task editor works on a
+   * deep clone), make the index and the on-disk files match it: re-point the
+   * index at the saved subtree objects, mark new/renamed/restatused subtasks for
+   * a write, and trash the files of subtasks removed in the editor. Unchanged
+   * subtasks aren't rewritten.
+   */
+  private async reconcileSubtasks(project: Project, parent: Task, oldSubtree: Task[]): Promise<void> {
+    indexAddSubtree(project, parent, findParentId(project, parent.id))
+
+    const old = new Map(oldSubtree.map((t) => [t.id, t]))
+    const liveIds = new Set<string>()
+    for (const { task } of flattenTasks(parent.subtasks)) {
+      liveIds.add(task.id)
+      const prev = old.get(task.id)
+      if (!prev) {
+        // Brand-new subtask: it needs its own file, body included.
+        this.hydratedBodies.add(task)
+        this.markDirty(project, [task.id], 'full')
+      } else if (prev.title !== task.title) {
+        this.markDirty(project, [task.id], 'full')
+      } else if (prev.status !== task.status || prev.completed !== task.completed || prev.progress !== task.progress) {
+        this.markDirty(project, [task.id], 'fm')
+      }
+    }
+
+    const folder = this.projectTaskFolder(project)
+    for (const removed of oldSubtree) {
+      if (liveIds.has(removed.id)) continue
+      project.taskIndex.delete(removed.id)
+      // The flat snapshot already lists every descendant, so trash this file only.
+      if (removed.filePath) await this.deleteTaskFiles({ ...removed, subtasks: [] }, folder)
+    }
   }
 
   /**

@@ -2,7 +2,7 @@ import type { App } from 'obsidian'
 import { TFile } from 'obsidian'
 import { describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
-import { makeTask, type StatusConfig, type Task } from '../types'
+import { makeTask, type Project, type StatusConfig, type Task } from '../types'
 import { ProjectStore } from './ProjectStore'
 import { buildTaskIndex } from './TaskIndex'
 import { flattenTasks } from './TaskTreeOps'
@@ -575,6 +575,77 @@ describe('ProjectStore task index', () => {
     expect(reloaded.taskIndex.size).toBe(fresh.size)
     for (const [id, entry] of fresh) {
       expect(reloaded.taskIndex.get(id)?.parentId).toBe(entry.parentId)
+    }
+  })
+})
+
+describe('ProjectStore editor subtask save', () => {
+  const reload = async (app: App, vault: FakeVault, path: string): Promise<Project> => {
+    const file = vault.getAbstractFileByPath(path)
+    if (!(file instanceof TFile)) throw new Error('missing file')
+    return expectDefined(await new ProjectStore(app, () => STATUSES).loadProject(file))
+  }
+
+  it('persists a subtask added through updateTask (the task editor save path)', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Editor', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+
+    // The editor edits a deep clone and saves the whole task back.
+    const edited = JSON.parse(JSON.stringify(parent)) as Task
+    edited.subtasks.push(makeTask({ title: 'New sub', type: 'subtask' }))
+    await store.updateTask(project, parent.id, edited)
+
+    const sub = expectDefined(flattenTasks(project.tasks).find((f) => f.task.title === 'New sub')).task
+    expect(sub.filePath).toBeTruthy()
+    expect(vault.getAbstractFileByPath(expectDefined(sub.filePath))).toBeInstanceOf(TFile)
+
+    const reloaded = await reload(app, vault, project.filePath)
+    expect(
+      flattenTasks(reloaded.tasks)
+        .map((f) => f.task.title)
+        .sort()
+    ).toEqual(['New sub', 'Parent'])
+  })
+
+  it('renames one subtask and trashes another removed in the editor', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Editor', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    await addNamed(store, project, 'Alpha', parent.id)
+    const beta = await addNamed(store, project, 'Beta', parent.id)
+    const betaPath = expectDefined(beta.filePath)
+
+    const live = expectDefined(flattenTasks(project.tasks).find((f) => f.task.id === parent.id)).task
+    const edited = JSON.parse(JSON.stringify(live)) as Task
+    edited.subtasks = edited.subtasks.filter((s) => s.title !== 'Beta')
+    edited.subtasks[0].title = 'Alpha renamed'
+    await store.updateTask(project, parent.id, edited)
+
+    expect(vault.getAbstractFileByPath(betaPath)).toBeNull()
+    const reloaded = await reload(app, vault, project.filePath)
+    expect(
+      flattenTasks(reloaded.tasks)
+        .map((f) => f.task.title)
+        .sort()
+    ).toEqual(['Alpha renamed', 'Parent'])
+  })
+})
+
+describe('ProjectStore duplicate long titles', () => {
+  it('duplicates a long-titled task without hanging and keeps filenames unique', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Dup3', 'Projects')
+    const longTitle = 'This is a very long task title that exceeds forty characters for sure'
+    const parent = await addNamed(store, project, longTitle)
+    await addNamed(store, project, 'subtask', parent.id)
+
+    const copy = await store.duplicateTask(project, parent.id, true)
+    expect(copy).not.toBeNull()
+    const paths = flattenTasks(project.tasks).map((f) => f.task.filePath)
+    expect(new Set(paths).size).toBe(paths.length)
+    for (const p of paths) {
+      expect(vault.getAbstractFileByPath(expectDefined(p))).toBeInstanceOf(TFile)
     }
   })
 })
