@@ -48,16 +48,12 @@ function patchNeedsBodyRewrite(patch: Partial<Task>): boolean {
   return patch.description !== undefined || patch.archived !== undefined || patch.subtasks !== undefined
 }
 
-/** The slug cap before it was raised to 60; files cut here are still valid. */
+/** A basename of this exact length that prefixes the title's slug is kept as-is. */
 const LEGACY_SLUG_CAP = 40
 
 /**
- * Pick a save path for a task. New tasks get the bare-slug name from
- * `taskFilePath`. Legacy `<slug>-<id8>.md` files are kept in place as long
- * as their slug still matches the current title, so untouched vaults don't
- * churn just because the suffix scheme changed. A note slugged under the older,
- * shorter cap is likewise kept, so raising the cap doesn't rename existing files
- * (and break links to them) the next time an untouched task is saved.
+ * Pick a save path. New tasks get the bare slug; an existing file is left where
+ * it is when its name still matches the title, so an unchanged title isn't renamed.
  */
 function resolveTaskPath(task: Task, folder: string, previousPath: string | undefined): string {
   const desired = taskFilePath(task.title, folder)
@@ -738,16 +734,6 @@ export class ProjectStore {
     return copy
   }
 
-  /**
-   * Name a freshly cloned task "<title> (copy N)". Any existing "(copy N)" suffix
-   * is stripped first, so duplicating a copy counts up ("Task (copy 2)") instead
-   * of stacking suffixes ("Task (copy) (copy)"). The base is trimmed so the suffix
-   * always survives the slug cap — a long title would otherwise truncate it away
-   * and collide with its source. Counting up (against titles already in use, on
-   * disk, or claimed by earlier clones in this duplication) keeps both the title
-   * and the file distinct, and always terminates: every counter yields a distinct
-   * slug, and the taken sets are finite.
-   */
   private assignCopyName(task: Task, folder: string, usedTitles: Set<string>, claimed: Set<string>): void {
     const base = task.title.replace(/(?: \(copy(?: \d+)?\))+$/, '')
     for (let n = 1; ; n++) {
