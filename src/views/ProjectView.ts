@@ -35,6 +35,7 @@ export class ProjectView extends ItemView {
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private fileModifyRef: EventRef | null = null
   private reloadDebounceTimer: number | null = null
+  private initialized = false
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf)
@@ -65,7 +66,37 @@ export class ProjectView extends ItemView {
     return { filePath: this.filePath }
   }
 
-  async onOpen(): Promise<void> {
+  onOpen(): Promise<void> {
+    // Setup only. setState is the sole loader: it is the only place filePath is
+    // set, and it loads the project itself. onOpen runs purely to guarantee the
+    // scaffold and listeners exist for hosts that open the view without setState.
+    this.ensureInitialized()
+    return Promise.resolve()
+  }
+
+  onClose(): Promise<void> {
+    if (this.reloadDebounceTimer !== null) {
+      window.clearTimeout(this.reloadDebounceTimer)
+      this.reloadDebounceTimer = null
+    }
+    if (this.keydownHandler) {
+      this.containerEl.removeEventListener('keydown', this.keydownHandler)
+      this.keydownHandler = null
+    }
+    this.fileModifyRef = null
+    this.subview?.destroy?.()
+    this.subview = null
+    return Promise.resolve()
+  }
+
+  // Some workspace plugins (Pane Relief, Hover Editor) restore a deferred leaf by
+  // calling setState without ever calling onOpen. Run the one-time DOM and listener
+  // setup from whichever entry point fires first so the view never renders into a
+  // missing scaffold or loses its file-change and keyboard handlers.
+  private ensureInitialized(): void {
+    if (this.initialized) return
+    this.initialized = true
+
     this.containerEl.addClass('pm-view')
     const root = this.contentEl
     root.empty()
@@ -73,8 +104,6 @@ export class ProjectView extends ItemView {
     this.toolbarEl = root.createDiv('pm-toolbar')
     this.headerEl = root.createDiv('pm-project-header-mount')
     this.bodyEl = root.createDiv('pm-content')
-
-    if (this.filePath) await this.loadProject()
 
     this.keydownHandler = (e: KeyboardEvent) => {
       this.subview?.handleKeyDown?.(e)
@@ -114,22 +143,8 @@ export class ProjectView extends ItemView {
     )
   }
 
-  onClose(): Promise<void> {
-    if (this.reloadDebounceTimer !== null) {
-      window.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = null
-    }
-    if (this.keydownHandler) {
-      this.containerEl.removeEventListener('keydown', this.keydownHandler)
-      this.keydownHandler = null
-    }
-    this.fileModifyRef = null
-    this.subview?.destroy?.()
-    this.subview = null
-    return Promise.resolve()
-  }
-
   private async loadProject(): Promise<void> {
+    this.ensureInitialized()
     const file = this.app.vault.getAbstractFileByPath(this.filePath)
     if (!(file instanceof TFile)) {
       this.renderMissingProject()
