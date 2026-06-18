@@ -178,15 +178,13 @@
   resize: none;
   overflow: hidden;
   box-sizing: border-box;
-  transition: background 0.15s;
 }
-.pm-modal-description:hover {
-  background: var(--background-modifier-hover);
-}
-/* The description edits in place, so it stays borderless on focus rather than
-   taking core app.css's textarea focus ring (textarea:focus, 0,1,1). */
+/* The description edits in place, so it stays seamless: core app.css paints a
+   form-field background on textarea:hover/:focus (0,1,1) and a focus box-shadow
+   ring; the element-prefixed selectors cancel them so no input box shows. */
+textarea.pm-modal-description:hover,
 textarea.pm-modal-description:focus {
-  background: var(--background-modifier-hover);
+  background: transparent;
   box-shadow: none;
   outline: none;
 }

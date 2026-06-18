@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The task editor title and description showed an input background when hovered or focused
 - Time tracking shows the over-estimate state once logged time passes the estimate
 
 ## [1.6.3] - 2026-06-17

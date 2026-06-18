@@ -273,10 +273,6 @@
   max-height: 300px;
   overflow-y: auto;
   cursor: text;
-  transition: background 0.15s;
-}
-.pm-modal-desc-preview:hover {
-  background: var(--background-modifier-hover);
 }
 .pm-modal-desc-preview p {
   margin: 0 0 0.5em;
