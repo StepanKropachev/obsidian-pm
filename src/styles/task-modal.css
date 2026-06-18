@@ -222,6 +222,13 @@ input.pm-subtask-checkbox:checked {
   background: var(--pm-success);
   border-color: var(--pm-success);
 }
+/* Core's checkmark ::after uses an asymmetric inset and 52% mask position tuned
+   to --checkbox-size; the box is sized to 17px here, so recenter the tick. */
+input.pm-subtask-checkbox:checked::after {
+  inset: 0;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
 
 .pm-subtask-dot {
   width: 7px;
