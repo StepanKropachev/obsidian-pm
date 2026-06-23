@@ -32,17 +32,33 @@ export function renderDateControl(opts: DateControlOpts): void {
       pop.close()
       return
     }
-    pop = new Popover({ anchor: trigger, width: 232, onClose: () => (pop = null) })
+    // The value to commit on close. A native date input fires `change` the moment its
+    // value is valid again, which for an already-set date means after the first edited
+    // segment — committing there would re-render the modal and yank focus to the title
+    // mid-edit. Instead the popover reports the final value once, when it closes (the
+    // user clicks away, presses Enter, or picks Today/Clear), so manual editing is free.
+    let next: string | null = null
+    pop = new Popover({
+      anchor: trigger,
+      width: 160,
+      onClose: () => {
+        pop = null
+        const value = next ?? field.value
+        if (value !== opts.value) opts.onChange(value)
+      }
+    })
     const field = pop.contentEl.createEl('input', { type: 'date', cls: 'pm-pop-field' })
     field.value = opts.value
-    field.addEventListener('change', () => {
-      opts.onChange(field.value)
-      pop?.close()
+    field.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        pop?.close()
+      }
     })
     const actions = pop.contentEl.createDiv('pm-pop-actions')
     const todayBtn = actions.createEl('button', { cls: 'pm-pop-item pm-pop-item--center', text: 'Today' })
     todayBtn.addEventListener('click', () => {
-      opts.onChange(today().toString())
+      next = today().toString()
       pop?.close()
     })
     if (has) {
@@ -51,7 +67,7 @@ export function renderDateControl(opts: DateControlOpts): void {
         text: 'Clear'
       })
       clearBtn.addEventListener('click', () => {
-        opts.onChange('')
+        next = ''
         pop?.close()
       })
     }

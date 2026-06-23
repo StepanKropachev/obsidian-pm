@@ -21,6 +21,13 @@ const ANCHOR_GAP = 4
  * on selection. It also closes on outside pointer-down and on Escape (the Escape
  * handler stops propagation so the host modal stays open).
  *
+ * When the anchor sits inside a modal the panel mounts into that modal element,
+ * not `document.body`: Obsidian's modal traps focus and yanks it back to the
+ * first field whenever focus lands on an element outside the modal, which would
+ * make a focusable popover (a date input, a search box) impossible to type in.
+ * `.pm-pop` is `position: fixed`, so it still escapes the modal's `overflow:
+ * hidden` and positions by viewport coordinates.
+ *
  * On phones it renders as a bottom sheet (`pm-pop--sheet`) instead of an anchored
  * box, so it stays usable without hover or precise positioning.
  */
@@ -40,7 +47,7 @@ export class Popover {
     this.anchor = opts.anchor
     this.win = activeWindow
     this.doc = activeDocument
-    this.host = opts.host ?? this.doc.body
+    this.host = opts.host ?? this.anchor.closest<HTMLElement>('.modal') ?? this.doc.body
     this.align = opts.align ?? 'left'
     this.width = opts.width
     this.onCloseCb = opts.onClose

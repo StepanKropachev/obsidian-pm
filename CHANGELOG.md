@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Typing a date in the task editor moved focus to the title before the date was finished
 - The task editor's priority strip sat below a blank band instead of along the top edge of the window
 - The task editor title and description showed an input background when hovered or focused
 - The checkmark on a completed subtask was not centered in its checkbox
