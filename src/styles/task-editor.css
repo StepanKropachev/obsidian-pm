@@ -388,6 +388,14 @@ button.pm-pop-item--danger {
   display: none;
 }
 
+/* The editor renders its own header inside the content; Obsidian's empty native
+   .modal-header still carries a margin-bottom that pushed our header (and its
+   accent strip) ~12px below the modal's top edge. Drop it so the strip sits
+   flush against the top of the window. */
+.pm-modal--task .modal-header {
+  display: none;
+}
+
 .pm-te-header {
   position: relative;
   display: flex;
