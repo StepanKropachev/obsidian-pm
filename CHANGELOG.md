@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The task editor title and description showed an input background when hovered or focused
 - The checkmark on a completed subtask was not centered in its checkbox
 - Time tracking shows the over-estimate state once logged time passes the estimate
+- The date picker input showed a focus ring the tag and assignee picker inputs did not
 
 ## [1.6.3] - 2026-06-17
 

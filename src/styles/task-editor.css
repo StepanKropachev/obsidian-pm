@@ -176,8 +176,8 @@ button.pm-prop-add {
   gap: 5px;
 }
 
-/* Assignees: a single trigger holding an overlapping avatar stack + a name / "N people"
-   label. Two classes beat the element-prefixed .pm-prop-inline base (0,1,1) for the gap. */
+/* Assignees: a single trigger holding an overlapping avatar stack. Two classes beat the
+   element-prefixed .pm-prop-inline base (0,1,1) for the gap. */
 .pm-prop-inline.pm-assignees-trigger {
   gap: 8px;
 }
@@ -292,9 +292,11 @@ button.pm-pop-item--danger {
   font-size: var(--font-ui-smaller);
   font-family: inherit;
 }
-.pm-pop-field:focus {
-  border-color: var(--interactive-accent);
-  outline: none;
+/* The date input carries a type attribute, so Obsidian core adds a box-shadow ring on
+   focus that the attribute-less text inputs never get. Suppress it so both look the same. */
+input.pm-pop-field:focus {
+  box-shadow: none;
+  border-color: var(--background-modifier-border);
 }
 .pm-pop-actions {
   display: flex;
@@ -570,8 +572,7 @@ button.pm-pop-item--danger {
 /* Keyboard focus affordance for the custom inline controls */
 .pm-prop-inline:focus-visible,
 .pm-prop-add:focus-visible,
-.pm-pop-item:focus-visible,
-.pm-pop-field:focus-visible {
+.pm-pop-item:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: -1px;
 }
