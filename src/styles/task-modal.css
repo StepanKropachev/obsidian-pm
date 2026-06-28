@@ -179,14 +179,18 @@
   overflow: hidden;
   box-sizing: border-box;
 }
-/* The description edits in place, so it stays seamless: core app.css paints a
-   form-field background on textarea:hover/:focus (0,1,1) and a focus box-shadow
-   ring; the element-prefixed selectors cancel them so no input box shows. */
+/* The description edits in place. Hover and focus paint a subtle background and border so
+   the field reads as editable; focus deepens the border. The box-shadow ring core app.css
+   adds on textarea:hover/:focus is suppressed. */
 textarea.pm-modal-description:hover,
 textarea.pm-modal-description:focus {
-  background: transparent;
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border);
   box-shadow: none;
   outline: none;
+}
+textarea.pm-modal-description:focus {
+  border-color: var(--background-modifier-border-focus);
 }
 
 /* Subtasks */

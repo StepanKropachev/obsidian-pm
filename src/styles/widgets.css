@@ -274,6 +274,10 @@
   overflow-y: auto;
   cursor: text;
 }
+.pm-modal-desc-preview:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border);
+}
 .pm-modal-desc-preview p {
   margin: 0 0 0.5em;
 }

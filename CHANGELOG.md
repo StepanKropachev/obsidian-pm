@@ -15,12 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Archive, delete, and opening a task as a note are grouped under a single menu in the task editor
 - Subtask progress is calculated from completed subtasks
 - The task editor shows assignee avatars alone when more than one person is assigned
+- The task description highlights with a background and border on hover and while editing
 
 ### Fixed
 
 - Typing a date in the task editor moved focus to the title before the date was finished
 - The task editor's priority strip sat below a blank band instead of along the top edge of the window
-- The task editor title and description showed an input background when hovered or focused
+- The task editor title showed an input background when hovered or focused
 - The checkmark on a completed subtask was not centered in its checkbox
 - Time tracking shows the over-estimate state once logged time passes the estimate
 - The date picker input showed a focus ring the tag and assignee picker inputs did not
