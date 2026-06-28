@@ -28,8 +28,7 @@ export interface MultiSelectOpts {
   menuLabel?: string
   create?: (label: string) => void
   tag?: boolean
-  /** Render the value as a single trigger holding an overlapping avatar stack plus
-      a name / "N people" label, instead of one chip per value. Backs Assignees. */
+  /** Render the value as a single trigger holding an overlapping avatar stack. Backs Assignees. */
   avatarStack?: boolean
   /** Render the values as a vertical list of id + title-link rows. Backs Depends on. */
   depsList?: boolean
@@ -74,10 +73,9 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     anchorBtn.className = 'pm-prop-inline pm-assignees-trigger'
     const stack = anchorBtn.createSpan({ cls: 'pm-avatar-stack' })
     for (const id of ids) new Avatar(stack).setName(labelOf(id)).setSize('sm')
-    anchorBtn.createSpan({
-      cls: 'pm-assignees-label',
-      text: ids.length === 1 ? labelOf(ids[0]) : `${ids.length} people`
-    })
+    if (ids.length === 1) {
+      anchorBtn.createSpan({ cls: 'pm-assignees-label', text: labelOf(ids[0]) })
+    }
   }
 
   const renderChips = () => {

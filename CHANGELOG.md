@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tags, assignees, and dependencies are edited through a new searchable picker
 - Archive, delete, and opening a task as a note are grouped under a single menu in the task editor
 - Subtask progress is calculated from completed subtasks
+- The task editor shows assignee avatars alone when more than one person is assigned
 
 ### Fixed
 
