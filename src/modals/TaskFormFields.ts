@@ -315,7 +315,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           addLabel: 'Add dependency',
           addLabelMore: 'Add another',
           placeholder: 'Search tasks…',
-          menuLabel: 'Blocked by',
           depsList: true,
           labelFor: titleOf,
           selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
