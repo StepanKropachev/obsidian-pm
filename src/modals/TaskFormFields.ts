@@ -39,7 +39,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
 ]
 
 /**
- * Renders the compact property grid: core properties (status, priority, type, assignees, due,
+ * Renders the compact property grid: core properties (type, status, priority, assignees, due,
  * tags) always show; rarely-used ones (start, repeat, depends on) hide when empty behind
  * "Add property". Single-selects and dates re-render the form on change; multi-selects mutate
  * the task in place and refresh their own chips.
@@ -49,6 +49,63 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   const statuses = plugin.settings.statuses
   const priorities = plugin.settings.priorities
   const grid = container.createDiv('pm-prop-grid')
+
+  // Type
+  renderPropRow(
+    grid,
+    'Type',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderSelectControl({
+        container: cell,
+        value: task.type,
+        options: TYPE_OPTIONS,
+        onChange: (id) => {
+          task.type = id as TaskType
+          if (id === 'milestone') {
+            task.start = ''
+            task.progress = 0
+          }
+          if (id !== 'subtask') ctx.setParentId(null)
+          rerender()
+        }
+      })
+      return cell
+    },
+    'shapes'
+  )
+
+  // Parent task shares the type row: the picker shows only for subtasks; otherwise an empty
+  // cell holds the right column so switching the type never reflows the rest of the grid.
+  if (task.type === 'subtask') {
+    renderPropRow(
+      grid,
+      'Parent task',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        const parents = flattenTasks(project.tasks)
+          .map((f) => f.task)
+          .filter((t) => t.id !== task.id)
+        renderSelectControl({
+          container: cell,
+          value: ctx.parentId,
+          options: [{ id: '', label: 'No parent' }, ...parents.map((t) => ({ id: t.id, label: t.title }))],
+          placeholder: 'Select parent',
+          search: true,
+          searchPlaceholder: 'Search tasks…',
+          width: 230,
+          onChange: (id) => {
+            ctx.setParentId(id || null)
+            rerender()
+          }
+        })
+        return cell
+      },
+      'corner-up-right'
+    )
+  } else {
+    grid.createDiv()
+  }
 
   // Status
   renderPropRow(
@@ -60,7 +117,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         container: cell,
         value: task.status,
         options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color })),
-        menuLabel: 'Set status',
         onChange: (id) => {
           task.status = id
           rerender()
@@ -81,7 +137,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         container: cell,
         value: task.priority,
         options: priorities.map((p) => ({ id: p.id, label: p.label, color: p.color })),
-        menuLabel: 'Set priority',
         onChange: (id) => {
           task.priority = id as TaskPriority
           rerender()
@@ -91,55 +146,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     },
     'flag'
   )
-
-  // Type
-  renderPropRow(
-    grid,
-    'Type',
-    () => {
-      const cell = createDiv('pm-prop-value')
-      renderSelectControl({
-        container: cell,
-        value: task.type,
-        options: TYPE_OPTIONS,
-        menuLabel: 'Task type',
-        onChange: (id) => {
-          task.type = id as TaskType
-          if (id === 'milestone') {
-            task.start = ''
-            task.progress = 0
-          }
-          if (id !== 'subtask') ctx.setParentId(null)
-          rerender()
-        }
-      })
-      return cell
-    },
-    'shapes'
-  )
-
-  // Parent task (subtask only)
-  if (task.type === 'subtask') {
-    renderPropRow(
-      grid,
-      'Parent task',
-      () => {
-        const cell = createDiv('pm-prop-value')
-        const allTasks = flattenTasks(project.tasks)
-          .map((f) => f.task)
-          .filter((t) => t.id !== task.id)
-        const sel = cell.createEl('select', { cls: 'pm-prop-select' })
-        sel.createEl('option', { value: '', text: ctx.parentId ? '' : '— Select parent —' })
-        for (const t of allTasks) {
-          const opt = sel.createEl('option', { value: t.id, text: t.title })
-          if (t.id === ctx.parentId) opt.selected = true
-        }
-        sel.addEventListener('change', () => ctx.setParentId(sel.value || null))
-        return cell
-      },
-      'corner-up-right'
-    )
-  }
 
   // Assignees
   renderPropRow(
@@ -235,6 +241,36 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     )
   }
 
+  // Repeat (extra)
+  if (task.recurrence || shownExtras.has('repeat')) {
+    renderPropRow(
+      grid,
+      'Repeat',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderSelectControl({
+          container: cell,
+          value: task.recurrence?.interval ?? 'none',
+          options: REPEAT_OPTIONS,
+          onChange: (id) => {
+            if (id === 'none') {
+              task.recurrence = undefined
+            } else {
+              task.recurrence = {
+                interval: id as Recurrence['interval'],
+                every: task.recurrence?.every ?? 1,
+                endDate: task.recurrence?.endDate
+              }
+            }
+            rerender()
+          }
+        })
+        return cell
+      },
+      'repeat'
+    )
+  }
+
   // Tags
   const tagsRow = renderPropRow(
     grid,
@@ -266,37 +302,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'tag'
   )
   tagsRow.addClass('pm-prop-row--wide')
-
-  // Repeat (extra)
-  if (task.recurrence || shownExtras.has('repeat')) {
-    renderPropRow(
-      grid,
-      'Repeat',
-      () => {
-        const cell = createDiv('pm-prop-value')
-        renderSelectControl({
-          container: cell,
-          value: task.recurrence?.interval ?? 'none',
-          options: REPEAT_OPTIONS,
-          menuLabel: 'Recurrence',
-          onChange: (id) => {
-            if (id === 'none') {
-              task.recurrence = undefined
-            } else {
-              task.recurrence = {
-                interval: id as Recurrence['interval'],
-                every: task.recurrence?.every ?? 1,
-                endDate: task.recurrence?.endDate
-              }
-            }
-            rerender()
-          }
-        })
-        return cell
-      },
-      'repeat'
-    )
-  }
 
   // Depends on (extra)
   if (task.dependencies.length > 0 || shownExtras.has('depends')) {

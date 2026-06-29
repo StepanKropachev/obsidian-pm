@@ -231,14 +231,6 @@ button.pm-prop-add {
   display: flex;
   flex-direction: column;
 }
-.pm-pop-label {
-  padding: 6px 9px 4px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
 button.pm-pop-item {
   display: flex;
   align-items: center;

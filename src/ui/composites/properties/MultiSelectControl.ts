@@ -24,8 +24,6 @@ export interface MultiSelectOpts {
   colorFor?: (id: string) => string
   search?: boolean
   placeholder?: string
-  /** Header shown above the picker options. */
-  menuLabel?: string
   create?: (label: string) => void
   tag?: boolean
   /** Render the value as a single trigger holding an overlapping avatar stack. Backs Assignees. */
@@ -133,7 +131,6 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     const popover = new Popover({ anchor: anchorBtn, width: 230, onClose: () => (pop = null) })
     pop = popover
     let query = ''
-    if (opts.menuLabel) popover.contentEl.createDiv({ cls: 'pm-pop-label', text: opts.menuLabel })
     const searchInput = opts.search
       ? popover.contentEl.createEl('input', {
           cls: 'pm-pop-field',

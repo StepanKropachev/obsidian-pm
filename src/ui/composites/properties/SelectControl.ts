@@ -7,14 +7,16 @@ export interface SelectControlOpts {
   value: string | null
   options: SelectItem[]
   onChange: (id: string) => void
-  menuLabel?: string
   placeholder?: string
+  search?: boolean
+  searchPlaceholder?: string
   width?: number
 }
 
 /**
  * Single-select inline control: a quiet trigger showing the current value that opens a
- * popover option list. Backs Status, Priority, Type, and Repeat.
+ * popover option list, optionally filtered by a search box. Backs Status, Priority, Type,
+ * Repeat, and Parent task.
  */
 export function renderSelectControl(opts: SelectControlOpts): void {
   const selected = opts.options.find((o) => o.id === opts.value) ?? null
@@ -32,20 +34,32 @@ export function renderSelectControl(opts: SelectControlOpts): void {
       return
     }
     pop = new Popover({ anchor: trigger, width: opts.width ?? 200, onClose: () => (pop = null) })
-    if (opts.menuLabel) pop.contentEl.createDiv({ cls: 'pm-pop-label', text: opts.menuLabel })
+    const searchInput = opts.search
+      ? pop.contentEl.createEl('input', {
+          cls: 'pm-pop-field',
+          attr: { placeholder: opts.searchPlaceholder ?? 'Search…', spellcheck: 'false' }
+        })
+      : null
     const list = pop.contentEl.createDiv('pm-pop-list')
-    for (const o of opts.options) {
-      renderOptionRow(list, {
-        label: o.label,
-        color: o.color,
-        icon: o.icon,
-        selected: o.id === opts.value,
-        onPick: () => {
-          pop?.close()
-          opts.onChange(o.id)
-        }
-      })
+    const renderList = () => {
+      list.empty()
+      const q = searchInput?.value.trim().toLowerCase() ?? ''
+      for (const o of opts.options.filter((it) => !q || it.label.toLowerCase().includes(q))) {
+        renderOptionRow(list, {
+          label: o.label,
+          color: o.color,
+          icon: o.icon,
+          selected: o.id === opts.value,
+          onPick: () => {
+            pop?.close()
+            opts.onChange(o.id)
+          }
+        })
+      }
     }
+    searchInput?.addEventListener('input', () => renderList())
+    renderList()
     pop.open()
+    searchInput?.focus()
   })
 }
