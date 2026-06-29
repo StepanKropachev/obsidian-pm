@@ -281,6 +281,32 @@ button.pm-pop-item--danger {
   color: var(--interactive-accent);
   --icon-size: 14px;
 }
+/* Square accent-check toggle. Two-token selector beats core's button:not(.clickable-icon). */
+button.pm-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 1.5px solid var(--background-modifier-border-focus);
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--interactive-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  --icon-size: 12px;
+}
+button.pm-checkbox .svg-icon {
+  opacity: 0;
+}
+button.pm-checkbox.is-checked {
+  border-color: var(--interactive-accent);
+}
+button.pm-checkbox.is-checked .svg-icon {
+  opacity: 1;
+}
 .pm-pop-field {
   width: 100%;
   margin-bottom: 4px;
@@ -325,21 +351,9 @@ input.pm-pop-field:focus {
   margin-bottom: 8px;
 }
 /* The heading is a flex item here, not inside .pm-modal-section-header, so it keeps the
-   section title's default bottom margin. Zero it so its box matches the text height and
-   the progress bar centers against the text rather than dropping below it. */
+   section title's default bottom margin. Zero it so the header's own margin sets the spacing. */
 .pm-subtasks-header .pm-modal-section-title {
   margin: 0;
-}
-.pm-subtasks-progress {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 90px;
-  max-width: 180px;
-  flex: 1;
-}
-.pm-subtasks-progress .pm-progress {
-  flex: 1;
 }
 /* The count lives inside the heading (Subtasks 1/4); keep it quiet next to the label. */
 .pm-subtasks-count {

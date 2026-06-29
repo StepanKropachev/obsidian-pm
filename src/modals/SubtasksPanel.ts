@@ -3,11 +3,11 @@ import type PMPlugin from '../main'
 import type { Task } from '../types'
 import { makeTask } from '../types'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
-import { ProgressBar } from '../ui/primitives/ProgressBar'
+import { Checkbox } from '../ui/primitives/Checkbox'
 
 /**
- * Renders the subtasks section: a header with derived progress, the editable list, and an
- * inline add row. Progress is derived from how many subtasks sit in a terminal status.
+ * Renders the subtasks section: a header with a completed count, the editable list, and an
+ * inline add row. The count is derived from how many subtasks sit in a terminal status.
  */
 export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: PMPlugin): void {
   const statuses = plugin.settings.statuses
@@ -16,12 +16,10 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
   const subHeader = subSection.createDiv('pm-subtasks-header')
   const heading = subHeader.createEl('h4', { text: 'Subtasks ', cls: 'pm-modal-section-title' })
   const countEl = heading.createSpan({ cls: 'pm-subtasks-count' })
-  const progressWrap = subHeader.createDiv('pm-subtasks-progress')
 
   const subList = subSection.createDiv('pm-modal-subtask-list')
 
-  const renderProgress = () => {
-    progressWrap.empty()
+  const renderCount = () => {
     const total = task.subtasks.length
     if (total === 0) {
       countEl.setText('')
@@ -29,7 +27,6 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     }
     const done = task.subtasks.filter((s) => isTerminalStatus(s.status, statuses)).length
     countEl.setText(`${done}/${total}`)
-    new ProgressBar(progressWrap).setValue(Math.round((done / total) * 100)).setSize('sm')
   }
 
   const renderSubtasks = () => {
@@ -37,13 +34,11 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     for (const sub of task.subtasks) {
       const row = subList.createDiv('pm-modal-subtask-row')
 
-      const check = row.createEl('input', { type: 'checkbox', cls: 'pm-subtask-checkbox' })
-      check.checked = isTerminalStatus(sub.status, statuses)
-      check.addEventListener('change', () => {
-        sub.status = check.checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
-        sub.progress = check.checked ? 100 : 0
+      new Checkbox(row).setChecked(isTerminalStatus(sub.status, statuses)).onChange((checked) => {
+        sub.status = checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
+        sub.progress = checked ? 100 : 0
         renderSubtasks()
-        renderProgress()
+        renderCount()
       })
 
       const titleEl = row.createSpan({ text: sub.title, cls: 'pm-subtask-title' })
@@ -57,13 +52,13 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
       rm.addEventListener('click', () => {
         task.subtasks = task.subtasks.filter((s) => s.id !== sub.id)
         renderSubtasks()
-        renderProgress()
+        renderCount()
       })
     }
   }
 
   renderSubtasks()
-  renderProgress()
+  renderCount()
 
   const addRow = subSection.createDiv('pm-subtask-add-row')
   const addInput = addRow.createEl('input', {
@@ -77,6 +72,6 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     task.subtasks.push(makeTask({ title, type: 'subtask' }))
     addInput.value = ''
     renderSubtasks()
-    renderProgress()
+    renderCount()
   })
 }
