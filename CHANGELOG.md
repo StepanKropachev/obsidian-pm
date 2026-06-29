@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Clicking the task ID or file path in the task editor copies it to the clipboard
+
 ### Changed
 
 - Status, priority, type, and dates on a task are changed via value picker

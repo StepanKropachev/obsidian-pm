@@ -475,6 +475,12 @@ input.pm-pop-field:focus {
   font-size: 11px;
   color: var(--text-faint);
 }
+.pm-te-copyable {
+  cursor: pointer;
+}
+.pm-te-copyable:hover {
+  color: var(--text-muted);
+}
 
 .pm-te-body {
   flex: 1;

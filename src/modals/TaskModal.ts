@@ -7,7 +7,8 @@ import {
   Modal,
   MarkdownRenderer,
   Notice,
-  setIcon
+  setIcon,
+  setTooltip
 } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
@@ -229,7 +230,15 @@ export class TaskModal extends Modal {
     crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.project.title })
     const crumbSep = crumb.createSpan({ cls: 'pm-te-crumb-sep' })
     setIcon(crumbSep, 'chevron-right')
-    crumb.createSpan({ cls: 'pm-te-crumb-id', text: this.task.id })
+    const idEl = crumb.createSpan({ cls: 'pm-te-crumb-id pm-te-copyable', text: this.task.id })
+    setTooltip(idEl, 'Copy task ID')
+    idEl.addEventListener(
+      'click',
+      safeAsync(async () => {
+        await navigator.clipboard.writeText(this.task.id)
+        new Notice('Copied task ID')
+      })
+    )
 
     header.createDiv('pm-te-header-spacer')
 
@@ -487,10 +496,19 @@ export class TaskModal extends Modal {
     const footer = contentEl.createDiv('pm-te-footer')
 
     if (!this.isNew && this.task.filePath) {
-      const pathHint = footer.createSpan({ cls: 'pm-te-footer-path' })
+      const filePath = this.task.filePath
+      const pathHint = footer.createSpan({ cls: 'pm-te-footer-path pm-te-copyable' })
       const fileIcon = pathHint.createSpan({ cls: 'pm-te-footer-icon' })
       setIcon(fileIcon, 'file-text')
-      pathHint.createSpan({ text: this.task.filePath })
+      pathHint.createSpan({ text: filePath })
+      setTooltip(pathHint, 'Copy file path')
+      pathHint.addEventListener(
+        'click',
+        safeAsync(async () => {
+          await navigator.clipboard.writeText(filePath)
+          new Notice('Copied file path')
+        })
+      )
     }
 
     footer.createDiv('pm-footer-spacer')
