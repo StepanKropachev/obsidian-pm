@@ -276,32 +276,6 @@ button.pm-pop-item--danger {
 .pm-pop-check--hidden {
   visibility: hidden;
 }
-/* Square accent-check toggle. Two-token selector beats core's button:not(.clickable-icon). */
-button.pm-checkbox {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  padding: 0;
-  border: 1.5px solid var(--background-modifier-border-focus);
-  border-radius: 4px;
-  background: transparent;
-  box-shadow: none;
-  color: var(--interactive-accent);
-  cursor: pointer;
-  flex-shrink: 0;
-  --icon-size: 12px;
-}
-button.pm-checkbox .svg-icon {
-  opacity: 0;
-}
-button.pm-checkbox.is-checked {
-  border-color: var(--interactive-accent);
-}
-button.pm-checkbox.is-checked .svg-icon {
-  opacity: 1;
-}
 .pm-pop-field {
   width: 100%;
   margin-bottom: 4px;

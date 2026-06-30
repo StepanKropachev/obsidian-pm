@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subtask progress is calculated from completed subtasks
 - The task editor shows assignee avatars alone when more than one person is assigned
 - The task description highlights with a background and border on hover and while editing
-- A completed subtask shows an accent checkmark matching the option picker
+- A completed subtask shows a filled checkbox matching the task table
 
 ### Fixed
 

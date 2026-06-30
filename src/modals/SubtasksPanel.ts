@@ -3,7 +3,6 @@ import type PMPlugin from '../main'
 import type { Task } from '../types'
 import { makeTask } from '../types'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
-import { Checkbox } from '../ui/primitives/Checkbox'
 
 /**
  * Renders the subtasks section: a header with a completed count, the editable list, and an
@@ -34,9 +33,11 @@ export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: 
     for (const sub of task.subtasks) {
       const row = subList.createDiv('pm-modal-subtask-row')
 
-      new Checkbox(row).setChecked(isTerminalStatus(sub.status, statuses)).onChange((checked) => {
-        sub.status = checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
-        sub.progress = checked ? 100 : 0
+      const cb = row.createEl('input', { type: 'checkbox', cls: 'pm-subtask-checkbox' })
+      cb.checked = isTerminalStatus(sub.status, statuses)
+      cb.addEventListener('change', () => {
+        sub.status = cb.checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
+        sub.progress = cb.checked ? 100 : 0
         renderSubtasks()
         renderCount()
       })
