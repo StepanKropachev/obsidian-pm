@@ -284,7 +284,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         addLabel: 'Add tags',
         placeholder: 'Find or create…',
         tag: true,
-        colorFor: (t) => stringToColor(t),
+        colorFor: plugin.settings.showTagColors ? (t) => stringToColor(t) : undefined,
         selected: () => task.tags,
         options: () => projectTags.map((t) => ({ id: t, label: t })),
         add: (id) => {

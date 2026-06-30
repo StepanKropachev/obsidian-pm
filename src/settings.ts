@@ -98,6 +98,16 @@ export class PMSettingTab extends PluginSettingTab {
       )
 
     new Setting(containerEl)
+      .setName('Show tag colors')
+      .setDesc('Show a colored dot on each tag, derived from its name. Turn off for plain tags.')
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.showTagColors).onChange(async (v) => {
+          this.plugin.settings.showTagColors = v
+          await this.plugin.saveSettings()
+        })
+      )
+
+    new Setting(containerEl)
       .setName('Save tasks on close')
       .setDesc('Automatically save tasks when you close the task modal. When off, only clicking save persists changes.')
       .addToggle((t) =>
