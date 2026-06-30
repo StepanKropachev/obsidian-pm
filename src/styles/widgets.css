@@ -136,23 +136,6 @@
   flex: 1;
 }
 
-.pm-time-chip {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 99px;
-  font-size: 11px;
-  background: var(--background-modifier-hover);
-  color: var(--text-muted);
-}
-.pm-time-chip--sm {
-  font-size: 10px;
-  padding: 1px 6px;
-}
-.pm-time-chip--over {
-  background: color-mix(in srgb, var(--color-red) 15%, transparent);
-  color: var(--color-red);
-}
-
 /* -- Kanban title row ---------------------------------------------------- */
 .pm-kanban-card-title-row {
   display: flex;

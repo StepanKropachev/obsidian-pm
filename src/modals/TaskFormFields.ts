@@ -3,6 +3,7 @@ import { Project, Task, TaskType, TaskPriority, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
+import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
 import { isTerminalStatus, stringToColor } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
@@ -136,7 +137,12 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderSelectControl({
         container: cell,
         value: task.priority,
-        options: priorities.map((p) => ({ id: p.id, label: p.label, color: p.color })),
+        options: priorities.map((p) => ({
+          id: p.id,
+          label: p.label,
+          color: p.color,
+          icon: p.icon || PRIORITY_CHEVRONS[p.id]
+        })),
         onChange: (id) => {
           task.priority = id as TaskPriority
           rerender()

@@ -6,10 +6,20 @@ export class Chip {
   el: HTMLElement
   private labelEl: HTMLElement
   private dotEl: HTMLElement | null = null
+  private iconEl: HTMLElement | null = null
 
   constructor(parentEl: HTMLElement) {
     this.el = parentEl.createSpan({ cls: 'pm-chip' })
     this.labelEl = this.el.createSpan({ cls: 'pm-chip-label' })
+  }
+
+  setLeadingIcon(name: string): this {
+    if (!this.iconEl) {
+      this.iconEl = this.el.createSpan({ cls: 'pm-chip-icon' })
+      this.el.prepend(this.iconEl)
+    }
+    setIcon(this.iconEl, name)
+    return this
   }
 
   setLabel(text: string): this {

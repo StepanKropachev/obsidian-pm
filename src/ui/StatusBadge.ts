@@ -30,6 +30,13 @@ export function renderStatusBadge(
   return badge.el
 }
 
+export const PRIORITY_CHEVRONS: Record<TaskPriority, string> = {
+  critical: 'chevrons-up',
+  high: 'chevron-up',
+  medium: 'equal',
+  low: 'chevron-down'
+}
+
 export function renderPriorityBadge(
   container: HTMLElement,
   task: Task,
@@ -41,19 +48,21 @@ export function renderPriorityBadge(
     .setLabel(formatBadgeText(config?.icon, config?.label ?? task.priority))
     .setColor(config?.color ?? 'var(--text-muted)')
     .setVariant('plain')
-    .setDot(!config?.icon)
-    .onClick((e) => {
-      const menu = new Menu()
-      for (const p of priorities) {
-        menu.addItem((item) =>
-          item
-            .setTitle(formatBadgeText(p.icon, p.label))
-            .setChecked(p.id === task.priority)
-            .onClick(() => onChange(p.id))
-        )
-      }
-      menu.showAtMouseEvent(e)
-    })
+  if (!config?.icon) {
+    badge.setLeadingIcon(PRIORITY_CHEVRONS[task.priority])
+  }
+  badge.onClick((e) => {
+    const menu = new Menu()
+    for (const p of priorities) {
+      menu.addItem((item) =>
+        item
+          .setTitle(formatBadgeText(p.icon, p.label))
+          .setChecked(p.id === task.priority)
+          .onClick(() => onChange(p.id))
+      )
+    }
+    menu.showAtMouseEvent(e)
+  })
   return badge.el
 }
 

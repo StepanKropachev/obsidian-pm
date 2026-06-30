@@ -273,6 +273,9 @@ button.pm-pop-item--danger {
   color: var(--interactive-accent);
   --icon-size: 14px;
 }
+.pm-pop-check--hidden {
+  visibility: hidden;
+}
 /* Square accent-check toggle. Two-token selector beats core's button:not(.clickable-icon). */
 button.pm-checkbox {
   display: inline-flex;

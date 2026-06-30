@@ -351,6 +351,14 @@
   background: var(--pm-chip-color);
   flex-shrink: 0;
 }
+.pm-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: -1px;
+  --icon-size: 15px;
+  color: var(--pm-chip-color);
+}
 .pm-chip--interactive {
   cursor: pointer;
 }

@@ -42,10 +42,9 @@ export function renderOptionRow(parent: HTMLElement, row: OptionRow): HTMLElemen
   if (row.avatar) new Avatar(item).setName(row.avatar).setSize('sm')
   else renderGlyph(item, row)
   item.createSpan({ cls: 'pm-pop-item-label', text: row.label })
-  if (row.selected) {
-    const check = item.createSpan({ cls: 'pm-pop-check' })
-    setIcon(check, 'check')
-  }
+  const check = item.createSpan({ cls: 'pm-pop-check' })
+  setIcon(check, 'check')
+  if (!row.selected) check.addClass('pm-pop-check--hidden')
   item.addEventListener('click', row.onPick)
   return item
 }

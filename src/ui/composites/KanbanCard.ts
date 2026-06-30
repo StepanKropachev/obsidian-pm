@@ -3,7 +3,6 @@ import { formatDateShort } from '../../utils'
 import { AvatarStack } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { ProgressBar } from '../primitives/ProgressBar'
-import { TimeChip } from '../primitives/TimeChip'
 
 export interface KanbanCardProps {
   task: Task
@@ -73,7 +72,11 @@ export class KanbanCard {
 
     const est = task.timeEstimate ?? 0
     if (props.loggedHours > 0 || est > 0) {
-      new TimeChip(body).setSize('sm').setHours(props.loggedHours, est)
+      const label = est > 0 ? `${props.loggedHours}/${est}h` : `${props.loggedHours}h`
+      const timeChip = new Chip(body).setLabel(label).setSize('sm')
+      if (est > 0 && props.loggedHours > est) {
+        timeChip.setVariant('solid').setColor('var(--color-red)').setStrong()
+      }
     }
 
     if (task.tags.length) {

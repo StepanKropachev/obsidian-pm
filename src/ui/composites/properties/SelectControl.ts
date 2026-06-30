@@ -33,7 +33,7 @@ export function renderSelectControl(opts: SelectControlOpts): void {
       pop.close()
       return
     }
-    pop = new Popover({ anchor: trigger, width: opts.width ?? 200, onClose: () => (pop = null) })
+    pop = new Popover({ anchor: trigger, width: opts.width ?? trigger.offsetWidth, onClose: () => (pop = null) })
     const searchInput = opts.search
       ? pop.contentEl.createEl('input', {
           cls: 'pm-pop-field',

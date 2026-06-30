@@ -115,6 +115,9 @@
   flex-direction: column;
   gap: 7px;
 }
+.pm-kanban-card-body > .pm-chip {
+  align-self: flex-start;
+}
 .pm-kanban-card-title {
   margin: 0;
   font-size: 13px;
