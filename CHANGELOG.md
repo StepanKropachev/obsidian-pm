@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The task editor shows assignee avatars alone when more than one person is assigned
 - The task description highlights with a background and border on hover and while editing
 - A completed subtask shows a filled checkbox matching the task table
+- Task priority is shown with a colored chevron instead of a dot
+- A value picker in the task editor sizes to its options instead of a fixed width
+- Logged time is shown the same way in the task table and on kanban cards
 
 ### Fixed
 
