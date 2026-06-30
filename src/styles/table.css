@@ -318,7 +318,7 @@
   color: var(--text-normal);
 }
 .pm-chip--tag {
-  padding: 2px 4px 2px 8px;
+  padding: 2px 6px;
   border-radius: 5px;
   font-size: 11px;
   gap: 4px;
@@ -328,6 +328,10 @@
 .pm-chip--tag .pm-chip-dot {
   width: 5px;
   height: 5px;
+  /* Drop the dot onto the text's x-height center; the tall line-height otherwise
+     centers it above the visual weight of the label. */
+  position: relative;
+  top: 0.75px;
 }
 .pm-chip--sm {
   padding: 1px 5px;
