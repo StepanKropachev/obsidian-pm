@@ -1,11 +1,13 @@
 import type { Task } from '../../../types'
 import { Chip } from '../../primitives/Chip'
 import { IconButton } from '../../primitives/IconButton'
+import { renderTagChip } from '../tagChip'
 import { makeInlineEdit } from './inlineEdit'
 
 export interface TitleCellProps {
   task: Task
   depth: number
+  showTagColors: boolean
   onTitleClick: () => void
   onTitleSave: (newTitle: string) => Promise<void>
   onAddSubtask: () => void
@@ -77,7 +79,7 @@ export class TitleCell {
     if (task.tags.length) {
       const tagRow = this.el.createDiv('pm-table-tags')
       for (const tag of task.tags) {
-        new Chip(tagRow).setLabel(tag).setVariant('outline').setTag()
+        renderTagChip(tagRow, tag, props.showTagColors)
       }
     }
   }

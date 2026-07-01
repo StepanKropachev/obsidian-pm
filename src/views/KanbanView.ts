@@ -112,7 +112,8 @@ export class KanbanView implements SubView {
       parentTitle,
       subtaskProgress,
       loggedHours: totalLoggedHours(task),
-      overdue: isTaskOverdue(task, this.plugin.settings.statuses)
+      overdue: isTaskOverdue(task, this.plugin.settings.statuses),
+      showTagColors: this.plugin.settings.showTagColors
     }
   }
 

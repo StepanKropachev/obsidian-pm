@@ -17,6 +17,7 @@ export interface KanbanCardData {
   subtaskProgress?: { done: number; total: number }
   loggedHours: number
   overdue: boolean
+  showTagColors: boolean
 }
 
 export interface KanbanColumnProps {
@@ -68,6 +69,7 @@ export class KanbanColumn {
         subtaskProgress: card.subtaskProgress,
         loggedHours: card.loggedHours,
         overdue: card.overdue,
+        showTagColors: card.showTagColors,
         onClick: () => props.onCardClick(card.task),
         onContextMenu: (e) => props.onCardContextMenu(card.task, e),
         onDragStart: () => props.onCardDragStart(card.task),

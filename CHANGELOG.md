@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task priority is shown with a colored chevron instead of a dot
 - A value picker in the task editor sizes to its options instead of a fixed width
 - Logged time is shown the same way in the task table and on kanban cards
+- Tags in the task table and on kanban cards show a colored dot, matching the task editor
 
 ### Fixed
 

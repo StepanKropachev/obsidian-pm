@@ -3,6 +3,7 @@ import { formatDateShort } from '../../utils'
 import { AvatarStack } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { ProgressBar } from '../primitives/ProgressBar'
+import { renderTagChip } from './tagChip'
 
 export interface KanbanCardProps {
   task: Task
@@ -12,6 +13,7 @@ export interface KanbanCardProps {
   subtaskProgress?: { done: number; total: number }
   loggedHours: number
   overdue: boolean
+  showTagColors: boolean
   onClick: () => void
   onContextMenu: (e: MouseEvent) => void
   onDragStart: () => void
@@ -82,7 +84,7 @@ export class KanbanCard {
     if (task.tags.length) {
       const tagsEl = body.createDiv('pm-kanban-card-tags')
       for (const tag of task.tags.slice(0, 3)) {
-        new Chip(tagsEl).setLabel(tag).setVariant('outline').setTag()
+        renderTagChip(tagsEl, tag, props.showTagColors)
       }
     }
 
