@@ -40,7 +40,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
 ]
 
 /**
- * Renders the compact property grid: core properties (type, status, priority, assignees, due,
+ * Renders the compact property grid: core properties (type, status, priority, due, assignees,
  * tags) always show; rarely-used ones (start, repeat, depends on) hide when empty behind
  * "Add property". Single-selects and dates re-render the form on change; multi-selects mutate
  * the task in place and refresh their own chips.
@@ -153,6 +153,51 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'flag'
   )
 
+  // Due (Date for milestones)
+  renderPropRow(
+    grid,
+    task.type === 'milestone' ? 'Date' : 'Due',
+    () => {
+      const cell = createDiv('pm-prop-value')
+      renderDateControl({
+        container: cell,
+        value: task.due,
+        emptyLabel: 'Set due date',
+        onChange: (v) => {
+          task.due = v
+          rerender()
+        }
+      })
+      return cell
+    },
+    'calendar-clock'
+  )
+
+  // Start shares the dates row with Due. Milestones have no start, so an empty cell holds the
+  // slot there so Assignees still leads the next row.
+  if (task.type !== 'milestone') {
+    renderPropRow(
+      grid,
+      'Start',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderDateControl({
+          container: cell,
+          value: task.start,
+          emptyLabel: 'Set start',
+          onChange: (v) => {
+            task.start = v
+            rerender()
+          }
+        })
+        return cell
+      },
+      'play'
+    )
+  } else {
+    grid.createDiv()
+  }
+
   // Assignees
   renderPropRow(
     grid,
@@ -182,48 +227,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     },
     'users'
   )
-
-  // Due (Date for milestones)
-  renderPropRow(
-    grid,
-    task.type === 'milestone' ? 'Date' : 'Due',
-    () => {
-      const cell = createDiv('pm-prop-value')
-      renderDateControl({
-        container: cell,
-        value: task.due,
-        emptyLabel: 'Set due date',
-        onChange: (v) => {
-          task.due = v
-          rerender()
-        }
-      })
-      return cell
-    },
-    'calendar-clock'
-  )
-
-  // Start (extra; hidden for milestones)
-  if (task.type !== 'milestone' && (task.start || shownExtras.has('start'))) {
-    renderPropRow(
-      grid,
-      'Start',
-      () => {
-        const cell = createDiv('pm-prop-value')
-        renderDateControl({
-          container: cell,
-          value: task.start,
-          emptyLabel: 'Set start',
-          onChange: (v) => {
-            task.start = v
-            rerender()
-          }
-        })
-        return cell
-      },
-      'play'
-    )
-  }
 
   // Completed (when complete or in a terminal status)
   if (task.completed || isTerminalStatus(task.status, statuses)) {
@@ -349,9 +352,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
 
   // Progressive disclosure for the remaining empty extras
   const hidden: HiddenProperty[] = []
-  if (task.type !== 'milestone' && !task.start && !shownExtras.has('start')) {
-    hidden.push({ id: 'start', label: 'Start', icon: 'play' })
-  }
   if (!task.recurrence && !shownExtras.has('repeat')) {
     hidden.push({ id: 'repeat', label: 'Repeat', icon: 'repeat' })
   }

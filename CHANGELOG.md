@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Status, priority, type, and dates on a task are changed via value picker
-- Start date, repeat, and dependencies are hidden by default and added to a task on demand from an "Add property"
+- Repeat and dependencies are hidden by default and added to a task on demand from an "Add property"
 - Tags, assignees, and dependencies are edited through a new searchable picker
 - Archive, delete, and opening a task as a note are grouped under a single menu in the task editor
 - Subtask progress is calculated from completed subtasks
@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A value picker in the task editor sizes to its options instead of a fixed width
 - Logged time is shown the same way in the task table and on kanban cards
 - Tags in the task table and on kanban cards show a colored dot, matching the task editor
+- The task editor shows the due and start dates on one row, due first
+- The start date is always shown in the task editor
 
 ### Fixed
 
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The task editor title showed an input background when hovered or focused
 - Time tracking shows the over-estimate state once logged time passes the estimate
 - The date picker input showed a focus ring the tag and assignee picker inputs did not
+- The add-tags button in the task editor sat out of line with the other property fields when a task had no tags
 
 ## [1.6.3] - 2026-06-17
 

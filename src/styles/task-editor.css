@@ -175,6 +175,9 @@ button.pm-prop-add {
   flex-wrap: wrap;
   gap: 5px;
 }
+.pm-prop-chips:empty {
+  display: none;
+}
 
 /* Assignees: a single trigger holding an overlapping avatar stack. Two classes beat the
    element-prefixed .pm-prop-inline base (0,1,1) for the gap. */
