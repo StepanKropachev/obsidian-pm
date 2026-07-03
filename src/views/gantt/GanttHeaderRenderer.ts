@@ -45,7 +45,7 @@ export function renderTimelineHeader(ctx: RendererContext): void {
   else if (granularity === 'month') renderMonthHeader(g, ctx)
   else renderQuarterHeader(g, ctx)
 
-  ctx.svgEl.appendChild(g)
+  ctx.headerSvgEl.appendChild(g)
 }
 
 function renderDayHeader(g: SVGGElement, ctx: RendererContext): void {

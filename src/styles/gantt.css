@@ -149,6 +149,17 @@
   position: relative;
 }
 
+/* Timeline header: pinned to the top on vertical scroll, scrolls with the body
+   horizontally (only `top` is constrained, so the horizontal axis stays free). */
+.pm-gantt-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+.pm-gantt-header-svg {
+  display: block;
+}
+
 .pm-gantt-svg-container {
   position: relative;
 }

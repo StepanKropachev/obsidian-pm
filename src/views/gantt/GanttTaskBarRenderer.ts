@@ -325,7 +325,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
   const milestones = ctx.flatTasks.filter((f) => f.task.type === 'milestone' && (f.task.due || f.task.start))
   if (!milestones.length) return
 
-  const labelsG = svgEl('g', { class: 'pm-gantt-milestone-labels' })
+  const linesG = svgEl('g', { class: 'pm-gantt-milestone-labels' })
 
   for (const { task } of milestones) {
     const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
@@ -335,7 +335,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
     const color = statusConfig?.color ?? getComputedStyle(ctx.svgEl).getPropertyValue('--interactive-accent').trim()
 
     const totalH = HEADER_HEIGHT + ctx.flatTasks.filter((f) => f.visible || f.depth === 0).length * ROW_HEIGHT
-    labelsG.appendChild(
+    linesG.appendChild(
       svgEl('line', {
         x1: x,
         y1: HEADER_HEIGHT,
@@ -348,6 +348,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
       })
     )
 
+    // Label rides the sticky header so it stays visible while rows scroll.
     const label = svgEl('text', {
       x,
       y: 14,
@@ -356,10 +357,10 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
       fill: color
     })
     label.textContent = task.title.length > 16 ? task.title.slice(0, 14) + '\u2026' : task.title
-    labelsG.appendChild(label)
+    ctx.headerSvgEl.appendChild(label)
   }
 
-  ctx.svgEl.appendChild(labelsG)
+  ctx.svgEl.appendChild(linesG)
 }
 
 // ─── Dependency arrows ─────────────────────────────────────────────────────

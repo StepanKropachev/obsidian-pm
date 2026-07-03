@@ -28,6 +28,7 @@ export class GanttView implements SubView {
   private granularity: GanttGranularity
   private scrollEl!: HTMLElement
   private svgEl!: SVGSVGElement
+  private headerSvgEl!: SVGSVGElement
   private flatTasks: FlatTask[] = []
   private cfg!: TimelineCfg
   private drag: DragState = makeDragState()
@@ -157,8 +158,24 @@ export class GanttView implements SubView {
     // Right panel: timeline
     const rightPanel = wrapper.createDiv('pm-gantt-right')
     this.scrollEl = rightPanel
-    const svgContainer = this.scrollEl.createDiv('pm-gantt-svg-container')
+
+    // Timeline header lives in its own SVG inside a sticky wrapper. It shares the
+    // right panel's horizontal scroll (so it tracks the body left/right) but pins to
+    // the top on vertical scroll, keeping the time period visible while rows scroll.
+    const headerSticky = rightPanel.createDiv('pm-gantt-header-sticky')
+    headerSticky.style.width = `${this.cfg.totalWidth}px`
+    headerSticky.style.height = `${HEADER_HEIGHT}px`
+    this.headerSvgEl = svgEl('svg', {
+      width: this.cfg.totalWidth,
+      height: HEADER_HEIGHT,
+      class: 'pm-gantt-header-svg'
+    })
+    headerSticky.appendChild(this.headerSvgEl)
+
+    const svgContainer = rightPanel.createDiv('pm-gantt-svg-container')
     svgContainer.style.width = `${this.cfg.totalWidth}px`
+    // Tuck the body's top band (still drawn at y=HEADER_HEIGHT) under the sticky header.
+    svgContainer.style.marginTop = `-${HEADER_HEIGHT}px`
 
     const totalRows = this.flatTasks.filter((f) => f.visible || f.depth === 0).length
     const svgHeight = HEADER_HEIGHT + (totalRows + 1) * ROW_HEIGHT // +1 for add-task row
@@ -274,6 +291,7 @@ export class GanttView implements SubView {
   private makeRendererContext(): RendererContext {
     return {
       svgEl: this.svgEl,
+      headerSvgEl: this.headerSvgEl,
       cfg: this.cfg,
       plugin: this.plugin,
       project: this.project,

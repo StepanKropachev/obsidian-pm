@@ -13,6 +13,7 @@ export { renderTaskBar, renderMilestoneLabels, renderDependencyArrows } from './
 
 export interface RendererContext {
   svgEl: SVGSVGElement
+  headerSvgEl: SVGSVGElement
   cfg: TimelineCfg
   plugin: PMPlugin
   project: Project
@@ -91,9 +92,7 @@ export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
   const x = dateToX(ctx.cfg, today())
   if (x < 0 || x > ctx.cfg.totalWidth) return
 
-  const g = svgEl('g', { class: 'pm-gantt-today-group' })
-
-  g.appendChild(
+  ctx.svgEl.appendChild(
     svgEl('line', {
       x1: x,
       y1: HEADER_HEIGHT - 8,
@@ -103,12 +102,12 @@ export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
     })
   )
 
-  g.appendChild(
+  // The diamond cap sits in the header band, so it rides the sticky header and
+  // stays visible while the rows scroll underneath.
+  ctx.headerSvgEl.appendChild(
     svgEl('polygon', {
       points: `${x},${HEADER_HEIGHT - 16} ${x + 6},${HEADER_HEIGHT - 8} ${x},${HEADER_HEIGHT} ${x - 6},${HEADER_HEIGHT - 8}`,
       class: 'pm-gantt-today-diamond'
     })
   )
-
-  ctx.svgEl.appendChild(g)
 }
