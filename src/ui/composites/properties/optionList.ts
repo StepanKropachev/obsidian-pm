@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian'
+import { isIconName } from '../../../utils'
 import { Avatar } from '../../primitives/Avatar'
 
 export interface SelectItem {
@@ -13,12 +14,14 @@ export interface GlyphSpec {
   icon?: string
 }
 
-/** Renders a leading glyph for an option: a tinted icon if `icon` is set, else a colored dot. */
+/** Renders a leading glyph for an option: a tinted named icon or emoji text if `icon` is set, else a colored dot. */
 export function renderGlyph(parent: HTMLElement, spec: GlyphSpec): void {
-  if (spec.icon) {
+  if (spec.icon && isIconName(spec.icon)) {
     const ic = parent.createSpan({ cls: 'pm-glyph-icon' })
     setIcon(ic, spec.icon)
     if (spec.color) ic.setCssProps({ '--pm-glyph-color': spec.color })
+  } else if (spec.icon) {
+    parent.createSpan({ cls: 'pm-glyph-icon pm-glyph-text', text: spec.icon })
   } else if (spec.color) {
     const dot = parent.createSpan({ cls: 'pm-glyph-dot' })
     dot.setCssProps({ '--pm-glyph-color': spec.color })

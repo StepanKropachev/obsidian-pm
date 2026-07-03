@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian'
+import { Notice, setIcon } from 'obsidian'
 import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
 import { today, parsePlainDate, Temporal } from './dates'
 
@@ -90,8 +90,24 @@ export function getPriorityConfig(priorities: PriorityConfig[], id: TaskPriority
   return priorities.find((p) => p.id === id)
 }
 
-/** Format a config's icon + label into display text (e.g. "🔴 Critical") */
+const iconNameCache = new Map<string, boolean>()
+
+/** True when Obsidian renders this string as a named icon (e.g. a Lucide id like 'flame'); false for emoji/plain text. */
+export function isIconName(icon: string): boolean {
+  let known = iconNameCache.get(icon)
+  if (known === undefined) {
+    const probe = activeDocument.createElement('span')
+    setIcon(probe, icon)
+    known = probe.childElementCount > 0
+    iconNameCache.set(icon, known)
+  }
+  return known
+}
+
+/** Format a config's icon + label into display text (e.g. "🔴 Critical").
+ *  Named icons are excluded — they can't render as text; icon-capable callers draw them via setIcon. */
 export function formatBadgeText(icon: string | undefined, label: string): string {
+  if (icon && isIconName(icon)) return label
   return [icon, label].filter(Boolean).join(' ')
 }
 

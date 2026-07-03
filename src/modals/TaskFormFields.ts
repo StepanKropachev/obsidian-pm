@@ -117,7 +117,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderSelectControl({
         container: cell,
         value: task.status,
-        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color })),
+        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color, icon: s.icon || undefined })),
         onChange: (id) => {
           task.status = id
           rerender()

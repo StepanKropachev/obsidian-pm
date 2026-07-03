@@ -6,6 +6,8 @@ export class Notice {
   hide(): void {}
 }
 
+export function setIcon(): void {}
+
 export function normalizePath(p: string): string {
   return p.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '').replace(/\/+$/, '')
 }

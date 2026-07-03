@@ -267,9 +267,19 @@
   flex: 1;
 }
 .pm-settings-status-icon {
-  width: 40px;
+  width: 90px;
   text-align: center;
-  flex: 0 0 40px;
+  flex: 0 0 90px;
+}
+.pm-icon-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pm-icon-suggestion-glyph {
+  display: inline-flex;
+  color: var(--text-muted);
+  --icon-size: 16px;
 }
 .pm-settings-status-label {
   flex: 1;

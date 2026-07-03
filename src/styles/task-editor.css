@@ -78,6 +78,10 @@ textarea.pm-te-title:focus {
   color: var(--pm-glyph-color, var(--text-muted));
   --icon-size: 14px;
 }
+.pm-glyph-text {
+  font-size: 12px;
+  line-height: 1;
+}
 .pm-glyph-dot {
   width: 8px;
   height: 8px;

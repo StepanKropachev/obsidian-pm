@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Priorities can be added, renamed, recolored, and reordered in settings
+- Status and priority icons accept Lucide icon names alongside emoji, with suggestions while typing in settings
 
 ### Fixed
 

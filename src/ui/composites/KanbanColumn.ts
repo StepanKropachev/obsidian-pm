@@ -1,5 +1,6 @@
+import { setIcon } from 'obsidian'
 import type { Task } from '../../types'
-import { formatBadgeText, safeAsync } from '../../utils'
+import { formatBadgeText, isIconName, safeAsync } from '../../utils'
 import { KanbanCard } from './KanbanCard'
 
 export interface KanbanColumnStatus {
@@ -45,10 +46,13 @@ export class KanbanColumn {
     topBar.setCssStyles({ background: props.status.color })
 
     const titleRow = header.createDiv('pm-kanban-col-title-row')
-    const badge = titleRow.createSpan({
-      text: formatBadgeText(props.status.icon, props.status.label),
-      cls: 'pm-kanban-col-badge'
-    })
+    const badge = titleRow.createSpan({ cls: 'pm-kanban-col-badge' })
+    if (props.status.icon && isIconName(props.status.icon)) {
+      setIcon(badge.createSpan({ cls: 'pm-kanban-col-badge-icon' }), props.status.icon)
+      badge.appendText(props.status.label)
+    } else {
+      badge.setText(formatBadgeText(props.status.icon, props.status.label))
+    }
     badge.style.color = props.status.color
 
     const headerRight = titleRow.createDiv('pm-kanban-col-header-right')

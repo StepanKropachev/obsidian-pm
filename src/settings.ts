@@ -1,10 +1,37 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian'
+import { AbstractInputSuggest, App, PluginSettingTab, Setting, Notice, getIconIds, setIcon } from 'obsidian'
 import type PMPlugin from './main'
 import { PMSettings, DEFAULT_SETTINGS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
+
+/** Suggests Lucide icon ids for the status/priority icon inputs. Typed emoji are kept as-is. */
+class IconSuggest extends AbstractInputSuggest<string> {
+  protected getSuggestions(query: string): string[] {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return getIconIds()
+      .filter((id) => id.includes(q))
+      .slice(0, 24)
+  }
+
+  renderSuggestion(id: string, el: HTMLElement): void {
+    el.addClass('pm-icon-suggestion')
+    setIcon(el.createSpan({ cls: 'pm-icon-suggestion-glyph' }), id)
+    el.createSpan({ text: id })
+  }
+}
+
+/** Wire icon-name suggestions to an icon input; picking a suggestion saves through the input's change handler. */
+function attachIconSuggest(app: App, input: HTMLInputElement): void {
+  const suggest = new IconSuggest(app, input)
+  suggest.onSelect((id) => {
+    suggest.setValue(id)
+    input.dispatchEvent(new Event('change'))
+    suggest.close()
+  })
+}
 
 export class PMSettingTab extends PluginSettingTab {
   plugin: PMPlugin
@@ -310,10 +337,11 @@ export class PMSettingTab extends PluginSettingTab {
 
       this.wireRowDragReorder(row, i, this.plugin.settings.statuses, () => this.renderStatusList(container))
 
-      // Icon input
+      // Icon input: emoji or a Lucide icon id (with suggestions)
       const icon = row.createEl('input', { type: 'text', value: s.icon })
       icon.addClass('pm-settings-status-icon')
       icon.placeholder = ''
+      attachIconSuggest(this.app, icon)
       icon.addEventListener('change', () => {
         this.plugin.settings.statuses[i].icon = icon.value
         void this.plugin.saveSettings()
@@ -367,10 +395,11 @@ export class PMSettingTab extends PluginSettingTab {
 
       this.wireRowDragReorder(row, i, this.plugin.settings.priorities, () => this.renderPriorityList(container))
 
-      // Icon input
+      // Icon input: emoji or a Lucide icon id (with suggestions)
       const icon = row.createEl('input', { type: 'text', value: p.icon })
       icon.addClass('pm-settings-status-icon')
       icon.placeholder = ''
+      attachIconSuggest(this.app, icon)
       icon.addEventListener('change', () => {
         this.plugin.settings.priorities[i].icon = icon.value
         void this.plugin.saveSettings()

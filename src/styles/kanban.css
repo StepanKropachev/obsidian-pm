@@ -49,8 +49,15 @@
   padding: 10px 12px 8px;
 }
 .pm-kanban-col-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
+}
+.pm-kanban-col-badge-icon {
+  display: inline-flex;
+  --icon-size: 14px;
 }
 .pm-kanban-col-header-right {
   display: flex;
