@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The gantt timeline header stays pinned to the top when scrolling through tasks
+- Selected text in a note can be turned into a task from the right-click menu or the "Create task from selection" command
 
 ## [1.7.0] - 2026-07-02
 

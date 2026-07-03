@@ -1,5 +1,5 @@
 import { MarkdownView, Plugin, Notice } from 'obsidian'
-import { DEFAULT_SETTINGS, PMSettings, Project } from './types'
+import { DEFAULT_SETTINGS, PMSettings, Project, Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
 import { ProjectStore } from './store'
 import { PMSettingTab } from './settings'
@@ -121,6 +121,31 @@ export default class PMPlugin extends Plugin {
         void this.importNotes()
       }
     })
+
+    this.addCommand({
+      id: 'create-task-from-selection',
+      name: 'Create task from selection',
+      editorCheckCallback: (checking, editor) => {
+        const selection = editor.getSelection().trim()
+        if (!selection) return false
+        if (checking) return true
+        void this.createTaskFromText(selection)
+        return true
+      }
+    })
+
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor) => {
+        const selection = editor.getSelection().trim()
+        if (!selection) return
+        menu.addItem((item) =>
+          item
+            .setTitle('Create task from selection')
+            .setIcon('list-plus')
+            .onClick(() => void this.createTaskFromText(selection))
+        )
+      })
+    )
 
     this.addCommand({
       id: 'open-current-as-project',
@@ -277,13 +302,39 @@ export default class PMPlugin extends Plugin {
     })
   }
 
-  private openTaskModalForProject(project: Project, parentId: string | null): void {
+  private openTaskModalForProject(project: Project, parentId: string | null, defaults?: Partial<Task>): void {
     openTaskModal(this, project, {
       parentId,
+      defaults,
       onSave: async () => {
         await this.store.saveProject(project)
         await this.router.openProjectByPath(project.filePath)
       }
+    })
+  }
+
+  /** Open the task modal pre-filled from selected text, targeting a chosen project. */
+  private async createTaskFromText(text: string): Promise<void> {
+    const trimmed = text.trim()
+    if (!trimmed) return
+
+    const newlineIdx = trimmed.indexOf('\n')
+    const defaults: Partial<Task> =
+      newlineIdx === -1
+        ? { title: trimmed }
+        : { title: trimmed.slice(0, newlineIdx).trim(), description: trimmed.slice(newlineIdx + 1).trim() }
+
+    const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
+    if (!projects.length) {
+      this.showNotice('No projects yet. Create a project first.')
+      return
+    }
+    if (projects.length === 1) {
+      this.openTaskModalForProject(projects[0], null, defaults)
+      return
+    }
+    openProjectPicker(this, projects, (project) => {
+      this.openTaskModalForProject(project, null, defaults)
     })
   }
 
