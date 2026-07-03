@@ -1,5 +1,6 @@
 export { archiveTask, unarchiveTask } from './ArchiveOps'
 export { ProjectStore, TaskFileNameConflictError } from './ProjectStore'
+export type { ImportNoteOptions, TaskSource } from './TaskSource'
 export { computeSchedule, wouldCreateCycle } from './Scheduler'
 export {
   applyTaskFilter,

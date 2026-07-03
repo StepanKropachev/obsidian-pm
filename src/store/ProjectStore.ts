@@ -32,6 +32,7 @@ import {
   TASK_SLUG_MAX_LENGTH
 } from './YamlSerializer'
 import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
+import type { ImportNoteOptions, TaskSource } from './TaskSource'
 
 /**
  * 'fm' — only frontmatter changed; body content is unaffected. Save path can
@@ -96,7 +97,7 @@ function fileNameFromPath(path: string): string {
  * The in-memory Project.tasks tree is assembled on load from individual
  * task files and remains unchanged for views.
  */
-export class ProjectStore {
+export class ProjectStore implements TaskSource {
   /** Per-project promise chains to serialize concurrent saves */
   private saveQueues = new Map<string, Promise<void>>()
 
@@ -698,6 +699,40 @@ export class ProjectStore {
     this.markDirty(project, [task.id], 'full')
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
+  }
+
+  /**
+   * Convert an arbitrary vault note into a top-level task file in the project's
+   * tasks folder. The note body becomes the task description; notes that are
+   * already pm-tasks are skipped. The task is picked up on the next project
+   * load via the orphan self-heal, matching how the tasks folder is scanned.
+   */
+  async importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'> {
+    const content = await this.app.vault.read(file)
+    const { frontmatter, body } = parseFrontmatter(content)
+    if (frontmatter?.[TASK_FRONTMATTER_KEY] === true) return 'skipped'
+
+    const task = makeTask({
+      title: file.basename,
+      description: body,
+      status: opts.status,
+      priority: opts.priority
+    })
+    const folder = this.projectTaskFolder(project)
+    await this.ensureFolder(folder)
+    const newFilePath = taskFilePath(task.title, folder)
+    const newContent = serializeTask(task, project, null)
+
+    if (opts.handling === 'move') {
+      await this.app.fileManager.renameFile(file, newFilePath)
+      const moved = this.app.vault.getAbstractFileByPath(newFilePath)
+      if (moved instanceof TFile) {
+        await this.app.vault.process(moved, () => newContent)
+      }
+    } else {
+      await this.app.vault.create(newFilePath, newContent)
+    }
+    return 'imported'
   }
 
   async duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null> {

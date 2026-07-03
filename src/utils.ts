@@ -34,6 +34,12 @@ export function getDefaultStatusId(statuses: StatusConfig[]): string {
   return statuses.length > 0 ? statuses[0].id : 'todo'
 }
 
+/** Returns the default priority id for new tasks: 'medium' when configured, else the middle of the list */
+export function getDefaultPriorityId(priorities: PriorityConfig[]): string {
+  if (priorities.some((p) => p.id === 'medium')) return 'medium'
+  return priorities.length > 0 ? priorities[Math.floor(priorities.length / 2)].id : 'medium'
+}
+
 /** Returns the first status id marked as complete */
 export function getCompleteStatusId(statuses: StatusConfig[]): string {
   const found = statuses.find((s) => s.complete)

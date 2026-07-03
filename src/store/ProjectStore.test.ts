@@ -779,3 +779,67 @@ describe('ProjectStore project cache', () => {
     expect(reloaded).toBe(clone)
   })
 })
+
+describe('ProjectStore.importNoteAsTask', () => {
+  async function importInto(handling: 'move' | 'copy') {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Import', 'Projects')
+    const note = await vault.create('Notes/Idea.md', 'the note body')
+    const result = await store.importNoteAsTask(project, note, {
+      status: 'in-progress',
+      priority: 'high',
+      handling
+    })
+    return { store, vault, app, project, result }
+  }
+
+  it('copies a note into the tasks folder and keeps the original', async () => {
+    const { vault, result } = await importInto('copy')
+    expect(result).toBe('imported')
+    expect(vault.getAbstractFileByPath('Notes/Idea.md')).toBeInstanceOf(TFile)
+
+    const created = vault.getAbstractFileByPath('Projects/Import_tasks/idea.md')
+    if (!(created instanceof TFile)) throw new Error('imported task file missing')
+    const content = await vault.read(created)
+    expect(content).toContain('pm-task: true')
+    expect(content).toContain('status: "in-progress"')
+    expect(content).toContain('priority: "high"')
+    expect(content).toContain('the note body')
+  })
+
+  it('moves a note into the tasks folder', async () => {
+    const { vault, result } = await importInto('move')
+    expect(result).toBe('imported')
+    expect(vault.getAbstractFileByPath('Notes/Idea.md')).toBeNull()
+
+    const moved = vault.getAbstractFileByPath('Projects/Import_tasks/idea.md')
+    if (!(moved instanceof TFile)) throw new Error('imported task file missing')
+    const content = await vault.read(moved)
+    expect(content).toContain('pm-task: true')
+    expect(content).toContain('the note body')
+  })
+
+  it('imported tasks appear as top-level tasks on the next project load', async () => {
+    const { vault, app, project } = await importInto('move')
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = expectDefined(await store2.loadProject(file))
+    expect(reloaded.tasks.map((t) => t.title)).toContain('Idea')
+  })
+
+  it('skips notes that are already tasks', async () => {
+    const { store, vault, project } = await importInto('copy')
+    const existing = vault.getAbstractFileByPath('Projects/Import_tasks/idea.md')
+    if (!(existing instanceof TFile)) throw new Error('imported task file missing')
+    const before = await vault.read(existing)
+
+    const result = await store.importNoteAsTask(project, existing, {
+      status: 'todo',
+      priority: 'low',
+      handling: 'move'
+    })
+    expect(result).toBe('skipped')
+    expect(await vault.read(existing)).toBe(before)
+  })
+})

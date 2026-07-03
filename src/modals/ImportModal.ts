@@ -1,9 +1,7 @@
-import { Modal, TFile, Notice } from 'obsidian'
+import { App, Modal, TFile, Notice } from 'obsidian'
+import type PMPlugin from '../main'
 import type { Project, TaskStatus, TaskPriority } from '../types'
-import { makeTask, DEFAULT_STATUSES, DEFAULT_PRIORITIES } from '../types'
-import { parseFrontmatter, TASK_FRONTMATTER_KEY } from '../store/YamlParser'
-import { serializeTask, taskFilePath } from '../store/YamlSerializer'
-import { ensureFolder } from '../store/vaultFs'
+import { getDefaultStatusId, getDefaultPriorityId } from '../utils'
 
 interface FileItem {
   file: TFile
@@ -23,11 +21,20 @@ export class ImportModal extends Modal {
 
   // Phase 2 state
   private phase: 1 | 2 = 1
-  private defaultStatus: TaskStatus = 'todo'
-  private defaultPriority: TaskPriority = 'medium'
+  private defaultStatus: TaskStatus
+  private defaultPriority: TaskPriority
   private fileHandling: 'move' | 'copy' = 'move'
   private project: Project | null = null
   private onImportComplete: (() => void) | null = null
+
+  constructor(
+    app: App,
+    private plugin: PMPlugin
+  ) {
+    super(app)
+    this.defaultStatus = getDefaultStatusId(plugin.settings.statuses)
+    this.defaultPriority = getDefaultPriorityId(plugin.settings.priorities)
+  }
 
   onOpen(): void {
     const { contentEl } = this
@@ -144,7 +151,7 @@ export class ImportModal extends Modal {
 
     const statusSelect = statusGroup.createEl('select')
 
-    DEFAULT_STATUSES.forEach((s) => {
+    this.plugin.settings.statuses.forEach((s) => {
       const option = statusSelect.createEl('option', { text: s.label })
       option.value = s.id
       if (s.id === this.defaultStatus) option.selected = true
@@ -160,14 +167,14 @@ export class ImportModal extends Modal {
 
     const prioritySelect = priorityGroup.createEl('select')
 
-    DEFAULT_PRIORITIES.forEach((p) => {
+    this.plugin.settings.priorities.forEach((p) => {
       const option = prioritySelect.createEl('option', { text: p.label })
       option.value = p.id
       if (p.id === this.defaultPriority) option.selected = true
     })
 
     prioritySelect.addEventListener('change', (e) => {
-      this.defaultPriority = (e.target as HTMLSelectElement).value as TaskPriority
+      this.defaultPriority = (e.target as HTMLSelectElement).value
     })
 
     // File handling radio
@@ -314,95 +321,35 @@ export class ImportModal extends Modal {
     }
 
     const selectedFiles = this.files.filter((f) => f.selected).map((f) => f.file)
-    const skipped: string[] = []
-    const imported: string[] = []
+    let skipped = 0
+    let imported = 0
 
-    try {
-      // Task folder mirrors ProjectStore.projectTaskFolder: <projectFile>_tasks
-      const tasksFolder = this.project.filePath.replace(/\.md$/, '_tasks')
-
-      for (const file of selectedFiles) {
-        try {
-          // Read file content
-          const content = await this.app.vault.read(file)
-
-          // Parse frontmatter
-          const { frontmatter, body } = parseFrontmatter(content)
-
-          // Check if already imported
-          if (frontmatter && frontmatter[TASK_FRONTMATTER_KEY] === true) {
-            skipped.push(file.basename)
-            continue
-          }
-
-          // Create task
-          const task = makeTask({
-            title: file.basename.replace(/\.md$/, ''),
-            description: body,
-            status: this.defaultStatus,
-            priority: this.defaultPriority
-          })
-
-          // Generate file path for task
-          const newFilePath = taskFilePath(task.title, tasksFolder)
-
-          // Serialize task to file content
-          const newContent = serializeTask(task, this.project, null)
-
-          if (this.fileHandling === 'move') {
-            // Move: rename to new location, then update content
-            try {
-              await ensureFolder(this.app, tasksFolder)
-
-              // Rename file to new path
-              await this.app.fileManager.renameFile(file, newFilePath)
-
-              // Get the moved file and update its content
-              const movedFile = this.app.vault.getAbstractFileByPath(newFilePath)
-              if (movedFile instanceof TFile) {
-                await this.app.vault.modify(movedFile, newContent)
-              }
-
-              imported.push(file.basename)
-            } catch (err) {
-              console.error(`Failed to move ${file.basename}:`, err)
-              skipped.push(file.basename)
-            }
-          } else {
-            // Copy: create new file, keep original
-            try {
-              await ensureFolder(this.app, tasksFolder)
-
-              await this.app.vault.create(newFilePath, newContent)
-              imported.push(file.basename)
-            } catch (err) {
-              console.error(`Failed to copy ${file.basename}:`, err)
-              skipped.push(file.basename)
-            }
-          }
-        } catch (err) {
-          console.error(`Error processing ${file.basename}:`, err)
-          skipped.push(file.basename)
-        }
+    for (const file of selectedFiles) {
+      try {
+        const result = await this.plugin.store.importNoteAsTask(this.project, file, {
+          status: this.defaultStatus,
+          priority: this.defaultPriority,
+          handling: this.fileHandling
+        })
+        if (result === 'imported') imported++
+        else skipped++
+      } catch (err) {
+        console.error(`Failed to import ${file.basename}:`, err)
+        skipped++
       }
-
-      // Call project reload callback if provided
-      if (this.onImportComplete) {
-        this.onImportComplete()
-      }
-
-      // Show summary notification
-      let message = `Imported ${imported.length} task${imported.length !== 1 ? 's' : ''}`
-      if (skipped.length > 0) {
-        message += ` (${skipped.length} skipped)`
-      }
-      new Notice(message, 3000)
-
-      this.close()
-    } catch (err) {
-      console.error('Import error:', err)
-      new Notice('Error during import. Check console for details.', 5000)
     }
+
+    if (this.onImportComplete) {
+      this.onImportComplete()
+    }
+
+    let message = `Imported ${imported} task${imported !== 1 ? 's' : ''}`
+    if (skipped > 0) {
+      message += ` (${skipped} skipped)`
+    }
+    new Notice(message, 3000)
+
+    this.close()
   }
 
   setProject(project: Project): void {

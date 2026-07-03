@@ -14,7 +14,7 @@ import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
-import { safeAsync, getDefaultStatusId, getPriorityConfig } from '../utils'
+import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig } from '../utils'
 import { confirmDialog } from '../ui/ModalFactory'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
@@ -54,7 +54,7 @@ export class TaskModal extends Modal {
     } else {
       this.task = makeTask({
         status: getDefaultStatusId(plugin.settings.statuses),
-        priority: 'medium',
+        priority: getDefaultPriorityId(plugin.settings.priorities),
         type: parentId ? 'subtask' : 'task',
         ...defaults
       })

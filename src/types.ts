@@ -2,7 +2,7 @@ import { today } from './dates'
 import type { TaskIndex } from './store/TaskIndex'
 
 export type TaskStatus = string
-export type TaskPriority = 'critical' | 'high' | 'medium' | 'low'
+export type TaskPriority = string
 export type GanttGranularity = 'day' | 'week' | 'month' | 'quarter'
 export type GanttWeekLabel = 'weekNumber' | 'dateRange' | 'both'
 export type ViewMode = 'table' | 'gantt' | 'kanban'

@@ -2,6 +2,7 @@ import { MarkdownView, Plugin, Notice } from 'obsidian'
 import { DEFAULT_SETTINGS, PMSettings, Project, Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
 import { ProjectStore } from './store'
+import type { TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
@@ -13,7 +14,7 @@ import { safeAsync } from './utils'
 
 export default class PMPlugin extends Plugin {
   settings: PMSettings = { ...DEFAULT_SETTINGS }
-  store!: ProjectStore
+  store!: TaskSource
   notifier!: Notifier
   router!: PMViewRouter
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []

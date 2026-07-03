@@ -164,6 +164,7 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
     vault,
     fileManager: {
       trashFile: (file: TAbstractFile) => vault.trashFile(file),
+      renameFile: (file: TAbstractFile, newPath: string) => vault.rename(file, newPath),
       processFrontMatter: async (file: TFile, fn: (fm: Record<string, unknown>) => void): Promise<void> => {
         await vault.process(file, (content) => {
           const { frontmatter, body } = splitFrontmatter(content)
@@ -202,6 +203,7 @@ export interface FakeAppLike {
   vault: FakeVault
   fileManager: {
     trashFile: (file: TAbstractFile) => Promise<void>
+    renameFile: (file: TAbstractFile, newPath: string) => Promise<void>
     processFrontMatter: (file: TFile, fn: (fm: Record<string, unknown>) => void) => Promise<void>
   }
   metadataCache: { getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null }

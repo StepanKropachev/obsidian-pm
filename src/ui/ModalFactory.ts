@@ -281,7 +281,7 @@ export function openImportModal(
   project: Project,
   onImportComplete?: () => void | Promise<void>
 ): void {
-  const modal = new ImportModal(plugin.app)
+  const modal = new ImportModal(plugin.app, plugin)
   modal.setProject(project)
   if (onImportComplete) {
     modal.setOnImportComplete(() => {

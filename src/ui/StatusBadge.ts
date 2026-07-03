@@ -30,7 +30,7 @@ export function renderStatusBadge(
   return badge.el
 }
 
-export const PRIORITY_CHEVRONS: Record<TaskPriority, string> = {
+export const PRIORITY_CHEVRONS: Record<string, string> = {
   critical: 'chevrons-up',
   high: 'chevron-up',
   medium: 'equal',
@@ -49,7 +49,7 @@ export function renderPriorityBadge(
     .setColor(config?.color ?? 'var(--text-muted)')
     .setVariant('plain')
   if (!config?.icon) {
-    badge.setLeadingIcon(PRIORITY_CHEVRONS[task.priority])
+    badge.setLeadingIcon(PRIORITY_CHEVRONS[task.priority] ?? 'equal')
   }
   badge.onClick((e) => {
     const menu = new Menu()

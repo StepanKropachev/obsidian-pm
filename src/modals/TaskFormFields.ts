@@ -1,5 +1,5 @@
 import type PMPlugin from '../main'
-import { Project, Task, TaskType, TaskPriority, Recurrence } from '../types'
+import { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
@@ -144,7 +144,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           icon: p.icon || PRIORITY_CHEVRONS[p.id]
         })),
         onChange: (id) => {
-          task.priority = id as TaskPriority
+          task.priority = id
           rerender()
         }
       })

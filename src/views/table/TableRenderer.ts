@@ -170,7 +170,9 @@ function fillTableBody(ctx: TableContext): void {
     list.push(f)
   }
   for (const list of childrenByParent.values()) {
-    list.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses))
+    list.sort((a, b) =>
+      compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses, ctx.plugin.settings.priorities)
+    )
   }
 
   const sorted: FlatTask[] = []

@@ -1,5 +1,5 @@
 import { ButtonComponent, Menu } from 'obsidian'
-import type { Project, FilterState, StatusConfig, PriorityConfig, TaskPriority, DueDateFilter } from '../../../types'
+import type { Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
@@ -61,7 +61,7 @@ export class FilterRow {
       filter.priorities,
       priorities.map((p) => ({ id: p.id, label: formatBadgeText(p.icon, p.label) })),
       (selected) => {
-        filter.priorities = selected as TaskPriority[]
+        filter.priorities = selected
         notify()
       }
     )
