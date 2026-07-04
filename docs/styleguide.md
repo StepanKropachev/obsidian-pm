@@ -43,10 +43,10 @@ The unified label primitive: status, priority, tags, due dates, time, small badg
 
 ### Pill - `Pill.ts`
 
-Toggleable filter button (`<button>`): saved views, filter dropdowns, due/archived toggles.
+Toggleable filter button: saved views, filter dropdowns, due/archived toggles. Wraps Obsidian's `ButtonComponent`, compacted; active carries the plugin's 12% accent-tint selection signature.
 
 - API: `new Pill(parent).setLabel(text).setActive(bool).setShape('rounded'|'pill').setAriaLabel(text).onClick(h).onContextMenu(h)`
-- CSS: `pm-pill`, `--active`, `--pill`
+- CSS: `button.pm-pill` (the `button` prefix outranks core button chrome), `--active`, `--pill`
 - Use when: a button whose pressed/active state persists (filters, saved views)
 - Not when: a non-interactive label (`Chip`) or a one-shot action (`ButtonComponent`)
 
@@ -154,12 +154,6 @@ No wrappers for these:
 - `Menu` - context menus and flat pickers (`.addItem()`, `.showAtMouseEvent()`)
 - `SuggestModal` / `FuzzySuggestModal` - searchable pickers (via ModalFactory)
 - `setIcon(el, 'lucide-name')` - icons; size via `--icon-size` on the parent (width/height rules do not override `.svg-icon`)
-
-## Deprecated patterns
-
-Empty right now. When a pattern gets deprecated, add a row (pattern, where, use instead, todo) so agents don't copy it; remove the row when the sweep lands.
-
-Styling ground rules that keep this table empty: Obsidian theme variables only (no new `--pm-*`; the only plugin tokens are `--pm-ghost-border` / `--pm-shadow-ambient` plus per-component parameters like `--pm-chip-color`), radii from `--radius-s`/`--radius-m`, and no hand-rolled `<button>` styling.
 
 ## Live gallery
 

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove buttons in the task editor, project editor, and settings are icon buttons with tooltips
 - The import dialog uses Obsidian's native buttons
 - The Gantt zoom control uses Obsidian's native buttons
+- Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
 
 ### Fixed
 

@@ -1,12 +1,17 @@
+import { ButtonComponent } from 'obsidian'
+
 export class Pill {
   el: HTMLButtonElement
+  private button: ButtonComponent
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('button', { cls: 'pm-pill' })
+    this.button = new ButtonComponent(parentEl)
+    this.el = this.button.buttonEl
+    this.el.addClass('pm-pill')
   }
 
   setLabel(text: string): this {
-    this.el.setText(text)
+    this.button.setButtonText(text)
     return this
   }
 
@@ -26,7 +31,7 @@ export class Pill {
   }
 
   onClick(handler: (e: MouseEvent) => unknown): this {
-    this.el.addEventListener('click', handler)
+    this.button.onClick(handler)
     return this
   }
 
