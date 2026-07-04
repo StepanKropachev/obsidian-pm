@@ -22,27 +22,6 @@
   flex: 1;
 }
 
-.pm-gantt-zoom-btn {
-  padding: 4px 12px;
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius-sm);
-  background: transparent;
-  color: var(--pm-text-muted);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-.pm-gantt-zoom-btn:hover {
-  background: var(--pm-bg3);
-  color: var(--pm-text);
-}
-.pm-gantt-zoom-btn--active {
-  background: var(--pm-accent);
-  color: var(--text-on-accent);
-  border-color: var(--pm-accent);
-}
-
 /* Main Gantt layout */
 .pm-gantt-wrapper {
   display: flex;

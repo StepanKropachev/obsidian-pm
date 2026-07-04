@@ -35,26 +35,6 @@
   display: flex;
   gap: 6px;
 }
-.pm-segmented-btn {
-  appearance: none;
-  background: none;
-  margin: 0;
-  font: inherit;
-  cursor: pointer;
-  padding: 4px 12px;
-  border-radius: var(--pm-radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--pm-text-muted);
-  border: 1px solid var(--pm-border);
-  transition: all 0.15s;
-}
-.pm-segmented-btn:hover {
-  background: var(--pm-bg3);
-}
-.pm-segmented-btn--active {
-  box-shadow: 0 0 0 2px var(--pm-accent);
-}
 
 /* -- Time tracking ------------------------------------------------------- */
 .pm-time-est-row {

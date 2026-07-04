@@ -130,20 +130,6 @@ body.pm-resize-active * {
   justify-content: flex-end;
   gap: 0.75rem;
 }
-.import-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-.import-btn--secondary {
-  border: 1px solid var(--background-modifier-border);
-  background-color: var(--background-primary);
-  color: var(--text-normal);
-}
-.import-btn--disabled {
-  cursor: not-allowed;
-}
-
 .import-options-content {
   padding: 1.5rem;
   display: flex;
