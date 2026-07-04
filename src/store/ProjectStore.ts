@@ -735,6 +735,55 @@ export class ProjectStore implements TaskSource {
     return 'imported'
   }
 
+  /**
+   * Persist a converted task forest (e.g. a TaskNotes import) as task files.
+   * Each node's description comes from its source note body; 'move' turns the
+   * source file into the task file, 'copy' leaves sources untouched. The
+   * project file is not rewritten — the next load self-heals top-level order
+   * and parenting from the written parentId/subtaskIds.
+   */
+  async importTaskForest(
+    project: Project,
+    roots: Task[],
+    sources: Map<string, TFile>,
+    handling: 'move' | 'copy'
+  ): Promise<number> {
+    const baseFolder = this.projectTaskFolder(project)
+    await this.ensureFolder(baseFolder)
+    let imported = 0
+
+    const writeNode = async (task: Task, parent: Task | null): Promise<void> => {
+      const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
+      if (task.archived) await this.ensureFolder(folder)
+      const source = sources.get(task.id)
+      if (source) {
+        const { body } = parseFrontmatter(await this.app.vault.read(source))
+        task.description = body
+      }
+      const desired = taskFilePath(task.title, folder)
+      const dest = this.uniqueChildPath(folder, desired.slice(desired.lastIndexOf('/') + 1))
+      const content = serializeTask(task, project, parent)
+      if (handling === 'move' && source) {
+        await this.app.fileManager.renameFile(source, dest)
+        const moved = this.app.vault.getAbstractFileByPath(dest)
+        if (moved instanceof TFile) {
+          await this.app.vault.process(moved, () => content)
+        }
+      } else {
+        await this.app.vault.create(dest, content)
+      }
+      imported++
+      for (const child of task.subtasks) {
+        await writeNode(child, task)
+      }
+    }
+
+    for (const root of roots) {
+      await writeNode(root, null)
+    }
+    return imported
+  }
+
   async duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null> {
     const source = findTaskById(project, sourceId)
     if (!source) return null

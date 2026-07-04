@@ -2,6 +2,14 @@ import { App, Modal, TFile, Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, TaskStatus, TaskPriority } from '../types'
 import { getDefaultStatusId, getDefaultPriorityId } from '../utils'
+import {
+  ensurePaletteEntries,
+  getTaskNotesApi,
+  resolveTaskNotesRef,
+  type TaskNotesApi,
+  type TaskNotesTaskInfo
+} from '../integrations/tasknotes'
+import { buildImportForest, type TaskNotesImportItem } from '../integrations/tasknotesImport'
 
 interface FileItem {
   file: TFile
@@ -324,7 +332,19 @@ export class ImportModal extends Modal {
     let skipped = 0
     let imported = 0
 
+    const api = getTaskNotesApi(this.app)
+    const taskNotesApi = api?.hasCapability('tasks.read') ? api : null
+    const taskNotesTasks: Array<{ file: TFile; info: TaskNotesTaskInfo }> = []
+
     for (const file of selectedFiles) {
+      const alreadyPmTask = this.app.metadataCache.getFileCache(file)?.frontmatter?.['pm-task'] === true
+      if (taskNotesApi && !alreadyPmTask) {
+        const info = await taskNotesApi.getTask(file.path).catch(() => null)
+        if (info) {
+          taskNotesTasks.push({ file, info })
+          continue
+        }
+      }
       try {
         const result = await this.plugin.store.importNoteAsTask(this.project, file, {
           status: this.defaultStatus,
@@ -339,6 +359,15 @@ export class ImportModal extends Modal {
       }
     }
 
+    if (taskNotesApi && taskNotesTasks.length) {
+      try {
+        imported += await this.importTaskNotesTasks(taskNotesApi, this.project, taskNotesTasks)
+      } catch (err) {
+        console.error('Failed to import TaskNotes tasks:', err)
+        skipped += taskNotesTasks.length
+      }
+    }
+
     if (this.onImportComplete) {
       this.onImportComplete()
     }
@@ -350,6 +379,54 @@ export class ImportModal extends Modal {
     new Notice(message, 3000)
 
     this.close()
+  }
+
+  /**
+   * Convert TaskNotes tasks preserving their fields: scheduled/due dates,
+   * blockedBy dependencies and project-link hierarchy (within the selection),
+   * tags, time estimate, completion, and archive state.
+   */
+  private async importTaskNotesTasks(
+    api: TaskNotesApi,
+    project: Project,
+    tasks: Array<{ file: TFile; info: TaskNotesTaskInfo }>
+  ): Promise<number> {
+    const snapshot = api.hasCapability('settings.snapshot') ? api.getSettingsSnapshot() : {}
+    const taskTag = snapshot.taskTag || 'task'
+    const archiveTag = snapshot.fieldMapping?.archiveTag || 'archived'
+
+    const resolve = (refs: string[] | undefined, sourcePath: string): string[] =>
+      (refs ?? []).map((ref) => resolveTaskNotesRef(this.app, ref, sourcePath)).filter((p): p is string => p !== null)
+
+    const items: TaskNotesImportItem[] = tasks.map(({ file, info }) => ({
+      path: file.path,
+      info,
+      parentPaths: resolve(info.projects, file.path),
+      blockedByPaths: resolve(
+        (info.blockedBy ?? []).map((dep) => (typeof dep === 'string' ? dep : dep.uid)),
+        file.path
+      )
+    }))
+
+    const { roots, byPath } = buildImportForest(items, {
+      defaultStatus: this.defaultStatus,
+      defaultPriority: this.defaultPriority,
+      taskTag,
+      archiveTag
+    })
+
+    const usedStatuses = new Set(items.map((i) => i.info.status).filter(Boolean))
+    const usedPriorities = new Set(items.map((i) => i.info.priority).filter(Boolean))
+    if (ensurePaletteEntries(api, this.plugin.settings, usedStatuses, usedPriorities) > 0) {
+      await this.plugin.saveSettings()
+    }
+
+    const sources = new Map<string, TFile>()
+    for (const { file } of tasks) {
+      const task = byPath.get(file.path)
+      if (task) sources.set(task.id, file)
+    }
+    return this.plugin.store.importTaskForest(project, roots, sources, this.fileHandling)
   }
 
   setProject(project: Project): void {

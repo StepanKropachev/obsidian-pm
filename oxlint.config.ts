@@ -32,7 +32,7 @@ export default defineConfig({
     'obsidianmd/regex-lookbehind': 'error',
     'obsidianmd/settings-tab/no-manual-html-headings': 'error',
     'obsidianmd/settings-tab/no-problematic-settings-headings': 'error',
-    'obsidianmd/ui/sentence-case': 'error',
+    'obsidianmd/ui/sentence-case': ['error', { ignoreWords: ['TaskNotes'] }],
     'obsidianmd/ui/sentence-case-json': 'warn',
     'obsidianmd/vault/iterate': 'error'
   }

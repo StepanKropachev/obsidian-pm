@@ -843,3 +843,44 @@ describe('ProjectStore.importNoteAsTask', () => {
     expect(await vault.read(existing)).toBe(before)
   })
 })
+
+describe('ProjectStore.importTaskForest', () => {
+  it('writes a parent/child forest that reloads as a tree with dependencies', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Forest', 'Projects')
+    const parentSource = await vault.create('Notes/Parent.md', 'parent body')
+    const childSource = await vault.create('Notes/Child.md', 'child body')
+
+    const child = makeTask({ title: 'Child', type: 'subtask' })
+    const parent = makeTask({ title: 'Parent', subtasks: [child] })
+    child.dependencies = [parent.id]
+    const sources = new Map([
+      [parent.id, parentSource],
+      [child.id, childSource]
+    ])
+
+    const count = await store.importTaskForest(project, [parent], sources, 'move')
+    expect(count).toBe(2)
+    expect(vault.getAbstractFileByPath('Notes/Parent.md')).toBeNull()
+
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = expectDefined(await store2.loadProject(file))
+    const top = reloaded.tasks.find((t) => t.title === 'Parent')
+    expect(expectDefined(top).subtasks.map((t) => t.title)).toEqual(['Child'])
+    expect(expectDefined(top).subtasks[0].dependencies).toEqual([parent.id])
+    expect(expectDefined(top).description).toBe('parent body')
+  })
+
+  it('places archived tasks in the Archive subfolder', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Arch', 'Projects')
+    const source = await vault.create('Notes/Old.md', 'old body')
+    const task = makeTask({ title: 'Old', archived: true })
+
+    await store.importTaskForest(project, [task], new Map([[task.id, source]]), 'copy')
+    expect(vault.getAbstractFileByPath('Projects/Arch_tasks/Archive/old.md')).toBeInstanceOf(TFile)
+    expect(vault.getAbstractFileByPath('Notes/Old.md')).toBeInstanceOf(TFile)
+  })
+})

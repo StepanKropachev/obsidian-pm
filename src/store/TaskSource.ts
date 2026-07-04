@@ -32,6 +32,12 @@ export interface TaskSource {
   insertTask(project: Project, task: Task, parentId?: string | null): Promise<void>
   duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null>
   importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'>
+  importTaskForest(
+    project: Project,
+    roots: Task[],
+    sources: Map<string, TFile>,
+    handling: 'move' | 'copy'
+  ): Promise<number>
   updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void>
   updateTasks(
     project: Project,

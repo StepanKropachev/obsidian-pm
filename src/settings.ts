@@ -2,6 +2,7 @@ import { AbstractInputSuggest, App, PluginSettingTab, Setting, Notice, getIconId
 import type PMPlugin from './main'
 import { PMSettings, DEFAULT_SETTINGS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
+import { getTaskNotesApi, importTaskNotesPalettes, isTaskNotesInstalled } from './integrations/tasknotes'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
@@ -261,6 +262,31 @@ export class PMSettingTab extends PluginSettingTab {
           this.renderPriorityList(priorityContainer)
         })
     )
+
+    if (isTaskNotesInstalled(this.app)) {
+      new Setting(containerEl).setName('TaskNotes').setHeading()
+
+      new Setting(containerEl)
+        .setName('Import statuses and priorities')
+        .setDesc('Add or update statuses and priorities to match TaskNotes. Entries TaskNotes does not know are kept.')
+        .addButton((btn) =>
+          btn.setButtonText('Import from TaskNotes').onClick(() => {
+            const api = getTaskNotesApi(this.app)
+            if (!api) {
+              new Notice('TaskNotes 4.10 or newer is required.')
+              return
+            }
+            const { added, updated } = importTaskNotesPalettes(api, this.plugin.settings)
+            void this.plugin.saveSettings()
+            this.display()
+            new Notice(
+              added || updated
+                ? `Imported from TaskNotes: ${added} added, ${updated} updated.`
+                : 'Statuses and priorities already match TaskNotes.'
+            )
+          })
+        )
+    }
   }
 
   private renderMembersList(container: HTMLElement): void {

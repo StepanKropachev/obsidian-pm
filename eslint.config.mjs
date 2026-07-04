@@ -16,5 +16,11 @@ export default defineConfig([
     rules: {
       'obsidianmd/no-static-styles-assignment': 'off'
     }
+  },
+  {
+    files: ['src/**/*.ts'],
+    rules: {
+      'obsidianmd/ui/sentence-case': ['error', { ignoreWords: ['TaskNotes'] }]
+    }
   }
 ])

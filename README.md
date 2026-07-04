@@ -99,6 +99,36 @@ For teams:
 
 There is no real-time multi-user editing. Two people editing the same task at once produces a sync conflict, same as any Markdown note.
 
+## Using with TaskNotes
+
+Project Manager works alongside the [TaskNotes](https://github.com/callumalpass/tasknotes) plugin (4.10 or newer).
+
+### Import TaskNotes tasks
+
+The regular **Import notes as tasks** command recognizes TaskNotes tasks and converts them with their fields intact:
+
+- scheduled and due dates map to start and due
+- `blockedBy` dependencies between imported notes become task dependencies
+- project links between imported notes become parent/subtask relationships
+- tags, time estimates, completion dates, simple recurrence, and archive state carry over
+- statuses and priorities the imported tasks use are added to your palettes automatically
+
+Choose **move** to turn the TaskNotes notes into task files inside the project's task folder, or **copy** to keep the originals untouched.
+
+### Align statuses and priorities
+
+**Settings > Import from TaskNotes** copies TaskNotes' status and priority palettes into Project Manager, so both plugins use the same values, names, and colors. Entries TaskNotes doesn't know are kept.
+
+### Let TaskNotes see Project Manager tasks
+
+TaskNotes can be configured to list and edit Project Manager tasks in place, without conversion:
+
+1. In TaskNotes settings, set task identification to **property** with name `pm-task` and value `true`.
+2. In its field mapping, map **scheduled** to `start`.
+3. Add your Project Manager status and priority values to TaskNotes' palettes.
+
+Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses project links and `blockedBy`, Project Manager uses id references), but both plugins edit frontmatter non-destructively, so each one's extra fields survive the other's writes.
+
 ## Settings
 
 | Setting | Description |
