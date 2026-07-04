@@ -52,47 +52,8 @@
 .pm-segmented-btn:hover {
   background: var(--pm-bg3);
 }
-.pm-segmented-btn--milestone {
-  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
-  border-color: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-  color: var(--text-accent);
-}
-.pm-segmented-btn--subtask {
-  background: color-mix(in srgb, var(--color-green) 15%, transparent);
-  border-color: color-mix(in srgb, var(--color-green) 40%, transparent);
-  color: var(--color-green);
-}
 .pm-segmented-btn--active {
   box-shadow: 0 0 0 2px var(--pm-accent);
-}
-
-/* -- Recurrence picker --------------------------------------------------- */
-.pm-prop-recurrence {
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.pm-recur-every {
-  width: 52px;
-  text-align: center;
-}
-.pm-recur-interval {
-  width: 110px;
-}
-.pm-recur-end {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.pm-recur-label {
-  font-size: 12px;
-  color: var(--pm-text-muted);
-}
-.pm-recur-end-input {
-  width: 130px;
-}
-.pm-prop-add-btn.pm-recur-rm {
-  color: var(--pm-danger);
-  border-color: color-mix(in srgb, var(--color-red) 30%, transparent);
 }
 
 /* -- Time tracking ------------------------------------------------------- */

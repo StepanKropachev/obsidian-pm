@@ -134,8 +134,6 @@
   outline: none;
 }
 
-.pm-prop-assignees,
-.pm-prop-tags,
 .pm-prop-deps {
   flex-wrap: wrap;
 }
