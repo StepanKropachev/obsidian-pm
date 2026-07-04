@@ -3,7 +3,7 @@ import type { Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter 
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
-import { Pill } from '../../primitives/Pill'
+import { ChipButton } from '../../primitives/ChipButton'
 import { formatBadgeText } from '../../../utils'
 
 export interface FilterRowProps {
@@ -25,7 +25,7 @@ const DUE_LABELS: Record<DueDateFilter, string> = {
 
 export class FilterRow {
   el: HTMLElement
-  private clearBtn: Pill | null = null
+  private clearBtn: ChipButton | null = null
 
   constructor(
     parentEl: HTMLElement,
@@ -94,20 +94,20 @@ export class FilterRow {
       )
     }
 
-    this.renderDueDatePill(notify)
-    this.renderArchivedPill(notify)
+    this.renderDueDateButton(notify)
+    this.renderArchivedButton(notify)
     this.renderClearButton()
   }
 
-  private renderDueDatePill(notify: () => void): void {
+  private renderDueDateButton(notify: () => void): void {
     const { filter } = this.props
-    const pill = new Pill(this.el)
+    const btn = new ChipButton(this.el)
     const updateLabel = () => {
       const current = filter.dueDateFilter
-      pill.setLabel(current !== 'any' ? `Due: ${DUE_LABELS[current]}` : DUE_LABELS.any).setActive(current !== 'any')
+      btn.setLabel(current !== 'any' ? `Due: ${DUE_LABELS[current]}` : DUE_LABELS.any).setActive(current !== 'any')
     }
     updateLabel()
-    pill.onClick((e) => {
+    btn.onClick((e) => {
       const menu = new Menu()
       const opts: DueDateFilter[] = ['any', 'overdue', 'this-week', 'this-month', 'no-date']
       for (const opt of opts) {
@@ -126,12 +126,12 @@ export class FilterRow {
     })
   }
 
-  private renderArchivedPill(notify: () => void): void {
+  private renderArchivedButton(notify: () => void): void {
     const { filter } = this.props
-    const pill = new Pill(this.el).setLabel('Archived').setActive(filter.showArchived)
-    pill.onClick(() => {
+    const btn = new ChipButton(this.el).setLabel('Archived').setActive(filter.showArchived)
+    btn.onClick(() => {
       filter.showArchived = !filter.showArchived
-      pill.setActive(filter.showArchived)
+      btn.setActive(filter.showArchived)
       notify()
     })
   }
@@ -142,7 +142,7 @@ export class FilterRow {
       this.clearBtn = null
       return
     }
-    this.clearBtn = new Pill(this.el).setLabel(`Clear (${count})`).onClick(() => {
+    this.clearBtn = new ChipButton(this.el).setLabel(`Clear (${count})`).onClick(() => {
       this.props.onClear()
     })
   }

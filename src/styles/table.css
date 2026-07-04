@@ -46,9 +46,9 @@
   padding-right: 4px;
 }
 
-/* -- Capsule base shared by Pill and Chip ------------------------------------ */
-/* `button` prefix on the pill selectors outranks core button chrome (see pm-prop-add) */
-button.pm-pill,
+/* -- Capsule base shared by ChipButton and Chip ------------------------------- */
+/* `button` prefix on the chip-btn selectors outranks core button chrome (see pm-prop-add) */
+button.pm-chip-btn,
 .pm-chip {
   display: inline-flex;
   align-items: center;
@@ -58,10 +58,10 @@ button.pm-pill,
   white-space: nowrap;
 }
 
-/* -- Pill (toggleable filter button) ------------------------------------------ */
+/* -- ChipButton ---------------------------------------------------------------- */
 /* A compact native button: the etched input-shadow chrome comes from app.css.
    Active carries the plugin's 12% accent-tint selection signature. */
-button.pm-pill {
+button.pm-chip-btn {
   height: auto;
   padding: 4px 10px;
   color: var(--text-muted);
@@ -69,15 +69,15 @@ button.pm-pill {
     background 0.1s,
     color 0.1s;
 }
-button.pm-pill:focus-visible {
+button.pm-chip-btn:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
 }
-button.pm-pill--active {
+button.pm-chip-btn--active {
   background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
   color: var(--text-accent);
 }
-button.pm-pill--active:hover {
+button.pm-chip-btn--active:hover {
   background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
 }
 
@@ -334,7 +334,7 @@ button.pm-pill--active:hover {
   font-weight: 600;
 }
 .pm-chip--pill,
-button.pm-pill--pill {
+button.pm-chip-btn--pill {
   border-radius: 99px;
 }
 .pm-chip--strong {

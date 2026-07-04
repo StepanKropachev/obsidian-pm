@@ -27,7 +27,7 @@ import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { EmptyState } from '../../ui/primitives/EmptyState'
 import { IconButton } from '../../ui/primitives/IconButton'
-import { Pill } from '../../ui/primitives/Pill'
+import { ChipButton } from '../../ui/primitives/ChipButton'
 import { Popover } from '../../ui/primitives/Popover'
 import { ProgressBar } from '../../ui/primitives/ProgressBar'
 import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
@@ -71,7 +71,7 @@ export class StyleguideView extends ItemView {
     root.addClass('pm-root', 'pm-styleguide')
     this.group('Primitives')
     this.renderChips()
-    this.renderPills()
+    this.renderChipButtons()
     this.renderAvatars()
     this.renderIconButtons()
     this.renderProgress()
@@ -123,12 +123,12 @@ export class StyleguideView extends ItemView {
     new Chip(mods).setLabel('interactive').setVariant('outline').onClick(noop)
   }
 
-  private renderPills(): void {
-    const sec = this.section('Pill', 'pill')
+  private renderChipButtons(): void {
+    const sec = this.section('ChipButton', 'chip-button')
     const row = this.row(sec, 'default / active / pill shape')
-    new Pill(row).setLabel('Saved view')
-    new Pill(row).setLabel('Active view').setActive(true)
-    new Pill(row).setLabel('Due: 3').setShape('pill').setActive(true)
+    new ChipButton(row).setLabel('Saved view')
+    new ChipButton(row).setLabel('Active view').setActive(true)
+    new ChipButton(row).setLabel('Due: 3').setShape('pill').setActive(true)
     const filterRow = this.row(sec, 'renderFilterDropdown')
     renderFilterDropdown(
       filterRow,

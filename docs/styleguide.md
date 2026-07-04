@@ -11,7 +11,7 @@ Before writing any new UI element, find your case here:
 - Need a small label, badge, or token (status, priority, tag, due date, count) -> `Chip`
 - Need a text button -> Obsidian `ButtonComponent`
 - Need an icon-only button -> `IconButton`
-- Need a toggleable filter button -> `Pill`
+- Need a compact button, toggleable or not -> `ChipButton`
 - Need a remove/x button on a token -> `Chip.setRemovable`
 - Need an "+ add" ghost row or button -> `renderAddButton`
 - Need mutually-exclusive options -> `SegmentedControl` (text) or `ViewSwitcher` (icons)
@@ -39,16 +39,16 @@ The unified label primitive: status, priority, tags, due dates, time, small badg
 - API: `new Chip(parent).setLabel(text).setVariant('solid'|'outline'|'plain').setColor(cssColor).setDot(bool).setLeadingIcon(lucide).setTag(bool).setStrong(bool).setShape('rounded'|'pill').setSize('md'|'sm').setTooltip(text).setRemovable(onRemove).onClick(handler)`
 - CSS: `pm-chip` + `--solid/--outline/--plain/--tag/--strong/--pill/--sm/--interactive`, parts `pm-chip-label/-icon/-dot/-rm`; color flows through `--pm-chip-color`
 - Use when: any small labeled token, clickable or not (`onClick` adds hover/click styling)
-- Not when: a toggleable filter button (`Pill`) or a text action button (`ButtonComponent`)
+- Not when: a real button (`ChipButton` when compact, `ButtonComponent` otherwise)
 
-### Pill - `Pill.ts`
+### ChipButton - `ChipButton.ts`
 
-Toggleable filter button: saved views, filter dropdowns, due/archived toggles. Wraps Obsidian's `ButtonComponent`, compacted; active carries the plugin's 12% accent-tint selection signature.
+The button sibling of `Chip`: a compact native button with an optional persistent active state. Wraps Obsidian's `ButtonComponent`; active carries the plugin's 12% accent-tint selection signature. Used by saved views, filter dropdowns, due/archived toggles, and the filter row's Clear.
 
-- API: `new Pill(parent).setLabel(text).setActive(bool).setShape('rounded'|'pill').setAriaLabel(text).onClick(h).onContextMenu(h)`
-- CSS: `button.pm-pill` (the `button` prefix outranks core button chrome), `--active`, `--pill`
-- Use when: a button whose pressed/active state persists (filters, saved views), or a one-shot action sitting in a pill row that must match its size (the filter row's Clear)
-- Not when: a non-interactive label (`Chip`) or a standalone action button (`ButtonComponent`)
+- API: `new ChipButton(parent).setLabel(text).setActive(bool).setShape('rounded'|'pill').setAriaLabel(text).onClick(h).onContextMenu(h)`
+- CSS: `button.pm-chip-btn` (the `button` prefix outranks core button chrome), `--active`, `--pill`
+- Use when: a compact button among chips/capsules, with or without persistent state
+- Not when: a non-interactive label (`Chip`) or a standalone full-size action button (`ButtonComponent`)
 
 ### Avatar / AvatarStack - `Avatar.ts`, `AvatarStack.ts`
 
@@ -129,7 +129,7 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
 - **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
 - **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
-- **ProjectHeader** - `ProjectHeader/`. Props: project, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view Pills, save button) and FilterRow (filter dropdowns, due/archived Pills).
+- **ProjectHeader** - `ProjectHeader/`. Props: project, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view ChipButtons, save button) and FilterRow (filter dropdowns, due/archived ChipButtons).
 - **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
 - **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
 
@@ -137,7 +137,7 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 
 Richer than primitives, used across views. Avoid expanding this bucket; prefer composites/primitives when they fit.
 
-- **FilterDropdown** - `renderFilterDropdown(parent, label, selected, options, onChange)`: a Pill that opens a checkable Menu with a Clear item. Any multi-select filter control.
+- **FilterDropdown** - `renderFilterDropdown(parent, label, selected, options, onChange)`: a ChipButton that opens a checkable Menu with a Clear item. Any multi-select filter control.
 - **FormField** - `renderPropRow(container, label, valueBuilder, icon?)` (label + value form row), `renderChipList(container, items, { variant, shape, onRemove, onAdd?, ... })` (removable-token list with add affordance), `renderProgressSlider(container, value, onChange)`.
 - **StatusBadge** - `renderStatusBadge(container, task, statuses, onChange)` (solid dot-led Chip + picker Menu), `renderPriorityBadge(...)` (plain Chip with chevron icon + picker Menu), `renderStatusDot(container, status, statuses, cls?)` (bare colored dot), `PRIORITY_CHEVRONS`. The only way to render status/priority.
 - **TaskContextMenu** - `buildTaskContextMenu(menu, task, ctx)`: the task right-click menu.
@@ -169,7 +169,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `pill`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
 
 ## Maintenance
 
