@@ -14,9 +14,9 @@
   justify-content: space-between;
   padding: 6px 12px;
   margin: 0 16px 6px;
-  background: color-mix(in srgb, var(--pm-accent) 8%, var(--pm-surface-raised));
-  border: 1px dashed var(--pm-border);
-  border-radius: var(--pm-radius);
+  background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--radius-m);
   flex-shrink: 0;
   animation: pm-bulk-bar-in 0.15s ease-out;
 }
@@ -42,7 +42,7 @@
 .pm-bulk-bar-count {
   font-size: 12px;
   font-weight: 600;
-  color: var(--pm-accent);
+  color: var(--interactive-accent);
   padding-right: 4px;
 }
 
@@ -86,8 +86,8 @@
 
 /* -- Selected Row ----------------------------------------------------------- */
 .pm-table-row--selected {
-  background: color-mix(in srgb, var(--pm-accent) 10%, transparent);
-  box-shadow: inset 3px 0 0 var(--pm-accent);
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--interactive-accent);
 }
 
 .pm-table-wrapper {
@@ -104,15 +104,15 @@
 .pm-table thead th {
   position: sticky;
   top: 0;
-  background: var(--pm-bg);
-  border-bottom: 2px solid var(--pm-border);
+  background: var(--background-primary);
+  border-bottom: 2px solid var(--background-modifier-border);
   padding: 8px 10px;
   text-align: left;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   white-space: nowrap;
   z-index: 10;
   user-select: none;
@@ -121,15 +121,15 @@
   cursor: pointer;
 }
 .pm-table-th-sortable:hover {
-  color: var(--pm-text);
+  color: var(--text-normal);
 }
 
 .pm-table-row {
-  border-bottom: 1px solid var(--pm-border);
+  border-bottom: 1px solid var(--background-modifier-border);
   transition: background 0.1s;
 }
 .pm-table-row:not(.pm-table-row--selected):hover {
-  background: color-mix(in srgb, var(--pm-accent) 5%, transparent);
+  background: color-mix(in srgb, var(--interactive-accent) 5%, transparent);
 }
 .pm-table-row--done {
   opacity: 0.55;
@@ -210,7 +210,7 @@
   line-height: 1.4;
 }
 .pm-task-title-text:hover {
-  color: var(--pm-accent);
+  color: var(--interactive-accent);
 }
 
 .pm-table-tags {

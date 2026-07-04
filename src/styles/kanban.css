@@ -30,8 +30,8 @@
   width: 280px;
   min-width: 280px;
   height: 100%;
-  background: var(--pm-bg2);
-  border-radius: var(--pm-radius-lg);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
   overflow: hidden;
 }
 
@@ -65,12 +65,12 @@
   gap: 6px;
 }
 .pm-kanban-col-count {
-  background: var(--pm-bg3);
+  background: var(--background-modifier-hover);
   border-radius: 99px;
   padding: 1px 8px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
 }
 
 .pm-kanban-cards {
@@ -84,7 +84,7 @@
   transition: background 0.15s;
 }
 .pm-kanban-drop-target {
-  background: var(--pm-accent-light);
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
 
 .pm-kanban-card {
@@ -92,9 +92,9 @@
   display: flex;
   flex-direction: column;
   min-height: 112px;
-  background: var(--pm-bg);
+  background: var(--background-primary);
   border: 1px solid var(--pm-ghost-border);
-  border-radius: var(--pm-radius);
+  border-radius: var(--radius-m);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.15s;
@@ -102,11 +102,11 @@
 }
 .pm-kanban-card:hover {
   box-shadow: 0 2px 12px var(--pm-shadow-ambient);
-  border-color: var(--pm-border);
+  border-color: var(--background-modifier-border);
 }
 .pm-kanban-card--dragging {
   box-shadow: 0 4px 16px var(--pm-shadow-ambient);
-  border-color: var(--pm-accent);
+  border-color: var(--interactive-accent);
   z-index: 100;
 }
 
@@ -159,7 +159,7 @@
 
 .pm-kanban-card-subtasks {
   font-size: 11px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
 }
 .pm-kanban-card-parent {
   font-size: 10px;

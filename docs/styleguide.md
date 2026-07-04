@@ -157,11 +157,9 @@ No wrappers for these:
 
 ## Deprecated patterns
 
-These exist in the codebase; don't copy them. Each row has a follow-up todo; new code uses the replacement.
+Empty right now. When a pattern gets deprecated, add a row (pattern, where, use instead, todo) so agents don't copy it; remove the row when the sweep lands.
 
-| Ad-hoc pattern             | Where                                     | Use instead              | Todo                         |
-| -------------------------- | ----------------------------------------- | ------------------------ | ---------------------------- |
-| new `--pm-*` CSS variables | `src/styles/variables.css` legacy aliases | Obsidian theme variables | `todos/token-unification.md` |
+Styling ground rules that keep this table empty: Obsidian theme variables only (no new `--pm-*`; the only plugin tokens are `--pm-ghost-border` / `--pm-shadow-ambient` plus per-component parameters like `--pm-chip-color`), radii from `--radius-s`/`--radius-m`, and no hand-rolled `<button>` styling.
 
 ## Live gallery
 

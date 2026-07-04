@@ -72,7 +72,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: var(--pm-surface-raised);
+  background: var(--background-secondary);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -96,7 +96,7 @@
   cursor: pointer;
   line-height: 1;
   padding: 2px;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   transition: transform 0.15s;
 }
 .pm-toolbar-icon:hover {
@@ -108,7 +108,7 @@
   font-weight: 700;
   margin: 0;
   padding: 2px 6px;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   outline: none;
   min-width: 40px;
   white-space: nowrap;
@@ -117,8 +117,8 @@
   max-width: 340px;
 }
 .pm-toolbar-title:focus {
-  background: var(--pm-bg3);
-  box-shadow: 0 0 0 2px var(--pm-accent);
+  background: var(--background-modifier-hover);
+  box-shadow: 0 0 0 2px var(--interactive-accent);
 }
 
 /* -- View switcher --------------------------------------------------------- */
@@ -165,7 +165,7 @@
   justify-content: center;
   height: 100%;
   gap: 12px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   padding: 40px;
 }
 .pm-empty-icon {
@@ -187,16 +187,16 @@
 
 .pm-project-card {
   border: 1px solid var(--pm-ghost-border);
-  border-radius: var(--pm-radius-lg);
+  border-radius: var(--radius-m);
   overflow: hidden;
   cursor: pointer;
-  background: var(--pm-surface-raised);
+  background: var(--background-secondary);
   transition: all 0.2s;
   position: relative;
 }
 .pm-project-card:hover {
   box-shadow: 0 4px 16px var(--pm-shadow-ambient);
-  border-color: var(--pm-border);
+  border-color: var(--background-modifier-border);
 }
 
 .pm-project-card-bar {
@@ -225,5 +225,5 @@
 }
 .pm-project-card-tasks {
   font-size: 12px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
 }
