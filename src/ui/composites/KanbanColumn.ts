@@ -1,7 +1,21 @@
 import { setIcon } from 'obsidian'
 import type { Task } from '../../types'
 import { formatBadgeText, isIconName, safeAsync } from '../../utils'
+import { animateCardReorder, snapshotCardRects } from '../motion'
 import { KanbanCard } from './KanbanCard'
+
+let activeDropTarget: HTMLElement | null = null
+
+function setActiveDropTarget(next: HTMLElement | null): void {
+  if (activeDropTarget === next) return
+  if (activeDropTarget) {
+    activeDropTarget.removeClass('pm-kanban-drop-target')
+  }
+  activeDropTarget = next
+  if (activeDropTarget) {
+    activeDropTarget.addClass('pm-kanban-drop-target')
+  }
+}
 
 export interface KanbanColumnStatus {
   id: string
@@ -77,33 +91,39 @@ export class KanbanColumn {
         onClick: () => props.onCardClick(card.task),
         onContextMenu: (e) => props.onCardContextMenu(card.task, e),
         onDragStart: () => props.onCardDragStart(card.task),
-        onDragEnd: () => props.onCardDragEnd()
+        onDragEnd: () => {
+          setActiveDropTarget(null)
+          props.onCardDragEnd()
+        }
       })
     }
 
     cardsEl.addEventListener('dragover', (e) => {
       e.preventDefault()
-      cardsEl.addClass('pm-kanban-drop-target')
+      setActiveDropTarget(cardsEl)
       const afterEl = getDragAfterElement(cardsEl, e.clientY)
       const dragging = cardsEl.querySelector('.pm-kanban-card--dragging')
       if (dragging) {
+        if ((afterEl && dragging.nextSibling === afterEl) || (!afterEl && dragging === cardsEl.lastElementChild)) {
+          return
+        }
+        const before = snapshotCardRects(cardsEl)
         if (afterEl) {
           cardsEl.insertBefore(dragging, afterEl)
         } else {
           cardsEl.appendChild(dragging)
         }
+        animateCardReorder(cardsEl, before)
       }
     })
 
-    cardsEl.addEventListener('dragleave', () => {
-      cardsEl.removeClass('pm-kanban-drop-target')
-    })
+    cardsEl.addEventListener('dragend', () => setActiveDropTarget(null))
 
     cardsEl.addEventListener(
       'drop',
       safeAsync(async (e: DragEvent) => {
         e.preventDefault()
-        cardsEl.removeClass('pm-kanban-drop-target')
+        setActiveDropTarget(null)
         const taskId = e.dataTransfer?.getData('text/plain') ?? ''
         if (!taskId) return
         await props.onDrop(taskId, props.status.id)
@@ -119,7 +139,8 @@ function getDragAfterElement(container: HTMLElement, y: number): Element | null 
   for (const card of cards) {
     const box = card.getBoundingClientRect()
     const offset = y - box.top - box.height / 2
-    if (offset < 0 && offset > closestOffset) {
+    const deadZone = Math.min(10, box.height * 0.1)
+    if (offset < -deadZone && offset > closestOffset) {
       closestOffset = offset
       closest = card
     }

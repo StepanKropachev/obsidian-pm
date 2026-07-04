@@ -5,6 +5,7 @@ import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
+import { animateModalIn } from '../ui/motion'
 
 const PROJECT_COLORS = [
   '#8b72be',
@@ -53,6 +54,7 @@ export class ProjectModal extends Modal {
 
   onOpen(): void {
     this.modalEl.addClass('pm-modal', 'pm-modal--project')
+    animateModalIn(this.modalEl)
     const el = this.contentEl
     el.empty()
     el.addClass('pm-project-modal')

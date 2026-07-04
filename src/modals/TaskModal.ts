@@ -20,6 +20,7 @@ import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
 import { renderSubtasksPanel } from './SubtasksPanel'
 import { NoteLinkSuggest } from './NoteLinkSuggest'
+import { animateModalIn } from '../ui/motion'
 
 export class TaskModal extends Modal {
   private task: Task
@@ -69,6 +70,7 @@ export class TaskModal extends Modal {
     contentEl.empty()
     contentEl.addClass('pm-task-modal')
     this.modalEl.addClass('pm-modal', 'pm-modal--task')
+    animateModalIn(this.modalEl)
     this.render()
   }
 

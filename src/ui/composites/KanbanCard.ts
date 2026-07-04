@@ -3,6 +3,7 @@ import { formatDateShort } from '../../utils'
 import { AvatarStack } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { ProgressBar } from '../primitives/ProgressBar'
+import { animateDragEnd, animateDragStart, bindLiftMotion, setKanbanDragActive } from '../motion'
 import { renderTagChip } from './tagChip'
 
 export interface KanbanCardProps {
@@ -29,6 +30,7 @@ export class KanbanCard {
     card.draggable = true
     card.dataset.taskId = task.id
     this.el = card
+    bindLiftMotion(card, { disabledDuringKanbanDrag: true })
 
     if (props.priorityColor) {
       const priorityBar = card.createDiv('pm-kanban-card-priority-bar')
@@ -112,14 +114,23 @@ export class KanbanCard {
 
     card.addEventListener('dragstart', (e) => {
       e.dataTransfer?.setData('text/plain', task.id)
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
       card.addClass('pm-kanban-card--dragging')
+      card.closest('.pm-kanban-board')?.addClass('pm-kanban-board--dragging')
       window.setTimeout(() => card.addClass('pm-dragging'), 0)
+      setKanbanDragActive(true)
+      animateDragStart(card)
       props.onDragStart()
     })
 
     card.addEventListener('dragend', () => {
       card.removeClass('pm-kanban-card--dragging')
       card.removeClass('pm-dragging')
+      activeDocument
+        .querySelectorAll('.pm-kanban-board--dragging')
+        .forEach((board) => board.removeClass('pm-kanban-board--dragging'))
+      setKanbanDragActive(false)
+      animateDragEnd(card)
       props.onDragEnd()
     })
 

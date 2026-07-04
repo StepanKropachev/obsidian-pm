@@ -81,10 +81,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: background 0.15s;
+  border-radius: var(--pm-radius);
+  transition:
+    background 0.14s ease,
+    box-shadow 0.14s ease;
 }
 .pm-kanban-drop-target {
   background: var(--pm-accent-light);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pm-accent) 62%, transparent);
 }
 
 .pm-kanban-card {
@@ -97,7 +101,10 @@
   border-radius: var(--pm-radius);
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
   position: relative;
 }
 .pm-kanban-card:hover {
@@ -108,6 +115,9 @@
   box-shadow: 0 4px 16px var(--pm-shadow-ambient);
   border-color: var(--pm-accent);
   z-index: 100;
+}
+.pm-kanban-board--dragging .pm-kanban-card {
+  will-change: transform;
 }
 
 .pm-kanban-card-priority-bar {

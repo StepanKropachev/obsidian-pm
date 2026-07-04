@@ -39,7 +39,7 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
   }
 
   const grid = ctx.contentEl.createDiv('pm-project-grid')
-  for (const project of projects) {
+  for (const [index, project] of projects.entries()) {
     const statuses = ctx.plugin.store.configFor(project).statuses
     const total = countTasks(project.tasks, false, statuses)
     const done = countTasks(project.tasks, true, statuses)
@@ -49,6 +49,7 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
       color: project.color,
       tasksDone: done,
       tasksTotal: total,
+      motionIndex: index,
       onClick: safeAsync(async () => {
         const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
         if (file instanceof TFile) await ctx.openProjectFile(file)

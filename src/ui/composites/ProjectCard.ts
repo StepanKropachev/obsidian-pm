@@ -1,4 +1,5 @@
 import { ProgressBar } from '../primitives/ProgressBar'
+import { animateSurfaceIn, bindLiftMotion } from '../motion'
 
 export interface ProjectCardProps {
   title: string
@@ -8,6 +9,7 @@ export interface ProjectCardProps {
   tasksTotal: number
   onClick: () => void
   onContextMenu: (e: MouseEvent) => void
+  motionIndex?: number
 }
 
 export class ProjectCard {
@@ -16,6 +18,8 @@ export class ProjectCard {
   constructor(parentEl: HTMLElement, props: ProjectCardProps) {
     const card = parentEl.createDiv('pm-project-card')
     this.el = card
+    animateSurfaceIn(card, props.motionIndex ?? 0)
+    bindLiftMotion(card, { y: -4, scale: 1.01 })
 
     const colorBar = card.createDiv('pm-project-card-bar')
     colorBar.setCssStyles({ background: props.color })
