@@ -1,7 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId } from '../types'
-import { truncateTitle, safeAsync } from '../utils'
+import { truncateTitle, safeAsync, projectStatuses } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
 import type { TableViewState } from './table/TableView'
@@ -198,7 +198,7 @@ export class ProjectView extends ItemView {
     this.headerEl.empty()
     this.header = new ProjectHeader(this.headerEl, {
       project: this.project,
-      statuses: this.plugin.settings.statuses,
+      statuses: projectStatuses(this.project, this.plugin.settings.statuses),
       priorities: this.plugin.settings.priorities,
       filter: this.filter,
       activeSavedViewId: this.activeSavedViewId,

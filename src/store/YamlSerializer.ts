@@ -28,6 +28,9 @@ export function serializeProject(project: Project, statuses: StatusConfig[] = []
     createdAt: project.createdAt,
     updatedAt: project.updatedAt
   }
+  if (project.enabledStatuses?.length) {
+    fm.enabledStatuses = project.enabledStatuses
+  }
 
   const yamlLines: string[] = ['---']
   appendYaml(yamlLines, fm, 0)

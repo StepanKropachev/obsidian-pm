@@ -319,3 +319,22 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+.pm-status-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pm-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+.pm-status-toggle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

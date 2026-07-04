@@ -3,7 +3,7 @@ import type PMPlugin from '../main'
 import { Project, Task, TaskStatus, FilterState } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
-import { isTaskOverdue, isTerminalStatus, getPriorityConfig } from '../utils'
+import { isTaskOverdue, isTerminalStatus, getPriorityConfig, projectStatuses } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
@@ -33,7 +33,7 @@ export class KanbanView implements SubView {
 
     const board = this.container.createDiv('pm-kanban-board')
 
-    for (const status of this.plugin.settings.statuses) {
+    for (const status of projectStatuses(this.project, this.plugin.settings.statuses)) {
       const tasks = this.getTasksForStatus(status.id)
       const cards = tasks.map((task) => this.buildCardData(task))
       new KanbanColumn(board, {

@@ -69,6 +69,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** Status ids this project uses. Undefined or empty = all global statuses. */
+  enabledStatuses?: string[]
   /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
   taskIndex: TaskIndex
 }

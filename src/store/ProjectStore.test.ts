@@ -884,3 +884,31 @@ describe('ProjectStore.importTaskForest', () => {
     expect(vault.getAbstractFileByPath('Notes/Old.md')).toBeInstanceOf(TFile)
   })
 })
+
+describe('per-project enabled statuses', () => {
+  it('round-trips enabledStatuses through the project file', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Subset', 'Projects')
+    project.enabledStatuses = ['todo', 'done']
+    await store.saveProject(project)
+
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = expectDefined(await store2.loadProject(file))
+    expect(reloaded.enabledStatuses).toEqual(['todo', 'done'])
+  })
+
+  it('omits the frontmatter key when no subset is selected', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('All', 'Projects')
+    await store.saveProject(project)
+
+    const store2 = new ProjectStore(app, () => STATUSES)
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    expect(await vault.read(file)).not.toContain('enabledStatuses')
+    const reloaded = expectDefined(await store2.loadProject(file))
+    expect(reloaded.enabledStatuses).toBeUndefined()
+  })
+})

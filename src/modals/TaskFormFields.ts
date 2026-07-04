@@ -4,7 +4,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
-import { isTerminalStatus, stringToColor } from '../utils'
+import { isTerminalStatus, projectStatuses, stringToColor } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
   renderSelectControl,
@@ -117,7 +117,12 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderSelectControl({
         container: cell,
         value: task.status,
-        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color, icon: s.icon || undefined })),
+        options: projectStatuses(project, statuses).map((s) => ({
+          id: s.id,
+          label: s.label,
+          color: s.color,
+          icon: s.icon || undefined
+        })),
         onChange: (id) => {
           task.status = id
           rerender()
