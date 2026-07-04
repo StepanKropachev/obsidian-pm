@@ -1,11 +1,13 @@
 import type { Task } from '../../../types'
 import { formatDateLong } from '../../../utils'
+import type { DueUrgency } from '../dueChip'
+import { renderDueChip } from '../dueChip'
 import { Chip } from '../../primitives/Chip'
 import { makeInlineEdit } from './inlineEdit'
 
 export interface DueDateCellProps {
   task: Task
-  urgency: 'normal' | 'near' | 'overdue'
+  urgency: DueUrgency
   onSave: (newDate: string) => Promise<void>
 }
 
@@ -37,12 +39,7 @@ export class DueDateCell {
       return
     }
 
-    const chip = new Chip(this.el).setLabel(formatDateLong(task.due))
-    if (props.urgency === 'near') {
-      chip.setVariant('solid').setColor('var(--color-orange)')
-    } else if (props.urgency === 'overdue') {
-      chip.setVariant('solid').setColor('var(--color-red)').setStrong()
-    }
+    const chip = renderDueChip(this.el, formatDateLong(task.due), props.urgency)
     chip.onClick((e) => {
       e.stopPropagation()
       startEdit(chip.el)

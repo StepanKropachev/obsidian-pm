@@ -2,7 +2,9 @@ import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Task } from '../../types'
 import { DEFAULT_PRIORITIES, DEFAULT_STATUSES, makeTask } from '../../types'
+import { renderDueChip } from '../../ui/composites/dueChip'
 import { renderTagChip } from '../../ui/composites/tagChip'
+import { renderTimeChip } from '../../ui/composites/timeChip'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
@@ -81,6 +83,7 @@ export class StyleguideView extends ItemView {
     this.renderBadges()
     this.renderForm()
     this.group('Composites')
+    this.renderDerivedChips()
     this.renderCards()
     this.renderTable()
     return Promise.resolve()
@@ -264,6 +267,18 @@ export class StyleguideView extends ItemView {
     renderChipList(chipListRow, ['design', 'frontend'], { onRemove: noop, onAdd: noop })
     const addRow = this.row(sec, 'renderAddProperty (the canonical add button)')
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)
+  }
+
+  private renderDerivedChips(): void {
+    const sec = this.section('Time and due chips', 'time-due')
+    const timeRow = this.row(sec, 'renderTimeChip: logged only / within estimate / over estimate')
+    renderTimeChip(timeRow, 3, 0)
+    renderTimeChip(timeRow, 5, 10)
+    renderTimeChip(timeRow, 6, 4)
+    const dueRow = this.row(sec, 'renderDueChip: normal / near / overdue')
+    renderDueChip(dueRow, 'Jul 20, 2026', 'normal')
+    renderDueChip(dueRow, 'Jul 6, 2026', 'near')
+    renderDueChip(dueRow, 'Jun 20, 2026', 'overdue')
   }
 
   private renderCards(): void {

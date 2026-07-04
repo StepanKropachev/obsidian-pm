@@ -18,6 +18,8 @@ Before writing any new UI element, find your case here:
 - Need a floating panel with inputs -> `Popover` (never hand-rolled absolute positioning)
 - Need a flat action list at the cursor -> Obsidian `Menu`
 - Need a status or priority indicator -> `renderStatusBadge` / `renderPriorityBadge` / `renderStatusDot`
+- Need a logged/estimate hours chip -> `renderTimeChip`
+- Need a due-date chip with urgency colors -> `renderDueChip`
 - Need user initials -> `Avatar` / `AvatarStack`
 - Need a progress indicator -> `ProgressBar`
 - Need an empty placeholder -> `EmptyState`
@@ -120,11 +122,13 @@ Floating panel anchored to a trigger, for content Obsidian's `Menu` can't host (
 
 Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh`. If a composite needs `plugin`, it's the wrong shape; push the store access up to the orchestrator view.
 
-- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, subtaskProgress, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/time/due badges), AvatarStack, ProgressBar, renderTagChip.
+- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, subtaskProgress, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges), renderTimeChip, renderDueChip, AvatarStack, ProgressBar, renderTagChip.
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
 - **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, onClick, onContextMenu. Composes ProgressBar.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
+- **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
+- **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
 - **ProjectHeader** - `ProjectHeader/`. Props: project, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view Pills, save button) and FilterRow (filter dropdowns, due/archived Pills).
 - **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
 - **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover), `renderAddProperty` (progressive-disclosure "Add property" with the canonical `pm-prop-add` ghost button), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
@@ -164,7 +168,6 @@ These exist in the codebase; don't copy them. Each row has a follow-up todo; new
 | `pm-prop-add-btn`, `pm-table-add-btn`, `pm-gantt-add-task-btn`, `pm-gantt-label-add-btn` | `src/modals/ProjectModal.ts`, `src/views/table/TableRenderer.ts:245`, gantt       | the `pm-prop-add` pattern (`renderAddProperty`) | `todos/ghost-button-consolidation.md` |
 | `import-btn`, `import-btn--secondary`                                                    | `src/modals/ImportModal.ts:145`                                                   | `ButtonComponent`                               | `todos/ghost-button-consolidation.md` |
 | `pm-gantt-zoom-btn` bespoke segmented control                                            | `src/views/gantt/GanttView.ts:98`                                                 | `SegmentedControl`                              | `todos/native-buttons.md`             |
-| copy-pasted time/due chip logic                                                          | `cells/TimeCell.ts` vs `KanbanCard.ts`; `cells/DueDateCell.ts` vs `KanbanCard.ts` | shared helper (to be extracted)                 | `todos/timechip-duechip-helpers.md`   |
 | new `--pm-*` CSS variables                                                               | `src/styles/variables.css` legacy aliases                                         | Obsidian theme variables                        | `todos/token-unification.md`          |
 | `.pm-pill` vs `.pm-chip` style overlap                                                   | `src/styles/table.css`                                                            | one capsule base (planned)                      | `todos/chip-pill-consolidation.md`    |
 
@@ -182,7 +185,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `pill`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `cards`, `table`).
+Each section has a `data-sg` attribute (`chip`, `pill`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
 
 ## Maintenance
 
