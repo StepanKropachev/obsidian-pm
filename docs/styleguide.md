@@ -159,10 +159,9 @@ No wrappers for these:
 
 These exist in the codebase; don't copy them. Each row has a follow-up todo; new code uses the replacement.
 
-| Ad-hoc pattern                          | Where                                     | Use instead                | Todo                               |
-| --------------------------------------- | ----------------------------------------- | -------------------------- | ---------------------------------- |
-| new `--pm-*` CSS variables              | `src/styles/variables.css` legacy aliases | Obsidian theme variables   | `todos/token-unification.md`       |
-| `.pm-pill` vs `.pm-chip` style overlap  | `src/styles/table.css`                    | one capsule base (planned) | `todos/chip-pill-consolidation.md` |
+| Ad-hoc pattern             | Where                                     | Use instead              | Todo                         |
+| -------------------------- | ----------------------------------------- | ------------------------ | ---------------------------- |
+| new `--pm-*` CSS variables | `src/styles/variables.css` legacy aliases | Obsidian theme variables | `todos/token-unification.md` |
 
 ## Live gallery
 

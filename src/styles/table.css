@@ -46,15 +46,21 @@
   padding-right: 4px;
 }
 
-/* -- Pill ------------------------------------------------------------------- */
-.pm-pill {
+/* -- Capsule base shared by Pill and Chip ------------------------------------ */
+.pm-pill,
+.pm-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
   border-radius: var(--radius-s);
   font-size: var(--font-ui-smaller);
   font-weight: 500;
+  white-space: nowrap;
+}
+
+/* -- Pill (toggleable filter button) ------------------------------------------ */
+.pm-pill {
+  gap: 4px;
+  padding: 4px 10px;
   cursor: pointer;
   border: 1px solid var(--background-modifier-border);
   background: transparent;
@@ -63,7 +69,6 @@
     background 0.15s,
     color 0.15s,
     border-color 0.15s;
-  white-space: nowrap;
 }
 .pm-pill:hover {
   background: var(--background-modifier-hover);
@@ -77,9 +82,6 @@
   background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
   border-color: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
   color: var(--text-accent);
-}
-.pm-pill--pill {
-  border-radius: 99px;
 }
 
 /* -- Selected Row ----------------------------------------------------------- */
@@ -295,15 +297,9 @@
 /* -- Chip (unified label primitive: status, priority, tags, due, badges) -- */
 .pm-chip {
   --pm-chip-color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
   padding: 2px 9px;
-  border-radius: var(--radius-s);
-  font-size: var(--font-ui-smaller);
-  font-weight: 500;
   line-height: 1.5;
-  white-space: nowrap;
   color: var(--pm-chip-color);
   background: transparent;
   border: 1px solid transparent;
@@ -340,7 +336,8 @@
   font-size: 10px;
   font-weight: 600;
 }
-.pm-chip--pill {
+.pm-chip--pill,
+.pm-pill--pill {
   border-radius: 99px;
 }
 .pm-chip--strong {
