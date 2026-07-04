@@ -19,7 +19,7 @@ import {
   renderDependencyArrows,
   renderMilestoneLabels
 } from './GanttRenderer'
-import { svgEl } from '../../utils'
+import { svgEl, projectStatuses } from '../../utils'
 import { Temporal, today } from '../../dates'
 import type { RendererContext } from './GanttRenderer'
 import { renderTaskLabel } from './TaskLabelRenderer'
@@ -273,7 +273,12 @@ export class GanttView implements SubView {
     const barsGroup = svgEl('g', { class: 'pm-gantt-bars' })
     this.svgEl.appendChild(barsGroup)
 
-    const labelCtx = { plugin: this.plugin, project: this.project, onRefresh: this.onRefresh }
+    const labelCtx = {
+      plugin: this.plugin,
+      project: this.project,
+      statuses: projectStatuses(this.project, this.plugin.settings.statuses),
+      onRefresh: this.onRefresh
+    }
     let rowIndex = 0
     const renderFlatList = (tasks: Task[], depth: number) => {
       for (const task of tasks) {
@@ -295,6 +300,7 @@ export class GanttView implements SubView {
       cfg: this.cfg,
       plugin: this.plugin,
       project: this.project,
+      statuses: projectStatuses(this.project, this.plugin.settings.statuses),
       flatTasks: this.flatTasks,
       drag: this.drag,
       link: this.link,
@@ -304,7 +310,11 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    return applyTaskFilterPromote(this.project.tasks, this.filter, this.plugin.settings.statuses)
+    return applyTaskFilterPromote(
+      this.project.tasks,
+      this.filter,
+      projectStatuses(this.project, this.plugin.settings.statuses)
+    )
   }
 
   private scrollToToday(): void {

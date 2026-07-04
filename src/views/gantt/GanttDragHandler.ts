@@ -127,13 +127,13 @@ export function attachDragHandle(
         redo: async () => {
           await plugin.store.updateTask(project, taskId, redoPatch)
           if (plugin.settings.autoSchedule) {
-            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
+            await plugin.store.scheduleAfterChange(project, taskId)
           }
           await onRefresh()
         }
       })
       if (plugin.settings.autoSchedule) {
-        await plugin.store.scheduleAfterChange(project, drag.dragTask.id, plugin.settings.statuses)
+        await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
       }
       await onRefresh()
     })
@@ -242,13 +242,13 @@ export function attachBarMove(
         redo: async () => {
           await plugin.store.updateTask(project, taskId, redoPatch)
           if (plugin.settings.autoSchedule) {
-            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
+            await plugin.store.scheduleAfterChange(project, taskId)
           }
           await onRefresh()
         }
       })
       if (plugin.settings.autoSchedule) {
-        await plugin.store.scheduleAfterChange(project, drag.dragTask.id, plugin.settings.statuses)
+        await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
       }
       await onRefresh()
     })

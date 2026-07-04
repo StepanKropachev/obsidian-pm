@@ -14,7 +14,7 @@ import type PMPlugin from '../main'
 import { Project, Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
-import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig } from '../utils'
+import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig, projectStatuses } from '../utils'
 import { confirmDialog } from '../ui/ModalFactory'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
@@ -139,7 +139,7 @@ export class TaskModal extends Modal {
       await this.plugin.store.updateTask(this.project, this.task.id, this.task)
     }
     if (this.plugin.settings.autoSchedule) {
-      await this.plugin.store.scheduleAfterChange(this.project, this.task.id, this.plugin.settings.statuses)
+      await this.plugin.store.scheduleAfterChange(this.project, this.task.id)
     }
     await this.onSave(this.task)
   }
@@ -487,7 +487,7 @@ export class TaskModal extends Modal {
     }
 
     // ── Subtasks ────────────────────────────────────────────────────────────
-    renderSubtasksPanel(body, this.task, this.plugin)
+    renderSubtasksPanel(body, this.task, this.plugin, projectStatuses(this.project, this.plugin.settings.statuses))
 
     // ── Time tracking ─────────────────────────────────────────────────────────
     renderTimeTrackingPanel(body, this.task)

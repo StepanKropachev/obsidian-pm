@@ -47,7 +47,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
   const { task, project, plugin, rerender, shownExtras } = ctx
-  const statuses = plugin.settings.statuses
+  const statuses = projectStatuses(project, plugin.settings.statuses)
   const priorities = plugin.settings.priorities
   const grid = container.createDiv('pm-prop-grid')
 
@@ -117,12 +117,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderSelectControl({
         container: cell,
         value: task.status,
-        options: projectStatuses(project, statuses).map((s) => ({
-          id: s.id,
-          label: s.label,
-          color: s.color,
-          icon: s.icon || undefined
-        })),
+        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color, icon: s.icon || undefined })),
         onChange: (id) => {
           task.status = id
           rerender()

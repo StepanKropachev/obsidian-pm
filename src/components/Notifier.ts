@@ -2,7 +2,7 @@ import { Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
-import { isTerminalStatus } from '../utils'
+import { isTerminalStatus, projectStatuses } from '../utils'
 import { Temporal, today, parsePlainDate } from '../dates'
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // check every hour
@@ -47,7 +47,7 @@ export class Notifier {
       for (const { task } of flat) {
         const due = parsePlainDate(task.due)
         if (!due) continue
-        if (isTerminalStatus(task.status, this.plugin.settings.statuses)) continue
+        if (isTerminalStatus(task.status, projectStatuses(project, this.plugin.settings.statuses))) continue
 
         const cmpToToday = Temporal.PlainDate.compare(due, now)
         const isOverdue = cmpToToday < 0

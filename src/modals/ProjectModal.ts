@@ -1,10 +1,10 @@
-import { App, ButtonComponent, Modal, Notice } from 'obsidian'
+import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, CustomFieldDef, makeId, makeProject } from '../types'
 import { rebuildTaskIndex } from '../store'
-import { formatBadgeText, safeAsync } from '../utils'
+import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
-import { renderStatusDot } from '../ui/StatusBadge'
+import { renderStatusListEditor } from '../ui/StatusListEditor'
 
 const PROJECT_COLORS = [
   '#8b72be',
@@ -215,33 +215,46 @@ export class ProjectModal extends Modal {
     const statusSection = el.createDiv('pm-modal-section')
     const statusHeader = statusSection.createDiv('pm-modal-section-header')
     statusHeader.createSpan({ text: 'Statuses', cls: 'pm-modal-subheading' })
-    statusHeader.createSpan({ text: 'Which statuses this project uses', cls: 'pm-modal-hint' })
+    statusHeader.createSpan({ text: 'The workflow for this project', cls: 'pm-modal-hint' })
 
-    const allStatuses = this.plugin.settings.statuses
-    const enabledSet = new Set(
-      this.project.enabledStatuses?.length ? this.project.enabledStatuses : allStatuses.map((s) => s.id)
-    )
-    const statusList = statusSection.createDiv('pm-status-toggle-list')
-    for (const s of allStatuses) {
-      const row = statusList.createEl('label', { cls: 'pm-status-toggle' })
-      const checkbox = row.createEl('input', { type: 'checkbox' })
-      checkbox.checked = enabledSet.has(s.id)
-      renderStatusDot(row, s.id, allStatuses, 'pm-status-toggle-dot')
-      row.createSpan({ text: formatBadgeText(s.icon, s.label) })
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          enabledSet.add(s.id)
-        } else if (enabledSet.size === 1) {
-          checkbox.checked = true
-          new Notice('A project needs at least one status.')
-          return
-        } else {
-          enabledSet.delete(s.id)
-        }
-        // All enabled is stored as "no selection" so new global statuses show up automatically.
-        this.project.enabledStatuses = enabledSet.size === allStatuses.length ? undefined : [...enabledSet]
+    const overrideToggle = statusSection.createEl('label', { cls: 'pm-status-toggle' })
+    const overrideCheckbox = overrideToggle.createEl('input', { type: 'checkbox' })
+    overrideCheckbox.checked = !!this.project.statuses?.length
+    overrideToggle.createSpan({ text: 'Use custom statuses instead of the global ones' })
+
+    const statusEditor = statusSection.createDiv('pm-settings-statuses')
+    const statusFooter = statusSection.createDiv()
+    const renderStatusEditor = () => {
+      statusEditor.empty()
+      statusFooter.empty()
+      const own = this.project.statuses
+      if (!own?.length) return
+      renderStatusListEditor(statusEditor, {
+        app: this.app,
+        statuses: own,
+        // The modal edits a clone; everything persists on Save.
+        onChanged: () => {}
+      })
+      const addBtn = statusFooter.createEl('button', { text: '+ add status', cls: 'pm-prop-add-btn' })
+      addBtn.addEventListener('click', () => {
+        own.push({
+          id: 'status-' + makeId().slice(0, 6),
+          label: 'New status',
+          color: '#8a94a0',
+          icon: '',
+          complete: false
+        })
+        renderStatusEditor()
       })
     }
+    overrideCheckbox.addEventListener('change', () => {
+      // Starting from a copy of the global list keeps existing task statuses valid.
+      this.project.statuses = overrideCheckbox.checked
+        ? this.plugin.settings.statuses.map((s) => ({ ...s }))
+        : undefined
+      renderStatusEditor()
+    })
+    renderStatusEditor()
 
     // ── Footer ────────────────────────────────────────────────────────────────
     const footer = el.createDiv('pm-modal-footer')

@@ -48,15 +48,25 @@ export function getCompleteStatusId(statuses: StatusConfig[]): string {
 }
 
 /**
- * Statuses available in a project: the enabled subset (all when the project has
- * no selection), plus any status its tasks still use so nothing disappears.
- * Terminal-status checks must keep using the full global list.
+ * The status definitions in effect for a project: its own list when it defines
+ * one, otherwise the global list. Statuses that tasks still use but neither
+ * list defines are appended (borrowing the global config when one exists) so
+ * nothing disappears from boards or pickers. Use this everywhere a project's
+ * tasks are interpreted, including terminal-status checks: an overridden
+ * status carries its own `complete` flag.
  */
-export function projectStatuses(project: Project, statuses: StatusConfig[]): StatusConfig[] {
-  if (!project.enabledStatuses?.length) return statuses
-  const enabled = new Set(project.enabledStatuses)
-  const inUse = new Set(flattenTasks(project.tasks).map((f) => f.task.status))
-  return statuses.filter((s) => enabled.has(s.id) || inUse.has(s.id))
+export function projectStatuses(project: Project, globalStatuses: StatusConfig[]): StatusConfig[] {
+  const own = project.statuses?.length ? project.statuses : globalStatuses
+  const known = new Set(own.map((s) => s.id))
+  let extras: StatusConfig[] | null = null
+  for (const { task } of flattenTasks(project.tasks)) {
+    if (known.has(task.status)) continue
+    known.add(task.status)
+    const fallback = globalStatuses.find((s) => s.id === task.status)
+    extras ??= []
+    extras.push(fallback ?? { id: task.status, label: task.status, color: '#8a94a0', icon: '', complete: false })
+  }
+  return extras ? [...own, ...extras] : own
 }
 
 /** Returns the sort index of a status in the config array (999 for unknown) */

@@ -1,5 +1,5 @@
 import type { Plugin, TFile } from 'obsidian'
-import type { Project, StatusConfig, Task, TaskPriority, TaskStatus } from '../types'
+import type { Project, Task, TaskPriority, TaskStatus } from '../types'
 import type { TaskFileNameConflictError } from './ProjectStore'
 
 export interface ImportNoteOptions {
@@ -52,7 +52,7 @@ export interface TaskSource {
   archiveTask(project: Project, taskId: string): Promise<void>
   unarchiveTask(project: Project, taskId: string): Promise<void>
 
-  scheduleAfterChange(project: Project, changedTaskId?: string, statuses?: StatusConfig[]): Promise<number>
+  scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number>
   saveTaskAttachment(project: Project, task: Task, fileName: string, data: ArrayBuffer): Promise<TFile>
   findTaskFileConflict(project: Project, task: Task): TaskFileNameConflictError | null
 }

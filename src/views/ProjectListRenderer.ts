@@ -1,7 +1,7 @@
 import { TFile, Menu, ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task, StatusConfig } from '../types'
-import { safeAsync, isTerminalStatus } from '../utils'
+import { safeAsync, isTerminalStatus, projectStatuses } from '../utils'
 import { openProjectModal } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectCard } from '../ui/composites/ProjectCard'
@@ -40,8 +40,8 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
 
   const grid = ctx.contentEl.createDiv('pm-project-grid')
   for (const project of projects) {
-    const total = countTasks(project.tasks, false, ctx.plugin.settings.statuses)
-    const done = countTasks(project.tasks, true, ctx.plugin.settings.statuses)
+    const total = countTasks(project.tasks, false, projectStatuses(project, ctx.plugin.settings.statuses))
+    const done = countTasks(project.tasks, true, projectStatuses(project, ctx.plugin.settings.statuses))
     new ProjectCard(grid, {
       title: project.title,
       icon: project.icon,

@@ -1,6 +1,6 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, TaskStatus, FilterState } from '../types'
+import { Project, Task, TaskStatus, FilterState, StatusConfig } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
 import { isTaskOverdue, isTerminalStatus, getPriorityConfig, projectStatuses } from '../utils'
@@ -11,6 +11,8 @@ import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
   private dragTask: Task | null = null
+  /** Status definitions in effect for this project, computed once per board render. */
+  private statuses: StatusConfig[] = []
 
   constructor(
     private container: HTMLElement,
@@ -28,12 +30,13 @@ export class KanbanView implements SubView {
   }
 
   private renderBoard(): void {
+    this.statuses = projectStatuses(this.project, this.plugin.settings.statuses)
     this.container.empty()
     this.container.addClass('pm-kanban-view')
 
     const board = this.container.createDiv('pm-kanban-board')
 
-    for (const status of projectStatuses(this.project, this.plugin.settings.statuses)) {
+    for (const status of this.statuses) {
       const tasks = this.getTasksForStatus(status.id)
       const cards = tasks.map((task) => this.buildCardData(task))
       new KanbanColumn(board, {
@@ -61,7 +64,7 @@ export class KanbanView implements SubView {
       ? flattenTasks(this.project.tasks).map((ft) => ft.task)
       : this.project.tasks
     const pending = candidates.filter(
-      (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.plugin.settings.statuses)
+      (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.statuses)
     )
     if (!pending.length) return
     await Promise.all(pending.map((t) => this.plugin.store.loadTaskBody(t)))
@@ -72,7 +75,7 @@ export class KanbanView implements SubView {
     const candidates = this.plugin.settings.kanbanShowSubtasks
       ? flattenTasks(this.project.tasks).map((ft) => ft.task)
       : this.project.tasks
-    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.plugin.settings.statuses))
+    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.statuses))
   }
 
   private buildCardData(task: Task): KanbanCardData {
@@ -101,7 +104,7 @@ export class KanbanView implements SubView {
 
     let subtaskProgress: { done: number; total: number } | undefined
     if (task.subtasks.length) {
-      const done = task.subtasks.filter((s) => isTerminalStatus(s.status, this.plugin.settings.statuses)).length
+      const done = task.subtasks.filter((s) => isTerminalStatus(s.status, this.statuses)).length
       subtaskProgress = { done, total: task.subtasks.length }
     }
 
@@ -112,7 +115,7 @@ export class KanbanView implements SubView {
       parentTitle,
       subtaskProgress,
       loggedHours: totalLoggedHours(task),
-      overdue: isTaskOverdue(task, this.plugin.settings.statuses),
+      overdue: isTaskOverdue(task, this.statuses),
       showTagColors: this.plugin.settings.showTagColors
     }
   }

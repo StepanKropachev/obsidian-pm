@@ -99,7 +99,7 @@ export function handleLinkDotClick(
       return
     }
     if (plugin.settings.autoSchedule) {
-      await plugin.store.scheduleAfterChange(project, successorId, plugin.settings.statuses)
+      await plugin.store.scheduleAfterChange(project, successorId)
     }
     await onRefresh()
   })()

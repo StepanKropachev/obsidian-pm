@@ -5,7 +5,7 @@ import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
 import { makeTask, type Project, type StatusConfig, type Task } from '../types'
 import { ProjectStore } from './ProjectStore'
 import { buildTaskIndex } from './TaskIndex'
-import { flattenTasks } from './TaskTreeOps'
+import { findTask, flattenTasks } from './TaskTreeOps'
 
 const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
   if (value == null) throw new Error(message)
@@ -885,30 +885,45 @@ describe('ProjectStore.importTaskForest', () => {
   })
 })
 
-describe('per-project enabled statuses', () => {
-  it('round-trips enabledStatuses through the project file', async () => {
+describe('per-project status definitions', () => {
+  it('round-trips project statuses through the project file', async () => {
     const { store, vault, app } = newStore()
-    const project = await store.createProject('Subset', 'Projects')
-    project.enabledStatuses = ['todo', 'done']
+    const project = await store.createProject('Custom', 'Projects')
+    project.statuses = [
+      { id: 'idea', label: 'Idea', color: '#888888', icon: '', complete: false },
+      { id: 'shipped', label: 'Shipped', color: '#00aa00', icon: '', complete: true }
+    ]
     await store.saveProject(project)
 
     const store2 = new ProjectStore(app, () => STATUSES)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = expectDefined(await store2.loadProject(file))
-    expect(reloaded.enabledStatuses).toEqual(['todo', 'done'])
+    expect(reloaded.statuses).toEqual(project.statuses)
   })
 
-  it('omits the frontmatter key when no subset is selected', async () => {
+  it('omits the frontmatter key when the project inherits global statuses', async () => {
     const { store, vault, app } = newStore()
-    const project = await store.createProject('All', 'Projects')
+    const project = await store.createProject('Inherit', 'Projects')
     await store.saveProject(project)
 
     const store2 = new ProjectStore(app, () => STATUSES)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
-    expect(await vault.read(file)).not.toContain('enabledStatuses')
+    expect(await vault.read(file)).not.toContain('statuses:')
     const reloaded = expectDefined(await store2.loadProject(file))
-    expect(reloaded.enabledStatuses).toBeUndefined()
+    expect(reloaded.statuses).toBeUndefined()
+  })
+
+  it('stamps completion using the project-defined complete flag', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Flags', 'Projects')
+    project.statuses = [
+      { id: 'idea', label: 'Idea', color: '#888888', icon: '', complete: false },
+      { id: 'shipped', label: 'Shipped', color: '#00aa00', icon: '', complete: true }
+    ]
+    const task = await addNamed(store, project, 'Ship it')
+    await store.updateTask(project, task.id, { status: 'shipped' })
+    expect(expectDefined(findTask(project.tasks, task.id)).completed).not.toBe('')
   })
 })

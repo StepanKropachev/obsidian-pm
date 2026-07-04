@@ -2,7 +2,7 @@ import { Notice } from 'obsidian'
 import { confirmDialog } from '../../ui/ModalFactory'
 import type PMPlugin from '../../main'
 import type { Project, FilterState } from '../../types'
-import { safeAsync } from '../../utils'
+import { safeAsync, projectStatuses } from '../../utils'
 import type { SubView } from '../SubView'
 import { renderTable, refreshTableBody, handleTableKeyDown, ROW_HEIGHT_ESTIMATE } from './TableRenderer'
 import type { SortKey, SortDir, TableState } from './TableRenderer'
@@ -131,7 +131,7 @@ export class TableView implements SubView {
           await this.plugin.store.updateTasks(this.project, ids, { due: action.due })
           if (this.plugin.settings.autoSchedule) {
             for (const id of ids) {
-              await this.plugin.store.scheduleAfterChange(this.project, id, this.plugin.settings.statuses)
+              await this.plugin.store.scheduleAfterChange(this.project, id)
             }
           }
           break
@@ -190,6 +190,7 @@ export class TableView implements SubView {
       container: this.container,
       project: this.project,
       plugin: this.plugin,
+      statuses: projectStatuses(this.project, this.plugin.settings.statuses),
       state: this.state,
       onRefresh: this.onRefresh,
       onSelectionChange: () => {

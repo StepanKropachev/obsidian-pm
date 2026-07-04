@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Task } from '../types'
+import type { StatusConfig, Task } from '../types'
 import { makeTask } from '../types'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
@@ -8,8 +8,12 @@ import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../ut
  * Renders the subtasks section: a header with a completed count, the editable list, and an
  * inline add row. The count is derived from how many subtasks sit in a terminal status.
  */
-export function renderSubtasksPanel(container: HTMLElement, task: Task, plugin: PMPlugin): void {
-  const statuses = plugin.settings.statuses
+export function renderSubtasksPanel(
+  container: HTMLElement,
+  task: Task,
+  plugin: PMPlugin,
+  statuses: StatusConfig[]
+): void {
   const subSection = container.createDiv('pm-modal-section')
 
   const subHeader = subSection.createDiv('pm-subtasks-header')
