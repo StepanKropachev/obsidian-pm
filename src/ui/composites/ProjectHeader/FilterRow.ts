@@ -1,4 +1,4 @@
-import { ButtonComponent, Menu } from 'obsidian'
+import { Menu } from 'obsidian'
 import type { Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
@@ -25,7 +25,7 @@ const DUE_LABELS: Record<DueDateFilter, string> = {
 
 export class FilterRow {
   el: HTMLElement
-  private clearBtn: ButtonComponent | null = null
+  private clearBtn: Pill | null = null
 
   constructor(
     parentEl: HTMLElement,
@@ -142,7 +142,7 @@ export class FilterRow {
       this.clearBtn = null
       return
     }
-    this.clearBtn = new ButtonComponent(this.el).setButtonText(`Clear (${count})`).onClick(() => {
+    this.clearBtn = new Pill(this.el).setLabel(`Clear (${count})`).onClick(() => {
       this.props.onClear()
     })
   }
@@ -153,7 +153,7 @@ export class FilterRow {
 
   private updateClearButton(): void {
     if (this.clearBtn) {
-      this.clearBtn.buttonEl.remove()
+      this.clearBtn.el.remove()
       this.clearBtn = null
     }
     this.renderClearButton()

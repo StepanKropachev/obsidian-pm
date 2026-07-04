@@ -47,8 +47,8 @@ Toggleable filter button: saved views, filter dropdowns, due/archived toggles. W
 
 - API: `new Pill(parent).setLabel(text).setActive(bool).setShape('rounded'|'pill').setAriaLabel(text).onClick(h).onContextMenu(h)`
 - CSS: `button.pm-pill` (the `button` prefix outranks core button chrome), `--active`, `--pill`
-- Use when: a button whose pressed/active state persists (filters, saved views)
-- Not when: a non-interactive label (`Chip`) or a one-shot action (`ButtonComponent`)
+- Use when: a button whose pressed/active state persists (filters, saved views), or a one-shot action sitting in a pill row that must match its size (the filter row's Clear)
+- Not when: a non-interactive label (`Chip`) or a standalone action button (`ButtonComponent`)
 
 ### Avatar / AvatarStack - `Avatar.ts`, `AvatarStack.ts`
 

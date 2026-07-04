@@ -156,6 +156,7 @@ export class PrimaryRow {
       this.props.filterRowExpanded || isFilterActive(this.props.filter) || this.props.filter.showArchived
     const pill = new Pill(parent)
       .setLabel('Filter')
+      .setShape('pill')
       .setActive(isFilterRowVisible)
       .setAriaLabel('Toggle filter row')
       .onClick(() => {
