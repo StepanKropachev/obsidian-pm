@@ -8,7 +8,8 @@ export default defineConfig([
     files: ['src/**/*.ts'],
     languageOptions: {
       parser: tsparser,
-      parserOptions: { project: './tsconfig.json' }
+      parserOptions: { project: './tsconfig.json' },
+      globals: { __STYLEGUIDE__: 'readonly' }
     }
   },
   {

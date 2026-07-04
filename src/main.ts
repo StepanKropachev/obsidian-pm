@@ -6,6 +6,7 @@ import type { TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
+import { registerStyleguide } from './views/styleguide/StyleguideView'
 import { PMViewRouter } from './views/PMViewRouter'
 import { openProjectModal, openTaskModal, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
@@ -51,6 +52,7 @@ export default class PMPlugin extends Plugin {
 
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
     this.registerView(PM_DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this))
+    if (__STYLEGUIDE__) registerStyleguide(this)
 
     this.app.workspace.onLayoutReady(
       safeAsync(async () => {
