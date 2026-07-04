@@ -1,5 +1,5 @@
 import { Menu } from 'obsidian'
-import { Pill } from './primitives/Pill'
+import { ChipButton } from './primitives/ChipButton'
 
 export function renderFilterDropdown(
   parent: HTMLElement,
@@ -8,15 +8,15 @@ export function renderFilterDropdown(
   options: { id: string; label: string }[],
   onChange: (selected: string[]) => void
 ): HTMLElement {
-  const pill = new Pill(parent).setAriaLabel(`Filter by ${label}`)
+  const btn = new ChipButton(parent).setAriaLabel(`Filter by ${label}`)
 
-  const updatePill = () => {
+  const updateLabel = () => {
     const has = selected.length > 0
-    pill.setLabel(has ? `${label}: ${selected.length}` : label).setActive(has)
+    btn.setLabel(has ? `${label}: ${selected.length}` : label).setActive(has)
   }
-  updatePill()
+  updateLabel()
 
-  pill.onClick((e) => {
+  btn.onClick((e) => {
     const menu = new Menu()
     for (const opt of options) {
       menu.addItem((item) =>
@@ -28,7 +28,7 @@ export function renderFilterDropdown(
             if (idx >= 0) selected.splice(idx, 1)
             else selected.push(opt.id)
             onChange(selected)
-            updatePill()
+            updateLabel()
           })
       )
     }
@@ -38,13 +38,13 @@ export function renderFilterDropdown(
         item.setTitle('Clear').onClick(() => {
           selected.length = 0
           onChange(selected)
-          updatePill()
+          updateLabel()
         })
       )
     }
     menu.showAtMouseEvent(e)
   })
 
-  pill.el.setAttribute('role', 'combobox')
-  return pill.el
+  btn.el.setAttribute('role', 'combobox')
+  return btn.el
 }

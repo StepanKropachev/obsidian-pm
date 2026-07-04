@@ -1,5 +1,6 @@
 import { AbstractInputSuggest, App, Notice, getIconIds, setIcon } from 'obsidian'
 import type { PriorityConfig, StatusConfig } from '../types'
+import { IconButton } from './primitives/IconButton'
 
 /** Suggests Lucide icon ids for the status/priority icon inputs. Typed emoji are kept as-is. */
 class IconSuggest extends AbstractInputSuggest<string> {
@@ -116,18 +117,19 @@ function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement,
 
     opts.renderExtra?.(row, item)
 
-    // Delete button
-    const del = row.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-    del.addEventListener('click', () => {
-      if (opts.items.length <= 1) {
-        new Notice(opts.minOneMessage)
-        return
-      }
-      opts.items.splice(i, 1)
-      opts.onChanged()
-      rerender()
-      opts.onDeleted?.(item)
-    })
+    new IconButton(row)
+      .setIcon('x')
+      .setTooltip('Remove')
+      .onClick(() => {
+        if (opts.items.length <= 1) {
+          new Notice(opts.minOneMessage)
+          return
+        }
+        opts.items.splice(i, 1)
+        opts.onChanged()
+        rerender()
+        opts.onDeleted?.(item)
+      })
   })
 }
 

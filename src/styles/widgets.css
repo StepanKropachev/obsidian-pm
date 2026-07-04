@@ -19,11 +19,11 @@
 .pm-kanban-cards::-webkit-scrollbar-thumb,
 .pm-task-modal::-webkit-scrollbar-thumb,
 .pm-project-modal::-webkit-scrollbar-thumb {
-  background: var(--pm-border);
+  background: var(--background-modifier-border);
   border-radius: 99px;
 }
 .pm-gantt-right::-webkit-scrollbar-thumb:hover {
-  background: var(--pm-text-muted);
+  background: var(--text-muted);
 }
 
 /* ---------------------------------------------------------------------------
@@ -35,65 +35,6 @@
   display: flex;
   gap: 6px;
 }
-.pm-segmented-btn {
-  appearance: none;
-  background: none;
-  margin: 0;
-  font: inherit;
-  cursor: pointer;
-  padding: 4px 12px;
-  border-radius: var(--pm-radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--pm-text-muted);
-  border: 1px solid var(--pm-border);
-  transition: all 0.15s;
-}
-.pm-segmented-btn:hover {
-  background: var(--pm-bg3);
-}
-.pm-segmented-btn--milestone {
-  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
-  border-color: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-  color: var(--text-accent);
-}
-.pm-segmented-btn--subtask {
-  background: color-mix(in srgb, var(--color-green) 15%, transparent);
-  border-color: color-mix(in srgb, var(--color-green) 40%, transparent);
-  color: var(--color-green);
-}
-.pm-segmented-btn--active {
-  box-shadow: 0 0 0 2px var(--pm-accent);
-}
-
-/* -- Recurrence picker --------------------------------------------------- */
-.pm-prop-recurrence {
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.pm-recur-every {
-  width: 52px;
-  text-align: center;
-}
-.pm-recur-interval {
-  width: 110px;
-}
-.pm-recur-end {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.pm-recur-label {
-  font-size: 12px;
-  color: var(--pm-text-muted);
-}
-.pm-recur-end-input {
-  width: 130px;
-}
-.pm-prop-add-btn.pm-recur-rm {
-  color: var(--pm-danger);
-  border-color: color-mix(in srgb, var(--color-red) 30%, transparent);
-}
 
 /* -- Time tracking ------------------------------------------------------- */
 .pm-time-est-row {
@@ -104,7 +45,7 @@
 }
 .pm-time-label {
   font-size: 12px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
 }
 .pm-time-est-input {
   width: 80px;
@@ -121,8 +62,8 @@
   gap: 6px;
   align-items: center;
   padding: 5px 6px;
-  border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg3);
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-hover);
   border: 1px solid var(--pm-ghost-border);
 }
 .pm-time-log-date {
@@ -153,10 +94,10 @@
 /* -- Inline edit input --------------------------------------------------- */
 .pm-inline-edit {
   padding: 3px 6px;
-  border: 1px solid var(--pm-accent);
-  border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg2);
-  color: var(--pm-text);
+  border: 1px solid var(--interactive-accent);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  color: var(--text-normal);
   font-size: 13px;
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
@@ -185,7 +126,7 @@
 /* -- Gantt link dots (dependency connectors) ---------------------------- */
 .pm-gantt-link-dot {
   fill: transparent;
-  stroke: var(--pm-accent);
+  stroke: var(--interactive-accent);
   stroke-width: 1.5;
   opacity: 0;
   transition:
@@ -198,13 +139,13 @@
 }
 .pm-gantt-bar-group .pm-gantt-link-dot:hover {
   opacity: 1;
-  fill: var(--pm-accent);
+  fill: var(--interactive-accent);
 }
 .pm-gantt-bar-group .pm-gantt-link-dot--active {
   opacity: 1;
-  fill: var(--pm-accent);
+  fill: var(--interactive-accent);
   stroke-width: 2;
-  filter: drop-shadow(0 0 3px var(--pm-accent));
+  filter: drop-shadow(0 0 3px var(--interactive-accent));
 }
 
 /* -- Gantt milestone ----------------------------------------------------- */
@@ -237,10 +178,7 @@
   --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
 }
 
-/* -- Properties container ---------------------------------------------- */
-.pm-modal-props-container {
-  padding: 0 24px;
-}
+/* -- Description section ------------------------------------------------ */
 .pm-modal-desc-section {
   border-top: none;
   position: relative;
@@ -248,7 +186,7 @@
 .pm-modal-desc-preview {
   padding: 6px 8px;
   background: transparent;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   border: 1px solid transparent;
   font-size: 13px;
   line-height: 1.6;
@@ -287,9 +225,9 @@
   width: 280px;
   max-height: 240px;
   overflow-y: auto;
-  background: var(--pm-bg);
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
   box-shadow: 0 4px 16px var(--pm-shadow-ambient);
   padding: 4px;
   display: none;
@@ -310,15 +248,15 @@
   display: flex;
   flex-direction: column;
   padding: 6px 10px;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   cursor: pointer;
   transition: background 0.1s;
 }
 .pm-note-suggest-item:hover {
-  background: var(--pm-bg3);
+  background: var(--background-modifier-hover);
 }
 .pm-note-suggest-item--active {
-  background: var(--pm-accent-light);
+  background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
 .pm-note-suggest-name-row {
   display: flex;
@@ -329,7 +267,7 @@
 .pm-note-suggest-name {
   font-size: 13px;
   font-weight: 500;
-  color: var(--pm-text);
+  color: var(--text-normal);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -340,35 +278,20 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--pm-text-faint);
-  background: var(--pm-bg3);
+  color: var(--text-faint);
+  background: var(--background-modifier-hover);
   padding: 1px 5px;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
 }
 .pm-note-suggest-path {
   font-size: 11px;
-  color: var(--pm-text-faint);
+  color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* -- Gantt add task button --------------------------------------------- */
-.pm-gantt-add-task-btn {
-  appearance: none;
-  background: none;
-  border: none;
-  margin: 0;
-  font: inherit;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--pm-text-muted);
-  padding: 4px 8px;
+/* -- Gantt add task row -------------------------------------------------- */
+.pm-gantt-add-row .pm-prop-add {
   margin-left: 20px;
-  border-radius: var(--pm-radius-sm);
-  transition: all 0.15s;
-}
-.pm-gantt-add-task-btn:hover {
-  background: var(--pm-bg3);
-  color: var(--pm-accent);
 }

@@ -1,7 +1,7 @@
-import { setIcon } from 'obsidian'
 import type PMPlugin from '../main'
 import type { StatusConfig, Task } from '../types'
 import { makeTask } from '../types'
+import { IconButton } from '../ui/primitives/IconButton'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
 /**
@@ -52,13 +52,15 @@ export function renderSubtasksPanel(
         sub.title = titleEl.textContent?.trim() ?? sub.title
       })
 
-      const rm = row.createEl('button', { cls: 'pm-subtask-rm' })
-      setIcon(rm, 'x')
-      rm.addEventListener('click', () => {
-        task.subtasks = task.subtasks.filter((s) => s.id !== sub.id)
-        renderSubtasks()
-        renderCount()
-      })
+      new IconButton(row)
+        .setIcon('x')
+        .setTooltip('Remove subtask')
+        .setRevealOnHover(true)
+        .onClick(() => {
+          task.subtasks = task.subtasks.filter((s) => s.id !== sub.id)
+          renderSubtasks()
+          renderCount()
+        })
     }
   }
 

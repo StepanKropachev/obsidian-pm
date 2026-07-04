@@ -2,25 +2,7 @@
    TASK MODAL
    --------------------------------------------------------------------------- */
 .pm-modal {
-  /* Inherit CSS variables since modals render outside .pm-root */
-  --pm-radius: 0.375rem;
-  --pm-radius-sm: 0.25rem;
-  --pm-radius-lg: 0.5rem;
-  --pm-font: var(--font-interface);
-  --pm-mono: var(--font-monospace);
-  --pm-bg: var(--background-primary);
-  --pm-bg2: var(--background-secondary);
-  --pm-bg3: var(--background-modifier-hover);
-  --pm-border: var(--background-modifier-border);
-  --pm-text: var(--text-normal);
-  --pm-text-muted: var(--text-muted);
-  --pm-text-faint: var(--text-faint);
-  --pm-accent: var(--interactive-accent);
-  --pm-accent-dim: var(--interactive-accent-hover);
-  --pm-accent-light: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
-  --pm-danger: var(--color-red);
-  --pm-success: var(--color-green);
-  --pm-warning: var(--color-yellow);
+  /* Modals render outside .pm-root, so the two plugin tokens are re-declared here */
   --pm-ghost-border: rgba(0, 0, 0, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
 
@@ -62,7 +44,7 @@
 }
 .pm-prop-label {
   font-size: 12px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -85,7 +67,7 @@
   appearance: none;
   height: 6px;
   border-radius: 99px;
-  background: var(--pm-bg3);
+  background: var(--background-modifier-hover);
   cursor: pointer;
 }
 .pm-progress-slider::-webkit-slider-thumb {
@@ -93,49 +75,47 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--pm-accent);
+  background: var(--interactive-accent);
   cursor: pointer;
   box-shadow: 0 1px 4px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
 }
 .pm-progress-slider-label {
   font-size: 12px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   min-width: 32px;
   text-align: right;
 }
 
 .pm-prop-date {
   padding: 4px 8px;
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg2);
-  color: var(--pm-text);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  color: var(--text-normal);
   font-size: 13px;
   cursor: pointer;
 }
 .pm-prop-date:focus {
-  border-color: var(--pm-accent);
+  border-color: var(--interactive-accent);
   outline: none;
 }
 
 .pm-prop-text,
 .pm-prop-select {
   padding: 5px 8px;
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius-sm);
-  background: var(--pm-bg2);
-  color: var(--pm-text);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  color: var(--text-normal);
   font-size: 13px;
   width: 100%;
 }
 .pm-prop-text:focus,
 .pm-prop-select:focus {
-  border-color: var(--pm-accent);
+  border-color: var(--interactive-accent);
   outline: none;
 }
 
-.pm-prop-assignees,
-.pm-prop-tags,
 .pm-prop-deps {
   flex-wrap: wrap;
 }
@@ -143,7 +123,7 @@
 /* Modal sections */
 .pm-modal-section {
   padding: 14px 24px;
-  border-top: 1px solid var(--pm-border);
+  border-top: 1px solid var(--background-modifier-border);
 }
 .pm-modal-section-header {
   display: flex;
@@ -156,7 +136,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   margin: 0 0 10px;
 }
 .pm-modal-section-header .pm-modal-section-title {
@@ -170,9 +150,9 @@
   height: var(--desc-height, auto);
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   background: transparent;
-  color: var(--pm-text);
+  color: var(--text-normal);
   font-size: 13px;
   line-height: 1.6;
   resize: none;
@@ -204,11 +184,11 @@ textarea.pm-modal-description:focus {
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
-  border-radius: var(--pm-radius-sm);
+  border-radius: var(--radius-s);
   transition: background 0.1s;
 }
 .pm-modal-subtask-row:hover {
-  background: var(--pm-bg3);
+  background: var(--background-modifier-hover);
 }
 
 .pm-subtask-dot {
@@ -225,36 +205,7 @@ textarea.pm-modal-description:focus {
   padding: 1px 3px;
 }
 .pm-subtask-title:focus {
-  background: var(--pm-bg3);
-}
-
-/* `button` prefix outranks core button chrome (grey fill + inset shadow + fixed
-   height), which otherwise paints over this ghost icon button. */
-button.pm-subtask-rm {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: auto;
-  padding: 2px;
-  border: none;
-  border-radius: var(--pm-radius-sm);
-  background: transparent;
-  box-shadow: none;
-  color: var(--pm-text-muted);
-  cursor: pointer;
-  transition: opacity 0.15s;
-  --icon-size: 14px;
-}
-/* Subtask rows reveal the remove button on hover; time-log rows keep it shown.
-   The row-scoped selectors (0,2,0) outrank the element-prefixed base (0,1,1). */
-.pm-modal-subtask-row .pm-subtask-rm {
-  opacity: 0;
-}
-.pm-modal-subtask-row:hover .pm-subtask-rm {
-  opacity: 1;
-}
-.pm-subtask-rm:hover {
-  color: var(--pm-danger);
+  background: var(--background-modifier-hover);
 }
 
 /* Modal footer */
@@ -263,8 +214,8 @@ button.pm-subtask-rm {
   align-items: center;
   gap: 8px;
   padding: 14px 24px;
-  border-top: 1px solid var(--pm-border);
-  background: var(--pm-bg2);
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
   position: sticky;
   bottom: 0;
 }

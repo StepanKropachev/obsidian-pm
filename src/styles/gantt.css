@@ -13,34 +13,13 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-bottom: 1px solid var(--pm-border);
+  border-bottom: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
-  background: var(--pm-bg);
+  background: var(--background-primary);
   flex-wrap: wrap;
 }
 .pm-gantt-sep {
   flex: 1;
-}
-
-.pm-gantt-zoom-btn {
-  padding: 4px 12px;
-  border: 1px solid var(--pm-border);
-  border-radius: var(--pm-radius-sm);
-  background: transparent;
-  color: var(--pm-text-muted);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-.pm-gantt-zoom-btn:hover {
-  background: var(--pm-bg3);
-  color: var(--pm-text);
-}
-.pm-gantt-zoom-btn--active {
-  background: var(--pm-accent);
-  color: var(--text-on-accent);
-  border-color: var(--pm-accent);
 }
 
 /* Main Gantt layout */
@@ -56,7 +35,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--pm-surface-raised);
+  background: var(--background-secondary);
   z-index: 5;
 }
 
@@ -64,9 +43,9 @@
   display: flex;
   align-items: flex-end;
   padding: 0 12px 10px;
-  box-shadow: inset 0 -2px 0 var(--pm-border);
+  box-shadow: inset 0 -2px 0 var(--background-modifier-border);
   flex-shrink: 0;
-  background: var(--pm-bg);
+  background: var(--background-primary);
   box-sizing: border-box;
 }
 .pm-gantt-left-header-label {
@@ -74,7 +53,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
 }
 
 .pm-gantt-left-body {
@@ -87,13 +66,13 @@
   align-items: center;
   gap: 6px;
   padding-right: 8px;
-  box-shadow: inset 0 -1px 0 var(--pm-border);
+  box-shadow: inset 0 -1px 0 var(--background-modifier-border);
   cursor: default;
   transition: background 0.1s;
   box-sizing: border-box;
 }
 .pm-gantt-label-row:hover {
-  background: var(--pm-bg3);
+  background: var(--background-modifier-hover);
 }
 
 .pm-gantt-label-spacer {
@@ -117,12 +96,12 @@
   cursor: pointer;
 }
 .pm-gantt-label-title:hover {
-  color: var(--pm-accent);
+  color: var(--interactive-accent);
 }
 
 .pm-gantt-label-progress {
   font-size: 11px;
-  color: var(--pm-text-muted);
+  color: var(--text-muted);
   flex-shrink: 0;
   margin-right: 8px;
 }
@@ -139,7 +118,7 @@
 }
 .pm-gantt-resize-handle:hover,
 .pm-gantt-resize-handle:active {
-  background: var(--pm-accent);
+  background: var(--interactive-accent);
 }
 
 /* Right panel: scrollable SVG */
@@ -169,7 +148,7 @@
 
 /* SVG elements */
 .pm-gantt-header-bg {
-  fill: var(--pm-bg2);
+  fill: var(--background-secondary);
 }
 .pm-gantt-band-even {
   fill: rgba(0, 0, 0, 0);
@@ -300,12 +279,12 @@
 /* Dependency arrows */
 .pm-gantt-arrow {
   fill: none;
-  stroke: var(--pm-accent);
+  stroke: var(--interactive-accent);
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
   opacity: 0.4;
 }
 .pm-gantt-arrowhead {
-  fill: var(--pm-accent);
+  fill: var(--interactive-accent);
   opacity: 0.5;
 }

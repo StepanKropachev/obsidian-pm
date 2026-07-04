@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Projects can define their own statuses and priorities in the project settings, replacing the global ones ([#57](https://github.com/StepanKropachev/obsidian-pm/issues/57))
 - Projects can override the default view, auto-scheduling, and the board display options in the project settings
 
+### Changed
+
+- Add buttons in the table, Gantt, project editor, and settings share one quiet style
+- Remove buttons in the task editor, project editor, and settings are icon buttons with tooltips
+- The import dialog uses Obsidian's native buttons
+- The Gantt zoom control uses Obsidian's native buttons
+- Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
+
 ### Fixed
 
 - The import dialog offered the built-in statuses and priorities instead of the configured ones

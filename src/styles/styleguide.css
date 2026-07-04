@@ -1,0 +1,48 @@
+/* Layout for the dev-only styleguide gallery (src/views/styleguide/StyleguideView.ts).
+   The view is compiled out of prod builds, but these rules still ship as dead CSS
+   since Obsidian only loads one styles.css. */
+
+.pm-styleguide {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.pm-sg-group {
+  font-size: var(--font-ui-large);
+  font-weight: 700;
+  margin-top: var(--size-4-8);
+}
+
+.pm-sg-section {
+  margin-bottom: var(--size-4-6);
+  padding-top: var(--size-4-4);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.pm-sg-title {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  margin-bottom: var(--size-4-2);
+}
+
+.pm-sg-caption {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  margin: var(--size-4-2) 0 var(--size-4-1);
+}
+
+.pm-sg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+}
+
+/* These normally get their width from a table cell or kanban column; give them one here. */
+.pm-sg-row .pm-progress {
+  width: 160px;
+}
+
+.pm-sg-row .pm-kanban-card {
+  width: 280px;
+}

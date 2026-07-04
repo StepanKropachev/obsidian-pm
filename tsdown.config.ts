@@ -17,6 +17,9 @@ export default defineConfig({
   clean: false,
   hash: false,
   outExtensions: () => ({ js: '.js' }),
+  define: {
+    __STYLEGUIDE__: JSON.stringify(!prod || Boolean(process.env['STYLEGUIDE']))
+  },
   deps: {
     neverBundle: [
       'obsidian',

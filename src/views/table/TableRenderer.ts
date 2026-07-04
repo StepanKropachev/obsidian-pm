@@ -4,6 +4,7 @@ import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { renderAddButton } from '../../ui/composites/addButton'
 import { compareTask } from './TableFilters'
 import { renderTaskRow, updateSelectedRow, updateSelectAllCheckbox } from './TableRow'
 
@@ -242,8 +243,7 @@ function renderWindowRows(ctx: TableContext): void {
   // "Add task" row
   const addRow = tbody.createEl('tr', { cls: 'pm-table-add-row' })
   const addCell = addRow.createEl('td', { attr: { colspan: String(colCount) } })
-  const addBtn = addCell.createEl('button', { text: '+ add task', cls: 'pm-table-add-btn' })
-  addBtn.addEventListener('click', () => {
+  renderAddButton(addCell, 'Add task', () => {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() })
   })
 

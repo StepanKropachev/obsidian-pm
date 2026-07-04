@@ -1,7 +1,8 @@
+import { ButtonComponent } from 'obsidian'
+
 export interface SegmentedOption<T extends string> {
   id: T
   label: string
-  cls?: string
 }
 
 export interface SegmentedControlProps<T extends string> {
@@ -15,15 +16,17 @@ export class SegmentedControl<T extends string> {
 
   constructor(parentEl: HTMLElement, props: SegmentedControlProps<T>) {
     this.el = parentEl.createDiv('pm-segmented')
+    const buttons = new Map<T, ButtonComponent>()
     for (const opt of props.options) {
-      const btn = this.el.createEl('button', { cls: 'pm-segmented-btn', text: opt.label })
-      if (opt.cls) btn.addClass(opt.cls)
-      if (opt.id === props.active) btn.addClass('pm-segmented-btn--active')
-      btn.addEventListener('click', () => {
-        this.el.querySelectorAll('.pm-segmented-btn').forEach((b) => b.removeClass('pm-segmented-btn--active'))
-        btn.addClass('pm-segmented-btn--active')
+      const btn = new ButtonComponent(this.el).setButtonText(opt.label).onClick(() => {
+        for (const [id, b] of buttons) {
+          if (id === opt.id) b.setCta()
+          else b.removeCta()
+        }
         props.onChange(opt.id)
       })
+      if (opt.id === props.active) btn.setCta()
+      buttons.set(opt.id, btn)
     }
   }
 }

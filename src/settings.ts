@@ -4,6 +4,7 @@ import { PMSettings, DEFAULT_SETTINGS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
 import { getTaskNotesApi, importTaskNotesPalettes, isTaskNotesInstalled } from './integrations/tasknotes'
 import { renderPriorityListEditor, renderStatusListEditor } from './ui/PaletteListEditor'
+import { IconButton } from './ui/primitives/IconButton'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
@@ -274,13 +275,14 @@ export class PMSettingTab extends PluginSettingTab {
         this.plugin.settings.globalTeamMembers[i] = input.value
         void this.plugin.saveSettings()
       })
-      const del = row.createEl('button', { text: '✕' })
-      del.addClass('pm-settings-del')
-      del.addEventListener('click', () => {
-        this.plugin.settings.globalTeamMembers.splice(i, 1)
-        void this.plugin.saveSettings()
-        this.renderMembersList(container)
-      })
+      new IconButton(row)
+        .setIcon('x')
+        .setTooltip('Remove member')
+        .onClick(() => {
+          this.plugin.settings.globalTeamMembers.splice(i, 1)
+          void this.plugin.saveSettings()
+          this.renderMembersList(container)
+        })
     })
   }
 

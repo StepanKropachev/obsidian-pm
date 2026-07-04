@@ -4,6 +4,8 @@ import type { Project, Task, GanttGranularity, FilterState } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { applyTaskFilterPromote } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { renderAddButton } from '../../ui/composites/addButton'
+import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import type { SubView } from '../SubView'
 import type { TimelineCfg } from './TimelineConfig'
 import { buildTimelineConfig, dateToX, xToDate, HEADER_HEIGHT, ROW_HEIGHT, LABEL_WIDTH } from './TimelineConfig'
@@ -94,16 +96,16 @@ export class GanttView implements SubView {
     const levels: GanttGranularity[] = ['day', 'week', 'month', 'quarter']
     const labels: Record<GanttGranularity, string> = { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' }
 
-    for (const level of levels) {
-      const btn = bar.createEl('button', { text: labels[level], cls: 'pm-gantt-zoom-btn' })
-      if (level === this.granularity) btn.addClass('pm-gantt-zoom-btn--active')
-      btn.addEventListener('click', () => {
+    new SegmentedControl<GanttGranularity>(bar, {
+      options: levels.map((level) => ({ id: level, label: labels[level] })),
+      active: this.granularity,
+      onChange: (level) => {
         this.granularity = level
         this.plugin.settings.ganttGranularity = level
         void this.plugin.saveSettings()
         this.render()
-      })
-    }
+      }
+    })
 
     bar.createSpan({ cls: 'pm-gantt-sep' })
     new ButtonComponent(bar).setButtonText('Today').onClick(() => this.scrollToToday())
@@ -236,8 +238,7 @@ export class GanttView implements SubView {
     // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row')
     addRow.style.height = `${ROW_HEIGHT}px`
-    const addBtn = addRow.createEl('button', { text: '+ add task', cls: 'pm-gantt-add-task-btn' })
-    addBtn.addEventListener('click', () => {
+    renderAddButton(addRow, 'Add task', () => {
       openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() })
     })
 

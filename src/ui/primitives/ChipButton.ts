@@ -1,22 +1,27 @@
-export class Pill {
+import { ButtonComponent } from 'obsidian'
+
+export class ChipButton {
   el: HTMLButtonElement
+  private button: ButtonComponent
 
   constructor(parentEl: HTMLElement) {
-    this.el = parentEl.createEl('button', { cls: 'pm-pill' })
+    this.button = new ButtonComponent(parentEl)
+    this.el = this.button.buttonEl
+    this.el.addClass('pm-chip-btn')
   }
 
   setLabel(text: string): this {
-    this.el.setText(text)
+    this.button.setButtonText(text)
     return this
   }
 
   setActive(active: boolean): this {
-    this.el.toggleClass('pm-pill--active', active)
+    this.el.toggleClass('pm-chip-btn--active', active)
     return this
   }
 
   setShape(shape: 'rounded' | 'pill'): this {
-    this.el.toggleClass('pm-pill--pill', shape === 'pill')
+    this.el.toggleClass('pm-chip-btn--pill', shape === 'pill')
     return this
   }
 
@@ -26,7 +31,7 @@ export class Pill {
   }
 
   onClick(handler: (e: MouseEvent) => unknown): this {
-    this.el.addEventListener('click', handler)
+    this.button.onClick(handler)
     return this
   }
 

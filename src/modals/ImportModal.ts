@@ -1,4 +1,4 @@
-import { App, Modal, TFile, Notice } from 'obsidian'
+import { App, ButtonComponent, Modal, TFile, Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { PriorityConfig, Project, StatusConfig, TaskStatus, TaskPriority } from '../types'
 import { getDefaultStatusId, getDefaultPriorityId } from '../utils'
@@ -23,7 +23,7 @@ export class ImportModal extends Modal {
   private selectedCount = 0
   private searchInput: HTMLInputElement | null = null
   private selectAllCheckbox: HTMLInputElement | null = null
-  private nextButton: HTMLButtonElement | null = null
+  private nextButton: ButtonComponent | null = null
   private fileListContainer: HTMLDivElement | null = null
   private counterLabel: HTMLDivElement | null = null
 
@@ -142,13 +142,13 @@ export class ImportModal extends Modal {
     // ── Footer with Next button ────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer')
 
-    const cancelButton = footer.createEl('button', { text: 'Cancel', cls: 'import-btn import-btn--secondary' })
-    cancelButton.addEventListener('click', () => this.close())
+    new ButtonComponent(footer).setButtonText('Cancel').onClick(() => this.close())
 
-    this.nextButton = footer.createEl('button', { text: 'Next', cls: 'mod-cta import-btn' })
-    this.nextButton.toggleClass('import-btn--disabled', this.selectedCount === 0)
-    this.nextButton.disabled = this.selectedCount === 0
-    this.nextButton.addEventListener('click', () => this.handleNext())
+    this.nextButton = new ButtonComponent(footer)
+      .setButtonText('Next')
+      .setCta()
+      .setDisabled(this.selectedCount === 0)
+      .onClick(() => this.handleNext())
   }
 
   private renderPhase2(): void {
@@ -229,14 +229,10 @@ export class ImportModal extends Modal {
     // ── Footer ───────────────────────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer')
 
-    const backButton = footer.createEl('button', { text: 'Back', cls: 'import-btn import-btn--secondary' })
-    backButton.addEventListener('click', () => this.handleBack())
+    new ButtonComponent(footer).setButtonText('Back').onClick(() => this.handleBack())
 
-    const importButton = footer.createEl('button', {
-      text: `Import (${this.selectedCount})`,
-      cls: 'mod-cta import-btn'
-    })
-    importButton.addEventListener('click', () => {
+    const importButton = new ButtonComponent(footer).setButtonText(`Import (${this.selectedCount})`).setCta()
+    importButton.onClick(() => {
       void this.handleImport()
     })
   }
@@ -315,9 +311,7 @@ export class ImportModal extends Modal {
   }
 
   private updateNextButton(): void {
-    if (!this.nextButton) return
-    this.nextButton.disabled = this.selectedCount === 0
-    this.nextButton.toggleClass('import-btn--disabled', this.selectedCount === 0)
+    this.nextButton?.setDisabled(this.selectedCount === 0)
   }
 
   private handleNext(): void {

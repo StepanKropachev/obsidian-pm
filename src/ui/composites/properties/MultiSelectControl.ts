@@ -2,6 +2,7 @@ import { setIcon } from 'obsidian'
 import { Popover } from '../../primitives/Popover'
 import { Chip } from '../../primitives/Chip'
 import { Avatar } from '../../primitives/Avatar'
+import { IconButton } from '../../primitives/IconButton'
 import { renderOptionRow } from './optionList'
 
 export interface PickerItem {
@@ -103,12 +104,13 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
       setIcon(row.createSpan({ cls: 'pm-dep-icon' }), 'link-2')
       row.createSpan({ cls: 'pm-dep-id', text: id })
       row.createSpan({ cls: 'pm-dep-title', text: labelOf(id) })
-      const rm = row.createEl('button', { cls: 'pm-chip-rm' })
-      setIcon(rm, 'x')
-      rm.addEventListener('click', () => {
-        opts.remove(id)
-        renderValues()
-      })
+      new IconButton(row)
+        .setIcon('x')
+        .setTooltip('Remove dependency')
+        .onClick(() => {
+          opts.remove(id)
+          renderValues()
+        })
     }
   }
 

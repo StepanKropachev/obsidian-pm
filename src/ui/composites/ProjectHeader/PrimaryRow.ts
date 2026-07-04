@@ -1,6 +1,6 @@
 import { ButtonComponent, Menu } from 'obsidian'
 import type { Project, FilterState, SavedView } from '../../../types'
-import { Pill } from '../../primitives/Pill'
+import { ChipButton } from '../../primitives/ChipButton'
 import { isFilterActive } from '../../../store/TaskFilter'
 import { safeAsync } from '../../../utils'
 
@@ -64,7 +64,7 @@ export class PrimaryRow {
   private renderSavedViewPills(parent: HTMLElement): void {
     const wrap = parent.createDiv('pm-project-header-saved-views')
 
-    new Pill(wrap)
+    new ChipButton(wrap)
       .setLabel('All')
       .setShape('pill')
       .setActive(!this.props.activeSavedViewId)
@@ -78,7 +78,7 @@ export class PrimaryRow {
   }
 
   private renderSavedViewPill(parent: HTMLElement, sv: SavedView): void {
-    new Pill(parent)
+    new ChipButton(parent)
       .setLabel(sv.name)
       .setShape('pill')
       .setActive(this.props.activeSavedViewId === sv.id)
@@ -154,13 +154,14 @@ export class PrimaryRow {
   private renderFilterToggle(parent: HTMLElement): void {
     const isFilterRowVisible =
       this.props.filterRowExpanded || isFilterActive(this.props.filter) || this.props.filter.showArchived
-    const pill = new Pill(parent)
+    const btn = new ChipButton(parent)
       .setLabel('Filter')
+      .setShape('pill')
       .setActive(isFilterRowVisible)
       .setAriaLabel('Toggle filter row')
       .onClick(() => {
         this.props.onToggleFilterRow()
       })
-    pill.el.addClass('pm-project-header-filter-toggle')
+    btn.el.addClass('pm-project-header-filter-toggle')
   }
 }
