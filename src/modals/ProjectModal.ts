@@ -3,6 +3,7 @@ import type PMPlugin from '../main'
 import { Project, ProjectConfig, CustomFieldDef, makeId, makeProject } from '../types'
 import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
+import { renderAddButton } from '../ui/composites/addButton'
 import { Avatar } from '../ui/primitives/Avatar'
 import { IconButton } from '../ui/primitives/IconButton'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
@@ -171,11 +172,7 @@ export class ProjectModal extends Modal {
             renderMembers()
           })
       }
-      const addBtn = memberWrap.createEl('button', {
-        text: '+ add member',
-        cls: 'pm-prop-add-btn'
-      })
-      addBtn.addEventListener('click', () => {
+      renderAddButton(memberWrap, 'Add member', () => {
         this.project.teamMembers.push('')
         renderMembers()
         window.setTimeout(() => {
@@ -198,11 +195,7 @@ export class ProjectModal extends Modal {
       for (let i = 0; i < this.project.customFields.length; i++) {
         this.renderCustomFieldEditor(cfList, this.project.customFields[i], i, renderCFs)
       }
-      const addCFBtn = cfList.createEl('button', {
-        text: '+ add custom field',
-        cls: 'pm-prop-add-btn'
-      })
-      addCFBtn.addEventListener('click', () => {
+      renderAddButton(cfList, 'Add custom field', () => {
         this.project.customFields.push({
           id: makeId(),
           name: 'New Field',
@@ -219,7 +212,7 @@ export class ProjectModal extends Modal {
       heading: 'Statuses',
       hint: 'The workflow for this project',
       toggleLabel: 'Use custom statuses instead of the global ones',
-      addLabel: '+ add status',
+      addLabel: 'Add status',
       get: () => this.project.config?.statuses,
       set: (statuses) => this.patchConfig('statuses', statuses),
       copyGlobal: () => this.plugin.settings.statuses.map((s) => ({ ...s })),
@@ -244,7 +237,7 @@ export class ProjectModal extends Modal {
       heading: 'Priorities',
       hint: 'The priority scale for this project',
       toggleLabel: 'Use custom priorities instead of the global ones',
-      addLabel: '+ add priority',
+      addLabel: 'Add priority',
       get: () => this.project.config?.priorities,
       set: (priorities) => this.patchConfig('priorities', priorities),
       copyGlobal: () => this.plugin.settings.priorities.map((p) => ({ ...p })),
@@ -356,8 +349,7 @@ export class ProjectModal extends Modal {
       const own = opts.get()
       if (!own?.length) return
       opts.renderEditor(editor, own)
-      const addBtn = footer.createEl('button', { text: opts.addLabel, cls: 'pm-prop-add-btn' })
-      addBtn.addEventListener('click', () => {
+      renderAddButton(footer, opts.addLabel, () => {
         own.push(opts.makeEntry())
         renderEditor()
       })
@@ -465,11 +457,7 @@ export class ProjectModal extends Modal {
               renderOpts()
             })
         }
-        const addOptBtn = optionsWrap.createEl('button', {
-          text: '+ option',
-          cls: 'pm-prop-add-btn pm-prop-add-btn--sm'
-        })
-        addOptBtn.addEventListener('click', () => {
+        renderAddButton(optionsWrap, 'Add option', () => {
           opts.push('')
           cf.options = opts
           renderOpts()

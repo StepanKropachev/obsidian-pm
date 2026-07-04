@@ -4,6 +4,7 @@ import type { Project, Task, GanttGranularity, FilterState } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { applyTaskFilterPromote } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { renderAddButton } from '../../ui/composites/addButton'
 import type { SubView } from '../SubView'
 import type { TimelineCfg } from './TimelineConfig'
 import { buildTimelineConfig, dateToX, xToDate, HEADER_HEIGHT, ROW_HEIGHT, LABEL_WIDTH } from './TimelineConfig'
@@ -236,8 +237,7 @@ export class GanttView implements SubView {
     // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row')
     addRow.style.height = `${ROW_HEIGHT}px`
-    const addBtn = addRow.createEl('button', { text: '+ add task', cls: 'pm-gantt-add-task-btn' })
-    addBtn.addEventListener('click', () => {
+    renderAddButton(addRow, 'Add task', () => {
       openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() })
     })
 

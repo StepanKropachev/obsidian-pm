@@ -1,8 +1,10 @@
 import type PMPlugin from '../../main'
 import type { Project, StatusConfig, Task } from '../../types'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
+import { IconButton } from '../../ui/primitives/IconButton'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { getStatusConfig, safeAsync } from '../../utils'
+import { renderStatusDot } from '../../ui/StatusBadge'
+import { safeAsync } from '../../utils'
 import { ROW_HEIGHT } from './TimelineConfig'
 
 export interface LabelContext {
@@ -71,9 +73,7 @@ export function renderTaskLabel(
   }
 
   // Color dot
-  const statusConfig = getStatusConfig(ctx.statuses, task.status)
-  const dot = el.createSpan({ cls: 'pm-gantt-label-dot' })
-  dot.style.background = statusConfig?.color ?? 'var(--text-muted)'
+  renderStatusDot(el, task.status, ctx.statuses, 'pm-gantt-label-dot')
 
   // Title
   const titleEl = el.createSpan({ text: task.title, cls: 'pm-gantt-label-title' })
@@ -87,10 +87,12 @@ export function renderTaskLabel(
   }
 
   // "+" button to add subtask (hover-visible)
-  const addSubBtn = el.createEl('button', { text: '+', cls: 'pm-gantt-label-add-btn' })
-  addSubBtn.title = 'Add subtask'
-  addSubBtn.addEventListener('click', (e) => {
-    e.stopPropagation()
-    openTaskModal(ctx.plugin, ctx.project, { parentId: task.id, onSave: () => ctx.onRefresh() })
-  })
+  new IconButton(el)
+    .setIcon('plus')
+    .setTooltip('Add subtask')
+    .setRevealOnHover(true)
+    .onClick((e) => {
+      e.stopPropagation()
+      openTaskModal(ctx.plugin, ctx.project, { parentId: task.id, onSave: () => ctx.onRefresh() })
+    })
 }

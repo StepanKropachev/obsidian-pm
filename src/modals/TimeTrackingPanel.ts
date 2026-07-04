@@ -1,7 +1,7 @@
-import { setIcon } from 'obsidian'
 import type { Task } from '../types'
 import { totalLoggedHours } from '../store/TaskTreeOps'
 import { today } from '../dates'
+import { renderAddButton } from '../ui/composites/addButton'
 import { IconButton } from '../ui/primitives/IconButton'
 import { ProgressBar } from '../ui/primitives/ProgressBar'
 
@@ -83,10 +83,7 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   }
   renderLogs()
 
-  const addLogBtn = timeSection.createEl('button', { cls: 'pm-prop-add' })
-  setIcon(addLogBtn.createSpan({ cls: 'pm-glyph-icon' }), 'plus')
-  addLogBtn.createSpan({ cls: 'pm-prop-add-label', text: 'Log time' })
-  addLogBtn.addEventListener('click', () => {
+  renderAddButton(timeSection, 'Log time', () => {
     if (!task.timeLogs) task.timeLogs = []
     task.timeLogs.push({
       date: today().toString(),

@@ -284,7 +284,8 @@
   transition: opacity 0.15s;
 }
 .pm-table-row:hover .pm-icon-btn--hover-only,
-.pm-modal-subtask-row:hover .pm-icon-btn--hover-only {
+.pm-modal-subtask-row:hover .pm-icon-btn--hover-only,
+.pm-gantt-label-row:hover .pm-icon-btn--hover-only {
   opacity: 1;
 }
 .pm-icon-btn--hover-only:focus-visible {
@@ -407,17 +408,4 @@ button.pm-chip-rm {
 /* Add task row */
 .pm-table-add-row td {
   padding: 8px 10px;
-}
-.pm-table-add-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--pm-text-muted);
-  font-size: 13px;
-  padding: 4px 8px;
-  border-radius: var(--pm-radius-sm);
-}
-.pm-table-add-btn:hover {
-  background: var(--pm-bg3);
-  color: var(--pm-text);
 }
