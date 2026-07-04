@@ -4,6 +4,7 @@ import { Project, ProjectConfig, CustomFieldDef, makeId, makeProject } from '../
 import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
+import { IconButton } from '../ui/primitives/IconButton'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
 
 const PROJECT_COLORS = [
@@ -162,11 +163,13 @@ export class ProjectModal extends Modal {
           this.project.teamMembers[i] = input.value
           renderMembers()
         })
-        const rm = row.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-        rm.addEventListener('click', () => {
-          this.project.teamMembers.splice(i, 1)
-          renderMembers()
-        })
+        new IconButton(row)
+          .setIcon('x')
+          .setTooltip('Remove member')
+          .onClick(() => {
+            this.project.teamMembers.splice(i, 1)
+            renderMembers()
+          })
       }
       const addBtn = memberWrap.createEl('button', {
         text: '+ add member',
@@ -428,11 +431,13 @@ export class ProjectModal extends Modal {
       rerender()
     })
 
-    const rmBtn = row.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-    rmBtn.addEventListener('click', () => {
-      this.project.customFields.splice(index, 1)
-      rerender()
-    })
+    new IconButton(row)
+      .setIcon('x')
+      .setTooltip('Remove field')
+      .onClick(() => {
+        this.project.customFields.splice(index, 1)
+        rerender()
+      })
 
     if (cf.type === 'select' || cf.type === 'multiselect') {
       const optionsWrap = row.createDiv('pm-cf-options')
@@ -451,12 +456,14 @@ export class ProjectModal extends Modal {
             opts[j] = optInput.value
             cf.options = opts
           })
-          const rmOptBtn = optRow.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-          rmOptBtn.addEventListener('click', () => {
-            opts.splice(j, 1)
-            cf.options = opts
-            renderOpts()
-          })
+          new IconButton(optRow)
+            .setIcon('x')
+            .setTooltip('Remove option')
+            .onClick(() => {
+              opts.splice(j, 1)
+              cf.options = opts
+              renderOpts()
+            })
         }
         const addOptBtn = optionsWrap.createEl('button', {
           text: '+ option',

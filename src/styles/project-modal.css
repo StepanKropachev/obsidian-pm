@@ -284,18 +284,6 @@
 .pm-settings-status-label {
   flex: 1;
 }
-.pm-settings-del {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 4px;
-}
-.pm-settings-del:hover {
-  background: color-mix(in srgb, var(--color-red) 10%, transparent);
-  color: var(--pm-danger);
-}
 .pm-settings-drag-handle {
   cursor: grab;
   color: var(--text-muted);

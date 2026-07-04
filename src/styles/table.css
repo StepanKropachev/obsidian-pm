@@ -283,7 +283,8 @@
   opacity: 0;
   transition: opacity 0.15s;
 }
-.pm-table-row:hover .pm-icon-btn--hover-only {
+.pm-table-row:hover .pm-icon-btn--hover-only,
+.pm-modal-subtask-row:hover .pm-icon-btn--hover-only {
   opacity: 1;
 }
 .pm-icon-btn--hover-only:focus-visible {
