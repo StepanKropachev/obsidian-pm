@@ -1,9 +1,9 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, TaskStatus, FilterState } from '../types'
+import { Project, Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
-import { isTaskOverdue, isTerminalStatus, getPriorityConfig, projectStatuses } from '../utils'
+import { isTaskOverdue, isTerminalStatus, getPriorityConfig } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
@@ -11,6 +11,8 @@ import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
   private dragTask: Task | null = null
+  /** Configuration in effect for this project, computed once per board render. */
+  private config!: ResolvedProjectConfig
 
   constructor(
     private container: HTMLElement,
@@ -22,18 +24,19 @@ export class KanbanView implements SubView {
 
   render(): void {
     this.renderBoard()
-    if (this.plugin.settings.kanbanShowDescriptionPreview) {
+    if (this.config.kanbanShowDescriptionPreview) {
       void this.hydrateDescriptions()
     }
   }
 
   private renderBoard(): void {
+    this.config = this.plugin.store.configFor(this.project)
     this.container.empty()
     this.container.addClass('pm-kanban-view')
 
     const board = this.container.createDiv('pm-kanban-board')
 
-    for (const status of projectStatuses(this.project, this.plugin.settings.statuses)) {
+    for (const status of this.config.statuses) {
       const tasks = this.getTasksForStatus(status.id)
       const cards = tasks.map((task) => this.buildCardData(task))
       new KanbanColumn(board, {
@@ -57,11 +60,11 @@ export class KanbanView implements SubView {
    * for the cards on the board, then re-render once so previews fill in.
    */
   private async hydrateDescriptions(): Promise<void> {
-    const candidates = this.plugin.settings.kanbanShowSubtasks
+    const candidates = this.config.kanbanShowSubtasks
       ? flattenTasks(this.project.tasks).map((ft) => ft.task)
       : this.project.tasks
     const pending = candidates.filter(
-      (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.plugin.settings.statuses)
+      (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.config.statuses)
     )
     if (!pending.length) return
     await Promise.all(pending.map((t) => this.plugin.store.loadTaskBody(t)))
@@ -69,19 +72,19 @@ export class KanbanView implements SubView {
   }
 
   private getTasksForStatus(status: TaskStatus): Task[] {
-    const candidates = this.plugin.settings.kanbanShowSubtasks
+    const candidates = this.config.kanbanShowSubtasks
       ? flattenTasks(this.project.tasks).map((ft) => ft.task)
       : this.project.tasks
-    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.plugin.settings.statuses))
+    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.config.statuses))
   }
 
   private buildCardData(task: Task): KanbanCardData {
-    const priorityConfig = getPriorityConfig(this.plugin.settings.priorities, task.priority)
+    const priorityConfig = getPriorityConfig(this.config.priorities, task.priority)
     const priorityColor =
       priorityConfig && task.priority !== 'medium' && task.priority !== 'low' ? priorityConfig.color : undefined
 
     let descriptionPreview: string | undefined
-    if (this.plugin.settings.kanbanShowDescriptionPreview && task.description.trim()) {
+    if (this.config.kanbanShowDescriptionPreview && task.description.trim()) {
       const text = task.description
         .replace(/```[\s\S]*?```/g, ' ')
         .replace(/`([^`]*)`/g, '$1')
@@ -94,14 +97,14 @@ export class KanbanView implements SubView {
     }
 
     let parentTitle: string | undefined
-    if (this.plugin.settings.kanbanShowSubtasks && task.type === 'subtask') {
+    if (this.config.kanbanShowSubtasks && task.type === 'subtask') {
       const parent = this.findParentTask(task.id)
       if (parent) parentTitle = parent.title
     }
 
     let subtaskProgress: { done: number; total: number } | undefined
     if (task.subtasks.length) {
-      const done = task.subtasks.filter((s) => isTerminalStatus(s.status, this.plugin.settings.statuses)).length
+      const done = task.subtasks.filter((s) => isTerminalStatus(s.status, this.config.statuses)).length
       subtaskProgress = { done, total: task.subtasks.length }
     }
 
@@ -112,7 +115,7 @@ export class KanbanView implements SubView {
       parentTitle,
       subtaskProgress,
       loggedHours: totalLoggedHours(task),
-      overdue: isTaskOverdue(task, this.plugin.settings.statuses),
+      overdue: isTaskOverdue(task, this.config.statuses),
       showTagColors: this.plugin.settings.showTagColors
     }
   }

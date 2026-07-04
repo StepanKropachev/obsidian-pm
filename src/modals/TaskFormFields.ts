@@ -4,7 +4,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
-import { isTerminalStatus, projectStatuses, stringToColor } from '../utils'
+import { isTerminalStatus, stringToColor } from '../utils'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
   renderSelectControl,
@@ -47,8 +47,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
   const { task, project, plugin, rerender, shownExtras } = ctx
-  const statuses = plugin.settings.statuses
-  const priorities = plugin.settings.priorities
+  const { statuses, priorities } = plugin.store.configFor(project)
   const grid = container.createDiv('pm-prop-grid')
 
   // Type
@@ -117,12 +116,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderSelectControl({
         container: cell,
         value: task.status,
-        options: projectStatuses(project, statuses).map((s) => ({
-          id: s.id,
-          label: s.label,
-          color: s.color,
-          icon: s.icon || undefined
-        })),
+        options: statuses.map((s) => ({ id: s.id, label: s.label, color: s.color, icon: s.icon || undefined })),
         onChange: (id) => {
           task.status = id
           rerender()

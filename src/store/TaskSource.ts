@@ -1,5 +1,5 @@
 import type { Plugin, TFile } from 'obsidian'
-import type { Project, StatusConfig, Task, TaskPriority, TaskStatus } from '../types'
+import type { Project, ResolvedProjectConfig, Task, TaskPriority, TaskStatus } from '../types'
 import type { TaskFileNameConflictError } from './ProjectStore'
 
 export interface ImportNoteOptions {
@@ -19,6 +19,14 @@ export interface TaskSource {
   consumeSelfWrite(path: string): boolean
   ensureFolder(folderPath: string): Promise<void>
 
+  /**
+   * The configuration in effect for a project (statuses, priorities, view and
+   * scheduling behavior), with the project's overrides applied over the
+   * source's defaults. Views and modals must read palettes through this
+   * instead of the global settings.
+   */
+  configFor(project: Project): ResolvedProjectConfig
+
   loadAllProjects(folder: string): Promise<Project[]>
   loadProject(file: TFile): Promise<Project | null>
   loadTaskBody(task: Task): Promise<void>
@@ -28,7 +36,6 @@ export interface TaskSource {
   saveProject(project: Project): Promise<void>
   deleteProject(project: Project): Promise<void>
 
-  addTask(project: Project, parentId?: string | null): Promise<Task>
   insertTask(project: Project, task: Task, parentId?: string | null): Promise<void>
   duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null>
   importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'>
@@ -52,7 +59,8 @@ export interface TaskSource {
   archiveTask(project: Project, taskId: string): Promise<void>
   unarchiveTask(project: Project, taskId: string): Promise<void>
 
-  scheduleAfterChange(project: Project, changedTaskId?: string, statuses?: StatusConfig[]): Promise<number>
+  /** Runs dependency-based auto-scheduling; a no-op when the project's config disables it. */
+  scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number>
   saveTaskAttachment(project: Project, task: Task, fileName: string, data: ArrayBuffer): Promise<TFile>
   findTaskFileConflict(project: Project, task: Task): TaskFileNameConflictError | null
 }

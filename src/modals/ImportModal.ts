@@ -1,6 +1,6 @@
 import { App, Modal, TFile, Notice } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Project, TaskStatus, TaskPriority } from '../types'
+import type { PriorityConfig, Project, StatusConfig, TaskStatus, TaskPriority } from '../types'
 import { getDefaultStatusId, getDefaultPriorityId } from '../utils'
 import {
   ensurePaletteEntries,
@@ -44,7 +44,16 @@ export class ImportModal extends Modal {
     this.defaultPriority = getDefaultPriorityId(plugin.settings.priorities)
   }
 
+  /** Palettes in effect for the import target; the global ones until setProject has run. */
+  private get palettes(): { statuses: StatusConfig[]; priorities: PriorityConfig[] } {
+    return this.project ? this.plugin.store.configFor(this.project) : this.plugin.settings
+  }
+
   onOpen(): void {
+    const palettes = this.palettes
+    this.defaultStatus = getDefaultStatusId(palettes.statuses)
+    this.defaultPriority = getDefaultPriorityId(palettes.priorities)
+
     const { contentEl } = this
     contentEl.empty()
     contentEl.addClass('import-modal')
@@ -159,7 +168,7 @@ export class ImportModal extends Modal {
 
     const statusSelect = statusGroup.createEl('select')
 
-    this.plugin.settings.statuses.forEach((s) => {
+    this.palettes.statuses.forEach((s) => {
       const option = statusSelect.createEl('option', { text: s.label })
       option.value = s.id
       if (s.id === this.defaultStatus) option.selected = true
@@ -175,7 +184,7 @@ export class ImportModal extends Modal {
 
     const prioritySelect = priorityGroup.createEl('select')
 
-    this.plugin.settings.priorities.forEach((p) => {
+    this.palettes.priorities.forEach((p) => {
       const option = prioritySelect.createEl('option', { text: p.label })
       option.value = p.id
       if (p.id === this.defaultPriority) option.selected = true

@@ -47,7 +47,7 @@ export class Notifier {
       for (const { task } of flat) {
         const due = parsePlainDate(task.due)
         if (!due) continue
-        if (isTerminalStatus(task.status, this.plugin.settings.statuses)) continue
+        if (isTerminalStatus(task.status, this.plugin.store.configFor(project).statuses)) continue
 
         const cmpToToday = Temporal.PlainDate.compare(due, now)
         const isOverdue = cmpToToday < 0

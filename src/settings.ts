@@ -1,38 +1,12 @@
-import { AbstractInputSuggest, App, PluginSettingTab, Setting, Notice, getIconIds, setIcon } from 'obsidian'
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian'
 import type PMPlugin from './main'
 import { PMSettings, DEFAULT_SETTINGS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
 import { getTaskNotesApi, importTaskNotesPalettes, isTaskNotesInstalled } from './integrations/tasknotes'
+import { renderPriorityListEditor, renderStatusListEditor } from './ui/PaletteListEditor'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
-
-/** Suggests Lucide icon ids for the status/priority icon inputs. Typed emoji are kept as-is. */
-class IconSuggest extends AbstractInputSuggest<string> {
-  protected getSuggestions(query: string): string[] {
-    const q = query.trim().toLowerCase()
-    if (!q) return []
-    return getIconIds()
-      .filter((id) => id.includes(q))
-      .slice(0, 24)
-  }
-
-  renderSuggestion(id: string, el: HTMLElement): void {
-    el.addClass('pm-icon-suggestion')
-    setIcon(el.createSpan({ cls: 'pm-icon-suggestion-glyph' }), id)
-    el.createSpan({ text: id })
-  }
-}
-
-/** Wire icon-name suggestions to an icon input; picking a suggestion saves through the input's change handler. */
-function attachIconSuggest(app: App, input: HTMLInputElement): void {
-  const suggest = new IconSuggest(app, input)
-  suggest.onSelect((id) => {
-    suggest.setValue(id)
-    input.dispatchEvent(new Event('change'))
-    suggest.close()
-  })
-}
 
 export class PMSettingTab extends PluginSettingTab {
   plugin: PMPlugin
@@ -318,6 +292,9 @@ export class PMSettingTab extends PluginSettingTab {
     const projects = await this.plugin.store.loadAllProjects(folder)
     let remapped = 0
     for (const project of projects) {
+      // A project that defines this status or priority itself is unaffected by the global delete.
+      const own = field === 'status' ? project.config?.statuses : project.config?.priorities
+      if (own?.some((entry) => entry.id === deletedId)) continue
       const ids = flattenTasks(project.tasks)
         .filter(({ task }) => task[field] === deletedId)
         .map(({ task }) => task.id)
@@ -331,134 +308,21 @@ export class PMSettingTab extends PluginSettingTab {
     }
   }
 
-  /** Wire drag-to-reorder on a config row; on drop, moves the dragged item to this row's index. */
-  private wireRowDragReorder<T>(row: HTMLElement, index: number, items: T[], rerender: () => void): void {
-    row.createSpan({ text: '⠿', cls: 'pm-settings-drag-handle' })
-    row.draggable = true
-    row.addEventListener('dragstart', (e) => {
-      e.dataTransfer?.setData('text/plain', String(index))
-      row.addClass('pm-settings-row--dragging')
-    })
-    row.addEventListener('dragend', () => {
-      row.removeClass('pm-settings-row--dragging')
-    })
-    row.addEventListener('dragover', (e) => {
-      e.preventDefault()
-    })
-    row.addEventListener('drop', (e) => {
-      e.preventDefault()
-      const fromIdx = parseInt(e.dataTransfer?.getData('text/plain') ?? '', 10)
-      if (isNaN(fromIdx) || fromIdx === index) return
-      const [moved] = items.splice(fromIdx, 1)
-      items.splice(index, 0, moved)
-      void this.plugin.saveSettings()
-      rerender()
-    })
-  }
-
   private renderStatusList(container: HTMLElement): void {
-    container.empty()
-    this.plugin.settings.statuses.forEach((s, i) => {
-      const row = container.createDiv('pm-settings-status-row')
-
-      this.wireRowDragReorder(row, i, this.plugin.settings.statuses, () => this.renderStatusList(container))
-
-      // Icon input: emoji or a Lucide icon id (with suggestions)
-      const icon = row.createEl('input', { type: 'text', value: s.icon })
-      icon.addClass('pm-settings-status-icon')
-      icon.placeholder = ''
-      attachIconSuggest(this.app, icon)
-      icon.addEventListener('change', () => {
-        this.plugin.settings.statuses[i].icon = icon.value
-        void this.plugin.saveSettings()
-      })
-
-      // Label input
-      const label = row.createEl('input', { type: 'text', value: s.label })
-      label.addClass('pm-settings-status-label')
-      label.addEventListener('change', () => {
-        this.plugin.settings.statuses[i].label = label.value
-        void this.plugin.saveSettings()
-      })
-
-      // Color picker
-      const color = row.createEl('input', { type: 'color', value: s.color })
-      color.addEventListener('change', () => {
-        this.plugin.settings.statuses[i].color = color.value
-        void this.plugin.saveSettings()
-      })
-
-      // Complete toggle
-      const completeLabel = row.createEl('label', { cls: 'pm-settings-complete-toggle' })
-      const checkbox = completeLabel.createEl('input', { type: 'checkbox' })
-      checkbox.checked = s.complete
-      completeLabel.createSpan({ text: 'Done', cls: 'pm-settings-complete-text' })
-      checkbox.addEventListener('change', () => {
-        this.plugin.settings.statuses[i].complete = checkbox.checked
-        void this.plugin.saveSettings()
-      })
-
-      // Delete button
-      const del = row.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-      del.addEventListener('click', () => {
-        if (this.plugin.settings.statuses.length <= 1) {
-          new Notice('You must have at least one status.')
-          return
-        }
-        const deletedStatus = this.plugin.settings.statuses[i]
-        this.plugin.settings.statuses.splice(i, 1)
-        void this.plugin.saveSettings()
-        this.renderStatusList(container)
-        void this.remapOrphanTasks('status', deletedStatus.id, deletedStatus.label)
-      })
+    renderStatusListEditor(container, {
+      app: this.app,
+      statuses: this.plugin.settings.statuses,
+      onChanged: () => void this.plugin.saveSettings(),
+      onDeleted: (deleted) => void this.remapOrphanTasks('status', deleted.id, deleted.label)
     })
   }
 
   private renderPriorityList(container: HTMLElement): void {
-    container.empty()
-    this.plugin.settings.priorities.forEach((p, i) => {
-      const row = container.createDiv('pm-settings-status-row')
-
-      this.wireRowDragReorder(row, i, this.plugin.settings.priorities, () => this.renderPriorityList(container))
-
-      // Icon input: emoji or a Lucide icon id (with suggestions)
-      const icon = row.createEl('input', { type: 'text', value: p.icon })
-      icon.addClass('pm-settings-status-icon')
-      icon.placeholder = ''
-      attachIconSuggest(this.app, icon)
-      icon.addEventListener('change', () => {
-        this.plugin.settings.priorities[i].icon = icon.value
-        void this.plugin.saveSettings()
-      })
-
-      // Label input
-      const label = row.createEl('input', { type: 'text', value: p.label })
-      label.addClass('pm-settings-status-label')
-      label.addEventListener('change', () => {
-        this.plugin.settings.priorities[i].label = label.value
-        void this.plugin.saveSettings()
-      })
-
-      // Color picker
-      const color = row.createEl('input', { type: 'color', value: p.color })
-      color.addEventListener('change', () => {
-        this.plugin.settings.priorities[i].color = color.value
-        void this.plugin.saveSettings()
-      })
-
-      // Delete button
-      const del = row.createEl('button', { text: '✕', cls: 'pm-settings-del' })
-      del.addEventListener('click', () => {
-        if (this.plugin.settings.priorities.length <= 1) {
-          new Notice('You must have at least one priority.')
-          return
-        }
-        const deletedPriority = this.plugin.settings.priorities[i]
-        this.plugin.settings.priorities.splice(i, 1)
-        void this.plugin.saveSettings()
-        this.renderPriorityList(container)
-        void this.remapOrphanTasks('priority', deletedPriority.id, deletedPriority.label)
-      })
+    renderPriorityListEditor(container, {
+      app: this.app,
+      priorities: this.plugin.settings.priorities,
+      onChanged: () => void this.plugin.saveSettings(),
+      onDeleted: (deleted) => void this.remapOrphanTasks('priority', deleted.id, deleted.label)
     })
   }
 }

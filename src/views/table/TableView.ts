@@ -129,9 +129,9 @@ export class TableView implements SubView {
           break
         case 'set-due-date':
           await this.plugin.store.updateTasks(this.project, ids, { due: action.due })
-          if (this.plugin.settings.autoSchedule) {
+          if (this.plugin.store.configFor(this.project).autoSchedule) {
             for (const id of ids) {
-              await this.plugin.store.scheduleAfterChange(this.project, id, this.plugin.settings.statuses)
+              await this.plugin.store.scheduleAfterChange(this.project, id)
             }
           }
           break
@@ -186,10 +186,13 @@ export class TableView implements SubView {
   }
 
   private makeTableContext() {
+    const config = this.plugin.store.configFor(this.project)
     return {
       container: this.container,
       project: this.project,
       plugin: this.plugin,
+      statuses: config.statuses,
+      priorities: config.priorities,
       state: this.state,
       onRefresh: this.onRefresh,
       onSelectionChange: () => {

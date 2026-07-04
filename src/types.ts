@@ -69,8 +69,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
-  /** Status ids this project uses. Undefined or empty = all global statuses. */
-  enabledStatuses?: string[]
+  /** Per-project overrides for the global settings. Absent fields inherit. */
+  config?: ProjectConfig
   /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
   taskIndex: TaskIndex
 }
@@ -105,6 +105,33 @@ export interface StatusConfig {
   color: string
   icon: string
   complete: boolean
+}
+
+/**
+ * The settings a project may override in its own file. Every field is
+ * optional; an absent field falls back to the global plugin settings.
+ */
+export interface ProjectConfig {
+  statuses?: StatusConfig[]
+  priorities?: PriorityConfig[]
+  defaultView?: ViewMode
+  autoSchedule?: boolean
+  kanbanShowSubtasks?: boolean
+  kanbanShowDescriptionPreview?: boolean
+}
+
+/**
+ * A project's configuration with every fallback applied, as returned by
+ * `TaskSource.configFor`. Views and modals read this instead of the global
+ * settings so alternative task sources can supply their own catalogs.
+ */
+export interface ResolvedProjectConfig {
+  statuses: StatusConfig[]
+  priorities: PriorityConfig[]
+  defaultView: ViewMode
+  autoSchedule: boolean
+  kanbanShowSubtasks: boolean
+  kanbanShowDescriptionPreview: boolean
 }
 
 export interface PriorityConfig {

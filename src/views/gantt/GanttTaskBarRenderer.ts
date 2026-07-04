@@ -27,7 +27,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     return
   }
 
-  const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
+  const statusConfig = getStatusConfig(ctx.statuses, task.status)
   const color = statusConfig?.color ?? getComputedStyle(ctx.svgEl).getPropertyValue('--interactive-accent').trim()
   const rowY = HEADER_HEIGHT + row * ROW_HEIGHT
   const y = rowY + BAR_PADDING
@@ -277,9 +277,7 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
         console.error('GanttTaskBarRenderer: click-to-set-dates failed', err)
         return
       }
-      if (ctx.plugin.settings.autoSchedule) {
-        await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id, ctx.plugin.settings.statuses)
-      }
+      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id)
       await ctx.onRefresh()
     })
   )
@@ -331,7 +329,7 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
     const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
     if (!date) continue
     const x = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2
-    const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
+    const statusConfig = getStatusConfig(ctx.statuses, task.status)
     const color = statusConfig?.color ?? getComputedStyle(ctx.svgEl).getPropertyValue('--interactive-accent').trim()
 
     const totalH = HEADER_HEIGHT + ctx.flatTasks.filter((f) => f.visible || f.depth === 0).length * ROW_HEIGHT

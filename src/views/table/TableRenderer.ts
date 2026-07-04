@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { Project, FilterState } from '../../types'
+import type { Project, FilterState, PriorityConfig, StatusConfig } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
@@ -39,6 +39,10 @@ export interface TableContext {
   container: HTMLElement
   project: Project
   plugin: PMPlugin
+  /** Status definitions in effect for this project, computed once per render pass. */
+  statuses: StatusConfig[]
+  /** Priority definitions in effect for this project, computed once per render pass. */
+  priorities: PriorityConfig[]
   state: TableState
   onRefresh: () => Promise<void>
   onSelectionChange: () => void
@@ -146,7 +150,7 @@ function fillTableBody(ctx: TableContext): void {
 
   let flat = flattenTasks(ctx.project.tasks)
   const hasActiveFilter = isFilterActive(ctx.state.filter)
-  flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.plugin.settings.statuses)
+  flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.statuses)
 
   const filteredIds = new Set(flat.map((f) => f.task.id))
 
@@ -170,9 +174,7 @@ function fillTableBody(ctx: TableContext): void {
     list.push(f)
   }
   for (const list of childrenByParent.values()) {
-    list.sort((a, b) =>
-      compareTask(a.task, b.task, ctx.state, ctx.plugin.settings.statuses, ctx.plugin.settings.priorities)
-    )
+    list.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.statuses, ctx.priorities))
   }
 
   const sorted: FlatTask[] = []

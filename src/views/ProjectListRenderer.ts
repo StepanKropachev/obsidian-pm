@@ -40,8 +40,9 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
 
   const grid = ctx.contentEl.createDiv('pm-project-grid')
   for (const project of projects) {
-    const total = countTasks(project.tasks, false, ctx.plugin.settings.statuses)
-    const done = countTasks(project.tasks, true, ctx.plugin.settings.statuses)
+    const statuses = ctx.plugin.store.configFor(project).statuses
+    const total = countTasks(project.tasks, false, statuses)
+    const done = countTasks(project.tasks, true, statuses)
     new ProjectCard(grid, {
       title: project.title,
       icon: project.icon,

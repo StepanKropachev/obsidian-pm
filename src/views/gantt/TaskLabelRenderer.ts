@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { Project, Task } from '../../types'
+import type { Project, StatusConfig, Task } from '../../types'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { getStatusConfig, safeAsync } from '../../utils'
@@ -8,6 +8,7 @@ import { ROW_HEIGHT } from './TimelineConfig'
 export interface LabelContext {
   plugin: PMPlugin
   project: Project
+  statuses: StatusConfig[]
   onRefresh: () => Promise<void>
 }
 
@@ -70,7 +71,7 @@ export function renderTaskLabel(
   }
 
   // Color dot
-  const statusConfig = getStatusConfig(ctx.plugin.settings.statuses, task.status)
+  const statusConfig = getStatusConfig(ctx.statuses, task.status)
   const dot = el.createSpan({ cls: 'pm-gantt-label-dot' })
   dot.style.background = statusConfig?.color ?? 'var(--text-muted)'
 

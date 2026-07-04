@@ -2,7 +2,7 @@ import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
 import { findTaskById } from '../../store/TaskIndex'
-import { formatBadgeText, projectStatuses } from '../../utils'
+import { formatBadgeText } from '../../utils'
 import { today } from '../../dates'
 import { promptText } from '../../ui/ModalFactory'
 import { TaskPickerModal } from '../../modals/PickerModals'
@@ -62,7 +62,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   // Status button
   new ButtonComponent(left).setButtonText('Set status').onClick((e) => {
     const menu = new Menu()
-    for (const s of projectStatuses(ctx.project, ctx.plugin.settings.statuses)) {
+    for (const s of ctx.statuses) {
       menu.addItem((item) =>
         item.setTitle(formatBadgeText(s.icon, s.label)).onClick(() => onAction({ type: 'set-status', status: s.id }))
       )
@@ -73,7 +73,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   // Priority button
   new ButtonComponent(left).setButtonText('Set priority').onClick((e) => {
     const menu = new Menu()
-    for (const p of ctx.plugin.settings.priorities) {
+    for (const p of ctx.priorities) {
       menu.addItem((item) =>
         item
           .setTitle(formatBadgeText(p.icon, p.label))

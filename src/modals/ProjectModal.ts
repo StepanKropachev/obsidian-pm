@@ -1,10 +1,10 @@
-import { App, ButtonComponent, Modal, Notice } from 'obsidian'
+import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, CustomFieldDef, makeId, makeProject } from '../types'
+import { Project, ProjectConfig, CustomFieldDef, makeId, makeProject } from '../types'
 import { rebuildTaskIndex } from '../store'
-import { formatBadgeText, safeAsync } from '../utils'
+import { safeAsync } from '../utils'
 import { Avatar } from '../ui/primitives/Avatar'
-import { renderStatusDot } from '../ui/StatusBadge'
+import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
 
 const PROJECT_COLORS = [
   '#8b72be',
@@ -212,36 +212,77 @@ export class ProjectModal extends Modal {
     renderCFs()
 
     // ── Statuses ──────────────────────────────────────────────────────────────
-    const statusSection = el.createDiv('pm-modal-section')
-    const statusHeader = statusSection.createDiv('pm-modal-section-header')
-    statusHeader.createSpan({ text: 'Statuses', cls: 'pm-modal-subheading' })
-    statusHeader.createSpan({ text: 'Which statuses this project uses', cls: 'pm-modal-hint' })
+    this.renderPaletteOverride(el, {
+      heading: 'Statuses',
+      hint: 'The workflow for this project',
+      toggleLabel: 'Use custom statuses instead of the global ones',
+      addLabel: '+ add status',
+      get: () => this.project.config?.statuses,
+      set: (statuses) => this.patchConfig('statuses', statuses),
+      copyGlobal: () => this.plugin.settings.statuses.map((s) => ({ ...s })),
+      makeEntry: () => ({
+        id: 'status-' + makeId().slice(0, 6),
+        label: 'New status',
+        color: '#8a94a0',
+        icon: '',
+        complete: false
+      }),
+      renderEditor: (container, statuses) =>
+        renderStatusListEditor(container, {
+          app: this.app,
+          statuses,
+          // The modal edits a clone; everything persists on Save.
+          onChanged: () => {}
+        })
+    })
 
-    const allStatuses = this.plugin.settings.statuses
-    const enabledSet = new Set(
-      this.project.enabledStatuses?.length ? this.project.enabledStatuses : allStatuses.map((s) => s.id)
-    )
-    const statusList = statusSection.createDiv('pm-status-toggle-list')
-    for (const s of allStatuses) {
-      const row = statusList.createEl('label', { cls: 'pm-status-toggle' })
-      const checkbox = row.createEl('input', { type: 'checkbox' })
-      checkbox.checked = enabledSet.has(s.id)
-      renderStatusDot(row, s.id, allStatuses, 'pm-status-toggle-dot')
-      row.createSpan({ text: formatBadgeText(s.icon, s.label) })
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          enabledSet.add(s.id)
-        } else if (enabledSet.size === 1) {
-          checkbox.checked = true
-          new Notice('A project needs at least one status.')
-          return
-        } else {
-          enabledSet.delete(s.id)
-        }
-        // All enabled is stored as "no selection" so new global statuses show up automatically.
-        this.project.enabledStatuses = enabledSet.size === allStatuses.length ? undefined : [...enabledSet]
-      })
-    }
+    // ── Priorities ────────────────────────────────────────────────────────────
+    this.renderPaletteOverride(el, {
+      heading: 'Priorities',
+      hint: 'The priority scale for this project',
+      toggleLabel: 'Use custom priorities instead of the global ones',
+      addLabel: '+ add priority',
+      get: () => this.project.config?.priorities,
+      set: (priorities) => this.patchConfig('priorities', priorities),
+      copyGlobal: () => this.plugin.settings.priorities.map((p) => ({ ...p })),
+      makeEntry: () => ({
+        id: 'priority-' + makeId().slice(0, 6),
+        label: 'New priority',
+        color: '#8a94a0',
+        icon: ''
+      }),
+      renderEditor: (container, priorities) =>
+        renderPriorityListEditor(container, {
+          app: this.app,
+          priorities,
+          onChanged: () => {}
+        })
+    })
+
+    // ── View & scheduling overrides ──────────────────────────────────────────
+    const behaviorSection = el.createDiv('pm-modal-section')
+    const behaviorHeader = behaviorSection.createDiv('pm-modal-section-header')
+    behaviorHeader.createSpan({ text: 'View & scheduling', cls: 'pm-modal-subheading' })
+    behaviorHeader.createSpan({ text: 'Overrides for this project', cls: 'pm-modal-hint' })
+    const behaviorGrid = behaviorSection.createDiv('pm-config-override-grid')
+
+    this.renderOverrideSelect(behaviorGrid, 'Default view', 'defaultView', [
+      { value: 'table', label: 'Table' },
+      { value: 'gantt', label: 'Gantt' },
+      { value: 'kanban', label: 'Board' }
+    ])
+    this.renderOverrideSelect(behaviorGrid, 'Auto-schedule', 'autoSchedule', [
+      { value: true, label: 'On' },
+      { value: false, label: 'Off' }
+    ])
+    this.renderOverrideSelect(behaviorGrid, 'Subtasks on board', 'kanbanShowSubtasks', [
+      { value: true, label: 'Show' },
+      { value: false, label: 'Hide' }
+    ])
+    this.renderOverrideSelect(behaviorGrid, 'Description preview on board', 'kanbanShowDescriptionPreview', [
+      { value: true, label: 'Show' },
+      { value: false, label: 'Hide' }
+    ])
 
     // ── Footer ────────────────────────────────────────────────────────────────
     const footer = el.createDiv('pm-modal-footer')
@@ -272,6 +313,81 @@ export class ProjectModal extends Modal {
           this.close()
         })
       )
+  }
+
+  /** Set or clear one override; the config object is dropped entirely when its last field clears. */
+  private patchConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K] | undefined): void {
+    const entries = Object.entries({ ...this.project.config, [key]: value }).filter(([, v]) => v !== undefined)
+    this.project.config = entries.length ? Object.fromEntries(entries) : undefined
+  }
+
+  private renderPaletteOverride<T>(
+    el: HTMLElement,
+    opts: {
+      heading: string
+      hint: string
+      toggleLabel: string
+      addLabel: string
+      get: () => T[] | undefined
+      set: (items: T[] | undefined) => void
+      copyGlobal: () => T[]
+      makeEntry: () => T
+      renderEditor: (container: HTMLElement, items: T[]) => void
+    }
+  ): void {
+    const section = el.createDiv('pm-modal-section')
+    const header = section.createDiv('pm-modal-section-header')
+    header.createSpan({ text: opts.heading, cls: 'pm-modal-subheading' })
+    header.createSpan({ text: opts.hint, cls: 'pm-modal-hint' })
+
+    const toggle = section.createEl('label', { cls: 'pm-status-toggle' })
+    const checkbox = toggle.createEl('input', { type: 'checkbox' })
+    checkbox.checked = !!opts.get()?.length
+    toggle.createSpan({ text: opts.toggleLabel })
+
+    const editor = section.createDiv('pm-settings-statuses')
+    const footer = section.createDiv()
+    const renderEditor = () => {
+      editor.empty()
+      footer.empty()
+      const own = opts.get()
+      if (!own?.length) return
+      opts.renderEditor(editor, own)
+      const addBtn = footer.createEl('button', { text: opts.addLabel, cls: 'pm-prop-add-btn' })
+      addBtn.addEventListener('click', () => {
+        own.push(opts.makeEntry())
+        renderEditor()
+      })
+    }
+    checkbox.addEventListener('change', () => {
+      // Starting from a copy of the global list keeps existing task values valid.
+      opts.set(checkbox.checked ? opts.copyGlobal() : undefined)
+      renderEditor()
+    })
+    renderEditor()
+  }
+
+  private renderOverrideSelect<
+    K extends 'defaultView' | 'autoSchedule' | 'kanbanShowSubtasks' | 'kanbanShowDescriptionPreview'
+  >(
+    grid: HTMLElement,
+    label: string,
+    key: K,
+    options: { value: NonNullable<ProjectConfig[K]>; label: string }[]
+  ): void {
+    const row = grid.createDiv('pm-config-override-row')
+    row.createEl('label', { text: label, cls: 'pm-label' })
+    const select = row.createEl('select', { cls: 'pm-input pm-select' })
+    const current = this.project.config?.[key]
+    const inherit = select.createEl('option', { value: '', text: 'Use global' })
+    inherit.selected = current === undefined
+    options.forEach((opt, i) => {
+      const optionEl = select.createEl('option', { value: String(i), text: opt.label })
+      if (current === opt.value) optionEl.selected = true
+    })
+    select.addEventListener('change', () => {
+      this.patchConfig(key, select.value === '' ? undefined : options[Number(select.value)].value)
+    })
   }
 
   private renderCustomFieldEditor(

@@ -1,7 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
 import type PMPlugin from '../main'
 import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId } from '../types'
-import { truncateTitle, safeAsync, projectStatuses } from '../utils'
+import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
 import type { TableViewState } from './table/TableView'
@@ -36,6 +36,8 @@ export class ProjectView extends ItemView {
   private fileModifyRef: EventRef | null = null
   private reloadDebounceTimer: number | null = null
   private initialized = false
+  /** File path whose default view mode has been applied, so reloads don't reset a user's mode switch. */
+  private defaultViewAppliedFor: string | null = null
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf)
@@ -156,6 +158,10 @@ export class ProjectView extends ItemView {
       return
     }
     this.plugin.applyCollapsedState(this.project)
+    if (this.defaultViewAppliedFor !== this.filePath) {
+      this.defaultViewAppliedFor = this.filePath
+      this.currentView = this.plugin.store.configFor(this.project).defaultView
+    }
     this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.renderProjectToolbar()
@@ -196,10 +202,11 @@ export class ProjectView extends ItemView {
   private renderProjectHeader(): void {
     if (!this.project) return
     this.headerEl.empty()
+    const config = this.plugin.store.configFor(this.project)
     this.header = new ProjectHeader(this.headerEl, {
       project: this.project,
-      statuses: projectStatuses(this.project, this.plugin.settings.statuses),
-      priorities: this.plugin.settings.priorities,
+      statuses: config.statuses,
+      priorities: config.priorities,
       filter: this.filter,
       activeSavedViewId: this.activeSavedViewId,
       onFilterChange: () => this.handleFilterMutation(),

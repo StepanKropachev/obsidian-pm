@@ -52,9 +52,10 @@ export class TaskModal extends Modal {
         this.parentId = entry?.parentId ?? null
       }
     } else {
+      const config = plugin.store.configFor(project)
       this.task = makeTask({
-        status: getDefaultStatusId(plugin.settings.statuses),
-        priority: getDefaultPriorityId(plugin.settings.priorities),
+        status: getDefaultStatusId(config.statuses),
+        priority: getDefaultPriorityId(config.priorities),
         type: parentId ? 'subtask' : 'task',
         ...defaults
       })
@@ -138,9 +139,7 @@ export class TaskModal extends Modal {
     } else {
       await this.plugin.store.updateTask(this.project, this.task.id, this.task)
     }
-    if (this.plugin.settings.autoSchedule) {
-      await this.plugin.store.scheduleAfterChange(this.project, this.task.id, this.plugin.settings.statuses)
-    }
+    await this.plugin.store.scheduleAfterChange(this.project, this.task.id)
     await this.onSave(this.task)
   }
 
@@ -218,7 +217,7 @@ export class TaskModal extends Modal {
 
     // ── Header: breadcrumb · overflow · close ───────────────────────────────
     const header = contentEl.createDiv('pm-te-header')
-    const prio = getPriorityConfig(this.plugin.settings.priorities, this.task.priority)
+    const prio = getPriorityConfig(this.plugin.store.configFor(this.project).priorities, this.task.priority)
     if (prio?.color) header.setCssProps({ '--pm-accent-strip': prio.color })
     const crumb = header.createDiv('pm-te-crumb')
     if (this.project.icon) {
@@ -487,7 +486,7 @@ export class TaskModal extends Modal {
     }
 
     // ── Subtasks ────────────────────────────────────────────────────────────
-    renderSubtasksPanel(body, this.task, this.plugin)
+    renderSubtasksPanel(body, this.task, this.plugin, this.plugin.store.configFor(this.project).statuses)
 
     // ── Time tracking ─────────────────────────────────────────────────────────
     renderTimeTrackingPanel(body, this.task)

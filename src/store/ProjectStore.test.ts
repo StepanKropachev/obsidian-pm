@@ -2,10 +2,10 @@ import type { App } from 'obsidian'
 import { TFile } from 'obsidian'
 import { describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
-import { makeTask, type Project, type StatusConfig, type Task } from '../types'
+import { DEFAULT_SETTINGS, makeTask, type PMSettings, type Project, type StatusConfig, type Task } from '../types'
 import { ProjectStore } from './ProjectStore'
 import { buildTaskIndex } from './TaskIndex'
-import { flattenTasks } from './TaskTreeOps'
+import { findTask, flattenTasks } from './TaskTreeOps'
 
 const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
   if (value == null) throw new Error(message)
@@ -18,9 +18,11 @@ const STATUSES: StatusConfig[] = [
   { id: 'done', label: 'Done', color: '#0a0', icon: 'check', complete: true }
 ]
 
+const SETTINGS: PMSettings = { ...DEFAULT_SETTINGS, statuses: STATUSES }
+
 function newStore(): { store: ProjectStore; vault: FakeVault; app: App } {
   const { app, vault } = makeFakeApp()
-  const store = new ProjectStore(app as unknown as App, () => STATUSES)
+  const store = new ProjectStore(app as unknown as App, () => SETTINGS)
   return { store, vault, app: app as unknown as App }
 }
 
@@ -182,7 +184,7 @@ describe('ProjectStore round-trip', () => {
     const childOfA = await addNamed(store, project, 'Sub of design', a.id)
 
     // Fresh store, same vault. Reload from disk.
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(file)
@@ -299,7 +301,7 @@ describe('ProjectStore completion date', () => {
     const task = await addNamed(store, project, 'Archive me')
     await store.updateTask(project, task.id, { status: 'done' })
 
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(file)
@@ -437,7 +439,7 @@ describe('ProjectStore metadataCache fast path', () => {
       title: 'task',
       projectId: project.id
     })
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const projectFile = vault.getAbstractFileByPath(project.filePath)
     if (!(projectFile instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(projectFile)
@@ -462,7 +464,7 @@ describe('ProjectStore metadataCache fast path', () => {
       title: 'preserve me',
       projectId: project.id
     })
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const projectFile = vault.getAbstractFileByPath(project.filePath)
     if (!(projectFile instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(projectFile)
@@ -491,7 +493,7 @@ describe('ProjectStore metadataCache fast path', () => {
       title: 'editable',
       projectId: project.id
     })
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const projectFile = vault.getAbstractFileByPath(project.filePath)
     if (!(projectFile instanceof TFile)) throw new Error('project file missing')
     const reloaded = await store2.loadProject(projectFile)
@@ -579,7 +581,7 @@ describe('ProjectStore task index', () => {
     await addNamed(store, project, 'Child', a.id)
     await addNamed(store, project, 'Beta')
 
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('missing file')
     const reloaded = await store2.loadProject(file)
@@ -597,7 +599,7 @@ describe('ProjectStore editor subtask save', () => {
   const reload = async (app: App, vault: FakeVault, path: string): Promise<Project> => {
     const file = vault.getAbstractFileByPath(path)
     if (!(file instanceof TFile)) throw new Error('missing file')
-    return expectDefined(await new ProjectStore(app, () => STATUSES).loadProject(file))
+    return expectDefined(await new ProjectStore(app, () => SETTINGS).loadProject(file))
   }
 
   it('persists a subtask added through updateTask (the task editor save path)', async () => {
@@ -821,7 +823,7 @@ describe('ProjectStore.importNoteAsTask', () => {
 
   it('imported tasks appear as top-level tasks on the next project load', async () => {
     const { vault, app, project } = await importInto('move')
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = expectDefined(await store2.loadProject(file))
@@ -863,7 +865,7 @@ describe('ProjectStore.importTaskForest', () => {
     expect(count).toBe(2)
     expect(vault.getAbstractFileByPath('Notes/Parent.md')).toBeNull()
 
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = expectDefined(await store2.loadProject(file))
@@ -885,30 +887,70 @@ describe('ProjectStore.importTaskForest', () => {
   })
 })
 
-describe('per-project enabled statuses', () => {
-  it('round-trips enabledStatuses through the project file', async () => {
+describe('per-project config', () => {
+  it('round-trips the config overrides through the project file', async () => {
     const { store, vault, app } = newStore()
-    const project = await store.createProject('Subset', 'Projects')
-    project.enabledStatuses = ['todo', 'done']
+    const project = await store.createProject('Custom', 'Projects')
+    project.config = {
+      statuses: [
+        { id: 'idea', label: 'Idea', color: '#888888', icon: '', complete: false },
+        { id: 'shipped', label: 'Shipped', color: '#00aa00', icon: '', complete: true }
+      ],
+      priorities: [
+        { id: 'urgent', label: 'Urgent', color: '#ff0000', icon: '' },
+        { id: 'later', label: 'Later', color: '#888888', icon: '' }
+      ],
+      defaultView: 'kanban',
+      autoSchedule: false
+    }
     await store.saveProject(project)
 
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
     const reloaded = expectDefined(await store2.loadProject(file))
-    expect(reloaded.enabledStatuses).toEqual(['todo', 'done'])
+    expect(reloaded.config).toEqual(project.config)
   })
 
-  it('omits the frontmatter key when no subset is selected', async () => {
+  it('omits the frontmatter key when the project overrides nothing', async () => {
     const { store, vault, app } = newStore()
-    const project = await store.createProject('All', 'Projects')
+    const project = await store.createProject('Inherit', 'Projects')
     await store.saveProject(project)
 
-    const store2 = new ProjectStore(app, () => STATUSES)
+    const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
-    expect(await vault.read(file)).not.toContain('enabledStatuses')
+    expect(await vault.read(file)).not.toContain('config:')
     const reloaded = expectDefined(await store2.loadProject(file))
-    expect(reloaded.enabledStatuses).toBeUndefined()
+    expect(reloaded.config).toBeUndefined()
+  })
+
+  it('stamps completion using the project-defined complete flag', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Flags', 'Projects')
+    project.config = {
+      statuses: [
+        { id: 'idea', label: 'Idea', color: '#888888', icon: '', complete: false },
+        { id: 'shipped', label: 'Shipped', color: '#00aa00', icon: '', complete: true }
+      ]
+    }
+    const task = await addNamed(store, project, 'Ship it')
+    await store.updateTask(project, task.id, { status: 'shipped' })
+    expect(expectDefined(findTask(project.tasks, task.id)).completed).not.toBe('')
+  })
+
+  it('skips auto-scheduling when the project turns it off', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('NoSched', 'Projects')
+    const a = await addNamed(store, project, 'First')
+    const b = await addNamed(store, project, 'Second')
+    await store.updateTask(project, a.id, { start: '2026-07-06', due: '2026-07-10' })
+    await store.updateTask(project, b.id, { start: '2026-07-01', due: '2026-07-02', dependencies: [a.id] })
+
+    project.config = { autoSchedule: false }
+    expect(await store.scheduleAfterChange(project, a.id)).toBe(0)
+
+    project.config = undefined
+    expect(await store.scheduleAfterChange(project, a.id)).toBeGreaterThan(0)
   })
 })

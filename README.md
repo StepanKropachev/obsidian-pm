@@ -62,7 +62,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
 ### Customization
 - **Custom fields** — Add per-project fields: text, number, date, select, multi-select, person, checkbox, URL.
 - **Custom statuses & priorities** — Edit labels, colors, and icons for each status and priority level.
-- **Per-project statuses** — Each project can limit which statuses it uses, so its board only shows relevant columns. Statuses still in use by tasks always stay visible.
+- **Per-project settings** — A project can define its own statuses and priorities and override the default view, auto-scheduling, and board display options. Project-defined statuses replace the global ones everywhere in that project, from kanban columns to pickers; statuses still in use by tasks always stay visible.
 - **Saved views** — Save filter/sort combinations in Table view and switch between them instantly.
 - **Team roster** — Manage a global team list for assignment across all projects, plus per-project team members.
 

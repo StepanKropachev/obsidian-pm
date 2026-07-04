@@ -320,11 +320,6 @@
   color: var(--text-muted);
 }
 
-.pm-status-toggle-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 .pm-status-toggle {
   display: flex;
   align-items: center;
@@ -332,9 +327,17 @@
   font-size: var(--font-ui-smaller);
   cursor: pointer;
 }
-.pm-status-toggle-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+
+.pm-config-override-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+.pm-config-override-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pm-config-override-row .pm-select {
+  width: 100%;
 }

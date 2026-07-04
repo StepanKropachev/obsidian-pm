@@ -98,9 +98,7 @@ export function handleLinkDotClick(
       console.error('GanttLinkHandler: save failed', err)
       return
     }
-    if (plugin.settings.autoSchedule) {
-      await plugin.store.scheduleAfterChange(project, successorId, plugin.settings.statuses)
-    }
+    await plugin.store.scheduleAfterChange(project, successorId)
     await onRefresh()
   })()
 }

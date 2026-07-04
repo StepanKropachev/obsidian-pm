@@ -1,7 +1,6 @@
 import { Notice, setIcon } from 'obsidian'
-import type { Project, Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
+import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
 import { today, parsePlainDate, Temporal } from './dates'
-import { flattenTasks } from './store/TaskTreeOps'
 
 /** Deterministic HSL color from a string (e.g. assignee name) */
 export function stringToColor(s: string): string {
@@ -45,18 +44,6 @@ export function getDefaultPriorityId(priorities: PriorityConfig[]): string {
 export function getCompleteStatusId(statuses: StatusConfig[]): string {
   const found = statuses.find((s) => s.complete)
   return found ? found.id : 'done'
-}
-
-/**
- * Statuses available in a project: the enabled subset (all when the project has
- * no selection), plus any status its tasks still use so nothing disappears.
- * Terminal-status checks must keep using the full global list.
- */
-export function projectStatuses(project: Project, statuses: StatusConfig[]): StatusConfig[] {
-  if (!project.enabledStatuses?.length) return statuses
-  const enabled = new Set(project.enabledStatuses)
-  const inUse = new Set(flattenTasks(project.tasks).map((f) => f.task.status))
-  return statuses.filter((s) => enabled.has(s.id) || inUse.has(s.id))
 }
 
 /** Returns the sort index of a status in the config array (999 for unknown) */

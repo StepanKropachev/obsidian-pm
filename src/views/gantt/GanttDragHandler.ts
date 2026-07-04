@@ -119,22 +119,18 @@ export function attachDragHandle(
       plugin.pushUndo({
         undo: async () => {
           await plugin.store.updateTask(project, taskId, { start: oldStart, due: oldDue })
-          if (plugin.settings.autoSchedule) {
+          if (plugin.store.configFor(project).autoSchedule) {
             new Notice('Dates reverted. Dependent task dates may need adjustment.')
           }
           await onRefresh()
         },
         redo: async () => {
           await plugin.store.updateTask(project, taskId, redoPatch)
-          if (plugin.settings.autoSchedule) {
-            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
-          }
+          await plugin.store.scheduleAfterChange(project, taskId)
           await onRefresh()
         }
       })
-      if (plugin.settings.autoSchedule) {
-        await plugin.store.scheduleAfterChange(project, drag.dragTask.id, plugin.settings.statuses)
-      }
+      await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
       await onRefresh()
     })
 
@@ -234,22 +230,18 @@ export function attachBarMove(
       plugin.pushUndo({
         undo: async () => {
           await plugin.store.updateTask(project, taskId, { start: oldStart, due: oldDue })
-          if (plugin.settings.autoSchedule) {
+          if (plugin.store.configFor(project).autoSchedule) {
             new Notice('Dates reverted. Dependent task dates may need adjustment.')
           }
           await onRefresh()
         },
         redo: async () => {
           await plugin.store.updateTask(project, taskId, redoPatch)
-          if (plugin.settings.autoSchedule) {
-            await plugin.store.scheduleAfterChange(project, taskId, plugin.settings.statuses)
-          }
+          await plugin.store.scheduleAfterChange(project, taskId)
           await onRefresh()
         }
       })
-      if (plugin.settings.autoSchedule) {
-        await plugin.store.scheduleAfterChange(project, drag.dragTask.id, plugin.settings.statuses)
-      }
+      await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
       await onRefresh()
     })
 
