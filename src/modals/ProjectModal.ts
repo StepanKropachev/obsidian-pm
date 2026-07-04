@@ -7,6 +7,7 @@ import { renderAddButton } from '../ui/composites/addButton'
 import { Avatar } from '../ui/primitives/Avatar'
 import { IconButton } from '../ui/primitives/IconButton'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
+import { animateModalIn } from '../ui/motion'
 
 const PROJECT_COLORS = [
   '#8b72be',
@@ -55,6 +56,7 @@ export class ProjectModal extends Modal {
 
   onOpen(): void {
     this.modalEl.addClass('pm-modal', 'pm-modal--project')
+    animateModalIn(this.modalEl)
     const el = this.contentEl
     el.empty()
     el.addClass('pm-project-modal')

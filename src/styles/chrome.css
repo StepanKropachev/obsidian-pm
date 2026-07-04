@@ -191,7 +191,10 @@
   overflow: hidden;
   cursor: pointer;
   background: var(--background-secondary);
-  transition: all 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
   position: relative;
 }
 .pm-project-card:hover {
