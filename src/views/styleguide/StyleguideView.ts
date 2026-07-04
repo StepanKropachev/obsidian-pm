@@ -17,6 +17,7 @@ import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectCard } from '../../ui/composites/ProjectCard'
 import { TaskRow } from '../../ui/composites/TaskRow'
+import { renderAddButton } from '../../ui/composites/addButton'
 import { renderAddProperty } from '../../ui/composites/properties'
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
@@ -265,7 +266,8 @@ export class StyleguideView extends ItemView {
     )
     const chipListRow = this.row(sec, 'renderChipList')
     renderChipList(chipListRow, ['design', 'frontend'], { onRemove: noop, onAdd: noop })
-    const addRow = this.row(sec, 'renderAddProperty (the canonical add button)')
+    const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
+    renderAddButton(addRow, 'Add member', noop)
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)
   }
 

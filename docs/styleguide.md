@@ -13,7 +13,7 @@ Before writing any new UI element, find your case here:
 - Need an icon-only button -> `IconButton`
 - Need a toggleable filter button -> `Pill`
 - Need a remove/x button on a token -> `Chip.setRemovable`
-- Need an "+ add" ghost row or button -> the `pm-prop-add` pattern (see `renderAddProperty` and `renderChipList`)
+- Need an "+ add" ghost row or button -> `renderAddButton`
 - Need mutually-exclusive options -> `SegmentedControl` (text) or `ViewSwitcher` (icons)
 - Need a floating panel with inputs -> `Popover` (never hand-rolled absolute positioning)
 - Need a flat action list at the cursor -> Obsidian `Menu`
@@ -98,9 +98,8 @@ Quiet empty placeholder: small icon, one line of muted text, optional CTA.
 
 Mutually-exclusive text options (e.g. the Task / Subtask / Milestone type picker).
 
-- API: `new SegmentedControl(parent, { options: [{id, label, cls?}], active, onChange })`
-- CSS: `pm-segmented`, `pm-segmented-btn`, `--active`
-- Note: hand-rolls `<button>`s; `todos/native-buttons.md` tracks migrating it to native components. Still the thing to use, don't roll your own
+- API: `new SegmentedControl(parent, { options: [{id, label}], active, onChange })`
+- CSS: `pm-segmented` (layout only); the buttons are native `ButtonComponent`s, active gets `setCta()`
 
 ### ViewSwitcher - `ViewSwitcher.ts`
 
@@ -126,12 +125,13 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
 - **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, onClick, onContextMenu. Composes ProgressBar.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
+- **addButton** - `addButton.ts`. `renderAddButton(parent, label, onClick)` -> ghost "+ label" button (`pm-prop-add`). The only way to render an add button.
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
 - **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
 - **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
 - **ProjectHeader** - `ProjectHeader/`. Props: project, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view Pills, save button) and FilterRow (filter dropdowns, due/archived Pills).
 - **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
-- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover), `renderAddProperty` (progressive-disclosure "Add property" with the canonical `pm-prop-add` ghost button), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
+- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
 
 ## Shared widgets (`src/ui/*.ts`)
 
@@ -159,17 +159,10 @@ No wrappers for these:
 
 These exist in the codebase; don't copy them. Each row has a follow-up todo; new code uses the replacement.
 
-| Ad-hoc pattern                                                                           | Where                                                                             | Use instead                                     | Todo                                  |
-| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------- |
-| `pm-gantt-label-dot` hand-rolled dot                                                     | `src/views/gantt/TaskLabelRenderer.ts:74`                                         | `renderStatusDot` (`src/ui/StatusBadge.ts`)     | `todos/ghost-button-consolidation.md` |
-| `pm-subtask-rm` remove buttons                                                           | `src/modals/SubtasksPanel.ts:55`, `src/modals/TimeTrackingPanel.ts:74`            | `IconButton` or `Chip.setRemovable`             | `todos/ghost-button-consolidation.md` |
-| hand-rolled `pm-chip-rm` button                                                          | `src/ui/composites/properties/MultiSelectControl.ts:106`                          | `Chip.setRemovable`                             | `todos/ghost-button-consolidation.md` |
-| `pm-settings-del` delete buttons                                                         | `src/modals/ProjectModal.ts:165`, `src/ui/PaletteListEditor.ts:120`               | `IconButton`                                    | `todos/ghost-button-consolidation.md` |
-| `pm-prop-add-btn`, `pm-table-add-btn`, `pm-gantt-add-task-btn`, `pm-gantt-label-add-btn` | `src/modals/ProjectModal.ts`, `src/views/table/TableRenderer.ts:245`, gantt       | the `pm-prop-add` pattern (`renderAddProperty`) | `todos/ghost-button-consolidation.md` |
-| `import-btn`, `import-btn--secondary`                                                    | `src/modals/ImportModal.ts:145`                                                   | `ButtonComponent`                               | `todos/ghost-button-consolidation.md` |
-| `pm-gantt-zoom-btn` bespoke segmented control                                            | `src/views/gantt/GanttView.ts:98`                                                 | `SegmentedControl`                              | `todos/native-buttons.md`             |
-| new `--pm-*` CSS variables                                                               | `src/styles/variables.css` legacy aliases                                         | Obsidian theme variables                        | `todos/token-unification.md`          |
-| `.pm-pill` vs `.pm-chip` style overlap                                                   | `src/styles/table.css`                                                            | one capsule base (planned)                      | `todos/chip-pill-consolidation.md`    |
+| Ad-hoc pattern                          | Where                                     | Use instead                | Todo                               |
+| --------------------------------------- | ----------------------------------------- | -------------------------- | ---------------------------------- |
+| new `--pm-*` CSS variables              | `src/styles/variables.css` legacy aliases | Obsidian theme variables   | `todos/token-unification.md`       |
+| `.pm-pill` vs `.pm-chip` style overlap  | `src/styles/table.css`                    | one capsule base (planned) | `todos/chip-pill-consolidation.md` |
 
 ## Live gallery
 
