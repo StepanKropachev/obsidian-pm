@@ -36,14 +36,14 @@ function makeTask(): Task {
 }
 
 describe('buildTimelineConfig year granularity', () => {
-  it('centers on the current year with adjacent month padding', () => {
+  it('uses only the current year range', () => {
     const cfg = buildTimelineConfig([makeTask()], 'year')
 
-    expect(cfg.startDate.toString()).toBe('2025-12-01')
-    expect(cfg.endDate.toString()).toBe('2027-02-01')
+    expect(cfg.startDate.toString()).toBe('2026-01-01')
+    expect(cfg.endDate.toString()).toBe('2027-01-01')
     expect(cfg.dayWidth).toBe(DAY_WIDTH.year)
-    expect(cfg.totalDays).toBe(427)
-    expect(cfg.totalWidth).toBe(427 * DAY_WIDTH.year)
+    expect(cfg.totalDays).toBe(365)
+    expect(cfg.totalWidth).toBe(365 * DAY_WIDTH.year)
     expect(dateToX(cfg, cfg.startDate)).toBe(0)
     expect(dateToX(cfg, cfg.startDate.add({ months: 1 }))).toBe(31 * DAY_WIDTH.year)
   })
@@ -51,8 +51,8 @@ describe('buildTimelineConfig year granularity', () => {
   it('expands year view to match the available width', () => {
     const cfg = buildTimelineConfig([makeTask()], 'year', { availableWidth: 1708 })
 
-    expect(cfg.dayWidth).toBe(4)
-    expect(cfg.totalWidth).toBe(1708)
+    expect(cfg.dayWidth).toBe(5)
+    expect(cfg.totalWidth).toBe(1825)
   })
 
   it('keeps month snap points in year view', () => {
@@ -60,6 +60,6 @@ describe('buildTimelineConfig year granularity', () => {
     const snapPoints = getSnapPoints(cfg)
 
     expect(snapPoints).toContain(dateToX(cfg, cfg.startDate.add({ months: 1 })))
-    expect(snapPoints).toContain(dateToX(cfg, cfg.startDate.add({ months: 13 })))
+    expect(snapPoints).toContain(dateToX(cfg, cfg.startDate.add({ months: 11 })))
   })
 })
