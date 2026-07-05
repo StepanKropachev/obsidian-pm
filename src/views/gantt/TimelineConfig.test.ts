@@ -48,6 +48,13 @@ describe('buildTimelineConfig year granularity', () => {
     expect(dateToX(cfg, cfg.startDate.add({ months: 1 }))).toBe(31 * DAY_WIDTH.year)
   })
 
+  it('expands year view to match the available width', () => {
+    const cfg = buildTimelineConfig([makeTask()], 'year', { availableWidth: 1708 })
+
+    expect(cfg.dayWidth).toBe(4)
+    expect(cfg.totalWidth).toBe(1708)
+  })
+
   it('keeps month snap points in year view', () => {
     const cfg = buildTimelineConfig([makeTask()], 'year')
     const snapPoints = getSnapPoints(cfg)

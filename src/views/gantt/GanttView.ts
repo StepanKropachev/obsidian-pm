@@ -85,7 +85,8 @@ export class GanttView implements SubView {
 
     const activeTasks = this.getVisibleTasks()
     this.flatTasks = flattenTasks(activeTasks).filter((f) => f.visible || f.depth === 0)
-    this.cfg = buildTimelineConfig(activeTasks, this.granularity)
+    const availableWidth = Math.max(0, this.container.clientWidth - this.labelWidth - 4)
+    this.cfg = buildTimelineConfig(activeTasks, this.granularity, { availableWidth })
 
     this.renderGranularityControls()
     this.renderGantt()
@@ -166,6 +167,19 @@ export class GanttView implements SubView {
     // Right panel: timeline
     const rightPanel = wrapper.createDiv('pm-gantt-right')
     this.scrollEl = rightPanel
+
+    if (this.granularity === 'year' && typeof ResizeObserver !== 'undefined') {
+      let resizeFrame = 0
+      const resizeObserver = new ResizeObserver(() => {
+        window.cancelAnimationFrame(resizeFrame)
+        resizeFrame = window.requestAnimationFrame(() => this.refresh())
+      })
+      resizeObserver.observe(rightPanel)
+      this.cleanupFns.push(() => {
+        window.cancelAnimationFrame(resizeFrame)
+        resizeObserver.disconnect()
+      })
+    }
 
     // Timeline header lives in its own SVG inside a sticky wrapper. It shares the
     // right panel's horizontal scroll (so it tracks the body left/right) but pins to

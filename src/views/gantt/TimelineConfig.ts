@@ -25,6 +25,10 @@ export interface TimelineCfg {
   totalWidth: number
 }
 
+export interface TimelineConfigOptions {
+  availableWidth?: number
+}
+
 const MIN_DAYS: Record<GanttGranularity, number> = {
   day: 30,
   week: 90,
@@ -33,7 +37,11 @@ const MIN_DAYS: Record<GanttGranularity, number> = {
   year: 365
 }
 
-export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity): TimelineCfg {
+export function buildTimelineConfig(
+  tasks: Task[],
+  granularity: GanttGranularity,
+  options: TimelineConfigOptions = {}
+): TimelineCfg {
   const allTasks = flattenTasks(tasks).map((f) => f.task)
   const dates: Temporal.PlainDate[] = []
 
@@ -73,8 +81,10 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
     }
   }
 
-  const dayWidth = DAY_WIDTH[granularity]
   const totalDays = endDate.since(startDate, { largestUnit: 'days' }).days
+  const responsiveWidth = options.availableWidth ? Math.round(options.availableWidth / totalDays) : 0
+  const dayWidth =
+    granularity === 'year' && responsiveWidth > 0 ? Math.max(2, responsiveWidth) : DAY_WIDTH[granularity]
   return {
     startDate,
     endDate,
