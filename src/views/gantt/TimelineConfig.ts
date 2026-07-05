@@ -60,8 +60,8 @@ export function buildTimelineConfig(
 
   if (granularity === 'year') {
     const currentYear = now.year
-    startDate = Temporal.PlainDate.from({ year: currentYear, month: 1, day: 1 })
-    endDate = Temporal.PlainDate.from({ year: currentYear + 1, month: 1, day: 1 })
+    startDate = Temporal.PlainDate.from({ year: currentYear - 1, month: 12, day: 1 })
+    endDate = Temporal.PlainDate.from({ year: currentYear + 1, month: 2, day: 1 })
   } else {
     // Add padding
     startDate = startDate.subtract({ days: 7 })
