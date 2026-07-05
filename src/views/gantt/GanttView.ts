@@ -93,8 +93,14 @@ export class GanttView implements SubView {
 
   private renderGranularityControls(): void {
     const bar = this.container.createDiv('pm-gantt-controls')
-    const levels: GanttGranularity[] = ['day', 'week', 'month', 'quarter']
-    const labels: Record<GanttGranularity, string> = { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' }
+    const levels: GanttGranularity[] = ['day', 'week', 'month', 'quarter', 'year']
+    const labels: Record<GanttGranularity, string> = {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month',
+      quarter: 'Quarter',
+      year: 'Year'
+    }
 
     new SegmentedControl<GanttGranularity>(bar, {
       options: levels.map((level) => ({ id: level, label: labels[level] })),
@@ -265,7 +271,11 @@ export class GanttView implements SubView {
         this.scrollEl.scrollLeft = Math.max(0, dateToX(this.cfg, this.pendingScroll.anchorDate))
         this.pendingScroll = null
       } else {
-        this.scrollToToday()
+        if (this.granularity === 'year') {
+          this.scrollToDateStart(Temporal.PlainDate.from({ year: today().year, month: 1, day: 1 }))
+        } else {
+          this.scrollToToday()
+        }
       }
     })
   }
@@ -319,6 +329,11 @@ export class GanttView implements SubView {
     const x = dateToX(this.cfg, today())
     const center = x - this.scrollEl.clientWidth / 2
     this.scrollEl.scrollLeft = Math.max(0, center)
+  }
+
+  private scrollToDateStart(date: Temporal.PlainDate): void {
+    if (!this.scrollEl) return
+    this.scrollEl.scrollLeft = Math.max(0, dateToX(this.cfg, date))
   }
 
   private setAllCollapsed(collapsed: boolean): void {

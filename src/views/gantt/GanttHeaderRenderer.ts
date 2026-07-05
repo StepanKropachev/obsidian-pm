@@ -43,6 +43,7 @@ export function renderTimelineHeader(ctx: RendererContext): void {
   if (granularity === 'day') renderDayHeader(g, ctx)
   else if (granularity === 'week') renderWeekHeader(g, ctx)
   else if (granularity === 'month') renderMonthHeader(g, ctx)
+  else if (granularity === 'year') renderYearHeader(g, ctx)
   else renderQuarterHeader(g, ctx)
 
   ctx.headerSvgEl.appendChild(g)
@@ -177,6 +178,34 @@ function renderQuarterHeader(g: SVGGElement, ctx: RendererContext): void {
     text.textContent = `Q${q} ${date.year}`
     g.appendChild(text)
     date = nextQStart
+  }
+}
+
+function renderYearHeader(g: SVGGElement, ctx: RendererContext): void {
+  renderYearBands(g, 0, 20, ctx)
+  let monthStart = ctx.cfg.startDate.with({ day: 1 })
+  while (Temporal.PlainDate.compare(monthStart, ctx.cfg.endDate) < 0) {
+    const nextMonthStart = monthStart.add({ months: 1 })
+    const x1 = Math.max(0, dateToX(ctx.cfg, monthStart))
+    const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, nextMonthStart))
+    const w = x2 - x1
+    const text = svgEl('text', {
+      x: x1 + w / 2,
+      y: 42,
+      class: 'pm-gantt-header-month'
+    })
+    text.textContent = monthStart.toLocaleString(undefined, { month: 'short' })
+    g.appendChild(text)
+    g.appendChild(
+      svgEl('line', {
+        x1,
+        y1: 20,
+        x2: x1,
+        y2: HEADER_HEIGHT,
+        class: 'pm-gantt-header-tick'
+      })
+    )
+    monthStart = nextMonthStart
   }
 }
 

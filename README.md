@@ -34,7 +34,7 @@ Sortable, filterable task grid with inline editing. Save custom filter/sort comb
 
 ### Gantt
 
-Interactive timeline with draggable bars, resizable edges, and dependency arrows. Zoom from day to quarter. Drag to reschedule, resize to adjust duration. Milestones render as diamonds. A "today" line keeps you oriented.
+Interactive timeline with draggable bars, resizable edges, and dependency arrows. Zoom from day to year. Year view shows Jan-Dec for the current year, with adjacent months available by horizontal scroll. Drag to reschedule, resize to adjust duration. Milestones render as diamonds. A "today" line keeps you oriented.
 
 <video src="https://github.com/user-attachments/assets/916f7100-44ef-401c-abb3-e003a0f7720a" autoplay loop muted playsinline width="400"></video>
 
@@ -58,6 +58,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
 - **Recurring tasks** — Daily, weekly, monthly, or yearly recurrence with configurable end dates.
 - **Time estimates & logging** — Set estimated hours, log actual time with date and notes. Visual progress bar shows logged vs. estimated.
 - **Due date notifications** — Get reminders before tasks are due. Configurable lead time.
+- **Year view** — Switch the Gantt chart to a compact year timeline that keeps Jan-Dec centered and scrolls into adjacent months.
 
 ### Customization
 - **Custom fields** — Add per-project fields: text, number, date, select, multi-select, person, checkbox, URL.
@@ -136,7 +137,7 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 |---|---|
 | Projects folder | Vault folder where project and task files are stored |
 | Default view | Table, Gantt, or Kanban |
-| Gantt granularity | Default timeline scale (day / week / month / quarter) |
+| Gantt granularity | Default timeline scale (day / week / month / quarter / year) |
 | Gantt week labels | Week number, date range, or both |
 | Due date notifications | Reminders N days before due dates |
 | Notifications on/off | Master switch for due date reminders, separate from lead time |
@@ -239,7 +240,7 @@ Task description in Markdown goes here.
 |---|---|
 | Projects folder | Vault folder where project and task files are stored |
 | Default view | Table, Gantt, or Kanban |
-| Gantt granularity | Default timeline scale (day / week / month / quarter) |
+| Gantt granularity | Default timeline scale (day / week / month / quarter / year) |
 | Gantt week labels | Week number, date range, or both |
 | Due date notifications | Reminders N days before due dates |
 | Custom statuses | Edit labels, colors, and icons for each status |
