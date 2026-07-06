@@ -45,6 +45,7 @@ export class GanttView implements SubView {
   }
   private cleanupFns: (() => void)[] = []
   private pendingScroll: { top: number; anchorDate: Temporal.PlainDate } | null = null
+  private lastContainerWidth = 0
 
   constructor(
     private container: HTMLElement,
@@ -82,14 +83,16 @@ export class GanttView implements SubView {
     cancelLink(this.link)
     this.container.empty()
     this.container.addClass('pm-gantt-view')
+    this.lastContainerWidth = Math.round(this.container.clientWidth)
 
     const activeTasks = this.getVisibleTasks()
     this.flatTasks = flattenTasks(activeTasks).filter((f) => f.visible || f.depth === 0)
-    const availableWidth = Math.max(0, this.container.clientWidth - this.labelWidth - 4)
+    const labelWidth = this.getResponsiveLabelWidth()
+    const availableWidth = Math.max(0, this.container.clientWidth - labelWidth - 4)
     this.cfg = buildTimelineConfig(activeTasks, this.granularity, { availableWidth })
 
     this.renderGranularityControls()
-    this.renderGantt()
+    this.renderGantt(labelWidth)
   }
 
   private renderGranularityControls(): void {
@@ -121,13 +124,12 @@ export class GanttView implements SubView {
     new ButtonComponent(bar).setButtonText('Collapse all').onClick(() => this.setAllCollapsed(true))
   }
 
-  private renderGantt(): void {
+  private renderGantt(initialLabelWidth: number): void {
     const wrapper = this.container.createDiv('pm-gantt-wrapper')
 
     // Left panel: task labels
     const leftPanel = wrapper.createDiv('pm-gantt-left')
-    leftPanel.style.width = `${this.labelWidth}px`
-    leftPanel.style.minWidth = `${this.labelWidth}px`
+    this.applyLabelWidth(leftPanel, initialLabelWidth)
     const leftHeader = leftPanel.createDiv('pm-gantt-left-header')
     leftHeader.style.height = `${HEADER_HEIGHT}px`
     leftHeader.createSpan({ text: 'Task', cls: 'pm-gantt-left-header-label' })
@@ -142,15 +144,14 @@ export class GanttView implements SubView {
       e.preventDefault()
       resizing = true
       startX = e.clientX
-      startWidth = this.labelWidth
+      startWidth = leftPanel.getBoundingClientRect().width
       activeDocument.body.addClass('pm-resize-active')
     })
     const onMouseMove = (e: MouseEvent) => {
       if (!resizing) return
       const newWidth = Math.max(150, Math.min(600, startWidth + (e.clientX - startX)))
       this.labelWidth = newWidth
-      leftPanel.style.width = `${newWidth}px`
-      leftPanel.style.minWidth = `${newWidth}px`
+      this.applyLabelWidth(leftPanel, newWidth)
     }
     const onMouseUp = () => {
       if (!resizing) return
@@ -168,13 +169,16 @@ export class GanttView implements SubView {
     const rightPanel = wrapper.createDiv('pm-gantt-right')
     this.scrollEl = rightPanel
 
-    if (this.granularity === 'year' && typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== 'undefined') {
       let resizeFrame = 0
       const resizeObserver = new ResizeObserver(() => {
+        const width = Math.round(this.container.clientWidth)
+        if (width === this.lastContainerWidth) return
+        this.lastContainerWidth = width
         window.cancelAnimationFrame(resizeFrame)
         resizeFrame = window.requestAnimationFrame(() => this.refresh())
       })
-      resizeObserver.observe(rightPanel)
+      resizeObserver.observe(this.container)
       this.cleanupFns.push(() => {
         window.cancelAnimationFrame(resizeFrame)
         resizeObserver.disconnect()
@@ -356,5 +360,23 @@ export class GanttView implements SubView {
     }
     void this.plugin.persistCollapsedState(this.project)
     this.render()
+  }
+
+  private getResponsiveLabelWidth(): number {
+    return this.getResponsiveLabelWidthFor(this.labelWidth)
+  }
+
+  private applyLabelWidth(leftPanel: HTMLElement, width: number): void {
+    const resolvedWidth = this.getResponsiveLabelWidthFor(width)
+    leftPanel.style.width = `${resolvedWidth}px`
+    leftPanel.style.minWidth = `${resolvedWidth}px`
+  }
+
+  private getResponsiveLabelWidthFor(width: number): number {
+    const viewportWidth = Math.max(0, this.container.clientWidth)
+    const maxWidth = Math.max(180, Math.min(600, Math.round(viewportWidth * 0.35)))
+    const minWidth = Math.max(150, Math.min(260, Math.round(viewportWidth * 0.2)))
+    const preferredWidth = Math.max(150, Math.min(600, width))
+    return Math.max(minWidth, Math.min(preferredWidth, maxWidth))
   }
 }
