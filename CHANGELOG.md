@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
 - The cursor lands where a task description was clicked when the editor opens
 - Subtasks are archived and unarchived along with their parent task
+- The time tracking section in the task editor no longer shows a progress bar
 
 ### Fixed
 

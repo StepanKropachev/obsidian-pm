@@ -361,11 +361,6 @@ input.pm-pop-field:focus {
   outline: none;
 }
 
-/* Time tracking progress bar spacing */
-.pm-time-progress {
-  margin-bottom: 10px;
-}
-
 /* ── Task editor shell ──────────────────────────────────────────────────── */
 .pm-task-modal {
   padding: 0;
