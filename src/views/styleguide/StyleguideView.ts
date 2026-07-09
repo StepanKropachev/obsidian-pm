@@ -318,7 +318,6 @@ export class StyleguideView extends ItemView {
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
-      subtaskProgress: { done: 2, total: 5 },
       loggedHours: 11,
       overdue: true,
       showTagColors: true,

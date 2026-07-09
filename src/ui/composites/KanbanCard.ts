@@ -12,7 +12,6 @@ export interface KanbanCardProps {
   priorityColor?: string
   descriptionPreview?: string
   parentTitle?: string
-  subtaskProgress?: { done: number; total: number }
   loggedHours: number
   overdue: boolean
   showTagColors: boolean
@@ -85,14 +84,6 @@ export class KanbanCard {
 
     if (task.progress > 0) {
       new ProgressBar(body).setSize('sm').setValue(task.progress)
-    }
-
-    if (props.subtaskProgress) {
-      const { done, total } = props.subtaskProgress
-      body.createSpan({
-        text: `${done}/${total} subtasks`,
-        cls: 'pm-kanban-card-subtasks'
-      })
     }
 
     const footer = body.createDiv('pm-kanban-card-footer')
