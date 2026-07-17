@@ -23,6 +23,7 @@ import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
 import { AvatarStack } from '../../ui/primitives/AvatarStack'
+import { CalendarPicker } from '../../ui/primitives/CalendarPicker'
 import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { EmptyState } from '../../ui/primitives/EmptyState'
@@ -80,6 +81,7 @@ export class StyleguideView extends ItemView {
     this.renderSegmented()
     this.renderViewSwitcher()
     this.renderPopover()
+    this.renderCalendarPicker()
     this.group('Shared widgets')
     this.renderBadges()
     this.renderForm()
@@ -229,6 +231,12 @@ export class StyleguideView extends ItemView {
       search.placeholder = 'A focusable input'
       pop.open()
     })
+  }
+
+  private renderCalendarPicker(): void {
+    const sec = this.section('CalendarPicker', 'calendar-picker')
+    const row = this.row(sec, 'Sun–Sat grid, month nav, emits YYYY-MM-DD')
+    new CalendarPicker(row).setValue('2026-07-16').onChange(noop)
   }
 
   private renderBadges(): void {

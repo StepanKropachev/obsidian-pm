@@ -68,6 +68,12 @@ export interface Project {
   createdAt: string
   updatedAt: string
   filePath: string // resolved vault path
+  /**
+   * Vault-relative directory that contains this project's file, declared in the
+   * project's `path` frontmatter. Blank/absent resolves to the file's actual
+   * parent folder (see `ProjectStore.projectDirectory`). Chosen at create time.
+   */
+  path?: string
   savedViews: SavedView[]
   /** Per-project overrides for the global settings. Absent fields inherit. */
   config?: ProjectConfig
@@ -118,6 +124,14 @@ export interface ProjectConfig {
   autoSchedule?: boolean
   kanbanShowSubtasks?: boolean
   kanbanShowDescriptionPreview?: boolean
+  /**
+   * Marks a `config` block as a materialized snapshot of the resolved palette
+   * (written on every save) rather than a deliberate per-project override. When
+   * `true`, the resolver ignores this block's `statuses`/`priorities` and
+   * re-derives them from the global palette, so later global edits re-propagate.
+   * Absent/`false` ⇒ a genuine override that still wins through `configFor`.
+   */
+  materialized?: boolean
 }
 
 /**
@@ -142,6 +156,11 @@ export interface PriorityConfig {
 }
 
 export interface PMSettings {
+  /**
+   * Default directory seeded into the create-project modal's path field. Since
+   * INT-014 this is only a create-time default — no longer a discovery boundary;
+   * discovery scans the whole vault for `pm-project: true` files.
+   */
   projectsFolder: string
   defaultView: ViewMode
   ganttGranularity: GanttGranularity
@@ -202,6 +221,18 @@ export const DEFAULT_SETTINGS: PMSettings = {
 
 export function makeId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+}
+
+/**
+ * A task/project id is VALID iff it is filename/slug-safe, non-empty, and at
+ * most 64 chars. Ids flow into slugs and filenames, so the charset must be
+ * bounded — an id violating this is minted/re-minted on load (INT-018).
+ */
+export const ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/
+
+/** True when `id` is a non-empty, filename-safe id (see {@link ID_PATTERN}). */
+export function isValidId(id: unknown): id is string {
+  return typeof id === 'string' && ID_PATTERN.test(id)
 }
 
 export function makeTask(overrides: Partial<Task> = {}): Task {

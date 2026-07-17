@@ -1,0 +1,13 @@
+{
+  "name": "pm-cli",
+  "version": "0.1.0",
+  "description": "Agent-first pm CLI for the Project Manager vault (INT-019). Runs the UNMODIFIED plugin store on Node over a real-fs vault adapter.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "pm": "bin/pm.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

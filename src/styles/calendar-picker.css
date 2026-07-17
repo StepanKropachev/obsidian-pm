@@ -1,0 +1,94 @@
+/* -- CalendarPicker primitive (src/ui/primitives/CalendarPicker.ts) ---------
+   A month-grid date picker rendered in plugin chrome instead of an OS/browser
+   native date input. Sun–Sat header, month navigation, clickable day cells. */
+
+.pm-calendar-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  width: 100%;
+  min-width: 220px;
+  user-select: none;
+}
+
+.pm-calendar-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+}
+
+.pm-calendar-picker__title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.pm-calendar-picker__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: pointer;
+}
+.pm-calendar-picker__nav:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.pm-calendar-picker__weekdays,
+.pm-calendar-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.pm-calendar-picker__weekday {
+  text-align: center;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: var(--size-4-1) 0;
+}
+
+.pm-calendar-picker__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+.pm-calendar-picker__day:hover {
+  background: var(--background-modifier-hover);
+}
+
+.pm-calendar-picker__day--adjacent {
+  color: var(--text-faint);
+}
+
+.pm-calendar-picker__day--today {
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+}
+
+.pm-calendar-picker__day--selected,
+.pm-calendar-picker__day--selected:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+}

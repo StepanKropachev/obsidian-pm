@@ -49,10 +49,11 @@ export class DashboardView extends ItemView {
   }
 
   private registerVaultListeners(): void {
-    const isRelevant = (path: string) => {
-      const folder = this.plugin.settings.projectsFolder
-      return path === folder || path.startsWith(`${folder}/`)
-    }
+    // Route the refresh guard through the store's vault-wide predicate so a
+    // `pm-project: true` file (or task file) created/renamed/deleted anywhere —
+    // not only under the global projects folder — live-refreshes the dashboard,
+    // matching discovery's vault-wide reach (INT-014 amendment 2, R28).
+    const isRelevant = (path: string) => this.plugin.store.isProjectRelevantPath(path)
     const scheduleReload = (path: string) => {
       if (!isRelevant(path)) return
       if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)

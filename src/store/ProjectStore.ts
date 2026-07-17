@@ -1,8 +1,8 @@
 import type { Plugin, TAbstractFile } from 'obsidian'
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { PMSettings, Project, ResolvedProjectConfig, StatusConfig, Task } from '../types'
-import { DEFAULT_SETTINGS, makeProject, makeTask } from '../types'
-import { today } from '../dates'
+import { DEFAULT_SETTINGS, isValidId, makeId, makeProject, makeTask } from '../types'
+import { parsePlainDate, today } from '../dates'
 import { isTerminalStatus } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { resolveProjectConfig } from './ProjectConfig'
@@ -54,6 +54,35 @@ function patchNeedsBodyRewrite(patch: Partial<Task>): boolean {
 const LEGACY_SLUG_CAP = 40
 
 /**
+ * Decide the authoritative id for a task loaded from disk (INT-018). A blank id
+ * is minted; an id failing the safety rule ({@link isValidId}) is re-minted; an
+ * id already claimed by an earlier task in the same load is re-minted (keep-first
+ * — the collider moves, not the incumbent). `claimed` is mutated to record the
+ * resolved id. `reason` reports what forced the change ('blank' minting is
+ * routine; 'invalid'/'collision' are surfaced to the user).
+ */
+function authorizeTaskId(
+  rawId: string,
+  claimed: Set<string>
+): { id: string; reason: 'kept' | 'blank' | 'invalid' | 'collision' } {
+  let reason: 'kept' | 'blank' | 'invalid' | 'collision' = 'kept'
+  let id = rawId
+  if (!id) {
+    id = makeId()
+    reason = 'blank'
+  } else if (!isValidId(id)) {
+    id = makeId()
+    reason = 'invalid'
+  }
+  while (claimed.has(id)) {
+    id = makeId()
+    if (reason === 'kept') reason = 'collision'
+  }
+  claimed.add(id)
+  return { id, reason }
+}
+
+/**
  * Pick a save path. New tasks get the bare slug; an existing file is left where
  * it is when its name still matches the title, so an unchanged title isn't renamed.
  */
@@ -88,6 +117,12 @@ function fileNameFromPath(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '')
 }
 
+/** The vault-relative parent folder of a path (`''` for a vault-root file). */
+function parentDirOf(path: string): string {
+  const idx = path.lastIndexOf('/')
+  return idx > 0 ? path.slice(0, idx) : ''
+}
+
 /**
  * Handles all read/write operations against the Obsidian vault.
  *
@@ -98,9 +133,32 @@ function fileNameFromPath(path: string): string {
  * The in-memory Project.tasks tree is assembled on load from individual
  * task files and remains unchanged for views.
  */
+/**
+ * Validate an ingested status/priority against the effective palette:
+ *   - blank/absent → the supplied default id (R4),
+ *   - a case-variant of a known id → the canonical id (R24),
+ *   - an unknown value → preserved verbatim so nothing is destroyed (R24).
+ */
+function normalizePaletteValue(raw: unknown, palette: { id: string }[], defaultId: string): string {
+  if (typeof raw !== 'string' || raw.length === 0) return defaultId
+  const exact = palette.find((entry) => entry.id === raw)
+  if (exact) return exact.id
+  const lower = raw.toLowerCase()
+  const canonical = palette.find((entry) => entry.id.toLowerCase() === lower)
+  return canonical ? canonical.id : raw
+}
+
 export class ProjectStore implements TaskSource {
   /** Per-project promise chains to serialize concurrent saves */
   private saveQueues = new Map<string, Promise<void>>()
+
+  /**
+   * Project file paths whose per-mutator saves are currently suppressed by an
+   * open `transact`. While a path is present, `saveProject` buffers (marks dirty
+   * only) instead of writing; the transaction performs the single real save on
+   * commit. Nested transacts on the same project share the one entry (flat).
+   */
+  private deferredSaves = new Set<string>()
 
   /**
    * Task IDs whose .md file needs writing on the next save, with the kind of
@@ -214,12 +272,24 @@ export class ProjectStore implements TaskSource {
    * a view's reload after an external edit misses the stale cache entry.
    */
   registerCacheInvalidation(plugin: Plugin): void {
-    const onChange = (file: TAbstractFile): void => this.invalidateForPath(file.path)
+    // create/modify: route qualifying external pm-task files to ingestion first
+    // (it captures the owning project synchronously, before invalidation could
+    // drop it), then invalidate the cache for external project-file edits.
+    const onChange = (file: TAbstractFile): void => {
+      if (file instanceof TFile) void this.handleExternalTaskChange(file)
+      this.invalidateForPath(file.path)
+    }
     plugin.registerEvent(this.app.vault.on('create', onChange))
     plugin.registerEvent(this.app.vault.on('modify', onChange))
-    plugin.registerEvent(this.app.vault.on('delete', onChange))
+    plugin.registerEvent(this.app.vault.on('delete', (file) => this.invalidateForPath(file.path)))
     plugin.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
+        // A rename of a loaded project file rebinds it in place (name + tasks
+        // folder) instead of dropping it; handleExternalRename re-keys the cache.
+        if (file instanceof TFile && this.projectCache.has(oldPath)) {
+          void this.handleExternalRename(oldPath, file)
+          return
+        }
         this.invalidateForPath(file.path)
         this.invalidateForPath(oldPath)
       })
@@ -249,19 +319,182 @@ export class ProjectStore implements TaskSource {
 
   // ─── Load ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Load every project in the vault. Since INT-014 the `folder` argument is only
+   * a create-time default (seeded so a fresh vault has somewhere to put its first
+   * project); it no longer bounds discovery. Projects are found vault-wide via
+   * `discoverProjects`, so a project filed under any category subfolder shows up.
+   */
   async loadAllProjects(folder: string): Promise<Project[]> {
+    // Keep the default folder around so first-run flows have a home to write to.
     await this.ensureFolder(folder)
-    // Walk the projects folder directly. Don't scan the whole vault.
-    const folderObj = this.app.vault.getAbstractFileByPath(folder)
-    const files: TFile[] = []
-    if (folderObj instanceof TFolder) {
-      for (const child of folderObj.children) {
-        if (child instanceof TFile && child.extension === 'md') files.push(child)
-      }
+    return this.discoverProjects()
+  }
+
+  /**
+   * Find every `pm-project: true` file anywhere in the vault, not just under a
+   * configured root (INT-014, R9). Uses metadataCache to skip non-project files
+   * cheaply; on a cache miss the file is read and filtered by `loadProject`.
+   */
+  async discoverProjects(): Promise<Project[]> {
+    // INT-020: migration-on-load. Relocate any legacy flat-layout project into
+    // the nested per-project-folder layout before scanning, idempotently.
+    await this.migrateLegacyProjects()
+    const candidates: TFile[] = []
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cached = this.app.metadataCache.getFileCache(file)?.frontmatter
+      // A resolved cache that isn't a project lets us skip the read; a cache miss
+      // (cached == null) still needs loadProject to read and decide.
+      if (cached && cached[FRONTMATTER_KEY] !== true) continue
+      candidates.push(file)
     }
-    const loaded = await Promise.all(files.map((f) => this.loadProject(f)))
+    const loaded = await Promise.all(candidates.map((f) => this.loadProject(f)))
     const projects = loaded.filter((p): p is Project => p !== null)
     return projects.sort((a, b) => a.title.localeCompare(b.title))
+  }
+
+  /**
+   * Migrate legacy flat-layout projects into the INT-020 nested per-project-folder
+   * layout (R34). A legacy project is a `pm-project: true` note at `<dir>/<Name>.md`
+   * whose parent folder is NOT named after it; it is relocated to
+   * `<dir>/<Name>/<Name>.md`, and its sibling `<dir>/<Name>_tasks/` folder (if any)
+   * moves with it to `<dir>/<Name>/<Name>_tasks/` — via vault rename, so the note
+   * body and task association are preserved. Already-nested projects are left
+   * untouched, so the pass is idempotent and re-runnable. Every touched path is
+   * self-write-marked so the resulting vault events do not re-ingest.
+   *
+   * With `{ dryRun: true }` it performs no writes and returns the list of moves
+   * that WOULD happen (`{ from, to }` note paths) — the command wiring is deferred.
+   */
+  async migrateLegacyProjects(options?: { dryRun?: boolean }): Promise<Array<{ from: string; to: string }>> {
+    const dryRun = options?.dryRun ?? false
+    interface LegacyProject {
+      notePath: string
+      name: string
+      targetFolder: string
+      targetNote: string
+      oldTasks: string
+      newTasks: string
+    }
+    const legacy: LegacyProject[] = []
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const notePath = normalizePath(file.path)
+      let frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null
+      if (frontmatter && frontmatter[FRONTMATTER_KEY] !== true) continue
+      if (!frontmatter) {
+        try {
+          frontmatter = parseFrontmatter(await this.app.vault.cachedRead(file)).frontmatter
+        } catch {
+          frontmatter = null
+        }
+      }
+      if (!frontmatter || frontmatter[FRONTMATTER_KEY] !== true) continue
+
+      const name = fileNameFromPath(notePath)
+      const parent = parentDirOf(notePath)
+      // Already nested (per-project folder named after the project) → no-op.
+      if (parent && fileNameFromPath(parent) === name) continue
+
+      const targetFolder = normalizePath(parent ? `${parent}/${name}` : name)
+      if (this.app.vault.getAbstractFileByPath(targetFolder)) {
+        // The destination folder is occupied — leave the project in its current
+        // (flat) layout rather than clobbering (WS-007 failure behavior).
+        console.warn(`[PM] Cannot migrate "${notePath}": "${targetFolder}" already exists.`)
+        continue
+      }
+      legacy.push({
+        notePath,
+        name,
+        targetFolder,
+        targetNote: normalizePath(`${targetFolder}/${name}.md`),
+        oldTasks: normalizePath(`${parent ? `${parent}/` : ''}${name}_tasks`),
+        newTasks: normalizePath(`${targetFolder}/${name}_tasks`)
+      })
+    }
+
+    const moves = legacy.map((l) => ({ from: l.notePath, to: l.targetNote }))
+    if (dryRun) return moves
+
+    for (const l of legacy) {
+      await this.ensureFolder(l.targetFolder)
+      // Move the sibling tasks folder (attachments + Archive travel with it) first.
+      const tasksFolder = this.app.vault.getAbstractFileByPath(l.oldTasks)
+      if (tasksFolder instanceof TFolder && !this.app.vault.getAbstractFileByPath(l.newTasks)) {
+        this.markSelfWrite(l.oldTasks)
+        this.markSelfWrite(l.newTasks)
+        await this.app.fileManager.renameFile(tasksFolder, l.newTasks)
+      }
+      // Move the project note into its new per-project folder.
+      const note = this.app.vault.getAbstractFileByPath(l.notePath)
+      if (note instanceof TFile) {
+        this.markSelfWrite(l.notePath)
+        this.markSelfWrite(l.targetNote)
+        await this.app.fileManager.renameFile(note, l.targetNote)
+      }
+      // Drop any stale cache entry keyed by the old flat path so it reloads fresh.
+      this.projectCache.delete(l.notePath)
+    }
+    return moves
+  }
+
+  /**
+   * Resolve the vault-relative directory a project lives in: its declared `path`
+   * frontmatter when present and non-blank, otherwise the directory the project
+   * is filed under (legacy fallback, R11 / INT-020 R33). Task files resolve
+   * against this directory.
+   */
+  projectDirectory(project: Project): string {
+    const declared = project.path?.trim()
+    if (declared) return declared
+    return this.filedUnderDir(project.filePath)
+  }
+
+  /**
+   * The vault-relative directory a project is FILED UNDER — the directory that
+   * contains its per-project folder (INT-020 nested layout). For a nested note
+   * `<dir>/<Name>/<Name>.md` (the per-project folder is named after the project)
+   * this is `<dir>`; for an un-migrated legacy flat note `<dir>/<Name>.md` it is
+   * the note's own parent folder `<dir>`. Blank/absent `path` resolves through
+   * here, so both layouts keep loading and rendering.
+   */
+  private filedUnderDir(notePath: string): string {
+    const parent = parentDirOf(notePath)
+    const noteBase = fileNameFromPath(notePath)
+    const parentBase = fileNameFromPath(parent)
+    // Nested layout: the note sits inside a folder named after the project.
+    if (parent && parentBase === noteBase) return parentDirOf(parent)
+    return parent
+  }
+
+  /**
+   * Answer "should the project dashboard refresh for this path?" the same
+   * vault-wide way discovery finds projects (INT-014 amendment 2, R28). True when
+   * the path is a `pm-project: true` file (resolved via `metadataCache`) filed
+   * ANYWHERE in the vault, or a markdown file under a known (loaded) project's
+   * resolved directory / `<Name>_tasks` folder (so task-file changes still
+   * refresh), or under the global projects folder (preserves pre-amendment
+   * behavior). False for unrelated notes. Reuses `projectDirectory` /
+   * `projectTaskFolder`; the global folder is not the sole source of truth.
+   */
+  isProjectRelevantPath(path: string): boolean {
+    // 1. A pm-project file anywhere in the vault (synchronous metadataCache read).
+    const file = this.app.vault.getAbstractFileByPath(path)
+    if (file instanceof TFile) {
+      const cached = this.app.metadataCache.getFileCache(file)?.frontmatter
+      if (cached && cached[FRONTMATTER_KEY] === true) return true
+    }
+    // 2. Inside a known project's resolved directory or its `<Name>_tasks` folder.
+    for (const project of this.projectCache.values()) {
+      if (path === project.filePath) return true
+      const dir = this.projectDirectory(project)
+      if (dir && (path === dir || path.startsWith(`${dir}/`))) return true
+      const taskFolder = this.projectTaskFolder(project)
+      if (path === taskFolder || path.startsWith(`${taskFolder}/`)) return true
+    }
+    // 3. Under the global projects folder (preserve pre-amendment behavior).
+    const folder = this.getSettings().projectsFolder
+    if (folder && (path === folder || path.startsWith(`${folder}/`))) return true
+    return false
   }
 
   async loadProject(file: TFile): Promise<Project | null> {
@@ -338,16 +571,54 @@ export class ProjectStore implements TaskSource {
     collect(folder)
 
     const results = await Promise.all(files.map((file) => this.loadTaskFile(file)))
+
+    // Id authority (INT-018): every cold-loaded task gets a stable, safe, unique
+    // id before it is used as a map key or for nesting. A blank id is minted; an
+    // id failing the safety rule is re-minted; a duplicate is resolved keep-first
+    // (the first-loaded keeps the id, the collider is re-minted). Every mint is
+    // persisted back to disk (processFrontMatter, self-write-marked so the modify
+    // event it raises is not re-ingested). References to a re-minted id (parentId,
+    // subtaskIds of a re-minted invalid id) are remapped so nesting survives.
+    const claimed = new Set<string>()
+    const idRemap = new Map<string, string>()
+    let reminted = 0
+    const pending: { task: Task; subtaskIds: string[]; parentId: string | null }[] = []
     for (let i = 0; i < files.length; i++) {
       const { task, subtaskIds, parentId } = results[i]
-      if (task) {
-        if (files[i].path.startsWith(archivePrefix)) {
-          task.archived = true
-        }
-        taskMap.set(task.id, task)
-        if (subtaskIds.length) subtaskIdsMap.set(task.id, subtaskIds)
-        if (parentId) parentIdMap.set(task.id, parentId)
+      if (!task) continue
+      const rawId = typeof task.id === 'string' ? task.id : ''
+      const { id: authId, reason } = authorizeTaskId(rawId, claimed)
+      if (authId !== rawId) {
+        // A non-blank id that changed (invalid → re-minted) is remapped so any
+        // child referencing the old id still resolves. A collision is NOT
+        // remapped: references to the shared id resolve to the kept-first task.
+        if (reason === 'invalid' && rawId) idRemap.set(rawId, authId)
+        task.id = authId
+        this.markSelfWrite(files[i].path)
+        await this.app.fileManager.processFrontMatter(files[i], (fm: Record<string, unknown>) => {
+          fm.id = authId
+        })
+        if (reason !== 'blank') reminted++
       }
+      if (files[i].path.startsWith(archivePrefix)) {
+        task.archived = true
+      }
+      taskMap.set(task.id, task)
+      pending.push({ task, subtaskIds, parentId })
+    }
+    for (const { task, subtaskIds, parentId } of pending) {
+      if (subtaskIds.length) {
+        subtaskIdsMap.set(
+          task.id,
+          subtaskIds.map((sid) => idRemap.get(sid) ?? sid)
+        )
+      }
+      if (parentId) parentIdMap.set(task.id, idRemap.get(parentId) ?? parentId)
+    }
+    if (reminted > 0) {
+      new Notice(
+        `Project Manager: re-minted ${reminted} duplicate/invalid task id${reminted === 1 ? '' : 's'} in "${folderPath}".`
+      )
     }
 
     for (const [taskId, sids] of subtaskIdsMap) {
@@ -467,10 +738,45 @@ export class ProjectStore implements TaskSource {
     this.hydratedBodies.add(project)
   }
 
+  // ─── Content detection ───────────────────────────────────────────────────────
+
+  /**
+   * The non-blank body lines of a note that count as real content: the
+   * frontmatter and ALL store-managed content — the `<!-- pm:link -->` backlink,
+   * legacy `Project:`/`Parent:` lines, and the auto-generated `## Subtasks`
+   * mirror — are excluded, so a note that is only its managed scaffolding reads
+   * as empty. Reuses `stripAutoGeneratedContent` (the same strip the description
+   * uses) so the `✎` content signal never fires on a childful-but-noteless parent.
+   */
+  private async realContentLines(file: TFile): Promise<string[]> {
+    const content = await this.app.vault.cachedRead(file)
+    const { frontmatter, body } = parseFrontmatter(content)
+    let text = stripAutoGeneratedContent(body)
+    // Project notes open with an auto `# {icon} {title}` H1 (YamlSerializer) — it
+    // is managed scaffolding, not human content, so a noteless project reads empty.
+    if (frontmatter && frontmatter[FRONTMATTER_KEY] !== undefined) {
+      text = text.replace(/^#\s+.*(?:\n|$)/, '')
+    }
+    return text.split('\n').filter((line) => line.trim().length > 0)
+  }
+
+  /** True iff a note holds real body content beyond its frontmatter + managed backlink line(s). */
+  async hasBodyContent(file: TFile): Promise<boolean> {
+    return (await this.realContentLines(file)).length > 0
+  }
+
+  /** Count of non-blank body lines that survive stripping frontmatter + managed backlink line(s). */
+  async bodyContentLines(file: TFile): Promise<number> {
+    return (await this.realContentLines(file)).length
+  }
+
   // ─── Save ──────────────────────────────────────────────────────────────────
 
   async saveProject(project: Project): Promise<void> {
     const key = project.filePath
+    // Inside an open transaction, mutators keep marking tasks dirty but the write
+    // is held back until the transaction commits with its single save.
+    if (this.deferredSaves.has(key)) return
     const prev = this.saveQueues.get(key) ?? Promise.resolve()
     const next = (async () => {
       await prev
@@ -514,11 +820,11 @@ export class ProjectStore implements TaskSource {
             const fmDesc = frontmatter?.description
             project.description = typeof fmDesc === 'string' ? fmDesc : body.trim()
           }
-          return serializeProject(project, this.statusesFor(project))
+          return serializeProject(project, this.configFor(project))
         })
         this.hydratedBodies.add(project)
       } else {
-        const content = serializeProject(project, this.statusesFor(project))
+        const content = serializeProject(project, this.configFor(project))
         this.markSelfWrite(project.filePath)
         await this.app.vault.create(project.filePath, content)
         this.hydratedBodies.add(project)
@@ -678,8 +984,17 @@ export class ProjectStore implements TaskSource {
 
   async createProject(title: string, folder: string): Promise<Project> {
     const safeName = title.replace(/[\\/:*?"<>|]/g, '-')
-    const filePath = normalizePath(`${folder}/${safeName}.md`)
+    // INT-020 nested layout: every project lives in its OWN folder
+    // `<folder>/<Name>/`, with the note at `<folder>/<Name>/<Name>.md` and the
+    // tasks folder nested one level down at `<folder>/<Name>/<Name>_tasks/`.
+    const dir = normalizePath(folder)
+    const projectFolder = dir ? `${dir}/${safeName}` : safeName
+    const filePath = normalizePath(`${projectFolder}/${safeName}.md`)
     const project = makeProject(title, filePath)
+    // Persist the caller-supplied directory as the project's `path` — the
+    // directory the project is FILED UNDER (which now CONTAINS the per-project
+    // folder), so discovery + task resolution honor it (INT-014 R8/R10, INT-020 R33).
+    project.path = folder
     await this.ensureFolder(this.projectTaskFolder(project))
     await this.saveProject(project)
     return project
@@ -695,6 +1010,376 @@ export class ProjectStore implements TaskSource {
     this.markDirty(project, [task.id], 'full')
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
+  }
+
+  /**
+   * Ingest an externally-authored `pm-task` file that appeared under this
+   * project's `<Name>_tasks/` folder (created or modified outside the plugin).
+   *
+   * Backfills a unique `id` (first) plus the full required frontmatter onto the
+   * file via processFrontMatter — self-write-marked so the resulting modify
+   * event is not re-ingested (no echo) — resolves blank fields to their
+   * defaults, adds the task to the in-memory tree, and persists the project's
+   * ordering (`taskIds`, or the parent's `subtaskIds` when parented). Returns
+   * the ingested task, or null for a non-pm-task / malformed / out-of-folder
+   * file; those never throw and leave the tree untouched.
+   */
+  async ingestExternalTask(project: Project, file: TFile): Promise<Task | null> {
+    try {
+      // Only files under this project's tasks folder are ingested (loose files
+      // elsewhere in the vault are not — see INT-013 Non-Goals).
+      const taskFolder = this.projectTaskFolder(project)
+      const filePath = normalizePath(file.path)
+      if (!filePath.startsWith(normalizePath(taskFolder) + '/')) return null
+
+      const content = await this.app.vault.cachedRead(file)
+      const { frontmatter, body } = parseFrontmatter(content)
+      if (!frontmatter || frontmatter[TASK_FRONTMATTER_KEY] !== true) return null
+
+      // Backfill a safe unique id first: a blank/absent OR unsafe id (fails the
+      // filename-safe rule, INT-018) gets a freshly minted one.
+      const rawId = frontmatter.id
+      const id = isValidId(rawId) ? rawId : makeId()
+
+      // Idempotent: a task the store already tracks under this id is not
+      // re-added. Recover its filePath if it was cache-loaded without one.
+      const existing = findTaskById(project, id)
+      if (existing) {
+        if (!existing.filePath) existing.filePath = filePath
+        return existing
+      }
+
+      // Validate status/priority against the effective palette: blank → default,
+      // a case-variant of a known id → the canonical id, an unknown value →
+      // preserved verbatim (never destroy AI/user data — the task still loads).
+      const resolved = this.configFor(project)
+      const status = normalizePaletteValue(frontmatter.status, resolved.statuses, 'todo')
+      const priority = normalizePaletteValue(frontmatter.priority, resolved.priorities, 'medium')
+      const { task, parentId } = hydrateTaskFromFile({ ...frontmatter, id, status, priority }, body, filePath)
+      task.id = id
+      this.hydratedBodies.add(task)
+
+      // Honor parentId only when the parent actually exists; otherwise top-level.
+      const resolvedParentId = parentId && findTaskById(project, parentId) ? parentId : null
+
+      // Archived state is derived from location, matching the folder load path.
+      if (filePath.startsWith(normalizePath(taskFolder + '/Archive') + '/')) task.archived = true
+
+      addTaskToTree(project.tasks, task, resolvedParentId)
+      indexAddSubtree(project, task, resolvedParentId)
+
+      // Backfill the full required frontmatter (id + defaults) back onto disk.
+      // Self-mark first so the modify event this write raises is skipped.
+      const parentTask = resolvedParentId ? findTaskById(project, resolvedParentId) : null
+      const nextFm = buildTaskFrontmatter(task, project, parentTask)
+      this.markSelfWrite(filePath)
+      await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+        Object.assign(fm, nextFm)
+      })
+
+      // Persist ordering: a top-level id lands in the project file's taskIds;
+      // a parented task's id lands in the parent's subtaskIds.
+      if (resolvedParentId) this.markDirty(project, [resolvedParentId], 'full')
+      await this.saveProject(project)
+
+      return task
+    } catch (e) {
+      console.error(`[PM] Failed to ingest external task ${file.path}:`, e)
+      return null
+    }
+  }
+
+  /**
+   * Route a vault create/modify of a possibly-external `pm-task` file to
+   * ingestion. Finds the loaded project whose `<Name>_tasks/` folder holds the
+   * file and hands off to `ingestExternalTask`; a file the store itself just
+   * wrote (a self-write) is skipped so backfills don't echo. Non-task files and
+   * files outside every loaded project's folder are ignored (returns null).
+   *
+   * This is the store-level seam the plugin's vault listeners call, so the
+   * view/composition-root glue stays thin and testable.
+   */
+  async handleExternalTaskChange(file: TFile): Promise<Task | null> {
+    // Non-destructive peek: the view's modify listener still needs the marker to
+    // skip its own reload, so we must not consume it here.
+    if (this.peekSelfWrite(normalizePath(file.path))) return null
+    const path = normalizePath(file.path)
+    for (const project of this.projectCache.values()) {
+      const taskFolder = normalizePath(this.projectTaskFolder(project))
+      if (path.startsWith(taskFolder + '/')) return this.ingestExternalTask(project, file)
+    }
+    return null
+  }
+
+  /**
+   * Rename a loaded project through the plugin: rename its `Projects/<Name>.md`
+   * file and its `<Name>_tasks` folder on disk (via the vault API), keep the
+   * in-memory project + its tasks re-bound to the new paths, and persist the new
+   * title (R13). Every path touched is `markSelfWrite`-marked inside one
+   * suppression window so the vault rename events these writes raise are consumed
+   * rather than echoed back into a second rename (R14).
+   */
+  async renameProject(project: Project, newTitle: string): Promise<void> {
+    const oldPath = normalizePath(project.filePath)
+    const oldName = fileNameFromPath(oldPath)
+    const safeName = newTitle.replace(/[\\/:*?"<>|]/g, '-')
+    if (safeName === oldName) {
+      // Same on-disk name (title differs only cosmetically); just persist the title.
+      project.title = newTitle
+      await this.saveProject(project)
+      return
+    }
+
+    // Under the INT-020 nested layout the project lives in a folder named after
+    // it (`<dir>/<Old>/`); a rename renames that folder AND the note + tasks folder
+    // inside it. A legacy flat note (`<dir>/<Old>.md`) renames in place.
+    const oldProjectFolder = parentDirOf(oldPath)
+    const nested = !!oldProjectFolder && fileNameFromPath(oldProjectFolder) === oldName
+    const filedUnder = nested ? parentDirOf(oldProjectFolder) : oldProjectFolder
+    const newProjectFolder = nested
+      ? normalizePath(filedUnder ? `${filedUnder}/${safeName}` : safeName)
+      : oldProjectFolder
+    const newPath = normalizePath(
+      nested
+        ? `${newProjectFolder}/${safeName}.md`
+        : oldProjectFolder
+          ? `${oldProjectFolder}/${safeName}.md`
+          : `${safeName}.md`
+    )
+
+    // Collide on the whole per-project folder (nested) or the note (legacy flat).
+    const collisionTarget = nested ? newProjectFolder : newPath
+    if (this.app.vault.getAbstractFileByPath(collisionTarget)) {
+      throw new Error(`A note named "${safeName}" already exists.`)
+    }
+
+    const oldTaskFolder = normalizePath(oldPath.replace(/\.md$/, '_tasks'))
+    const newTaskFolder = normalizePath(newPath.replace(/\.md$/, '_tasks'))
+    // Self-mark every path we're about to touch, before any write, so the whole
+    // rename lands inside one suppression window (R14 — no echo loop).
+    this.markSelfWrite(oldPath)
+    this.markSelfWrite(newPath)
+    this.markSelfWrite(oldTaskFolder)
+    this.markSelfWrite(newTaskFolder)
+
+    if (nested) {
+      this.markSelfWrite(oldProjectFolder)
+      this.markSelfWrite(newProjectFolder)
+      // 1. Rename the note in place: `<Old>/<Old>.md` → `<Old>/<safeName>.md`.
+      const interimNote = normalizePath(`${oldProjectFolder}/${safeName}.md`)
+      const noteFile = this.app.vault.getAbstractFileByPath(oldPath)
+      if (noteFile instanceof TFile && interimNote !== oldPath) {
+        this.markSelfWrite(interimNote)
+        await this.app.fileManager.renameFile(noteFile, interimNote)
+      }
+      // 2. Rename the tasks folder in place: `<Old>/<Old>_tasks` → `<Old>/<safeName>_tasks`.
+      const interimTaskFolder = normalizePath(`${oldProjectFolder}/${safeName}_tasks`)
+      const tasksFolder = this.app.vault.getAbstractFileByPath(oldTaskFolder)
+      if (
+        tasksFolder instanceof TFolder &&
+        interimTaskFolder !== oldTaskFolder &&
+        !this.app.vault.getAbstractFileByPath(interimTaskFolder)
+      ) {
+        this.markSelfWrite(interimTaskFolder)
+        await this.app.fileManager.renameFile(tasksFolder, interimTaskFolder)
+      }
+      // 3. Rename the per-project folder itself, carrying note + tasks + freeform.
+      const projectFolder = this.app.vault.getAbstractFileByPath(oldProjectFolder)
+      if (projectFolder instanceof TFolder) await this.app.fileManager.renameFile(projectFolder, newProjectFolder)
+    } else {
+      const noteFile = this.app.vault.getAbstractFileByPath(oldPath)
+      if (noteFile instanceof TFile) await this.app.fileManager.renameFile(noteFile, newPath)
+    }
+
+    await this.rebindRenamedProject(project, oldPath, newPath, oldTaskFolder, newTaskFolder, newTitle)
+  }
+
+  /**
+   * Re-point an already-created project's directory (INT-014 amendment, R26/R27):
+   * move the whole project folder — the `<oldDir>/<Name>.md` file AND its
+   * `<oldDir>/<Name>_tasks` folder (attachments + Archive travel with it, since the
+   * vault folder-rename is recursive) — to live under `newDir`, leaving nothing at
+   * the old location. Updates the `path` frontmatter + resolved directory to
+   * `newDir` and re-points every task's filePath, keeping tasks attached. Mirrors
+   * `renameProject`'s self-write discipline (all touched paths marked up front, so
+   * the vault rename events these writes raise are consumed rather than echoed),
+   * but varies the DIRECTORY instead of the basename. A `newDir` with spaces is
+   * honored literally. No-op when `newDir` is already the project's directory;
+   * throws if the destination `.md` already exists.
+   */
+  async moveProject(project: Project, newDir: string): Promise<void> {
+    const oldPath = normalizePath(project.filePath)
+    const targetDir = normalizePath(newDir)
+    if (targetDir === normalizePath(this.projectDirectory(project))) return
+
+    const baseName = fileNameFromPath(oldPath)
+    const oldProjectFolder = parentDirOf(oldPath)
+    const nested = !!oldProjectFolder && fileNameFromPath(oldProjectFolder) === baseName
+
+    if (nested) {
+      // INT-020: relocate the WHOLE per-project folder `<oldDir>/<Name>/` →
+      // `<newDir>/<Name>/` (note + `<Name>_tasks/` + any freeform content) via a
+      // single recursive folder rename (R36).
+      const newProjectFolder = normalizePath(targetDir ? `${targetDir}/${baseName}` : baseName)
+      const newPath = normalizePath(`${newProjectFolder}/${baseName}.md`)
+      if (newPath === oldPath) return
+      if (this.app.vault.getAbstractFileByPath(newProjectFolder)) {
+        throw new Error(`A folder named "${baseName}" already exists in "${targetDir}".`)
+      }
+      const oldTaskFolder = normalizePath(oldPath.replace(/\.md$/, '_tasks'))
+      const newTaskFolder = normalizePath(newPath.replace(/\.md$/, '_tasks'))
+      // Self-mark every path we're about to touch, before any write, so the whole
+      // move lands inside one suppression window (no echo loop).
+      this.markSelfWrite(oldPath)
+      this.markSelfWrite(newPath)
+      this.markSelfWrite(oldTaskFolder)
+      this.markSelfWrite(newTaskFolder)
+      this.markSelfWrite(oldProjectFolder)
+      this.markSelfWrite(newProjectFolder)
+
+      await this.ensureFolder(targetDir)
+      const folder = this.app.vault.getAbstractFileByPath(oldProjectFolder)
+      if (folder instanceof TFolder) await this.app.fileManager.renameFile(folder, newProjectFolder)
+      // Keep the declared `path` aligned with the new filed-under directory before
+      // the rebind persists it (rebind re-derives `path` from the new note path).
+      project.path = targetDir
+      await this.rebindRenamedProject(project, oldPath, newPath, oldTaskFolder, newTaskFolder, project.title)
+      return
+    }
+
+    // Legacy flat layout: move the `.md` file and let the rebind cascade its
+    // sibling `<Name>_tasks/` folder.
+    const newPath = normalizePath(targetDir ? `${targetDir}/${baseName}.md` : `${baseName}.md`)
+    if (newPath === oldPath) return
+    if (this.app.vault.getAbstractFileByPath(newPath)) {
+      throw new Error(`A note named "${baseName}" already exists in "${targetDir}".`)
+    }
+
+    const oldTaskFolder = normalizePath(oldPath.replace(/\.md$/, '_tasks'))
+    const newTaskFolder = normalizePath(newPath.replace(/\.md$/, '_tasks'))
+    this.markSelfWrite(oldPath)
+    this.markSelfWrite(newPath)
+    this.markSelfWrite(oldTaskFolder)
+    this.markSelfWrite(newTaskFolder)
+
+    await this.ensureFolder(targetDir)
+    const file = this.app.vault.getAbstractFileByPath(oldPath)
+    if (file instanceof TFile) await this.app.fileManager.renameFile(file, newPath)
+    project.path = targetDir
+    await this.rebindRenamedProject(project, oldPath, newPath, oldTaskFolder, newTaskFolder, project.title)
+  }
+
+  /**
+   * Map an inbound vault `rename` event (old path → the renamed file) onto a
+   * loaded item and update its name in memory + persisted title (R12). A
+   * project-file rename cascades the `<Name>_tasks` folder rename and re-points
+   * every task's `filePath`, so tasks stay attached (R15); a task-file rename
+   * updates just that task. An event whose new path the store self-marked is the
+   * echo of a plugin-initiated rename and is ignored; so is a rename whose old
+   * path resolves to no loaded item.
+   */
+  async handleExternalRename(oldPath: string, file: TFile): Promise<void> {
+    const normalizedOld = normalizePath(oldPath)
+    const newPath = normalizePath(file.path)
+    if (normalizedOld === newPath) return
+    // A self-marked new path means our own renameProject raised this event.
+    if (this.peekSelfWrite(newPath)) return
+
+    const cachedProject = this.projectCache.get(normalizedOld)
+    if (cachedProject) {
+      const oldTaskFolder = normalizePath(normalizedOld.replace(/\.md$/, '_tasks'))
+      const newTaskFolder = normalizePath(newPath.replace(/\.md$/, '_tasks'))
+      await this.rebindRenamedProject(
+        cachedProject,
+        normalizedOld,
+        newPath,
+        oldTaskFolder,
+        newTaskFolder,
+        file.basename
+      )
+      return
+    }
+    // Otherwise it may be a task file renamed inside a loaded project's folder.
+    await this.rebindRenamedTaskFile(normalizedOld, file)
+  }
+
+  /**
+   * Shared rebind for a renamed project (used by both the outbound and inbound
+   * paths). The project .md is assumed already at `newPath`; this cascades the
+   * `<Name>_tasks` folder to follow the name, re-points each task's filePath,
+   * moves the store's per-project bookkeeping to the new key, updates the
+   * identity fields, and persists the new title (and `path` when the folder moved).
+   */
+  private async rebindRenamedProject(
+    project: Project,
+    oldPath: string,
+    newPath: string,
+    oldTaskFolder: string,
+    newTaskFolder: string,
+    newTitle: string
+  ): Promise<void> {
+    if (oldTaskFolder !== newTaskFolder) {
+      const folder = this.app.vault.getAbstractFileByPath(oldTaskFolder)
+      if (folder instanceof TFolder && !this.app.vault.getAbstractFileByPath(newTaskFolder)) {
+        this.markSelfWrite(oldTaskFolder)
+        this.markSelfWrite(newTaskFolder)
+        await this.app.fileManager.renameFile(folder, newTaskFolder)
+      }
+      // Re-point every task's in-memory filePath under the new folder (R15).
+      const oldPrefix = oldTaskFolder + '/'
+      const newPrefix = newTaskFolder + '/'
+      for (const { task } of flattenTasks(project.tasks)) {
+        const fp = task.filePath ? normalizePath(task.filePath) : ''
+        if (fp.startsWith(oldPrefix)) {
+          const rebased = newPrefix + fp.slice(oldPrefix.length)
+          this.markSelfWrite(fp)
+          this.markSelfWrite(rebased)
+          task.filePath = rebased
+        }
+      }
+    }
+
+    // Move per-project bookkeeping from the old key to the new one.
+    const dirty = this.dirtyTasks.get(oldPath)
+    this.dirtyTasks.delete(oldPath)
+    const queue = this.saveQueues.get(oldPath)
+    this.saveQueues.delete(oldPath)
+    this.projectCache.delete(oldPath)
+
+    project.title = newTitle
+    project.filePath = newPath
+    // Keep the declared `path` frontmatter aligned with the directory the project
+    // is filed under (INT-020: the parent of the per-project folder, not the note's
+    // immediate parent) when the item moved; a same-folder rename leaves it be.
+    if (project.path !== undefined) project.path = this.filedUnderDir(newPath)
+
+    if (dirty) this.dirtyTasks.set(newPath, dirty)
+    if (queue) this.saveQueues.set(newPath, queue)
+    this.projectCache.set(newPath, project)
+
+    await this.saveProject(project)
+  }
+
+  /** Rebind a single loaded task whose file was renamed in the vault (R12). */
+  private async rebindRenamedTaskFile(oldPath: string, file: TFile): Promise<void> {
+    const newPath = normalizePath(file.path)
+    for (const project of this.projectCache.values()) {
+      const taskFolder = normalizePath(this.projectTaskFolder(project))
+      if (!oldPath.startsWith(taskFolder + '/')) continue
+      const match = flattenTasks(project.tasks).find(
+        (f) => f.task.filePath && normalizePath(f.task.filePath) === oldPath
+      )
+      if (!match) return
+      const task = match.task
+      task.filePath = newPath
+      task.title = file.basename
+      task.archived = newPath.startsWith(normalizePath(taskFolder + '/Archive') + '/')
+      this.markSelfWrite(newPath)
+      await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+        fm.title = task.title
+      })
+      return
+    }
   }
 
   /**
@@ -1128,5 +1813,90 @@ export class ProjectStore implements TaskSource {
     }
     await this.saveProject(project)
     return patches.length
+  }
+
+  // ─── Batch transactions ────────────────────────────────────────────────────
+
+  /**
+   * Run `fn` as one atomic batch against `project`. Per-mutator saves are
+   * suppressed while it runs (dirty state buffers in memory); on success exactly
+   * one `saveProject` + one `scheduleAfterChange` fire, on a throw the in-memory
+   * tree is rolled back to a pre-transaction snapshot and nothing is written.
+   */
+  async transact<T>(project: Project, fn: () => Promise<T> | T): Promise<T> {
+    const key = project.filePath
+    // Nested transaction on the same project: flatten. The outermost call owns
+    // the snapshot, the commit save, and the schedule pass.
+    if (this.deferredSaves.has(key)) return fn()
+
+    // Snapshot enough in-memory state to undo an aborted batch. No disk write
+    // happens until commit, so rolling back the tree + dirty set is sufficient.
+    const treeSnapshot = structuredClone(project.tasks)
+    const dirtySnapshot = new Map(this.dirtyTasks.get(key) ?? [])
+    this.deferredSaves.add(key)
+    try {
+      const result = await fn()
+      this.deferredSaves.delete(key)
+      await this.saveProject(project)
+      await this.scheduleAfterChange(project)
+      return result
+    } catch (e) {
+      this.deferredSaves.delete(key)
+      // Roll the tree back and drop any dirt the aborted batch accumulated.
+      project.tasks = treeSnapshot
+      rebuildTaskIndex(project)
+      if (dirtySnapshot.size > 0) this.dirtyTasks.set(key, dirtySnapshot)
+      else this.dirtyTasks.delete(key)
+      throw e
+    }
+  }
+
+  /**
+   * Shift `taskId`'s own `start`/`due` by `deltaDays` (empty dates stay empty),
+   * and — when `cascadeSubtree` is on (the default) — every descendant's
+   * `start`/`due` by the same delta, so a moved parent drags its subtree. Dates
+   * live in frontmatter, so touched tasks are marked `'fm'`. Composes with
+   * scheduling: after the shift it runs `scheduleAfterChange` so downstream
+   * DEPENDENTS still cascade. Returns the number of tasks whose dates moved.
+   */
+  async shiftTaskDates(
+    project: Project,
+    taskId: string,
+    deltaDays: number,
+    opts?: { cascadeSubtree?: boolean; scheduleDownstream?: boolean }
+  ): Promise<number> {
+    const task = findTaskById(project, taskId)
+    if (!task) return 0
+    const cascade = opts?.cascadeSubtree ?? true
+    const scheduleDownstream = opts?.scheduleDownstream ?? true
+
+    const targets: Task[] = [task]
+    if (cascade) {
+      for (const ft of flattenTasks(task.subtasks)) targets.push(ft.task)
+    }
+
+    const shift = (iso: string): string => {
+      const d = parsePlainDate(iso)
+      return d ? d.add({ days: deltaDays }).toString() : iso
+    }
+
+    let shifted = 0
+    for (const t of targets) {
+      const patch: Partial<Task> = {}
+      if (t.start) patch.start = shift(t.start)
+      if (t.due) patch.due = shift(t.due)
+      if (patch.start === undefined && patch.due === undefined) continue
+      updateTaskInTree(project.tasks, t.id, patch)
+      this.markDirty(project, [t.id], 'fm')
+      shifted++
+    }
+    if (shifted === 0) return 0
+
+    await this.saveProject(project)
+    // Re-run the dependency scheduler so tasks downstream of the shifted subtree
+    // move to keep their predecessor constraints — unless the caller opted out
+    // (`--no-cascade` / `--no-schedule` → move only the item / its subtree).
+    if (scheduleDownstream) await this.scheduleAfterChange(project, taskId)
+    return shifted
   }
 }

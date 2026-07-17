@@ -29,6 +29,15 @@ export class FakeVault {
     return this.files.get(n)?.file ?? this.folders.get(n) ?? null
   }
 
+  /** Vault-wide markdown enumerator, mirroring Obsidian's `Vault.getMarkdownFiles()`. */
+  getMarkdownFiles(): TFile[] {
+    const out: TFile[] = []
+    for (const { file } of this.files.values()) {
+      if (file.extension === 'md') out.push(file)
+    }
+    return out
+  }
+
   async cachedRead(file: TFile): Promise<string> {
     return this.files.get(file.path)?.content ?? ''
   }
@@ -94,6 +103,12 @@ export class FakeVault {
       for (const f of folders) this.folders.delete(f.path)
       for (const e of entries) this.files.delete(e.file.path)
       detachFromParent(file)
+      // Rebuild child links from scratch: the moved folders' stale `children`
+      // arrays still point at their descendants, so clear them and re-push once
+      // (otherwise a re-parented child would appear twice).
+      for (const f of folders) f.children = []
+      // Shallow-to-deep so each moved parent is registered before its children.
+      folders.sort((a, b) => a.path.length - b.path.length)
       for (const f of folders) {
         const np = to + f.path.slice(from.length)
         const parent = this.ensureFolderForPath(np)

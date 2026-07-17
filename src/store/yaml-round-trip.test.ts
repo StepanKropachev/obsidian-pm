@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { makeProject, makeTask, type Project, type SavedView, type Task } from '../types'
+import {
+  DEFAULT_PRIORITIES,
+  DEFAULT_STATUSES,
+  makeProject,
+  makeTask,
+  type PriorityConfig,
+  type Project,
+  type SavedView,
+  type StatusConfig,
+  type Task
+} from '../types'
 import { hydrateProjectFromFrontmatter, hydrateTaskFromFile } from './YamlHydrator'
 import { parseFrontmatter } from './YamlParser'
 import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
+
+const GLOBAL_PALETTE = { statuses: DEFAULT_STATUSES, priorities: DEFAULT_PRIORITIES }
+const configOf = (fm: Record<string, unknown>) => fm.config as Record<string, unknown> | undefined
+const idsOf = (list: unknown) => (Array.isArray(list) ? list.map((e) => String((e as { id?: unknown }).id)) : [])
 
 function roundTripTask(
   t: Task,
@@ -266,3 +280,67 @@ describe('hydration does not alias the source frontmatter', () => {
     expect(fm.teamMembers).toEqual(['Alice'])
   })
 })
+
+// Feature 5 (INT-017): self-describing palettes materialize the resolved palette
+// into `config` on every save, tagged `materialized: true`, while genuine
+// per-project overrides are serialized untagged so they keep winning on reload.
+describe('palette materialization on serialize', () => {
+  const OVERRIDE_STATUSES: StatusConfig[] = [
+    { id: 'custom', label: 'Custom', color: '#123456', icon: '', complete: false }
+  ]
+  const OVERRIDE_PRIORITIES: PriorityConfig[] = [{ id: 'someday', label: 'Someday', color: '#123456', icon: '' }]
+
+  it('materializes the effective palette (statuses AND priorities) with a marker on a legacy project', () => {
+    const p = makeProject('Legacy', 'Projects/Legacy.md')
+    const { frontmatter } = parseFrontmatter(serializeProject(p, GLOBAL_PALETTE))
+    if (!frontmatter) throw new Error('frontmatter missing')
+    const config = configOf(frontmatter)
+    expect(config?.materialized).toBe(true)
+    expect(idsOf(config?.statuses)).toEqual(DEFAULT_STATUSES.map((s) => s.id))
+    expect(idsOf(config?.priorities)).toEqual(DEFAULT_PRIORITIES.map((pr) => pr.id))
+  })
+
+  it('a materialized block round-trips as materialized and the resolver keeps ignoring it', () => {
+    const p = makeProject('M', 'Projects/M.md')
+    const { project } = roundTripProjectWith(p, GLOBAL_PALETTE)
+    expect(project.config?.materialized).toBe(true)
+    // Re-serializing re-derives from the (now smaller) global palette — a materialized
+    // block never freezes the project against later global-palette edits.
+    const smaller = { statuses: DEFAULT_STATUSES.slice(0, 2), priorities: DEFAULT_PRIORITIES.slice(0, 1) }
+    const { frontmatter } = parseFrontmatter(serializeProject(project, smaller))
+    if (!frontmatter) throw new Error('frontmatter missing')
+    expect(idsOf(configOf(frontmatter)?.statuses)).toEqual(['todo', 'in-progress'])
+  })
+
+  it('a genuine override is serialized untagged and survives round-trip (R25 shape)', () => {
+    const p = makeProject('Override', 'Projects/Override.md')
+    p.config = { statuses: OVERRIDE_STATUSES }
+    const { frontmatter, project } = roundTripProjectWith(p, GLOBAL_PALETTE)
+    const config = configOf(frontmatter)
+    // Not re-tagged materialized, and the global palette did NOT clobber the override.
+    expect(config?.materialized).not.toBe(true)
+    expect(idsOf(config?.statuses)).toEqual(['custom'])
+    expect(project.config?.statuses?.map((s) => s.id)).toEqual(['custom'])
+  })
+
+  it('materializes a priorities-only override with the resolved priorities', () => {
+    const p = makeProject('PrioOverride', 'Projects/PrioOverride.md')
+    p.config = { priorities: OVERRIDE_PRIORITIES }
+    const { frontmatter } = roundTripProjectWith(p, GLOBAL_PALETTE)
+    const config = configOf(frontmatter)
+    expect(config?.materialized).not.toBe(true)
+    expect(idsOf(config?.priorities)).toEqual(['someday'])
+    expect(config?.statuses).toBeUndefined()
+  })
+
+  it('does not materialize when no palette is supplied (bare round-trip stays config-free)', () => {
+    const { frontmatter } = roundTripProject(makeProject('Bare', 'Projects/Bare.md'))
+    expect(configOf(frontmatter)).toBeUndefined()
+  })
+})
+
+function roundTripProjectWith(p: Project, palette: { statuses: StatusConfig[]; priorities: PriorityConfig[] }) {
+  const { frontmatter, body } = parseFrontmatter(serializeProject(p, palette))
+  if (!frontmatter) throw new Error('frontmatter missing')
+  return { project: hydrateProjectFromFrontmatter(frontmatter, body, p.filePath, 'RT'), frontmatter }
+}

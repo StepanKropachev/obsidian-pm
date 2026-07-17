@@ -127,6 +127,7 @@ export function hydrateProjectFromFrontmatter(
     createdAt: (frontmatter.createdAt as string) ?? new Date().toISOString(),
     updatedAt: (frontmatter.updatedAt as string) ?? new Date().toISOString(),
     filePath,
+    path: typeof frontmatter.path === 'string' && frontmatter.path ? frontmatter.path : undefined,
     savedViews: hydrateSavedViews((frontmatter.savedViews as unknown[]) ?? []),
     config: hydrateProjectConfig(frontmatter.config),
     taskIndex: new Map()
@@ -150,6 +151,9 @@ function hydrateProjectConfig(raw: unknown): ProjectConfig | undefined {
   if (typeof r.kanbanShowDescriptionPreview === 'boolean') {
     config.kanbanShowDescriptionPreview = r.kanbanShowDescriptionPreview
   }
+  // The round-trip-safety marker: a materialized block is re-derived from the
+  // global palette by the resolver rather than treated as a deliberate override.
+  if (r.materialized === true) config.materialized = true
   return Object.keys(config).length ? config : undefined
 }
 

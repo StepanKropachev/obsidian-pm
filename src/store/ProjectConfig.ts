@@ -13,16 +13,20 @@ const FALLBACK_COLOR = '#8a94a0'
  */
 export function resolveProjectConfig(project: Project, settings: PMSettings): ResolvedProjectConfig {
   const config = project.config
+  // A materialized block is a write-through snapshot of the resolved palette, not
+  // a deliberate override: re-derive it from the global palette so later global
+  // edits re-propagate. Only an untagged block counts as an authoritative override.
+  const isOverride = config?.materialized !== true
   return {
     statuses: withInUseExtras(
-      config?.statuses?.length ? config.statuses : settings.statuses,
+      isOverride && config?.statuses?.length ? config.statuses : settings.statuses,
       settings.statuses,
       project,
       (task) => task.status,
       (id) => ({ id, label: id, color: FALLBACK_COLOR, icon: '', complete: false })
     ),
     priorities: withInUseExtras(
-      config?.priorities?.length ? config.priorities : settings.priorities,
+      isOverride && config?.priorities?.length ? config.priorities : settings.priorities,
       settings.priorities,
       project,
       (task) => task.priority,

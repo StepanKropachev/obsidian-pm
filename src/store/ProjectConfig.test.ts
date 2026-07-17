@@ -82,6 +82,26 @@ describe('resolveProjectConfig', () => {
     expect(resolved.priorities.map((p) => p.id)).toEqual(['urgent', 'later', 'high'])
   })
 
+  it('re-derives a materialized block from the global palette (marker ⇒ not an override)', () => {
+    // A materialized snapshot carries the resolved palette but must NOT win as an
+    // override: the resolver ignores it and re-derives from the global settings so
+    // later global-palette edits re-propagate on the next save.
+    const resolved = resolveProjectConfig(
+      makeOverrideProject({ statuses: CUSTOM_STATUSES, priorities: CUSTOM_PRIORITIES, materialized: true }),
+      DEFAULT_SETTINGS
+    )
+    expect(resolved.statuses).toEqual(DEFAULT_STATUSES)
+    expect(resolved.priorities).toEqual(DEFAULT_PRIORITIES)
+  })
+
+  it('honors a genuine override (no materialized marker) over the global palette', () => {
+    const resolved = resolveProjectConfig(
+      makeOverrideProject({ statuses: CUSTOM_STATUSES, materialized: false }),
+      DEFAULT_SETTINGS
+    )
+    expect(resolved.statuses.map((s) => s.id)).toEqual(['idea', 'shipped'])
+  })
+
   it('synthesizes a placeholder for in-use values nobody defines', () => {
     const project = makeOverrideProject()
     const parent = makeTask({ status: 'todo' })

@@ -12,6 +12,9 @@
 
 </div>
 
+> [!NOTE]
+> This is a **private fork** of [stepankropachev/obsidian-pm](https://github.com/stepankropachev/obsidian-pm). It has diverged from upstream and is maintained independently — it does not track, pull, or merge changes from the original project.
+
 Table views, Gantt charts, Kanban boards, custom fields, time tracking, smart scheduling — all stored as plain Markdown with YAML frontmatter. No external services. No sync subscriptions. Your data stays yours.
 
 <img width="1422" height="791" alt="Project Manager dashboard" src="https://github.com/user-attachments/assets/ca6bc67f-e656-45be-b93a-17410555ec1a" />

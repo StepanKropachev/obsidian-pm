@@ -143,6 +143,24 @@ export class ProjectView extends ItemView {
         })
       )
     )
+    // A rename of this view's own project file (in the file explorer) must not
+    // dead-end at "Project not found": track the new path and reload. The store's
+    // own rename listener does the in-memory rebind (name + tasks folder); by the
+    // time this debounced reload fires, the project resolves at its new path.
+    this.registerEvent(
+      this.app.vault.on('rename', (file, oldPath) => {
+        if (!(file instanceof TFile) || oldPath !== this.filePath) return
+        this.filePath = file.path
+        if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
+        this.reloadDebounceTimer = window.setTimeout(
+          safeAsync(async () => {
+            this.reloadDebounceTimer = null
+            await this.loadProject()
+          }),
+          300
+        )
+      })
+    )
   }
 
   private async loadProject(): Promise<void> {

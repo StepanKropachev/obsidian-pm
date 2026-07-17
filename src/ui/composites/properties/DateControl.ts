@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian'
+import { CalendarPicker } from '../../primitives/CalendarPicker'
 import { Popover } from '../../primitives/Popover'
 import { formatDate, relativeDue, today } from '../../../dates'
 
@@ -32,28 +33,21 @@ export function renderDateControl(opts: DateControlOpts): void {
       pop.close()
       return
     }
-    // The value to commit on close. A native date input fires `change` the moment its
-    // value is valid again, which for an already-set date means after the first edited
-    // segment — committing there would re-render the modal and yank focus to the title
-    // mid-edit. Instead the popover reports the final value once, when it closes (the
-    // user clicks away, presses Enter, or picks Today/Clear), so manual editing is free.
+    // The value to commit on close. The calendar reports the chosen day once, and the
+    // popover commits it on close (a day click, or Today/Clear) — so a single change
+    // reaches the modal instead of an intermediate stream that would yank focus mid-edit.
     let next: string | null = null
     pop = new Popover({
       anchor: trigger,
-      width: 160,
+      width: 260,
       onClose: () => {
         pop = null
-        const value = next ?? field.value
-        if (value !== opts.value) opts.onChange(value)
+        if (next !== null && next !== opts.value) opts.onChange(next)
       }
     })
-    const field = pop.contentEl.createEl('input', { type: 'date', cls: 'pm-pop-field' })
-    field.value = opts.value
-    field.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        pop?.close()
-      }
+    new CalendarPicker(pop.contentEl).setValue(opts.value).onChange((value) => {
+      next = value
+      pop?.close()
     })
     const actions = pop.contentEl.createDiv('pm-pop-actions')
     const todayBtn = actions.createEl('button', { cls: 'pm-pop-item pm-pop-item--center', text: 'Today' })
@@ -72,6 +66,5 @@ export function renderDateControl(opts: DateControlOpts): void {
       })
     }
     pop.open()
-    field.focus()
   })
 }

@@ -16,6 +16,7 @@ Before writing any new UI element, find your case here:
 - Need an "+ add" ghost row or button -> `renderAddButton`
 - Need mutually-exclusive options -> `SegmentedControl` (text) or `ViewSwitcher` (icons)
 - Need a floating panel with inputs -> `Popover` (never hand-rolled absolute positioning)
+- Need to pick a calendar date -> `CalendarPicker` (never an OS/browser-native `<input type="date">`)
 - Need a flat action list at the cursor -> Obsidian `Menu`
 - Need a status or priority indicator -> `renderStatusBadge` / `renderPriorityBadge` / `renderStatusDot`
 - Need a logged/estimate hours chip -> `renderTimeChip`
@@ -117,6 +118,15 @@ Floating panel anchored to a trigger, for content Obsidian's `Menu` can't host (
 - Use when: an anchored panel needs focusable inputs
 - Not when: a flat list of actions suffices (Obsidian `Menu`)
 
+### CalendarPicker - `CalendarPicker.ts`
+
+A month-grid date picker rendered entirely in plugin chrome — the in-plugin replacement for an OS/browser-native `<input type="date">`. A Sun–Sat weekday header, a month label with previous/next navigation, and clickable day cells in Sunday-through-Saturday columns. Consumes and emits `YYYY-MM-DD` strings; all date math routes through `src/dates.ts` (`Temporal`), never `Date`. Backs the date popover in `renderDateControl`.
+
+- API: `new CalendarPicker(parent).setValue('YYYY-MM-DD').onChange((dateStr) => …)`
+- CSS: `pm-calendar-picker`, parts `__header/__nav/__prev/__next/__title/__weekdays/__weekday/__grid/__day`, states `__day--adjacent/--today/--selected`
+- Use when: a user picks a single whole-day date
+- Not when: a date range, multiple dates, or a time-of-day is needed (out of scope)
+
 ## Composites (`src/ui/composites/`)
 
 Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh`. If a composite needs `plugin`, it's the wrong shape; push the store access up to the orchestrator view.
@@ -169,7 +179,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `calendar-picker`, `badges`, `form`, `time-due`, `cards`, `table`).
 
 ## Maintenance
 
