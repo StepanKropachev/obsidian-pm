@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type FilterState, type Task } from '../types'
+import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type CustomFieldFilterSelection, type FilterState, type Task } from '../types'
 import {
   applyTaskFilter,
   applyTaskFilterFlat,
@@ -36,6 +36,10 @@ describe('isFilterActive', () => {
 
   it('returns true when dueDateFilter is not "any"', () => {
     expect(isFilterActive(filter({ dueDateFilter: 'overdue' }))).toBe(true)
+  })
+
+  it('returns true when a custom field filter is active', () => {
+    expect(isFilterActive(filter({ customFields: { impact: { value: 'high', type: 'text' } } } as never))).toBe(true)
   })
 
   it('ignores showArchived (matches legacy semantics)', () => {
@@ -96,6 +100,18 @@ describe('matchesFilter', () => {
   it('treats no-date dueDateFilter correctly', () => {
     expect(matchesFilter(task({ id: 'a', due: '' }), filter({ dueDateFilter: 'no-date' }))).toBe(true)
     expect(matchesFilter(task({ id: 'b', due: '2026-01-01' }), filter({ dueDateFilter: 'no-date' }))).toBe(false)
+  })
+
+  it('matches custom field filters by value', () => {
+    const taskWithField = task({ id: 'a', customFields: { impact: 'high' } })
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: 'high', type: 'text' } } } as never))).toBe(true)
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: 'low', type: 'text' } } } as never))).toBe(false)
+  })
+
+  it('matches custom field filters by multiselect selection', () => {
+    const taskWithField = task({ id: 'a', customFields: { impact: ['high', 'urgent'] } })
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: ['high'], type: 'multiselect' } } } as never))).toBe(true)
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: ['low'], type: 'multiselect' } } } as never))).toBe(false)
   })
 })
 

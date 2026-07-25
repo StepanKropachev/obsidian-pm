@@ -1,6 +1,8 @@
 node_modules/
 main.js
 styles.css
+data.json
+package-lock.json
 .claude/
 preview/
 CLAUDE.md

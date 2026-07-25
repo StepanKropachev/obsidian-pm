@@ -1,5 +1,6 @@
 import type {
   CustomFieldDef,
+  CustomFieldFilterSelection,
   PriorityConfig,
   Project,
   ProjectConfig,
@@ -33,7 +34,16 @@ export function hydrateSavedViews(raw: unknown[]): SavedView[] {
           assignees: Array.isArray(filter.assignees) ? filter.assignees : [],
           tags: Array.isArray(filter.tags) ? filter.tags : [],
           dueDateFilter: (filter.dueDateFilter as string as SavedView['filter']['dueDateFilter']) ?? 'any',
-          showArchived: (filter.showArchived as boolean) ?? false
+          showArchived: (filter.showArchived as boolean) ?? false,
+          customFields:
+            typeof filter.customFields === 'object' && filter.customFields !== null
+              ? Object.fromEntries(
+                  Object.entries(filter.customFields as Record<string, unknown>).map(([key, value]) => [
+                    key,
+                    value as CustomFieldFilterSelection
+                  ])
+                )
+              : {}
         },
         sortKey: (v.sortKey as string) ?? 'status',
         sortDir: (v.sortDir as 'asc' | 'desc') ?? 'asc',

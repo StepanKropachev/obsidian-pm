@@ -323,6 +323,8 @@ export class ProjectView extends ItemView {
         onSave: (updated) => {
           this.project = updated
           this.renderProjectToolbar()
+          this.renderProjectHeader()
+          this.renderCurrentView()
         }
       })
     })
@@ -385,6 +387,7 @@ export class ProjectView extends ItemView {
           onSave: (updated) => {
             this.project = updated
             this.renderProjectToolbar()
+            this.renderProjectHeader()
             this.renderCurrentView()
           }
         })

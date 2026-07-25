@@ -200,7 +200,8 @@ export class ProjectModal extends Modal {
           id: makeId(),
           name: 'New Field',
           type: 'text',
-          options: []
+          options: [],
+          filterable: false
         })
         renderCFs()
       })
@@ -421,6 +422,14 @@ export class ProjectModal extends Modal {
     typeSelect.addEventListener('change', () => {
       this.project.customFields[index].type = typeSelect.value as CustomFieldDef['type']
       rerender()
+    })
+
+    const filterToggle = row.createEl('label', { cls: 'pm-cf-filter-toggle' })
+    const filterCheckbox = filterToggle.createEl('input', { type: 'checkbox' })
+    filterCheckbox.checked = !!cf.filterable
+    filterToggle.createSpan({ text: 'Filterable' })
+    filterCheckbox.addEventListener('change', () => {
+      this.project.customFields[index].filterable = filterCheckbox.checked
     })
 
     new IconButton(row)
