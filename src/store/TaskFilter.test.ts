@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type CustomFieldFilterSelection, type FilterState, type Task } from '../types'
+import { DEFAULT_STATUSES, makeDefaultFilter, makeTask, type FilterState, type Task } from '../types'
 import {
   applyTaskFilter,
   applyTaskFilterFlat,
