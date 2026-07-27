@@ -1,5 +1,5 @@
 import type PMPlugin from '../main'
-import { Project, Task, TaskType, Recurrence } from '../types'
+import type { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'

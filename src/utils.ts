@@ -96,7 +96,7 @@ const iconNameCache = new Map<string, boolean>()
 export function isIconName(icon: string): boolean {
   let known = iconNameCache.get(icon)
   if (known === undefined) {
-    const probe = activeDocument.createElement('span')
+    const probe = createSpan()
     setIcon(probe, icon)
     known = probe.childElementCount > 0
     iconNameCache.set(icon, known)

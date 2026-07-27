@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian'
 import { Popover } from '../../primitives/Popover'
-import { renderGlyph, renderOptionRow, SelectItem } from './optionList'
+import { renderGlyph, renderOptionRow, type SelectItem } from './optionList'
 
 export interface SelectControlOpts {
   container: HTMLElement

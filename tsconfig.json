@@ -9,6 +9,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "isolatedModules": true,
+    "erasableSyntaxOnly": false,
     "noEmit": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
