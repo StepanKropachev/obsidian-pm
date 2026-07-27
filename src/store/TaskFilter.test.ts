@@ -81,6 +81,24 @@ describe('matchesFilter', () => {
     expect(matchesFilter(t, filter({ text: 'unrelated' }))).toBe(false)
   })
 
+  it('matches a task id pasted into the search box', () => {
+    const t = task({ id: 'ci9q78ljy7xcz0out', title: 'Refactor parser' })
+    expect(matchesFilter(t, filter({ text: 'ci9q78ljy7xcz0out' }))).toBe(true)
+    expect(matchesFilter(t, filter({ text: '  ci9q78ljy7xcz0out\n' }))).toBe(true)
+    expect(matchesFilter(t, filter({ text: 'CI9Q78LJY7XCZ0OUT' }))).toBe(true)
+  })
+
+  it('does not match a partial id, so ids never pollute ordinary text search', () => {
+    const t = task({ id: 'ci9q78ljy7xcz0out', title: 'Refactor parser' })
+    expect(matchesFilter(t, filter({ text: 'out' }))).toBe(false)
+    expect(matchesFilter(t, filter({ text: 'ci9q78' }))).toBe(false)
+  })
+
+  it('ignores a whitespace-only query', () => {
+    const t = task({ id: 'a', title: 'Refactor parser' })
+    expect(matchesFilter(t, filter({ text: '   ' }))).toBe(true)
+  })
+
   it('filters by status, priority, assignees, tags', () => {
     const t = task({ id: 'a', status: 'in-progress', priority: 'high', assignees: ['Alice'], tags: ['x'] })
     expect(matchesFilter(t, filter({ statuses: ['in-progress'] }))).toBe(true)

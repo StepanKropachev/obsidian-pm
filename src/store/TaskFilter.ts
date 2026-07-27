@@ -28,10 +28,13 @@ export function countActiveFilters(filter: FilterState): number {
 
 export function matchesFilter(task: Task, filter: FilterState, statuses: StatusConfig[] = []): boolean {
   if (task.archived && !filter.showArchived) return false
-  if (filter.text) {
-    const q = filter.text.toLowerCase()
+  const q = filter.text.trim().toLowerCase()
+  if (q) {
+    // Ids compare whole-string: they are opaque generated strings, so a substring test would
+    // match tasks whose id merely contains the query, with nothing on screen to explain the hit.
     if (
       !(
+        task.id.toLowerCase() === q ||
         task.title.toLowerCase().includes(q) ||
         task.status.includes(q) ||
         task.priority.includes(q) ||
