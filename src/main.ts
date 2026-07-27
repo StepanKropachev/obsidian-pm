@@ -1,5 +1,5 @@
 import { MarkdownView, Plugin, Notice } from 'obsidian'
-import { DEFAULT_SETTINGS, PMSettings, Project, Task } from './types'
+import { DEFAULT_SETTINGS, type PMSettings, type Project, type Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
 import { ProjectStore } from './store'
 import type { TaskSource } from './store'

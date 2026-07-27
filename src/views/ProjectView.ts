@@ -1,6 +1,6 @@
-import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, EventRef } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, type EventRef } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, ViewMode, FilterState, SavedView, makeDefaultFilter, makeId } from '../types'
+import { type Project, type ViewMode, type FilterState, type SavedView, makeDefaultFilter, makeId } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'

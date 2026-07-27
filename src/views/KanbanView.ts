@@ -1,6 +1,6 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
+import type { Project, Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
 import { isTaskOverdue, isTerminalStatus, getPriorityConfig } from '../utils'
