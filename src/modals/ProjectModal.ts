@@ -1,6 +1,6 @@
 import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, ProjectConfig, CustomFieldDef, makeId, makeProject } from '../types'
+import { type Project, type ProjectConfig, type CustomFieldDef, makeId, makeProject } from '../types'
 import { rebuildTaskIndex } from '../store'
 import { safeAsync } from '../utils'
 import { renderAddButton } from '../ui/composites/addButton'

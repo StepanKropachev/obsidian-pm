@@ -11,7 +11,7 @@ import {
   setTooltip
 } from 'obsidian'
 import type PMPlugin from '../main'
-import { Project, Task, makeTask } from '../types'
+import { type Project, type Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
 import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig } from '../utils'
