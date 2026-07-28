@@ -23,9 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The import dialog uses Obsidian's native buttons
 - The Gantt zoom control uses Obsidian's native buttons
 - Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
+- The cursor lands where a task description was clicked when the editor opens
 
 ### Fixed
 
+- Text and images in a task description could not be selected or copied ([#169](https://github.com/StepanKropachev/obsidian-pm/issues/169))
+- A task description rewrapped its text when clicked for editing
 - Searching for a task by its id found nothing ([#167](https://github.com/StepanKropachev/obsidian-pm/issues/167))
 - The import dialog offered the built-in statuses and priorities instead of the configured ones
 

@@ -191,9 +191,8 @@
   font-size: 13px;
   line-height: 1.6;
   min-height: 32px;
-  max-height: 300px;
-  overflow-y: auto;
   cursor: text;
+  user-select: text;
 }
 .pm-modal-desc-preview:hover {
   background: var(--background-modifier-hover);

@@ -382,13 +382,14 @@ export class TaskModal extends Modal {
       attachFileLinkHandlers()
     }
 
-    const showEdit = () => {
+    const showEdit = (caret?: number) => {
       descPreview.classList.add('pm-hidden')
       descArea.classList.remove('pm-hidden')
       descArea.value = this.task.description
       window.setTimeout(() => {
         autoResize()
         descArea.focus()
+        if (caret !== undefined) descArea.setSelectionRange(caret, caret)
       }, 0)
     }
 
@@ -451,6 +452,37 @@ export class TaskModal extends Modal {
     })
     this.noteSuggest.attach(descSection)
 
+    // Walk the rendered text and the markdown source in step, skipping the source
+    // characters that produced no output, so a caret in the preview lands on the
+    // character that rendered it rather than on the syntax around it.
+    const sourceOffsetOf = (renderedIndex: number) => {
+      const rendered = descPreview.textContent || ''
+      const src = this.task.description
+      const plain = (c: string) => (/\s/.test(c) ? ' ' : c)
+      let cursor = 0
+      for (let i = 0; i < renderedIndex && i < rendered.length; i++) {
+        const ch = plain(rendered[i])
+        while (cursor < src.length && plain(src[cursor]) !== ch) cursor++
+        cursor++
+      }
+      return Math.min(cursor, src.length)
+    }
+
+    const clickedSourceOffset = (e: MouseEvent) => {
+      const doc = descPreview.ownerDocument
+      const caret = doc.caretPositionFromPoint?.(e.clientX, e.clientY)
+      const node = caret?.offsetNode
+      if (!node || node.nodeType !== Node.TEXT_NODE || !descPreview.contains(node)) return undefined
+      const walker = doc.createTreeWalker(descPreview, NodeFilter.SHOW_TEXT)
+      let rendered = 0
+      let current = walker.nextNode()
+      while (current && current !== node) {
+        rendered += (current.textContent || '').length
+        current = walker.nextNode()
+      }
+      return current ? sourceOffsetOf(rendered + caret.offset) : undefined
+    }
+
     descPreview.addEventListener('click', (e) => {
       const target = e.target as HTMLElement
       if (target.instanceOf(HTMLInputElement) && target.type === 'checkbox') return
@@ -473,8 +505,13 @@ export class TaskModal extends Modal {
         return
       }
 
+      if (target.instanceOf(HTMLImageElement)) return
+
+      const selection = activeWindow.getSelection()
+      if (selection && !selection.isCollapsed && descPreview.contains(selection.anchorNode)) return
+
       // Click on non-link text = edit
-      showEdit()
+      showEdit(clickedSourceOffset(e))
     })
 
     if (hasContent()) {
