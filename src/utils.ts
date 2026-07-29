@@ -1,6 +1,7 @@
 import { Notice, setIcon } from 'obsidian'
 import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
-import { today, parsePlainDate, Temporal } from './dates'
+import type { DueUrgency } from './ui/composites/dueChip'
+import { today, parsePlainDate } from './dates'
 
 /** Deterministic HSL color from a string (e.g. assignee name) */
 export function stringToColor(s: string): string {
@@ -52,11 +53,13 @@ export function statusSortOrder(status: string, statuses: StatusConfig[]): numbe
   return idx >= 0 ? idx : 999
 }
 
-/** Is a task overdue? (past due, not in a terminal status) */
-export function isTaskOverdue(task: Task, statuses: StatusConfig[]): boolean {
+/** How urgent a task's due date is. Terminal tasks are never urgent. */
+export function dueUrgency(task: Task, statuses: StatusConfig[]): DueUrgency {
   const due = parsePlainDate(task.due)
-  if (!due) return false
-  return Temporal.PlainDate.compare(due, today()) < 0 && !isTerminalStatus(task.status, statuses)
+  if (!due || isTerminalStatus(task.status, statuses)) return 'normal'
+  const days = today().until(due, { largestUnit: 'day' }).days
+  if (days < 0) return 'overdue'
+  return days < 3 ? 'near' : 'normal'
 }
 
 /** Safely convert a custom-field value to a display string.

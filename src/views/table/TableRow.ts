@@ -1,7 +1,6 @@
 import { Menu } from 'obsidian'
-import { getStatusConfig, isTaskOverdue, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
+import { getStatusConfig, dueUrgency, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
-import { today, parsePlainDate } from '../../dates'
 import type { Task } from '../../types'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext, TableState } from './TableRenderer'
@@ -120,12 +119,9 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx
 
   new AssigneesCell(row, task.assignees)
 
-  const due = parsePlainDate(task.due)
-  const overdue = isTaskOverdue(task, ctx.statuses)
-  const isNear = !overdue && due !== null && due.since(today(), { largestUnit: 'days' }).days < 3
   new DueDateCell(row, {
     task,
-    urgency: overdue ? 'overdue' : isNear ? 'near' : 'normal',
+    urgency: dueUrgency(task, ctx.statuses),
     onSave: async (val) => {
       await ctx.plugin.store.updateTask(ctx.project, task.id, { due: val })
       await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id)

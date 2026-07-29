@@ -3,7 +3,7 @@ import type PMPlugin from '../main'
 import type { Project, Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
-import { isTaskOverdue, isTerminalStatus, getPriorityConfig } from '../utils'
+import { dueUrgency, isTerminalStatus, getPriorityConfig } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
@@ -115,7 +115,7 @@ export class KanbanView implements SubView {
       parentTitle,
       subtaskProgress,
       loggedHours: totalLoggedHours(task),
-      overdue: isTaskOverdue(task, this.config.statuses),
+      overdue: dueUrgency(task, this.config.statuses) === 'overdue',
       showTagColors: this.plugin.settings.showTagColors
     }
   }
