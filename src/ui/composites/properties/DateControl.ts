@@ -1,17 +1,18 @@
 import { setIcon } from 'obsidian'
 import { Popover } from '../../primitives/Popover'
-import { formatDate, relativeDue, today } from '../../../dates'
+import { formatDate, today, type DueTone } from '../../../dates'
 
 export interface DateControlOpts {
   container: HTMLElement
   value: string
   onChange: (value: string) => void
   emptyLabel?: string
+  hint?: { text: string; tone: DueTone } | null
 }
 
 /**
- * Inline date control: shows the formatted date with a relative-due hint, opening a popover
- * with a native date input plus Today / Clear shortcuts. Backs Due, Start, and Completed.
+ * Inline date control: shows the formatted date plus an optional caller-supplied hint, opening a
+ * popover with a native date input plus Today / Clear shortcuts. Backs Due, Start, and Completed.
  */
 export function renderDateControl(opts: DateControlOpts): void {
   const has = !!opts.value
@@ -23,8 +24,7 @@ export function renderDateControl(opts: DateControlOpts): void {
     cls: 'pm-prop-inline-label',
     text: has ? formatDate(opts.value) : (opts.emptyLabel ?? 'Set date')
   })
-  const rel = relativeDue(opts.value)
-  if (rel) trigger.createSpan({ cls: `pm-due pm-due--${rel.tone}`, text: rel.text })
+  if (opts.hint) trigger.createSpan({ cls: `pm-due pm-due--${opts.hint.tone}`, text: opts.hint.text })
 
   let pop: Popover | null = null
   trigger.addEventListener('click', () => {

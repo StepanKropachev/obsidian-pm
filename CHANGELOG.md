@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Start and completed dates were labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))
+- The due date of a done task was labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))
+- The due date of a done task was highlighted as urgent in the table
 - Text and images in a task description could not be selected or copied ([#169](https://github.com/StepanKropachev/obsidian-pm/issues/169))
 - A task description rewrapped its text when clicked for editing
 - Searching for a task by its id found nothing ([#167](https://github.com/StepanKropachev/obsidian-pm/issues/167))

@@ -5,6 +5,7 @@ import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
 import { isTerminalStatus, stringToColor } from '../utils'
+import { relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
   renderSelectControl,
@@ -162,6 +163,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         container: cell,
         value: task.due,
         emptyLabel: 'Set due date',
+        hint: isTerminalStatus(task.status, statuses) ? null : relativeDue(task.due),
         onChange: (v) => {
           task.due = v
           rerender()
