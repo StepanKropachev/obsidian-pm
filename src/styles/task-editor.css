@@ -147,7 +147,8 @@ button.pm-prop-inline--empty {
 .pm-due--today {
   color: var(--color-orange);
 }
-.pm-due--soon {
+.pm-due--soon,
+.pm-due--outcome {
   color: var(--text-muted);
 }
 

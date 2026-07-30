@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Temporal } from 'temporal-polyfill'
-import { relativeDue } from './dates'
+import { completionOutcome, relativeDue } from './dates'
 
 const from = Temporal.PlainDate.from('2026-06-15')
 
@@ -28,5 +28,23 @@ describe('relativeDue', () => {
   it('returns null beyond a week out', () => {
     expect(relativeDue('2026-06-22', from)).toBeNull()
     expect(relativeDue('2026-12-01', from)).toBeNull()
+  })
+})
+
+describe('completionOutcome', () => {
+  it('returns null unless both dates are set', () => {
+    expect(completionOutcome('', '2026-06-15')).toBeNull()
+    expect(completionOutcome('2026-06-15', '')).toBeNull()
+    expect(completionOutcome('not-a-date', '2026-06-15')).toBeNull()
+  })
+
+  it('counts the days a task ran past its due date', () => {
+    expect(completionOutcome('2026-06-15', '2026-06-18')).toEqual({ text: '3d late', tone: 'outcome' })
+    expect(completionOutcome('2026-06-15', '2026-06-16')).toEqual({ text: '1d late', tone: 'outcome' })
+  })
+
+  it('reads on time when the task landed on or before its due date', () => {
+    expect(completionOutcome('2026-06-15', '2026-06-15')).toEqual({ text: 'On time', tone: 'outcome' })
+    expect(completionOutcome('2026-06-15', '2026-06-01')).toEqual({ text: 'On time', tone: 'outcome' })
   })
 })
