@@ -23,7 +23,7 @@ export function formatDate(iso: string): string {
   return d ? d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
 }
 
-export type DueTone = 'overdue' | 'today' | 'soon'
+export type DueTone = 'overdue' | 'today' | 'soon' | 'outcome'
 
 /**
  * A short relative-due label for a YYYY-MM-DD date, or null when the date is
@@ -39,4 +39,13 @@ export function relativeDue(iso: string, from: Temporal.PlainDate = today()): { 
   if (days === 1) return { text: 'Tomorrow', tone: 'today' }
   if (days <= 6) return { text: `In ${days}d`, tone: 'soon' }
   return null
+}
+
+/** Whether a finished task landed on its due date; null unless both dates are set. */
+export function completionOutcome(due: string, completed: string): { text: string; tone: DueTone } | null {
+  const dueDate = parsePlainDate(due)
+  const completedDate = parsePlainDate(completed)
+  if (!dueDate || !completedDate) return null
+  const days = dueDate.until(completedDate, { largestUnit: 'day' }).days
+  return { text: days > 0 ? `${days}d late` : 'On time', tone: 'outcome' }
 }
