@@ -76,7 +76,7 @@ Horizontal progress track with optional percent label.
 - API: `new ProgressBar(parent).setValue(0-100).setColor(cssColor).setSize('sm'|'md').setShowLabel(bool)`
 - CSS: `pm-progress`, `-track`, `-fill`, `-label`, `--sm`; color via `--pm-progress-color`
 - Use when: task/project completion display
-- Not when: user-editable progress (use `renderProgressSlider` from `FormField.ts`)
+- Editable progress: swap the display for a number input on click via `makeInlineEdit` (ProgressCell keeps the bar as display; the task editor's Progress row uses `renderInputControl`)
 
 ### CollapseToggle - `CollapseToggle.ts`
 
@@ -130,15 +130,15 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 - **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
 - **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
 - **ProjectHeader** - `ProjectHeader/`. Props: project, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view ChipButtons, save button) and FilterRow (filter dropdowns, due/archived ChipButtons).
-- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
-- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
+- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date/number editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
+- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
 
 ## Shared widgets (`src/ui/*.ts`)
 
 Richer than primitives, used across views. Avoid expanding this bucket; prefer composites/primitives when they fit.
 
 - **FilterDropdown** - `renderFilterDropdown(parent, label, selected, options, onChange)`: a ChipButton that opens a checkable Menu with a Clear item. Any multi-select filter control.
-- **FormField** - `renderPropRow(container, label, valueBuilder, icon?)` (label + value form row), `renderChipList(container, items, { variant, shape, onRemove, onAdd?, ... })` (removable-token list with add affordance), `renderProgressSlider(container, value, onChange)`.
+- **FormField** - `renderPropRow(container, label, valueBuilder, icon?)` (label + value form row), `renderChipList(container, items, { variant, shape, onRemove, onAdd?, ... })` (removable-token list with add affordance).
 - **StatusBadge** - `renderStatusBadge(container, task, statuses, onChange)` (solid dot-led Chip + picker Menu), `renderPriorityBadge(...)` (plain Chip with chevron icon + picker Menu), `renderStatusDot(container, status, statuses, cls?)` (bare colored dot), `PRIORITY_CHEVRONS`. The only way to render status/priority.
 - **TaskContextMenu** - `buildTaskContextMenu(menu, task, ctx)`: the task right-click menu.
 - **ModalFactory** - all modal opening: `openTaskModal`, `openProjectModal`, `openProjectPicker`, `openTaskPicker`, `openImportModal`, `confirmDialog`, `confirmDuplicateSubtasks`, `promptText`. Never instantiate a modal directly from a view.

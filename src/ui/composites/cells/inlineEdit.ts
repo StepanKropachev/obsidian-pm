@@ -3,7 +3,7 @@ import { safeAsync } from '../../../utils'
 export interface InlineEditOpts {
   container: HTMLElement
   display: HTMLElement
-  inputType: 'text' | 'date'
+  inputType: 'text' | 'date' | 'number'
   value: string
   onSave: (newValue: string) => Promise<void>
 }
@@ -13,7 +13,7 @@ export function makeInlineEdit(opts: InlineEditOpts): void {
   const input = container.createEl('input', { type: inputType, cls: 'pm-inline-edit', value })
   display.replaceWith(input)
   input.focus()
-  if (inputType === 'text') input.select()
+  if (inputType !== 'date') input.select()
 
   let saved = false
   const save = safeAsync(async () => {
@@ -28,7 +28,7 @@ export function makeInlineEdit(opts: InlineEditOpts): void {
   })
 
   input.addEventListener('blur', save)
-  if (inputType === 'text') {
+  if (inputType !== 'date') {
     input.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter') save()
       if (ev.key === 'Escape') input.replaceWith(display)
