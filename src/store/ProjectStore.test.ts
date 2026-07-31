@@ -397,6 +397,53 @@ describe('ProjectStore task attachments', () => {
   })
 })
 
+describe('ProjectStore archiving', () => {
+  it('archives the whole subtree when a parent is archived', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Tree', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    const child = await addNamed(store, project, 'Child', parent.id)
+    const grandchild = await addNamed(store, project, 'Grandchild', child.id)
+
+    await store.archiveTask(project, parent.id)
+
+    for (const task of [parent, child, grandchild]) {
+      expect(task.archived).toBe(true)
+      expect(task.filePath).toMatch(/^Projects\/Tree_tasks\/Archive\//)
+      expect(vault.getAbstractFileByPath(expectDefined(task.filePath))).not.toBeNull()
+    }
+  })
+
+  it('unarchives the whole subtree when a parent is unarchived', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Tree', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    const child = await addNamed(store, project, 'Child', parent.id)
+
+    await store.archiveTask(project, parent.id)
+    await store.unarchiveTask(project, parent.id)
+
+    for (const task of [parent, child]) {
+      expect(task.archived).toBe(false)
+      expect(task.filePath).toBe(`Projects/Tree_tasks/${task.title.toLowerCase()}.md`)
+      expect(vault.getAbstractFileByPath(expectDefined(task.filePath))).not.toBeNull()
+    }
+  })
+
+  it('leaves an already archived subtask in place when its parent is archived', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Tree', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    const child = await addNamed(store, project, 'Child', parent.id)
+
+    await store.archiveTask(project, child.id)
+    await store.archiveTask(project, parent.id)
+
+    expect(child.archived).toBe(true)
+    expect(child.filePath).toBe('Projects/Tree_tasks/Archive/child.md')
+  })
+})
+
 describe('ProjectStore metadataCache fast path', () => {
   function stubTaskCache(app: App, path: string, fm: Record<string, unknown>): void {
     const cache = (app as unknown as { metadataCache: { getFileCache: (f: TFile) => unknown } }).metadataCache

@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Gantt zoom control uses Obsidian's native buttons
 - Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
 - The cursor lands where a task description was clicked when the editor opens
+- Subtasks are archived and unarchived along with their parent task
 
 ### Fixed
 
