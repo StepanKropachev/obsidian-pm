@@ -51,23 +51,3 @@ export function renderChipList(container: HTMLElement, items: string[], opts: Ch
     new ButtonComponent(container).setButtonText(opts.addLabel ?? '+ Add').onClick((e) => onAdd(e))
   }
 }
-
-export function renderProgressSlider(
-  container: HTMLElement,
-  value: number,
-  onChange: (value: number) => void
-): HTMLElement {
-  const wrap = container.createDiv('pm-prop-value pm-prop-progress-wrap')
-  const slider = wrap.createEl('input', { type: 'range', cls: 'pm-progress-slider' })
-  slider.min = '0'
-  slider.max = '100'
-  slider.step = '5'
-  slider.value = String(value)
-  const label = wrap.createSpan({ text: `${value}%`, cls: 'pm-progress-slider-label' })
-  slider.addEventListener('input', () => {
-    const v = parseInt(slider.value)
-    label.textContent = `${v}%`
-    onChange(v)
-  })
-  return wrap
-}

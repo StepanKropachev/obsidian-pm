@@ -3,10 +3,9 @@ import { totalLoggedHours } from '../store/TaskTreeOps'
 import { today } from '../dates'
 import { renderAddButton } from '../ui/composites/addButton'
 import { IconButton } from '../ui/primitives/IconButton'
-import { ProgressBar } from '../ui/primitives/ProgressBar'
 
 /**
- * Renders the time tracking section (estimate, progress bar, log entries)
+ * Renders the time tracking section (estimate, log entries)
  * into the given container.
  */
 export function renderTimeTrackingPanel(container: HTMLElement, task: Task): void {
@@ -31,14 +30,6 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
     const v = parseFloat(estInput.value)
     task.timeEstimate = isNaN(v) || v <= 0 ? undefined : v
   })
-
-  // Progress bar (red once logged time exceeds the estimate)
-  if (est > 0) {
-    const over = logged > est
-    const bar = new ProgressBar(timeSection.createDiv('pm-time-progress'))
-    bar.setValue(Math.round((logged / est) * 100)).setSize('sm')
-    if (over) bar.setColor('var(--color-red)')
-  }
 
   // Log entries
   const logList = timeSection.createDiv('pm-time-log-list')

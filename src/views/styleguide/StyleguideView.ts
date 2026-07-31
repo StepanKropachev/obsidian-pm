@@ -18,7 +18,7 @@ import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectCard } from '../../ui/composites/ProjectCard'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
-import { renderAddProperty } from '../../ui/composites/properties'
+import { renderAddProperty, renderInputControl } from '../../ui/composites/properties'
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
@@ -266,6 +266,17 @@ export class StyleguideView extends ItemView {
     )
     const chipListRow = this.row(sec, 'renderChipList')
     renderChipList(chipListRow, ['design', 'frontend'], { onRemove: noop, onAdd: noop })
+    const inputRow = this.row(sec, 'renderInputControl: number / text / empty')
+    renderInputControl({
+      container: inputRow,
+      value: '45',
+      inputType: 'number',
+      suffix: '%',
+      number: { min: 0, max: 100 },
+      onChange: noop
+    })
+    renderInputControl({ container: inputRow, value: 'Acme Corp', onChange: noop })
+    renderInputControl({ container: inputRow, value: '', placeholder: 'Set value', onChange: noop })
     const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
     renderAddButton(addRow, 'Add member', noop)
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)
@@ -318,7 +329,6 @@ export class StyleguideView extends ItemView {
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
-      subtaskProgress: { done: 2, total: 5 },
       loggedHours: 11,
       overdue: true,
       showTagColors: true,
@@ -390,7 +400,7 @@ export class StyleguideView extends ItemView {
       new PriorityCell(tr.el, { task, priorities: DEFAULT_PRIORITIES, onChange: noop })
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })
       new TimeCell(tr.el, time)
-      new ProgressCell(tr.el, { value: task.progress, color: 'var(--interactive-accent)' })
+      new ProgressCell(tr.el, { value: task.progress, color: 'var(--interactive-accent)', onSave: noopAsync })
       new AssigneesCell(tr.el, task.assignees)
       new ActionsCell(tr.el, { onClick: noop })
     }
