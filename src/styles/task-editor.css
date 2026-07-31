@@ -173,6 +173,9 @@ button.pm-prop-add {
   color: var(--text-accent);
   background: var(--background-modifier-hover);
 }
+.pm-prop-value .pm-prop-add {
+  margin: -1px 0;
+}
 
 /* Multi-value (chips + add) */
 .pm-prop-chips {
