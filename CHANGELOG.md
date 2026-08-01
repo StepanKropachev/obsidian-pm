@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The sort arrow in the table stayed on the column that was sorted before
 - Start and completed dates were labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))
 - The due date of a done task was labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))
 - The due date of a done task was highlighted as urgent in the table

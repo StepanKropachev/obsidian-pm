@@ -98,6 +98,19 @@ export function renderTable(ctx: TableContext): void {
     { key: 'progress', label: 'Progress', width: '120px' },
     { key: null, label: 'Time', width: '90px' }
   ]
+  const sortableHeaders: { key: SortKey; th: HTMLElement }[] = []
+  const paintSortIndicators = () => {
+    for (const { key, th } of sortableHeaders) {
+      th.querySelector('.pm-sort-indicator')?.remove()
+      if (ctx.state.sortKey === key) {
+        th.createSpan({
+          text: ctx.state.sortDir === 'asc' ? ' \u2191' : ' \u2193',
+          cls: 'pm-sort-indicator'
+        })
+      }
+    }
+  }
+
   for (const col of cols) {
     const th = hrow.createEl('th')
     if (col.width) th.setCssStyles({ width: col.width })
@@ -106,12 +119,7 @@ export function renderTable(ctx: TableContext): void {
       th.setAttribute('role', 'button')
       th.setAttribute('aria-label', `Sort by ${col.label}`)
       th.createSpan({ text: col.label })
-      if (ctx.state.sortKey === col.key) {
-        th.createSpan({
-          text: ctx.state.sortDir === 'asc' ? ' \u2191' : ' \u2193',
-          cls: 'pm-sort-indicator'
-        })
-      }
+      sortableHeaders.push({ key: col.key, th })
       th.addEventListener('click', () => {
         if (ctx.state.sortKey === col.key) {
           ctx.state.sortDir = ctx.state.sortDir === 'asc' ? 'desc' : 'asc'
@@ -119,12 +127,14 @@ export function renderTable(ctx: TableContext): void {
           ctx.state.sortKey = col.key as SortKey
           ctx.state.sortDir = 'asc'
         }
+        paintSortIndicators()
         refreshTableBody(ctx)
       })
     } else {
       th.setText(col.label)
     }
   }
+  paintSortIndicators()
 
   for (const cf of ctx.project.customFields) {
     const th = hrow.createEl('th', { text: cf.name })
