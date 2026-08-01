@@ -129,7 +129,14 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx
     }
   })
 
-  new ProgressCell(row, { value: task.progress, color: statusConfig?.color ?? 'var(--interactive-accent)' })
+  new ProgressCell(row, {
+    value: task.progress,
+    color: statusConfig?.color ?? 'var(--interactive-accent)',
+    onSave: async (progress) => {
+      await ctx.plugin.store.updateTask(ctx.project, task.id, { progress })
+      await ctx.onRefresh()
+    }
+  })
   new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
 
   for (const cf of ctx.project.customFields) {

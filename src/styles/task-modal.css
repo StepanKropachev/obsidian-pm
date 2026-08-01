@@ -56,36 +56,6 @@
   flex-wrap: wrap;
 }
 
-.pm-prop-progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-.pm-progress-slider {
-  flex: 1;
-  appearance: none;
-  height: 6px;
-  border-radius: 99px;
-  background: var(--background-modifier-hover);
-  cursor: pointer;
-}
-.pm-progress-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--interactive-accent);
-  cursor: pointer;
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-}
-.pm-progress-slider-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  min-width: 32px;
-  text-align: right;
-}
-
 .pm-prop-date {
   padding: 4px 8px;
   border: 1px solid var(--background-modifier-border);

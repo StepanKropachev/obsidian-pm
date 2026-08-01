@@ -173,6 +173,9 @@ button.pm-prop-add {
   color: var(--text-accent);
   background: var(--background-modifier-hover);
 }
+.pm-prop-value .pm-prop-add {
+  margin: -1px 0;
+}
 
 /* Multi-value (chips + add) */
 .pm-prop-chips {
@@ -359,11 +362,6 @@ input.pm-pop-field:focus {
   border-color: var(--background-modifier-border-focus);
   background: var(--background-primary);
   outline: none;
-}
-
-/* Time tracking progress bar spacing */
-.pm-time-progress {
-  margin-bottom: 10px;
 }
 
 /* ── Task editor shell ──────────────────────────────────────────────────── */

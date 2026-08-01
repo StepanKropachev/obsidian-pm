@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Projects can define their own statuses and priorities in the project settings, replacing the global ones ([#57](https://github.com/StepanKropachev/obsidian-pm/issues/57))
 - Projects can override the default view, auto-scheduling, and the board display options in the project settings
 - The completed date shows whether a task finished on time or how many days late it was
+- Task progress can be set from 0 to 100 in the task editor and by clicking the progress bar in the table
 
 ### Changed
 
@@ -26,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter and saved-view buttons match Obsidian's native buttons, with an accent tint when active
 - The cursor lands where a task description was clicked when the editor opens
 - Subtasks are archived and unarchived along with their parent task
+- The time tracking section in the task editor no longer shows a progress bar
+- The kanban card no longer shows a subtask count next to the progress bar
+- Every property row in the task editor is the same height
 
 ### Fixed
 

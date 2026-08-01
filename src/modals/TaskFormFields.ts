@@ -10,6 +10,7 @@ import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
   renderSelectControl,
   renderDateControl,
+  renderInputControl,
   renderMultiSelect,
   renderAddProperty,
   type SelectItem,
@@ -42,7 +43,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
 
 /**
  * Renders the compact property grid: core properties (type, status, priority, due, assignees,
- * tags) always show; rarely-used ones (start, repeat, depends on) hide when empty behind
+ * tags) always show; rarely-used ones (progress, repeat, depends on) hide when empty behind
  * "Add property". Single-selects and dates re-render the form on change; multi-selects mutate
  * the task in place and refresh their own chips.
  */
@@ -252,6 +253,30 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     )
   }
 
+  // Progress (extra; milestones have none)
+  if (task.type !== 'milestone' && (task.progress > 0 || shownExtras.has('progress'))) {
+    renderPropRow(
+      grid,
+      'Progress',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        renderInputControl({
+          container: cell,
+          value: String(task.progress),
+          inputType: 'number',
+          suffix: '%',
+          number: { min: 0, max: 100 },
+          onChange: (v) => {
+            task.progress = Number(v)
+            rerender()
+          }
+        })
+        return cell
+      },
+      'percent'
+    )
+  }
+
   // Repeat (extra)
   if (task.recurrence || shownExtras.has('repeat')) {
     renderPropRow(
@@ -354,6 +379,9 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
 
   // Progressive disclosure for the remaining empty extras
   const hidden: HiddenProperty[] = []
+  if (task.type !== 'milestone' && task.progress === 0 && !shownExtras.has('progress')) {
+    hidden.push({ id: 'progress', label: 'Progress', icon: 'percent' })
+  }
   if (!task.recurrence && !shownExtras.has('repeat')) {
     hidden.push({ id: 'repeat', label: 'Repeat', icon: 'repeat' })
   }

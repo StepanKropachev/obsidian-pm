@@ -157,10 +157,6 @@
   padding-top: 2px;
 }
 
-.pm-kanban-card-subtasks {
-  font-size: 11px;
-  color: var(--text-muted);
-}
 .pm-kanban-card-parent {
   font-size: 10px;
   color: var(--text-muted);
