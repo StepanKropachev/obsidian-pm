@@ -57,6 +57,7 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
       (granularity === 'day' && isMonday) ||
       (granularity === 'week' && isMonday) ||
       (granularity === 'month' && isFirst) ||
+      (granularity === 'year' && isFirst) ||
       (granularity === 'quarter' && isFirst && (d.month - 1) % 3 === 0)
 
     if (shouldDrawLine) {

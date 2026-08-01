@@ -57,6 +57,7 @@ export class PMSettingTab extends PluginSettingTab {
         .addOption('week', 'Week')
         .addOption('month', 'Month')
         .addOption('quarter', 'Quarter')
+        .addOption('year', 'Year')
         .setValue(this.plugin.settings.ganttGranularity)
         .onChange(async (v) => {
           this.plugin.settings.ganttGranularity = v as PMSettings['ganttGranularity']
