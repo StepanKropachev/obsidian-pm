@@ -53,11 +53,51 @@ export function wireRowDragReorder<T>(row: HTMLElement, index: number, items: T[
   })
 }
 
-interface PaletteEntry {
+export interface PaletteEntry {
   id: string
   label: string
   color: string
   icon: string
+}
+
+/**
+ * The icon, label, and color inputs shared by the project modal's palette rows
+ * and the plugin settings pages. Appends to `parent` in that order.
+ */
+export function renderPaletteFields(parent: HTMLElement, app: App, item: PaletteEntry, onChanged: () => void): void {
+  const icon = parent.createEl('input', { type: 'text', value: item.icon })
+  icon.addClass('pm-settings-status-icon')
+  icon.placeholder = 'Icon'
+  attachIconSuggest(app, icon)
+  icon.addEventListener('change', () => {
+    item.icon = icon.value
+    onChanged()
+  })
+
+  const label = parent.createEl('input', { type: 'text', value: item.label })
+  label.addClass('pm-settings-status-label')
+  label.addEventListener('change', () => {
+    item.label = label.value
+    onChanged()
+  })
+
+  const color = parent.createEl('input', { type: 'color', value: item.color })
+  color.addEventListener('change', () => {
+    item.color = color.value
+    onChanged()
+  })
+}
+
+/** The per-status Done checkbox, marking which statuses count as complete. */
+export function renderStatusDoneToggle(parent: HTMLElement, status: StatusConfig, onChanged: () => void): void {
+  const wrapper = parent.createEl('label', { cls: 'pm-settings-complete-toggle' })
+  const checkbox = wrapper.createEl('input', { type: 'checkbox' })
+  checkbox.checked = status.complete
+  wrapper.createSpan({ text: 'Done', cls: 'pm-settings-complete-text' })
+  checkbox.addEventListener('change', () => {
+    status.complete = checkbox.checked
+    onChanged()
+  })
 }
 
 interface PaletteListEditorOpts<T extends PaletteEntry> {
@@ -90,30 +130,7 @@ function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement,
       rerender()
     })
 
-    // Icon input: emoji or a Lucide icon id (with suggestions)
-    const icon = row.createEl('input', { type: 'text', value: item.icon })
-    icon.addClass('pm-settings-status-icon')
-    icon.placeholder = ''
-    attachIconSuggest(opts.app, icon)
-    icon.addEventListener('change', () => {
-      item.icon = icon.value
-      opts.onChanged()
-    })
-
-    // Label input
-    const label = row.createEl('input', { type: 'text', value: item.label })
-    label.addClass('pm-settings-status-label')
-    label.addEventListener('change', () => {
-      item.label = label.value
-      opts.onChanged()
-    })
-
-    // Color picker
-    const color = row.createEl('input', { type: 'color', value: item.color })
-    color.addEventListener('change', () => {
-      item.color = color.value
-      opts.onChanged()
-    })
+    renderPaletteFields(row, opts.app, item, opts.onChanged)
 
     opts.renderExtra?.(row, item)
 
@@ -148,16 +165,7 @@ export function renderStatusListEditor(container: HTMLElement, opts: StatusListE
     onChanged: opts.onChanged,
     onDeleted: opts.onDeleted,
     minOneMessage: 'You must have at least one status.',
-    renderExtra: (row, status) => {
-      const completeLabel = row.createEl('label', { cls: 'pm-settings-complete-toggle' })
-      const checkbox = completeLabel.createEl('input', { type: 'checkbox' })
-      checkbox.checked = status.complete
-      completeLabel.createSpan({ text: 'Done', cls: 'pm-settings-complete-text' })
-      checkbox.addEventListener('change', () => {
-        status.complete = checkbox.checked
-        opts.onChanged()
-      })
-    }
+    renderExtra: (row, status) => renderStatusDoneToggle(row, status, opts.onChanged)
   })
 }
 

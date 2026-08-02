@@ -1,13 +1,22 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian'
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian'
+import type { SettingDefinitionItem, SettingDefinitionPage } from 'obsidian'
 import type PMPlugin from './main'
 import { type PMSettings, DEFAULT_SETTINGS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
-import { getTaskNotesApi, importTaskNotesPalettes, isTaskNotesInstalled } from './integrations/tasknotes'
-import { renderPriorityListEditor, renderStatusListEditor } from './ui/PaletteListEditor'
-import { IconButton } from './ui/primitives/IconButton'
+import {
+  countTaskNotesPaletteChanges,
+  getTaskNotesApi,
+  importTaskNotesPalettes,
+  isTaskNotesInstalled
+} from './integrations/tasknotes'
+import { renderPaletteFields, renderStatusDoneToggle } from './ui/PaletteListEditor'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
+
+function plural(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`
+}
 
 export class PMSettingTab extends PluginSettingTab {
   plugin: PMPlugin
@@ -15,287 +24,374 @@ export class PMSettingTab extends PluginSettingTab {
   constructor(app: App, plugin: PMPlugin) {
     super(app, plugin)
     this.plugin = plugin
+    this.icon = 'chart-gantt'
   }
 
-  display(): void {
-    const { containerEl } = this
-    containerEl.empty()
-    containerEl.addClass('pm-settings')
-
-    // ── General ──────────────────────────────────────────────────────────────
-    new Setting(containerEl)
-      .setName('Projects folder')
-      .setDesc('Vault folder where project files are stored.')
-      .addText((text) =>
-        text
-          .setPlaceholder('Projects')
-          .setValue(this.plugin.settings.projectsFolder)
-          .onChange(async (v) => {
-            this.plugin.settings.projectsFolder = v.trim() || 'Projects'
-            await this.plugin.saveSettings()
-          })
-      )
-
-    new Setting(containerEl)
-      .setName('Default view')
-      .setDesc('Which view opens when you open a project.')
-      .addDropdown((dd) =>
-        dd
-          .addOption('table', 'Table')
-          .addOption('gantt', 'Gantt')
-          .addOption('kanban', 'Board')
-          .setValue(this.plugin.settings.defaultView)
-          .onChange(async (v) => {
-            this.plugin.settings.defaultView = v as PMSettings['defaultView']
-            await this.plugin.saveSettings()
-          })
-      )
-
-    new Setting(containerEl).setName('Default gantt granularity').addDropdown((dd) =>
-      dd
-        .addOption('day', 'Day')
-        .addOption('week', 'Week')
-        .addOption('month', 'Month')
-        .addOption('quarter', 'Quarter')
-        .setValue(this.plugin.settings.ganttGranularity)
-        .onChange(async (v) => {
-          this.plugin.settings.ganttGranularity = v as PMSettings['ganttGranularity']
-          await this.plugin.saveSettings()
-        })
-    )
-
-    new Setting(containerEl)
-      .setName('Gantt week label')
-      .setDesc('What to display in weekly gantt header cells.')
-      .addDropdown((dd) =>
-        dd
-          .addOption('weekNumber', 'Week number (w15)')
-          .addOption('dateRange', 'Date range (apr 7\u201313)')
-          .addOption('both', 'Both (w15: apr 7\u201313)')
-          .setValue(this.plugin.settings.ganttWeekLabel)
-          .onChange(async (v) => {
-            this.plugin.settings.ganttWeekLabel = v as PMSettings['ganttWeekLabel']
-            await this.plugin.saveSettings()
-          })
-      )
-
-    new Setting(containerEl)
-      .setName('Show subtasks on board')
-      .setDesc('Display subtasks as individual cards on the kanban board.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.kanbanShowSubtasks).onChange(async (v) => {
-          this.plugin.settings.kanbanShowSubtasks = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    new Setting(containerEl)
-      .setName('Show description preview on board')
-      .setDesc('Display the first few lines of each task description on kanban cards.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.kanbanShowDescriptionPreview).onChange(async (v) => {
-          this.plugin.settings.kanbanShowDescriptionPreview = v
-          await this.plugin.saveSettings()
-          this.plugin.refreshProjectViews()
-        })
-      )
-
-    new Setting(containerEl)
-      .setName('Show tag colors')
-      .setDesc('Show a colored dot on each tag, derived from its name. Turn off for plain tags.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.showTagColors).onChange(async (v) => {
-          this.plugin.settings.showTagColors = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    new Setting(containerEl)
-      .setName('Save tasks on close')
-      .setDesc('Automatically save tasks when you close the task modal. When off, only clicking save persists changes.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.saveTaskOnClose).onChange(async (v) => {
-          this.plugin.settings.saveTaskOnClose = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    // ── Notifications ─────────────────────────────────────────────────────────
-    new Setting(containerEl).setName('Due date notifications').setHeading()
-
-    new Setting(containerEl)
-      .setName('Enable notifications')
-      .setDesc('Show a banner when tasks are approaching their due date.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.notificationsEnabled).onChange(async (v) => {
-          this.plugin.settings.notificationsEnabled = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    new Setting(containerEl)
-      .setName('Lead time (days)')
-      .setDesc('How many days before the due date to show the notification.')
-      .addSlider((sl) =>
-        sl
-          .setLimits(1, 14, 1)
-          .setValue(this.plugin.settings.notificationLeadDays)
-          .setDynamicTooltip()
-          .onChange(async (v) => {
-            this.plugin.settings.notificationLeadDays = v
-            await this.plugin.saveSettings()
-          })
-      )
-
-    // ── Scheduling ───────────────────────────────────────────────────────────
-    new Setting(containerEl).setName('Scheduling').setHeading()
-
-    new Setting(containerEl)
-      .setName('Auto-schedule')
-      .setDesc('Automatically adjust dependent task dates when a task changes.')
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.autoSchedule).onChange(async (v) => {
-          this.plugin.settings.autoSchedule = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    new Setting(containerEl)
-      .setName('Pull dependents forward on early finish')
-      .setDesc(
-        'When a task is completed before its due date, move its dependent tasks earlier by the days it saved. Needs auto-schedule.'
-      )
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.pullForwardOnEarlyFinish).onChange(async (v) => {
-          this.plugin.settings.pullForwardOnEarlyFinish = v
-          await this.plugin.saveSettings()
-        })
-      )
-
-    // ── Team Members ──────────────────────────────────────────────────────────
-    new Setting(containerEl).setName('Team members').setHeading()
-
-    containerEl.createEl('p', {
-      cls: 'pm-settings-desc',
-      text: 'Global list of people available as assignees across all projects.'
-    })
-    // margin handled by .pm-settings-desc CSS class
-
-    const membersContainer = containerEl.createDiv('pm-settings-members')
-    this.renderMembersList(membersContainer)
-
-    new Setting(containerEl).addButton((btn) =>
-      btn
-        .setButtonText('+ add member')
-        .setCta()
-        .onClick(() => {
-          this.plugin.settings.globalTeamMembers.push('')
-          void this.plugin.saveSettings()
-          this.renderMembersList(membersContainer)
-        })
-    )
-
-    // ── Statuses ──────────────────────────────────────────────────────────────
-    new Setting(containerEl).setName('Statuses').setHeading()
-    containerEl.createEl('p', {
-      cls: 'pm-settings-desc',
-      text: 'Customize status labels, colors, and icons. Drag to reorder.'
-    })
-
-    const statusContainer = containerEl.createDiv('pm-settings-statuses')
-    this.renderStatusList(statusContainer)
-
-    new Setting(containerEl).addButton((btn) =>
-      btn
-        .setButtonText('+ add status')
-        .setCta()
-        .onClick(() => {
-          const id = 'status-' + makeId().slice(0, 6)
-          this.plugin.settings.statuses.push({
-            id,
-            label: 'New status',
-            color: '#8a94a0',
-            icon: '',
-            complete: false
-          })
-          void this.plugin.saveSettings()
-          this.renderStatusList(statusContainer)
-        })
-    )
-
-    // ── Priorities ────────────────────────────────────────────────────────────
-    new Setting(containerEl).setName('Priorities').setHeading()
-    containerEl.createEl('p', {
-      cls: 'pm-settings-desc',
-      text: 'Customize priority labels, colors, and icons. Drag to reorder from most to least important.'
-    })
-
-    const priorityContainer = containerEl.createDiv('pm-settings-statuses')
-    this.renderPriorityList(priorityContainer)
-
-    new Setting(containerEl).addButton((btn) =>
-      btn
-        .setButtonText('+ add priority')
-        .setCta()
-        .onClick(() => {
-          const id = 'priority-' + makeId().slice(0, 6)
-          this.plugin.settings.priorities.push({
-            id,
-            label: 'New priority',
-            color: '#8a94a0',
-            icon: ''
-          })
-          void this.plugin.saveSettings()
-          this.renderPriorityList(priorityContainer)
-        })
-    )
-
-    if (isTaskNotesInstalled(this.app)) {
-      new Setting(containerEl).setName('TaskNotes').setHeading()
-
-      new Setting(containerEl)
-        .setName('Import statuses and priorities')
-        .setDesc('Add or update statuses and priorities to match TaskNotes. Entries TaskNotes does not know are kept.')
-        .addButton((btn) =>
-          btn.setButtonText('Import from TaskNotes').onClick(() => {
-            const api = getTaskNotesApi(this.app)
-            if (!api) {
-              new Notice('TaskNotes 4.10 or newer is required.')
-              return
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        type: 'group',
+        heading: 'General',
+        items: [
+          {
+            name: 'Projects folder',
+            desc: 'Vault folder where project files are stored.',
+            control: {
+              type: 'folder',
+              key: 'projectsFolder',
+              defaultValue: 'Projects',
+              placeholder: 'Projects',
+              validate: (value) => (value.trim() ? undefined : 'Enter a folder name.')
             }
-            const { added, updated } = importTaskNotesPalettes(api, this.plugin.settings)
-            void this.plugin.saveSettings()
-            this.display()
-            new Notice(
-              added || updated
-                ? `Imported from TaskNotes: ${added} added, ${updated} updated.`
-                : 'Statuses and priorities already match TaskNotes.'
-            )
-          })
-        )
+          },
+          {
+            name: 'Default view',
+            desc: 'View that opens when a project is opened.',
+            control: {
+              type: 'dropdown',
+              key: 'defaultView',
+              options: { table: 'Table', gantt: 'Gantt', kanban: 'Board' }
+            }
+          },
+          {
+            name: 'Save tasks on close',
+            desc: 'Save changes when the task editor is closed.',
+            control: { type: 'toggle', key: 'saveTaskOnClose' }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Style',
+        items: [
+          {
+            name: 'Show tag colors',
+            desc: 'Give each tag a colored dot derived from its name.',
+            aliases: ['appearance'],
+            control: { type: 'toggle', key: 'showTagColors' }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Gantt',
+        items: [
+          {
+            name: 'Default granularity',
+            desc: 'Time unit for each column in the timeline.',
+            aliases: ['timeline', 'zoom'],
+            control: {
+              type: 'dropdown',
+              key: 'ganttGranularity',
+              options: { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' }
+            }
+          },
+          {
+            name: 'Week label',
+            desc: 'Text shown in weekly header cells.',
+            aliases: ['timeline'],
+            control: {
+              type: 'dropdown',
+              key: 'ganttWeekLabel',
+              options: {
+                weekNumber: 'Week number (w15)',
+                dateRange: 'Date range (apr 7\u201313)',
+                both: 'Both (w15: apr 7\u201313)'
+              }
+            }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Board',
+        items: [
+          {
+            name: 'Show subtasks',
+            desc: 'Display subtasks as individual cards.',
+            aliases: ['kanban'],
+            control: { type: 'toggle', key: 'kanbanShowSubtasks' }
+          },
+          {
+            name: 'Show description preview',
+            desc: 'Display the first few lines of each task description.',
+            aliases: ['kanban'],
+            control: { type: 'toggle', key: 'kanbanShowDescriptionPreview' }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Scheduling',
+        items: [
+          {
+            name: 'Auto-schedule',
+            desc: 'Adjust dependent task dates when a task changes.',
+            aliases: ['dependencies'],
+            control: { type: 'toggle', key: 'autoSchedule' }
+          },
+          {
+            name: 'Pull dependents forward',
+            desc: 'Move dependent tasks earlier when a task is completed before its due date.',
+            aliases: ['dependencies'],
+            control: {
+              type: 'toggle',
+              key: 'pullForwardOnEarlyFinish',
+              disabled: () => !this.plugin.settings.autoSchedule
+            }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Notifications',
+        items: [
+          {
+            name: 'Due date reminders',
+            desc: 'Show a banner when a task is approaching its due date.',
+            aliases: ['notifications', 'banner'],
+            control: { type: 'toggle', key: 'notificationsEnabled' }
+          },
+          {
+            name: 'Days in advance',
+            desc: 'How many days before the due date to notify.',
+            aliases: ['notifications', 'reminders', 'lead time'],
+            control: {
+              type: 'slider',
+              key: 'notificationLeadDays',
+              min: 1,
+              max: 14,
+              step: 1,
+              disabled: () => !this.plugin.settings.notificationsEnabled
+            }
+          }
+        ]
+      },
+      {
+        type: 'group',
+        heading: 'Task fields',
+        items: [this.statusesPage(), this.prioritiesPage(), this.teamMembersPage()]
+      },
+      {
+        type: 'group',
+        heading: 'Integrations',
+        visible: () => isTaskNotesInstalled(this.app),
+        items: [this.taskNotesPage()]
+      }
+    ]
+  }
+
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    await super.setControlValue(key, value)
+    if (key === 'kanbanShowDescriptionPreview') this.plugin.refreshProjectViews()
+    this.refreshDomState()
+  }
+
+  private statusesPage(): SettingDefinitionPage {
+    const statuses = this.plugin.settings.statuses
+    return {
+      type: 'page',
+      name: 'Statuses',
+      desc: 'Labels, colors, and icons for the status field.',
+      displayValue: () => plural(this.plugin.settings.statuses.length, 'status', 'statuses'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Statuses',
+          emptyState: 'No statuses.',
+          items: statuses.map((status) => ({
+            name: status.label,
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              renderPaletteFields(setting.controlEl, this.app, status, () => this.persist())
+              renderStatusDoneToggle(setting.controlEl, status, () => this.persist())
+            }
+          })),
+          onReorder: (from, to) => this.reorder(statuses, from, to),
+          onDelete: (index) => this.deleteEntry('status', index),
+          addItem: {
+            name: 'Add status',
+            action: () => {
+              statuses.push({
+                id: 'status-' + makeId().slice(0, 6),
+                label: 'New status',
+                color: '#8a94a0',
+                icon: '',
+                complete: false
+              })
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
     }
   }
 
-  private renderMembersList(container: HTMLElement): void {
-    container.empty()
+  private prioritiesPage(): SettingDefinitionPage {
+    const priorities = this.plugin.settings.priorities
+    return {
+      type: 'page',
+      name: 'Priorities',
+      desc: 'Labels, colors, and icons for the priority field.',
+      displayValue: () => plural(this.plugin.settings.priorities.length, 'priority', 'priorities'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Priorities',
+          emptyState: 'No priorities.',
+          items: priorities.map((priority) => ({
+            name: priority.label,
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              renderPaletteFields(setting.controlEl, this.app, priority, () => this.persist())
+            }
+          })),
+          onReorder: (from, to) => this.reorder(priorities, from, to),
+          onDelete: (index) => this.deleteEntry('priority', index),
+          addItem: {
+            name: 'Add priority',
+            action: () => {
+              priorities.push({
+                id: 'priority-' + makeId().slice(0, 6),
+                label: 'New priority',
+                color: '#8a94a0',
+                icon: ''
+              })
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
+    }
+  }
+
+  private taskNotesPage(): SettingDefinitionPage {
+    const connected = (): boolean => getTaskNotesApi(this.app) !== null
+    return {
+      type: 'page',
+      name: 'TaskNotes',
+      desc: 'Share statuses and priorities with the TaskNotes plugin.',
+      displayValue: () => this.taskNotesStatus(),
+      status: () => (connected() ? null : 'warning'),
+      items: [
+        {
+          type: 'list',
+          extraButtons: [
+            (button) =>
+              button
+                .setIcon('refresh-cw')
+                .setTooltip('Import from TaskNotes')
+                .setDisabled(!connected())
+                .onClick(() => this.importFromTaskNotes())
+          ],
+          items: [
+            {
+              name: 'Statuses and priorities',
+              desc: 'Copies labels, colors, and completion from TaskNotes 4.10 or newer.',
+              render: (setting: Setting) => {
+                setting.controlEl.createDiv({ cls: 'setting-item-value', text: this.taskNotesStatus() })
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+
+  /** Whether an import would change anything right now, as a short value. */
+  private taskNotesStatus(): string {
+    const api = getTaskNotesApi(this.app)
+    if (!api) return 'Update required'
+    const { added, updated } = countTaskNotesPaletteChanges(api, this.plugin.settings)
+    const total = added + updated
+    return total === 0 ? 'Up to date' : plural(total, 'change', 'changes')
+  }
+
+  private teamMembersPage(): SettingDefinitionPage {
     const members = this.plugin.settings.globalTeamMembers
-    members.forEach((m, i) => {
-      const row = container.createDiv('pm-settings-member-row')
-      const input = row.createEl('input', { type: 'text', value: m })
-      input.placeholder = 'Name'
-      input.addEventListener('change', () => {
-        this.plugin.settings.globalTeamMembers[i] = input.value
-        void this.plugin.saveSettings()
-      })
-      new IconButton(row)
-        .setIcon('x')
-        .setTooltip('Remove member')
-        .onClick(() => {
-          this.plugin.settings.globalTeamMembers.splice(i, 1)
-          void this.plugin.saveSettings()
-          this.renderMembersList(container)
-        })
-    })
+    return {
+      type: 'page',
+      name: 'Team members',
+      desc: 'People available as assignees across all projects.',
+      displayValue: () => plural(this.plugin.settings.globalTeamMembers.length, 'person', 'people'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Team members',
+          emptyState: 'No team members yet.',
+          items: members.map((member, index) => ({
+            name: member || 'Unnamed member',
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              setting.addText((text) =>
+                text
+                  .setPlaceholder('Name')
+                  .setValue(member)
+                  .onChange((value) => {
+                    this.plugin.settings.globalTeamMembers[index] = value
+                    this.persist()
+                  })
+              )
+            }
+          })),
+          onReorder: (from, to) => this.reorder(members, from, to),
+          onDelete: (index) => {
+            members.splice(index, 1)
+            this.persist()
+            this.update()
+          },
+          addItem: {
+            name: 'Add member',
+            action: () => {
+              members.push('')
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
+    }
+  }
+
+  private persist(): void {
+    void this.plugin.saveSettings()
+  }
+
+  private reorder<T>(items: T[], from: number, to: number): void {
+    const [moved] = items.splice(from, 1)
+    items.splice(to, 0, moved)
+    this.persist()
+    this.update()
+  }
+
+  private deleteEntry(field: 'status' | 'priority', index: number): void {
+    const entries = field === 'status' ? this.plugin.settings.statuses : this.plugin.settings.priorities
+    if (entries.length <= 1) {
+      new Notice(`You must have at least one ${field}.`)
+      return
+    }
+    const [removed] = entries.splice(index, 1)
+    this.persist()
+    this.update()
+    void this.remapOrphanTasks(field, removed.id, removed.label)
+  }
+
+  private importFromTaskNotes(): void {
+    const api = getTaskNotesApi(this.app)
+    if (!api) {
+      new Notice('TaskNotes 4.10 or newer is required.')
+      return
+    }
+    const { added, updated } = importTaskNotesPalettes(api, this.plugin.settings)
+    this.persist()
+    this.update()
+    new Notice(
+      added || updated
+        ? `Imported from TaskNotes: ${added} added, ${updated} updated.`
+        : 'Statuses and priorities already match TaskNotes.'
+    )
   }
 
   private async remapOrphanTasks(field: 'status' | 'priority', deletedId: string, deletedLabel: string): Promise<void> {
@@ -320,23 +416,5 @@ export class PMSettingTab extends PluginSettingTab {
     if (remapped > 0) {
       new Notice(`Remapped ${remapped} task${remapped === 1 ? '' : 's'} from '${deletedLabel}' to '${fallback.label}'.`)
     }
-  }
-
-  private renderStatusList(container: HTMLElement): void {
-    renderStatusListEditor(container, {
-      app: this.app,
-      statuses: this.plugin.settings.statuses,
-      onChanged: () => void this.plugin.saveSettings(),
-      onDeleted: (deleted) => void this.remapOrphanTasks('status', deleted.id, deleted.label)
-    })
-  }
-
-  private renderPriorityList(container: HTMLElement): void {
-    renderPriorityListEditor(container, {
-      app: this.app,
-      priorities: this.plugin.settings.priorities,
-      onChanged: () => void this.plugin.saveSettings(),
-      onDeleted: (deleted) => void this.remapOrphanTasks('priority', deleted.id, deleted.label)
-    })
   }
 }

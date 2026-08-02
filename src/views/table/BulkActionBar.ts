@@ -212,7 +212,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   // Delete button
   new ButtonComponent(left)
     .setButtonText('Delete')
-    .setWarning()
+    .setDestructive()
     .onClick(() => onAction({ type: 'delete' }))
 
   // Right section: clear selection

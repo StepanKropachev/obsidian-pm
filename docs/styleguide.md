@@ -142,7 +142,7 @@ Richer than primitives, used across views. Avoid expanding this bucket; prefer c
 - **StatusBadge** - `renderStatusBadge(container, task, statuses, onChange)` (solid dot-led Chip + picker Menu), `renderPriorityBadge(...)` (plain Chip with chevron icon + picker Menu), `renderStatusDot(container, status, statuses, cls?)` (bare colored dot), `PRIORITY_CHEVRONS`. The only way to render status/priority.
 - **TaskContextMenu** - `buildTaskContextMenu(menu, task, ctx)`: the task right-click menu.
 - **ModalFactory** - all modal opening: `openTaskModal`, `openProjectModal`, `openProjectPicker`, `openTaskPicker`, `openImportModal`, `confirmDialog`, `confirmDuplicateSubtasks`, `promptText`. Never instantiate a modal directly from a view.
-- **PaletteListEditor** - `renderStatusListEditor` / `renderPriorityListEditor` for settings-style palette editing, plus `attachIconSuggest`, `wireRowDragReorder`.
+- **PaletteListEditor** - `renderPaletteFields(parent, app, item, onChanged)` (icon + label + color inputs) and `renderStatusDoneToggle` are the row internals, used by the plugin settings pages. `renderStatusListEditor` / `renderPriorityListEditor` wrap them with their own drag handle and delete button for the project modal's per-project overrides; plugin settings get those affordances from Obsidian's list settings instead. Plus `attachIconSuggest`, `wireRowDragReorder`.
 
 ## Native Obsidian components to use directly
 

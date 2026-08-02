@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_SETTINGS, type PMSettings } from '../types'
-import { importTaskNotesPalettes, type TaskNotesApi } from './tasknotes'
+import { countTaskNotesPaletteChanges, importTaskNotesPalettes, type TaskNotesApi } from './tasknotes'
 
 function makeApi(): TaskNotesApi {
   return {
@@ -68,5 +68,24 @@ describe('importTaskNotesPalettes', () => {
 
     const second = importTaskNotesPalettes(makeApi(), settings)
     expect(second).toEqual({ added: 0, updated: 0 })
+  })
+})
+
+describe('countTaskNotesPaletteChanges', () => {
+  it('reports what the import would change without changing anything', () => {
+    const settings = makeSettings()
+    const before = JSON.stringify(settings)
+
+    const counted = countTaskNotesPaletteChanges(makeApi(), settings)
+
+    expect(JSON.stringify(settings)).toBe(before)
+    expect(counted).toEqual(importTaskNotesPalettes(makeApi(), makeSettings()))
+  })
+
+  it('reports nothing once the palettes match TaskNotes', () => {
+    const settings = makeSettings()
+    importTaskNotesPalettes(makeApi(), settings)
+
+    expect(countTaskNotesPaletteChanges(makeApi(), settings)).toEqual({ added: 0, updated: 0 })
   })
 })

@@ -71,6 +71,13 @@ export function getTaskNotesApi(app: App): TaskNotesApi | null {
   return api
 }
 
+interface PaletteUpsert<T> {
+  id: string
+  make: () => T
+  differs: (existing: T) => boolean
+  apply: (existing: T) => void
+}
+
 /**
  * Upsert one ordered TaskNotes palette into ours. Entries with a matching id are
  * patched in place; missing entries are inserted right after the last TaskNotes
@@ -79,7 +86,7 @@ export function getTaskNotesApi(app: App): TaskNotesApi | null {
  */
 function upsertPalette<T extends { id: string }>(
   target: T[],
-  incoming: Array<{ id: string; make: () => T; patch: (existing: T) => boolean }>
+  incoming: PaletteUpsert<T>[]
 ): { added: number; updated: number } {
   let added = 0
   let updated = 0
@@ -88,12 +95,30 @@ function upsertPalette<T extends { id: string }>(
     const idx = target.findIndex((cfg) => cfg.id === item.id)
     if (idx >= 0) {
       anchor = idx
-      if (item.patch(target[idx])) updated++
+      if (item.differs(target[idx])) {
+        item.apply(target[idx])
+        updated++
+      }
     } else {
       anchor += 1
       target.splice(anchor, 0, item.make())
       added++
     }
+  }
+  return { added, updated }
+}
+
+/** What `upsertPalette` would change, without touching the target. */
+function countPaletteChanges<T extends { id: string }>(
+  target: T[],
+  incoming: PaletteUpsert<T>[]
+): { added: number; updated: number } {
+  let added = 0
+  let updated = 0
+  for (const item of incoming) {
+    const existing = target.find((cfg) => cfg.id === item.id)
+    if (!existing) added++
+    else if (item.differs(existing)) updated++
   }
   return { added, updated }
 }
@@ -136,42 +161,49 @@ export function ensurePaletteEntries(
   return added
 }
 
+function statusUpserts(api: TaskNotesApi): PaletteUpsert<StatusConfig>[] {
+  return [...api.getStatuses()]
+    .sort((a, b) => a.order - b.order)
+    .map((s) => ({
+      id: s.value,
+      make: () => ({ id: s.value, label: s.label, color: s.color, icon: '', complete: s.isCompleted }),
+      differs: (existing: StatusConfig) =>
+        existing.label !== s.label || existing.color !== s.color || existing.complete !== s.isCompleted,
+      apply: (existing: StatusConfig) => {
+        existing.label = s.label
+        existing.color = s.color
+        existing.complete = s.isCompleted
+      }
+    }))
+}
+
+function priorityUpserts(api: TaskNotesApi): PaletteUpsert<PriorityConfig>[] {
+  return [...api.getPriorities()]
+    .sort((a, b) => b.weight - a.weight)
+    .map((p) => ({
+      id: p.value,
+      make: () => ({ id: p.value, label: p.label, color: p.color, icon: '' }),
+      differs: (existing: PriorityConfig) => existing.label !== p.label || existing.color !== p.color,
+      apply: (existing: PriorityConfig) => {
+        existing.label = p.label
+        existing.color = p.color
+      }
+    }))
+}
+
 /** Upsert TaskNotes' configured statuses and priorities into our palettes. */
 export function importTaskNotesPalettes(api: TaskNotesApi, settings: PMSettings): { added: number; updated: number } {
-  const statuses = upsertPalette(
-    settings.statuses,
-    [...api.getStatuses()]
-      .sort((a, b) => a.order - b.order)
-      .map((s) => ({
-        id: s.value,
-        make: () => ({ id: s.value, label: s.label, color: s.color, icon: '', complete: s.isCompleted }),
-        patch: (existing: StatusConfig) => {
-          if (existing.label === s.label && existing.color === s.color && existing.complete === s.isCompleted) {
-            return false
-          }
-          existing.label = s.label
-          existing.color = s.color
-          existing.complete = s.isCompleted
-          return true
-        }
-      }))
-  )
+  const statuses = upsertPalette(settings.statuses, statusUpserts(api))
+  const priorities = upsertPalette(settings.priorities, priorityUpserts(api))
+  return { added: statuses.added + priorities.added, updated: statuses.updated + priorities.updated }
+}
 
-  const priorities = upsertPalette(
-    settings.priorities,
-    [...api.getPriorities()]
-      .sort((a, b) => b.weight - a.weight)
-      .map((p) => ({
-        id: p.value,
-        make: () => ({ id: p.value, label: p.label, color: p.color, icon: '' }),
-        patch: (existing: PriorityConfig) => {
-          if (existing.label === p.label && existing.color === p.color) return false
-          existing.label = p.label
-          existing.color = p.color
-          return true
-        }
-      }))
-  )
-
+/** What `importTaskNotesPalettes` would change right now, without changing anything. */
+export function countTaskNotesPaletteChanges(
+  api: TaskNotesApi,
+  settings: PMSettings
+): { added: number; updated: number } {
+  const statuses = countPaletteChanges(settings.statuses, statusUpserts(api))
+  const priorities = countPaletteChanges(settings.priorities, priorityUpserts(api))
   return { added: statuses.added + priorities.added, updated: statuses.updated + priorities.updated }
 }

@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The plugin requires Obsidian 1.13
+- Settings are grouped by area, with statuses, priorities, team members, and TaskNotes each on their own page
+- Settings can be found from Obsidian's settings search
+- The TaskNotes page shows how many statuses and priorities differ before importing
+- A setting that depends on another one is unavailable until that one is turned on
 - Add buttons in the table, Gantt, project editor, and settings share one quiet style
 - Remove buttons in the task editor, project editor, and settings are icon buttons with tooltips
 - The import dialog uses Obsidian's native buttons
