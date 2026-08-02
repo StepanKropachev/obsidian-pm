@@ -11,9 +11,12 @@ interface FileContent {
   content: string
 }
 
+type VaultHandler = (file: TAbstractFile, oldPath?: string) => void
+
 export class FakeVault {
   private files = new Map<string, FileContent>()
   private folders = new Map<string, TFolder>()
+  private handlers = new Map<string, Set<VaultHandler>>()
 
   modifyCount = new Map<string, number>()
   createCount = new Map<string, number>()
@@ -22,6 +25,20 @@ export class FakeVault {
   constructor() {
     const root = makeFolder('', null)
     this.folders.set('', root)
+  }
+
+  on(name: string, handler: VaultHandler): VaultHandler {
+    let set = this.handlers.get(name)
+    if (!set) {
+      set = new Set()
+      this.handlers.set(name, set)
+    }
+    set.add(handler)
+    return handler
+  }
+
+  private emit(name: string, file: TAbstractFile, oldPath?: string): void {
+    for (const handler of this.handlers.get(name) ?? []) handler(file, oldPath)
   }
 
   getAbstractFileByPath(path: string): TAbstractFile | null {
@@ -42,6 +59,7 @@ export class FakeVault {
     if (!entry) throw new Error(`modify: ${file.path} does not exist`)
     entry.content = content
     bump(this.modifyCount, file.path)
+    this.emit('modify', file)
   }
 
   async process(file: TFile, fn: (data: string) => string): Promise<string> {
@@ -50,6 +68,7 @@ export class FakeVault {
     const next = fn(entry.content)
     entry.content = next
     bump(this.modifyCount, file.path)
+    this.emit('modify', file)
     return next
   }
 
@@ -61,6 +80,7 @@ export class FakeVault {
     this.files.set(n, { file, content })
     parent.children.push(file)
     bump(this.createCount, n)
+    this.emit('create', file)
     return file
   }
 
@@ -72,6 +92,7 @@ export class FakeVault {
     this.files.set(n, { file, content: '' })
     parent.children.push(file)
     bump(this.createCount, n)
+    this.emit('create', file)
     return file
   }
 
@@ -120,6 +141,7 @@ export class FakeVault {
     relocateFile(entry.file, to, parent)
     this.files.set(to, entry)
     parent.children.push(entry.file)
+    this.emit('rename', entry.file, from)
   }
 
   async trashFile(file: TAbstractFile): Promise<void> {
@@ -135,6 +157,7 @@ export class FakeVault {
     this.files.delete(file.path)
     detachFromParent(entry.file)
     bump(this.trashCount, file.path)
+    this.emit('delete', entry.file)
   }
 
   resetCounts(): void {

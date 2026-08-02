@@ -13,8 +13,16 @@ function subtree(task: Task): Task[] {
   return [task, ...task.subtasks.flatMap(subtree)]
 }
 
+/** Records a path the plugin is about to write, so the move doesn't read back as an external change. */
+type MarkSelfWrite = (path: string) => void
+
 /** Move a task's file (and attachments) into `targetFolder`. Reports whether the file ended up there. */
-async function moveTaskFile(app: App, task: Task, targetFolder: string): Promise<boolean> {
+async function moveTaskFile(
+  app: App,
+  task: Task,
+  targetFolder: string,
+  markSelfWrite: MarkSelfWrite
+): Promise<boolean> {
   if (!task.filePath) return false
 
   const fileName = task.filePath.split('/').pop()
@@ -26,13 +34,22 @@ async function moveTaskFile(app: App, task: Task, targetFolder: string): Promise
   if (!(file instanceof TFile)) return false
 
   const oldPath = task.filePath
+  markSelfWrite(oldPath)
+  markSelfWrite(newPath)
+  markSelfWrite(oldPath.replace(/\.md$/, ''))
+  markSelfWrite(newPath.replace(/\.md$/, ''))
   await app.vault.rename(file, newPath)
   await moveTaskAttachmentFolder(app, oldPath, newPath)
   task.filePath = newPath
   return true
 }
 
-export async function archiveTask(app: App, project: Project, taskId: string): Promise<void> {
+export async function archiveTask(
+  app: App,
+  project: Project,
+  taskId: string,
+  markSelfWrite: MarkSelfWrite
+): Promise<void> {
   const task = findTaskById(project, taskId)
   if (!task) return
 
@@ -40,16 +57,21 @@ export async function archiveTask(app: App, project: Project, taskId: string): P
   await ensureFolder(app, archiveFolder)
 
   for (const t of subtree(task)) {
-    if (await moveTaskFile(app, t, archiveFolder)) t.archived = true
+    if (await moveTaskFile(app, t, archiveFolder, markSelfWrite)) t.archived = true
   }
 }
 
-export async function unarchiveTask(app: App, project: Project, taskId: string): Promise<void> {
+export async function unarchiveTask(
+  app: App,
+  project: Project,
+  taskId: string,
+  markSelfWrite: MarkSelfWrite
+): Promise<void> {
   const task = findTaskById(project, taskId)
   if (!task) return
 
   const taskFolder = normalizePath(projectTaskFolder(project))
   for (const t of subtree(task)) {
-    if (await moveTaskFile(app, t, taskFolder)) t.archived = false
+    if (await moveTaskFile(app, t, taskFolder, markSelfWrite)) t.archived = false
   }
 }

@@ -1,7 +1,6 @@
 import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
-import { type Project, type ProjectConfig, type CustomFieldDef, makeId, makeProject } from '../types'
-import { rebuildTaskIndex } from '../store'
+import { type Project, type ProjectConfig, type ProjectPatch, type CustomFieldDef, makeId, makeProject } from '../types'
 import { safeAsync } from '../utils'
 import { renderAddButton } from '../ui/composites/addButton'
 import { Avatar } from '../ui/primitives/Avatar'
@@ -23,34 +22,60 @@ const PROJECT_COLORS = [
 
 const PROJECT_ICONS = ['📋', '🚀', '💡', '🎯', '🔬', '🏗', '📊', '🎨', '📱', '🛠', '📝', '⚡']
 
+/** The project fields this modal edits. Tasks and saved views are not among them. */
+interface ProjectDraft {
+  title: string
+  description: string
+  color: string
+  icon: string
+  customFields: CustomFieldDef[]
+  teamMembers: string[]
+  config: ProjectConfig | undefined
+}
+
+function draftOf(project: Project): ProjectDraft {
+  const { title, description, color, icon, customFields, teamMembers, config } = project
+  const draft = { title, description, color, icon, customFields, teamMembers, config }
+  return JSON.parse(JSON.stringify(draft)) as ProjectDraft
+}
+
 /**
  * Project create/edit modal.
  *
- * Obsidian renders modals outside `.pm-root` in the DOM. We apply `.pm-modal`
- * to re-declare `--pm-*` CSS variables, then use CSS classes from styles.css.
- * Remaining inline styles are only for dynamic runtime values (computed colors,
- * avatar hashes, display toggles) that cannot be expressed in static CSS.
+ * Edits a draft of the project's own fields, never the project itself, and
+ * saves only what changed. Obsidian renders modals outside `.pm-root` in the
+ * DOM. We apply `.pm-modal` to re-declare `--pm-*` CSS variables, then use CSS
+ * classes from styles.css. Remaining inline styles are only for dynamic runtime
+ * values (computed colors, avatar hashes, display toggles) that cannot be
+ * expressed in static CSS.
  */
 export class ProjectModal extends Modal {
-  private project: Project
+  private draft: ProjectDraft
+  private original: ProjectDraft
   private isNew: boolean
 
   constructor(
     app: App,
     private plugin: PMPlugin,
-    existingProject: Project | null,
+    private existingProject: Project | null,
     private onSave: (project: Project) => void | Promise<void>
   ) {
     super(app)
-    if (existingProject) {
-      this.project = JSON.parse(JSON.stringify(existingProject)) as Project
-      // The JSON round-trip turns the taskIndex Map into a plain object.
-      rebuildTaskIndex(this.project)
-      this.isNew = false
-    } else {
-      this.project = makeProject('New Project', '')
-      this.isNew = true
+    this.isNew = existingProject === null
+    const base = existingProject ?? makeProject('New Project', '')
+    this.draft = draftOf(base)
+    this.original = draftOf(base)
+  }
+
+  /** Only the fields the user actually changed, so the form can't write back anything it never showed. */
+  private changedFields(): ProjectPatch {
+    const patch: ProjectPatch = {}
+    for (const key of Object.keys(this.draft) as (keyof ProjectDraft)[]) {
+      if (JSON.stringify(this.draft[key]) !== JSON.stringify(this.original[key])) {
+        Object.assign(patch, { [key]: this.draft[key] })
+      }
     }
+    return patch
   }
 
   onOpen(): void {
@@ -79,14 +104,14 @@ export class ProjectModal extends Modal {
 
     // Icon picker
     const iconWrap = topRow.createDiv('pm-icon-picker')
-    const iconBtn = iconWrap.createEl('button', { text: this.project.icon, cls: 'pm-icon-picker-btn' })
+    const iconBtn = iconWrap.createEl('button', { text: this.draft.icon, cls: 'pm-icon-picker-btn' })
 
     const iconGrid = iconWrap.createDiv('pm-icon-grid')
     iconGrid.addClass('pm-hidden')
     for (const emoji of PROJECT_ICONS) {
       const btn = iconGrid.createEl('button', { text: emoji, cls: 'pm-icon-option' })
       btn.addEventListener('click', () => {
-        this.project.icon = emoji
+        this.draft.icon = emoji
         iconBtn.textContent = emoji
         iconGrid.addClass('pm-hidden')
       })
@@ -100,12 +125,12 @@ export class ProjectModal extends Modal {
     titleWrap.createEl('label', { text: 'Project name', cls: 'pm-label' })
     const titleInput = titleWrap.createEl('input', {
       type: 'text',
-      value: this.project.title,
+      value: this.draft.title,
       cls: 'pm-input pm-input--lg'
     })
     titleInput.placeholder = 'My awesome project'
     titleInput.addEventListener('input', () => {
-      this.project.title = titleInput.value
+      this.draft.title = titleInput.value
     })
     window.setTimeout(() => {
       titleInput.focus()
@@ -119,18 +144,18 @@ export class ProjectModal extends Modal {
     for (const color of PROJECT_COLORS) {
       const swatch = colorPalette.createEl('button', { cls: 'pm-color-swatch' })
       swatch.setCssStyles({ background: color })
-      if (color === this.project.color) swatch.addClass('pm-color-swatch--selected')
+      if (color === this.draft.color) swatch.addClass('pm-color-swatch--selected')
       swatch.addEventListener('click', () => {
-        this.project.color = color
+        this.draft.color = color
         colorPalette.querySelectorAll('.pm-color-swatch').forEach((s) => s.removeClass('pm-color-swatch--selected'))
         swatch.addClass('pm-color-swatch--selected')
       })
     }
     const customColor = colorPalette.createEl('input', { type: 'color', cls: 'pm-color-custom' })
-    customColor.value = this.project.color
+    customColor.value = this.draft.color
     customColor.title = 'Custom color'
     customColor.addEventListener('change', () => {
-      this.project.color = customColor.value
+      this.draft.color = customColor.value
       colorPalette.querySelectorAll('.pm-color-swatch').forEach((s) => s.removeClass('pm-color-swatch--selected'))
     })
 
@@ -139,9 +164,9 @@ export class ProjectModal extends Modal {
     descSection.createEl('label', { text: 'Description', cls: 'pm-label' })
     const descArea = descSection.createEl('textarea', { cls: 'pm-input pm-project-desc' })
     descArea.placeholder = 'What is this project about?'
-    descArea.value = this.project.description
+    descArea.value = this.draft.description
     descArea.addEventListener('input', () => {
-      this.project.description = descArea.value
+      this.draft.description = descArea.value
     })
 
     // ── Team members ──────────────────────────────────────────────────────────
@@ -150,30 +175,30 @@ export class ProjectModal extends Modal {
     const memberWrap = memberSection.createDiv('pm-member-list')
     const renderMembers = () => {
       memberWrap.empty()
-      for (let i = 0; i < this.project.teamMembers.length; i++) {
+      for (let i = 0; i < this.draft.teamMembers.length; i++) {
         const row = memberWrap.createDiv('pm-member-row')
-        const name = this.project.teamMembers[i] || '?'
+        const name = this.draft.teamMembers[i] || '?'
         new Avatar(row).setName(name)
         const input = row.createEl('input', {
           type: 'text',
-          value: this.project.teamMembers[i],
+          value: this.draft.teamMembers[i],
           cls: 'pm-input pm-member-input'
         })
         input.placeholder = 'Name'
         input.addEventListener('change', () => {
-          this.project.teamMembers[i] = input.value
+          this.draft.teamMembers[i] = input.value
           renderMembers()
         })
         new IconButton(row)
           .setIcon('x')
           .setTooltip('Remove member')
           .onClick(() => {
-            this.project.teamMembers.splice(i, 1)
+            this.draft.teamMembers.splice(i, 1)
             renderMembers()
           })
       }
       renderAddButton(memberWrap, 'Add member', () => {
-        this.project.teamMembers.push('')
+        this.draft.teamMembers.push('')
         renderMembers()
         window.setTimeout(() => {
           const inputs = memberWrap.querySelectorAll('input')
@@ -192,11 +217,11 @@ export class ProjectModal extends Modal {
     const cfList = cfSection.createDiv('pm-cf-list')
     const renderCFs = () => {
       cfList.empty()
-      for (let i = 0; i < this.project.customFields.length; i++) {
-        this.renderCustomFieldEditor(cfList, this.project.customFields[i], i, renderCFs)
+      for (let i = 0; i < this.draft.customFields.length; i++) {
+        this.renderCustomFieldEditor(cfList, this.draft.customFields[i], i, renderCFs)
       }
       renderAddButton(cfList, 'Add custom field', () => {
-        this.project.customFields.push({
+        this.draft.customFields.push({
           id: makeId(),
           name: 'New Field',
           type: 'text',
@@ -213,7 +238,7 @@ export class ProjectModal extends Modal {
       hint: 'The workflow for this project',
       toggleLabel: 'Use custom statuses instead of the global ones',
       addLabel: 'Add status',
-      get: () => this.project.config?.statuses,
+      get: () => this.draft.config?.statuses,
       set: (statuses) => this.patchConfig('statuses', statuses),
       copyGlobal: () => this.plugin.settings.statuses.map((s) => ({ ...s })),
       makeEntry: () => ({
@@ -238,7 +263,7 @@ export class ProjectModal extends Modal {
       hint: 'The priority scale for this project',
       toggleLabel: 'Use custom priorities instead of the global ones',
       addLabel: 'Add priority',
-      get: () => this.project.config?.priorities,
+      get: () => this.draft.config?.priorities,
       set: (priorities) => this.patchConfig('priorities', priorities),
       copyGlobal: () => this.plugin.settings.priorities.map((p) => ({ ...p })),
       makeEntry: () => ({
@@ -301,15 +326,19 @@ export class ProjectModal extends Modal {
             titleInput.focus()
             return
           }
-          this.project.title = title
+          this.draft.title = title
 
-          if (this.isNew) {
-            this.project.filePath = `${this.plugin.settings.projectsFolder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`
-            await this.plugin.store.ensureFolder(this.plugin.settings.projectsFolder)
+          const folder = this.plugin.settings.projectsFolder
+          if (!this.existingProject) {
+            const project = makeProject(title, `${folder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`)
+            Object.assign(project, this.draft)
+            await this.plugin.store.ensureFolder(folder)
+            await this.plugin.store.saveProject(project)
+            await this.onSave(project)
+          } else {
+            await this.plugin.store.updateProject(this.existingProject, this.changedFields())
+            await this.onSave(this.existingProject)
           }
-
-          await this.plugin.store.saveProject(this.project)
-          await this.onSave(this.project)
           this.close()
         })
       )
@@ -317,8 +346,8 @@ export class ProjectModal extends Modal {
 
   /** Set or clear one override; the config object is dropped entirely when its last field clears. */
   private patchConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K] | undefined): void {
-    const entries = Object.entries({ ...this.project.config, [key]: value }).filter(([, v]) => v !== undefined)
-    this.project.config = entries.length ? Object.fromEntries(entries) : undefined
+    const entries = Object.entries({ ...this.draft.config, [key]: value }).filter(([, v]) => v !== undefined)
+    this.draft.config = entries.length ? Object.fromEntries(entries) : undefined
   }
 
   private renderPaletteOverride<T>(
@@ -382,7 +411,7 @@ export class ProjectModal extends Modal {
     const row = grid.createDiv('pm-config-override-row')
     row.createEl('label', { text: label, cls: 'pm-label' })
     const select = row.createEl('select', { cls: 'pm-input pm-select' })
-    const current = this.project.config?.[key]
+    const current = this.draft.config?.[key]
     const inherit = select.createEl('option', { value: '', text: 'Use global' })
     inherit.selected = current === undefined
     options.forEach((opt, i) => {
@@ -409,7 +438,7 @@ export class ProjectModal extends Modal {
     })
     nameInput.placeholder = 'Field name'
     nameInput.addEventListener('change', () => {
-      this.project.customFields[index].name = nameInput.value
+      this.draft.customFields[index].name = nameInput.value
     })
 
     const typeSelect = row.createEl('select', { cls: 'pm-input pm-select pm-cf-type' })
@@ -428,7 +457,7 @@ export class ProjectModal extends Modal {
       if (val === cf.type) opt.selected = true
     }
     typeSelect.addEventListener('change', () => {
-      this.project.customFields[index].type = typeSelect.value as CustomFieldDef['type']
+      this.draft.customFields[index].type = typeSelect.value as CustomFieldDef['type']
       rerender()
     })
 
@@ -436,7 +465,7 @@ export class ProjectModal extends Modal {
       .setIcon('x')
       .setTooltip('Remove field')
       .onClick(() => {
-        this.project.customFields.splice(index, 1)
+        this.draft.customFields.splice(index, 1)
         rerender()
       })
 

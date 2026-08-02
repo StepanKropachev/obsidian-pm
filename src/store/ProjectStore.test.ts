@@ -1,9 +1,17 @@
-import type { App } from 'obsidian'
+import type { App, Plugin } from 'obsidian'
 import { TFile } from 'obsidian'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
 import { today } from '../dates'
-import { DEFAULT_SETTINGS, makeTask, type PMSettings, type Project, type StatusConfig, type Task } from '../types'
+import {
+  DEFAULT_SETTINGS,
+  makeDefaultFilter,
+  makeTask,
+  type PMSettings,
+  type Project,
+  type StatusConfig,
+  type Task
+} from '../types'
 import { ProjectStore } from './ProjectStore'
 import { addDays } from './Scheduler'
 import { buildTaskIndex } from './TaskIndex'
@@ -28,6 +36,23 @@ function newStore(): { store: ProjectStore; vault: FakeVault; app: App } {
   return { store, vault, app: app as unknown as App }
 }
 
+function fileAt(app: App, path: string): TFile {
+  const file = app.vault.getAbstractFileByPath(path)
+  if (!(file instanceof TFile)) throw new Error(`no file at ${path}`)
+  return file
+}
+
+async function readStatus(app: App, path: string): Promise<string> {
+  const content = await app.vault.cachedRead(fileAt(app, path))
+  return (/^status:\s*(.*)$/m.exec(content)?.[1] ?? '').replace(/"/g, '')
+}
+
+/** An edit the plugin did not make, e.g. from another device or a markdown tab. */
+async function editOnDisk(app: App, path: string, edit: (content: string) => string): Promise<void> {
+  const file = fileAt(app, path)
+  await app.vault.modify(file, edit(await app.vault.cachedRead(file)))
+}
+
 async function addNamed(
   store: ProjectStore,
   project: Parameters<ProjectStore['insertTask']>[0],
@@ -39,57 +64,129 @@ async function addNamed(
   return task
 }
 
-describe('ProjectStore self-write tracking', () => {
-  it('marks the project file as self-written after save', async () => {
-    const { store, vault } = newStore()
-    const project = await store.createProject('Self', 'Projects')
-    expect(store.consumeSelfWrite(project.filePath)).toBe(true) // creates mark too (cache invalidation peeks them)
-
-    await store.updateTask(project, 'nope', {}) // no-op (id not found)
-    // Project file is rewritten on every saveProject, which marks it.
-    expect(store.consumeSelfWrite(project.filePath)).toBe(true)
-    expect(vault.modifyCount.get(project.filePath)).toBe(1)
+describe('ProjectStore live project instance', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
-  it('marks task file paths as self-written when modified', async () => {
-    const { store, vault } = newStore()
-    const project = await store.createProject('T', 'Projects')
-    const task = await addNamed(store, project, 'Solo')
-    vault.resetCounts()
+  it('gives concurrent loaders the same instance', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Race', 'Projects')
+    await addNamed(store, project, 'Card')
 
-    await store.updateTask(project, task.id, { status: 'in-progress' })
+    // A second store stands in for a cold start: a view, the dashboard and the
+    // notifier all asking for the same project at once.
+    const cold = new ProjectStore(app, () => SETTINGS)
+    const file = fileAt(app, project.filePath)
+    const [a, b] = await Promise.all([cold.loadProject(file), cold.loadProject(file)])
 
-    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(true)
-    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(false) // single-use
+    expect(a).not.toBeNull()
+    expect(a).toBe(b)
   })
 
-  it('marks both old and new path on title rename (modify new, trash old)', async () => {
-    const { store, vault } = newStore()
-    const project = await store.createProject('R', 'Projects')
-    const task = await addNamed(store, project, 'Before')
-    const oldPath = expectDefined(task.filePath)
-    vault.resetCounts()
+  it('keeps the instance holders already have when another copy is saved', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Held', 'Projects')
+    const task = await addNamed(store, project, 'Card')
+    const held = expectDefined(await store.loadProject(fileAt(app, project.filePath)))
 
-    await store.updateTask(project, task.id, { title: 'Renamed' })
+    // A detached copy, as a form working on its own draft would produce.
+    const copy = JSON.parse(JSON.stringify(held)) as Project
+    copy.taskIndex = buildTaskIndex(copy.tasks)
+    copy.title = 'Detached'
+    await store.saveProject(copy)
 
-    // The new path is created (marked for cache invalidation) and the old
-    // path is trashed (marked so the delete listener skips the reload).
-    expect(store.consumeSelfWrite(expectDefined(task.filePath))).toBe(true)
-    expect(store.consumeSelfWrite(oldPath)).toBe(true)
+    expect(await store.loadProject(fileAt(app, project.filePath))).toBe(held)
+
+    // The copy's stale tasks never become the live tree.
+    await store.updateTask(held, task.id, { status: 'done' })
+    await store.saveProject(copy)
+    expect(await readStatus(app, expectDefined(task.filePath))).toBe('done')
   })
 
-  it('treats markers older than the window as stale', async () => {
+  it('reloads an external edit into the instance holders have', async () => {
+    const { store, app } = newStore()
+    const plugin = { registerEvent: () => {}, register: () => {} } as unknown as Plugin
+    store.registerVaultSync(plugin)
+    const project = await store.createProject('Synced', 'Projects')
+    const task = await addNamed(store, project, 'Card')
+    const held = expectDefined(await store.loadProject(fileAt(app, project.filePath)))
+    const changes: string[] = []
+    store.onProjectChanged((path) => changes.push(path))
+    await vi.advanceTimersByTimeAsync(6000) // past the self-write window
+
+    await editOnDisk(app, expectDefined(task.filePath), (c) => c.replace('status: "todo"', 'status: "done"'))
+    await vi.advanceTimersByTimeAsync(400)
+
+    expect(expectDefined(findTask(held.tasks, task.id)).status).toBe('done')
+    expect(changes).toEqual([project.filePath])
+  })
+
+  it('does not reload its own writes', async () => {
+    const { store, app } = newStore()
+    const plugin = { registerEvent: () => {}, register: () => {} } as unknown as Plugin
+    store.registerVaultSync(plugin)
+    const project = await store.createProject('Quiet', 'Projects')
+    const task = await addNamed(store, project, 'Card')
+    const held = expectDefined(await store.loadProject(fileAt(app, project.filePath)))
+    const liveTask = expectDefined(findTask(held.tasks, task.id))
+
+    await store.updateTask(held, task.id, { status: 'in-progress' })
+    await vi.advanceTimersByTimeAsync(400)
+
+    // A reload would have replaced the task objects in the tree.
+    expect(findTask(held.tasks, task.id)).toBe(liveTask)
+  })
+
+  it('does not let one view revert a change made in another', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Two views', 'Projects')
+    const task = await addNamed(store, project, 'Card')
+    const taskPath = expectDefined(task.filePath)
+    const viewA = expectDefined(await store.loadProject(fileAt(app, project.filePath)))
+    const viewB = expectDefined(await store.loadProject(fileAt(app, project.filePath)))
+
+    await store.updateTask(viewA, task.id, { status: 'done' })
+    await store.updateTask(viewB, task.id, { priority: 'high' })
+
+    expect(await readStatus(app, taskPath)).toBe('done')
+  })
+
+  it('notifies on every change, whoever made it', async () => {
     const { store } = newStore()
+    const project = await store.createProject('Notified', 'Projects')
+    const changes: string[] = []
+    const unsubscribe = store.onProjectChanged((path) => changes.push(path))
 
-    try {
-      vi.useFakeTimers()
-      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
-      const project = await store.createProject('Stale', 'Projects')
-      vi.setSystemTime(new Date('2026-01-01T00:00:05.001Z')) // > 5s after marker
-      expect(store.consumeSelfWrite(project.filePath)).toBe(false)
-    } finally {
-      vi.useRealTimers()
-    }
+    const task = await addNamed(store, project, 'Card')
+    await store.updateTask(project, task.id, { status: 'done' })
+    expect(changes).toEqual([project.filePath, project.filePath])
+
+    unsubscribe()
+    await store.updateTask(project, task.id, { status: 'todo' })
+    expect(changes).toHaveLength(2)
+  })
+})
+
+describe('ProjectStore project metadata patch', () => {
+  it('writes only the patched fields', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Patch', 'Projects')
+    await addNamed(store, project, 'Card')
+    project.savedViews = [{ id: 'v1', name: 'Mine', filter: makeDefaultFilter(), sortKey: 'status', sortDir: 'asc' }]
+    await store.saveProject(project)
+
+    await store.updateProject(project, { title: 'Renamed', color: '#123456' })
+
+    expect(project.title).toBe('Renamed')
+    expect(project.savedViews).toHaveLength(1)
+    const content = await app.vault.cachedRead(fileAt(app, project.filePath))
+    expect(content).toContain('title: "Renamed"')
+    expect(content).toContain('color: "#123456"')
+    expect(content).toContain('Mine')
   })
 })
 
@@ -866,23 +963,6 @@ describe('ProjectStore project cache', () => {
 
     expect(first).toBe(project)
     expect(second).toBe(first)
-  })
-
-  it('saving a cloned project makes the clone the canonical cached copy', async () => {
-    const { store, vault } = newStore()
-    const project = await store.createProject('Clone me', 'Projects')
-    await addNamed(store, project, 'task')
-
-    // Same shape as ProjectModal: JSON round-trip plus index rebuild.
-    const clone = JSON.parse(JSON.stringify(project)) as typeof project
-    clone.taskIndex = buildTaskIndex(clone.tasks)
-    clone.description = 'edited in modal'
-    await store.saveProject(clone)
-
-    const file = vault.getAbstractFileByPath(project.filePath)
-    if (!(file instanceof TFile)) throw new Error('project file missing')
-    const reloaded = await store.loadProject(file)
-    expect(reloaded).toBe(clone)
   })
 })
 

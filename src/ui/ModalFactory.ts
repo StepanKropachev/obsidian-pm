@@ -250,12 +250,13 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
 
 export interface OpenProjectModalOpts {
   project?: Project | null
-  onSave: (project: Project) => void | Promise<void>
+  /** Only needed when the caller has to act on the saved project, e.g. open a newly created one. */
+  onSave?: (project: Project) => void | Promise<void>
 }
 
 export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): void {
   const open = (): void => {
-    new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave).open()
+    new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave ?? (() => {})).open()
   }
   if (opts.project) {
     const project = opts.project

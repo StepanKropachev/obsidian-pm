@@ -1,4 +1,4 @@
-import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile, type EventRef } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ViewMode, type FilterState, type SavedView, makeDefaultFilter, makeId } from '../types'
 import { truncateTitle, safeAsync } from '../utils'
@@ -33,8 +33,7 @@ export class ProjectView extends ItemView {
   private header: ProjectHeader | null = null
   private titleEl2!: HTMLElement
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
-  private fileModifyRef: EventRef | null = null
-  private reloadDebounceTimer: number | null = null
+  private pendingRefresh: Promise<void> | null = null
   private initialized = false
   /** File path whose default view mode has been applied, so reloads don't reset a user's mode switch. */
   private defaultViewAppliedFor: string | null = null
@@ -77,15 +76,10 @@ export class ProjectView extends ItemView {
   }
 
   onClose(): Promise<void> {
-    if (this.reloadDebounceTimer !== null) {
-      window.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = null
-    }
     if (this.keydownHandler) {
       this.containerEl.removeEventListener('keydown', this.keydownHandler)
       this.keydownHandler = null
     }
-    this.fileModifyRef = null
     this.subview?.destroy?.()
     this.subview = null
     return Promise.resolve()
@@ -115,34 +109,32 @@ export class ProjectView extends ItemView {
       this.containerEl.setAttribute('tabindex', '-1')
     }
 
-    const reloadIfRelevant = (filePath: string) => {
-      if (!this.project || !this.filePath) return false
-      const taskFolder = this.filePath.replace(/\.md$/, '_tasks')
-      return filePath.startsWith(taskFolder) || filePath === this.filePath
-    }
-    this.fileModifyRef = this.app.vault.on('modify', (file) => {
-      if (!(file instanceof TFile) || !reloadIfRelevant(file.path)) return
-      if (this.plugin.store.consumeSelfWrite(file.path)) return
-      if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = window.setTimeout(
-        safeAsync(async () => {
-          this.reloadDebounceTimer = null
-          await this.loadProject()
-        }),
-        300
-      )
-    })
-    this.registerEvent(this.fileModifyRef)
-    this.registerEvent(
-      this.app.vault.on(
-        'delete',
-        safeAsync(async (file) => {
-          if (!reloadIfRelevant(file.path)) return
-          if (this.plugin.store.consumeSelfWrite(file.path)) return
-          await this.loadProject()
-        })
-      )
+    this.register(
+      this.plugin.store.onProjectChanged((path) => {
+        if (path === this.filePath) this.handleProjectChanged()
+      })
     )
+  }
+
+  /**
+   * The project changed, from this view or another one. The store keeps a
+   * single instance per file, so `this.project` is already current and only
+   * the DOM needs catching up.
+   */
+  private handleProjectChanged(): void {
+    if (!this.project) return
+    if (!(this.app.vault.getAbstractFileByPath(this.filePath) instanceof TFile)) {
+      this.renderMissingProject()
+      return
+    }
+    // Rebuilding the chrome would drop the caret out of the project title or
+    // the search box, so leave it alone while the user is in it.
+    const focused = activeDocument.activeElement
+    if (!this.toolbarEl.contains(focused) && !this.headerEl.contains(focused)) {
+      this.renderProjectToolbar()
+      this.renderProjectHeader()
+    }
+    void this.refreshProject()
   }
 
   private async loadProject(): Promise<void> {
@@ -318,13 +310,7 @@ export class ProjectView extends ItemView {
       attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' }
     })
     iconEl.addEventListener('click', () => {
-      openProjectModal(this.plugin, {
-        project: this.project,
-        onSave: (updated) => {
-          this.project = updated
-          this.renderProjectToolbar()
-        }
-      })
+      openProjectModal(this.plugin, { project: this.project })
     })
 
     this.titleEl2 = left.createEl('h2', { text: this.project.title, cls: 'pm-toolbar-title' })
@@ -333,8 +319,9 @@ export class ProjectView extends ItemView {
       'blur',
       safeAsync(async () => {
         if (!this.project) return
-        this.project.title = this.titleEl2.textContent?.trim() ?? this.project.title
-        await this.plugin.store.saveProject(this.project)
+        const title = this.titleEl2.textContent?.trim()
+        if (!title || title === this.project.title) return
+        await this.plugin.store.updateProject(this.project, { title })
       })
     )
 
@@ -380,14 +367,7 @@ export class ProjectView extends ItemView {
       .setIcon('settings')
       .setTooltip('Project settings')
       .onClick(() => {
-        openProjectModal(this.plugin, {
-          project: this.project,
-          onSave: (updated) => {
-            this.project = updated
-            this.renderProjectToolbar()
-            this.renderCurrentView()
-          }
-        })
+        openProjectModal(this.plugin, { project: this.project })
       })
   }
 
@@ -445,24 +425,24 @@ export class ProjectView extends ItemView {
   }
 
   /**
-   * Re-render after a plugin-initiated mutation. Store mutators update
-   * project.tasks in place before they await the save, so memory is already
-   * current and no disk reload is needed. External edits come in through the
-   * modify/delete listeners in onOpen. Prefers the subview's in-place refresh
-   * over a full destroy-and-rebuild.
+   * Re-render from the project in memory, which the store keeps current.
+   * Coalesced, so a mutation that reports back through its own callback and
+   * through the store's change event paints once. Prefers the subview's
+   * in-place refresh over a full destroy-and-rebuild.
    */
-  async refreshProject(): Promise<void> {
-    if (!this.project) return
-    if (this.reloadDebounceTimer !== null) {
-      window.clearTimeout(this.reloadDebounceTimer)
-      this.reloadDebounceTimer = null
-    }
-    if (this.subview?.refresh) {
-      this.subview.refresh()
-    } else if (this.subview) {
-      this.subview.render()
-    } else {
-      this.renderCurrentView()
-    }
+  refreshProject(): Promise<void> {
+    if (this.pendingRefresh) return this.pendingRefresh
+    this.pendingRefresh = new Promise((resolve) => {
+      window.setTimeout(() => {
+        this.pendingRefresh = null
+        if (this.project) {
+          if (this.subview?.refresh) this.subview.refresh()
+          else if (this.subview) this.subview.render()
+          else this.renderCurrentView()
+        }
+        resolve()
+      }, 0)
+    })
+    return this.pendingRefresh
   }
 }

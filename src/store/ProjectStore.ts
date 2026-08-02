@@ -1,6 +1,6 @@
 import type { Plugin, TAbstractFile } from 'obsidian'
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
-import type { PMSettings, Project, ResolvedProjectConfig, StatusConfig, Task } from '../types'
+import type { PMSettings, Project, ProjectPatch, ResolvedProjectConfig, StatusConfig, Task } from '../types'
 import { DEFAULT_SETTINGS, makeProject, makeTask } from '../types'
 import { today } from '../dates'
 import { isTerminalStatus } from '../utils'
@@ -118,18 +118,25 @@ export class ProjectStore implements TaskSource {
   private hydratedBodies = new WeakSet<Task | Project>()
 
   /**
-   * Projects already loaded this session, keyed by file path. The cached
-   * object is the in-memory canonical copy: mutators keep it current, every
-   * successful save re-points the entry at the saved object, and external
-   * (non-self-write) vault events drop the entry so the next load re-reads.
+   * The one live Project per file path, keyed by path and held as the loading
+   * promise so concurrent loads collapse onto a single instance. Everything
+   * that holds a project holds this object: mutators keep it current, an
+   * external change reloads into it, and it is only ever replaced when the
+   * project is deleted.
    */
-  private projectCache = new Map<string, Project>()
+  private projectCache = new Map<string, Promise<Project | null>>()
+
+  /** Notified after any change to a project, whoever made it. */
+  private changeHandlers = new Set<(path: string) => void>()
+
+  /** Pending external-change reloads, keyed by project path. */
+  private reloadTimers = new Map<string, number>()
+  private static readonly RELOAD_DEBOUNCE_MS = 300
 
   /**
-   * Paths we've just written, created, or trashed ourselves, timestamped.
-   * The view's modify/delete listeners consume markers to skip reloads; the
-   * cache invalidation listeners peek at them without consuming.
-   * Stale entries (older than the window) are treated as never-marked.
+   * Paths we've just written, created, or trashed ourselves, timestamped. The
+   * vault listeners check them so our own writes don't come back as external
+   * changes. Stale entries (older than the window) are treated as never-marked.
    */
   private selfWrites = new Map<string, number>()
   private static readonly SELF_WRITE_WINDOW_MS = 5000
@@ -184,7 +191,8 @@ export class ProjectStore implements TaskSource {
   // ─── Self-write tracking ──────────────────────────────────────────────────
 
   private markSelfWrite(path: string): void {
-    // Created files have no consumer, so sweep expired markers before they pile up.
+    // Markers are only ever read within their window, so sweep the expired ones
+    // before they pile up.
     if (this.selfWrites.size > 256) {
       const cutoff = Date.now() - ProjectStore.SELF_WRITE_WINDOW_MS
       for (const [p, t] of this.selfWrites) {
@@ -194,46 +202,112 @@ export class ProjectStore implements TaskSource {
     this.selfWrites.set(path, Date.now())
   }
 
-  /** Returns true if we wrote this path recently. Consumes the marker either way. */
-  consumeSelfWrite(path: string): boolean {
-    const ts = this.selfWrites.get(path)
-    if (ts === undefined) return false
-    this.selfWrites.delete(path)
-    return Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
-  }
-
-  /** Like consumeSelfWrite, but non-destructive — view listeners still need the marker. */
   private peekSelfWrite(path: string): boolean {
     const ts = this.selfWrites.get(path)
     return ts !== undefined && Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
   }
 
+  // ─── Change notification ──────────────────────────────────────────────────
+
+  /** Subscribe to project changes. Returns the unsubscribe function. */
+  onProjectChanged(handler: (path: string) => void): () => void {
+    this.changeHandlers.add(handler)
+    return () => this.changeHandlers.delete(handler)
+  }
+
+  private emitChange(path: string): void {
+    for (const handler of this.changeHandlers) handler(path)
+  }
+
   /**
-   * Wire vault events that drop cached projects on external changes. Call once
-   * from onload, before any view registers listeners — these must run first so
-   * a view's reload after an external edit misses the stale cache entry.
+   * Wire the vault events that keep loaded projects in step with the files.
+   * Call once from onload. This is the only place the plugin listens for
+   * changes to project files.
    */
-  registerCacheInvalidation(plugin: Plugin): void {
-    const onChange = (file: TAbstractFile): void => this.invalidateForPath(file.path)
+  registerVaultSync(plugin: Plugin): void {
+    const onChange = (file: TAbstractFile): void => this.syncPath(file.path)
     plugin.registerEvent(this.app.vault.on('create', onChange))
     plugin.registerEvent(this.app.vault.on('modify', onChange))
     plugin.registerEvent(this.app.vault.on('delete', onChange))
     plugin.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
-        this.invalidateForPath(file.path)
-        this.invalidateForPath(oldPath)
+        this.syncPath(file.path)
+        this.syncPath(oldPath)
       })
     )
+    plugin.register(() => {
+      for (const timer of this.reloadTimers.values()) window.clearTimeout(timer)
+      this.reloadTimers.clear()
+    })
   }
 
-  private invalidateForPath(path: string): void {
+  /** An external write landed. Reload the live project so every holder sees it. */
+  private syncPath(path: string): void {
     if (this.projectCache.size === 0) return
     if (this.peekSelfWrite(path)) return
     for (const key of this.projectCache.keys()) {
       if (path === key || path.startsWith(key.replace(/\.md$/, '_tasks') + '/')) {
-        this.projectCache.delete(key)
+        const pending = this.reloadTimers.get(key)
+        if (pending !== undefined) window.clearTimeout(pending)
+        this.reloadTimers.set(
+          key,
+          window.setTimeout(() => {
+            this.reloadTimers.delete(key)
+            void this.reloadProject(key)
+          }, ProjectStore.RELOAD_DEBOUNCE_MS)
+        )
       }
     }
+  }
+
+  private async reloadProject(path: string): Promise<void> {
+    const live = await this.projectCache.get(path)
+    if (!live) return
+    await this.queue(path, async () => {
+      const file = this.app.vault.getAbstractFileByPath(path)
+      if (!(file instanceof TFile)) {
+        this.projectCache.delete(path)
+        this.emitChange(path)
+        return
+      }
+      const fresh = await this.readProject(file)
+      if (!fresh) return
+      this.adopt(live, fresh)
+      this.emitChange(path)
+    })
+  }
+
+  /**
+   * Copy a freshly read project onto the live instance. Views, modals and the
+   * notifier all hold that object, so a reload updates it in place rather than
+   * handing out a second copy of the same project.
+   */
+  private adopt(live: Project, fresh: Project): void {
+    const { taskIndex, ...fields } = fresh
+    Object.assign(live, fields)
+    rebuildTaskIndex(live)
+    if (this.hydratedBodies.has(fresh)) this.hydratedBodies.add(live)
+    else this.hydratedBodies.delete(live)
+  }
+
+  /** Serialize work on one project: saves and reloads never interleave. */
+  private queue<T>(key: string, work: () => Promise<T>): Promise<T> {
+    const prev = this.saveQueues.get(key) ?? Promise.resolve()
+    const next = (async () => {
+      await prev
+      return work()
+    })()
+    this.saveQueues.set(
+      key,
+      (async () => {
+        try {
+          await next
+        } catch {
+          // swallow so the next queued item still runs after a failure
+        }
+      })()
+    )
+    return next
   }
 
   // ─── Folder helpers ────────────────────────────────────────────────────────
@@ -264,9 +338,21 @@ export class ProjectStore implements TaskSource {
     return projects.sort((a, b) => a.title.localeCompare(b.title))
   }
 
+  /**
+   * The live project for a file. Concurrent callers share the one in-flight
+   * read, so a project never exists twice in memory.
+   */
   async loadProject(file: TFile): Promise<Project | null> {
-    const cachedProject = this.projectCache.get(file.path)
-    if (cachedProject) return cachedProject
+    const live = this.projectCache.get(file.path)
+    if (live) return live
+    const loading = this.readProject(file)
+    this.projectCache.set(file.path, loading)
+    const project = await loading
+    if (!project) this.projectCache.delete(file.path)
+    return project
+  }
+
+  private async readProject(file: TFile): Promise<Project | null> {
     try {
       // Fast path: pull frontmatter from Obsidian's metadataCache, skip the disk read.
       // Only safe for new-format projects (taskIds in frontmatter, no embedded tasks).
@@ -309,7 +395,6 @@ export class ProjectStore implements TaskSource {
         this.clearDirty(project)
       }
 
-      this.projectCache.set(file.path, project)
       return project
     } catch (e) {
       console.error(`[PM] Failed to load project ${file.path}:`, e)
@@ -470,23 +555,18 @@ export class ProjectStore implements TaskSource {
   // ─── Save ──────────────────────────────────────────────────────────────────
 
   async saveProject(project: Project): Promise<void> {
-    const key = project.filePath
-    const prev = this.saveQueues.get(key) ?? Promise.resolve()
-    const next = (async () => {
-      await prev
-      await this.doSaveProject(project)
-    })()
-    this.saveQueues.set(
-      key,
-      (async () => {
-        try {
-          await next
-        } catch {
-          // swallow so the next queued save still runs after a failure
-        }
-      })()
-    )
-    return next
+    return this.queue(project.filePath, () => this.doSaveProject(project))
+  }
+
+  /**
+   * Apply a metadata patch to the live project and save it. The project editor
+   * works on a draft; only the fields it changed come back here, so a stale
+   * draft can't overwrite anything else about the project.
+   */
+  async updateProject(project: Project, patch: ProjectPatch): Promise<void> {
+    Object.assign(project, patch)
+    if (patch.description !== undefined) this.hydratedBodies.add(project)
+    await this.saveProject(project)
   }
 
   private async doSaveProject(project: Project): Promise<void> {
@@ -523,9 +603,12 @@ export class ProjectStore implements TaskSource {
         await this.app.vault.create(project.filePath, content)
         this.hydratedBodies.add(project)
       }
-      // The object we just saved is the canonical in-memory copy (it may be a
-      // clone of a previously cached project, e.g. from the project modal).
-      this.projectCache.set(project.filePath, project)
+      // A project saved before it was ever loaded (creation, migration) becomes
+      // the live instance. A save never replaces an instance others already hold.
+      if (!this.projectCache.has(project.filePath)) {
+        this.projectCache.set(project.filePath, Promise.resolve(project))
+      }
+      this.emitChange(project.filePath)
     } catch (e) {
       // Save failed. Merge the snapshot back so the next save retries.
       for (const [id, kind] of dirty) this.markDirty(project, [id], kind)
@@ -870,10 +953,6 @@ export class ProjectStore implements TaskSource {
    * `completed` away from the task's current value (a manual edit in the modal, or
    * an import) wins and is left untouched; otherwise crossing the
    * complete/incomplete boundary stamps today's date or clears it.
-   *
-   * The modal saves the whole task as the patch, so `patch.completed` is almost
-   * always present and equal to the stored value — comparing against the task,
-   * not just checking presence, is what lets auto-stamping fire from the modal.
    */
   private stampCompletion(project: Project, task: Task, patch: Partial<Task>): void {
     if (patch.status === undefined) return
@@ -1025,11 +1104,13 @@ export class ProjectStore implements TaskSource {
   }
 
   async archiveTask(project: Project, taskId: string): Promise<void> {
-    await doArchiveTask(this.app, project, taskId)
+    await doArchiveTask(this.app, project, taskId, (path) => this.markSelfWrite(path))
+    await this.saveProject(project)
   }
 
   async unarchiveTask(project: Project, taskId: string): Promise<void> {
-    await doUnarchiveTask(this.app, project, taskId)
+    await doUnarchiveTask(this.app, project, taskId, (path) => this.markSelfWrite(path))
+    await this.saveProject(project)
   }
 
   async deleteTask(project: Project, taskId: string): Promise<void> {
@@ -1109,6 +1190,7 @@ export class ProjectStore implements TaskSource {
     this.clearDirty(project)
     this.saveQueues.delete(project.filePath)
     this.projectCache.delete(project.filePath)
+    this.emitChange(project.filePath)
   }
 
   private async deleteFolderRecursive(folder: TFolder): Promise<void> {

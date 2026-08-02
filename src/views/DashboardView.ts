@@ -53,7 +53,7 @@ export class DashboardView extends ItemView {
       const folder = this.plugin.settings.projectsFolder
       return path === folder || path.startsWith(`${folder}/`)
     }
-    const scheduleReload = (path: string) => {
+    const scheduleRender = (path: string) => {
       if (!isRelevant(path)) return
       if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = window.setTimeout(() => {
@@ -61,13 +61,15 @@ export class DashboardView extends ItemView {
         this.render()
       }, 300)
     }
-    this.registerEvent(this.app.vault.on('create', (file) => scheduleReload(file.path)))
-    this.registerEvent(this.app.vault.on('modify', (file) => scheduleReload(file.path)))
-    this.registerEvent(this.app.vault.on('delete', (file) => scheduleReload(file.path)))
+    // The store reports changes within a project; the vault reports projects
+    // appearing and disappearing, which is what changes this list.
+    this.register(this.plugin.store.onProjectChanged(scheduleRender))
+    this.registerEvent(this.app.vault.on('create', (file) => scheduleRender(file.path)))
+    this.registerEvent(this.app.vault.on('delete', (file) => scheduleRender(file.path)))
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
-        scheduleReload(file.path)
-        scheduleReload(oldPath)
+        scheduleRender(file.path)
+        scheduleRender(oldPath)
       })
     )
   }
