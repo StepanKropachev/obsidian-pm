@@ -2,8 +2,10 @@ import type { App } from 'obsidian'
 import { TFile } from 'obsidian'
 import { describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
+import { today } from '../dates'
 import { DEFAULT_SETTINGS, makeTask, type PMSettings, type Project, type StatusConfig, type Task } from '../types'
 import { ProjectStore } from './ProjectStore'
+import { addDays } from './Scheduler'
 import { buildTaskIndex } from './TaskIndex'
 import { findTask, flattenTasks } from './TaskTreeOps'
 
@@ -330,6 +332,61 @@ describe('ProjectStore completion date', () => {
     // a stamped date onto the open task in the same call.
     await store.updateTasks(project, [finishing.id, open.id], { priority: 'high' })
     expect(open.completed).toBe('')
+  })
+})
+
+describe('ProjectStore pull-forward on early finish', () => {
+  const BLOCKER_DUE = '2099-06-10'
+
+  async function chain(pullForward: boolean): Promise<{ store: ProjectStore; project: Project; blocked: Task }> {
+    const { app } = makeFakeApp()
+    const store = new ProjectStore(app as unknown as App, () => ({
+      ...SETTINGS,
+      pullForwardOnEarlyFinish: pullForward
+    }))
+    const project = await store.createProject('Early', 'Projects')
+    const blocker = makeTask({ title: 'Blocker', due: BLOCKER_DUE })
+    await store.insertTask(project, blocker)
+    const blocked = makeTask({
+      title: 'Blocked',
+      start: addDays(BLOCKER_DUE, 1),
+      due: addDays(BLOCKER_DUE, 2),
+      dependencies: [blocker.id]
+    })
+    await store.insertTask(project, blocked)
+    await store.updateTask(project, blocker.id, { status: 'done' })
+    return { store, project, blocked }
+  }
+
+  it('pulls a dependent back when its blocker is completed ahead of its due date', async () => {
+    const { blocked } = await chain(true)
+    const finishedOn = today().toString()
+    expect(blocked.start).toBe(addDays(finishedOn, 1))
+    expect(blocked.due).toBe(addDays(finishedOn, 2))
+  })
+
+  it('leaves the dependent in place when the option is off', async () => {
+    const { blocked } = await chain(false)
+    expect(blocked.start).toBe(addDays(BLOCKER_DUE, 1))
+  })
+
+  it('keeps a project-level override across a reload', async () => {
+    const { store, vault, app } = newStore()
+    const project = await store.createProject('Override', 'Projects')
+    project.config = { pullForwardOnEarlyFinish: true }
+    await store.saveProject(project)
+
+    const file = vault.getAbstractFileByPath(project.filePath)
+    if (!(file instanceof TFile)) throw new Error('project file missing')
+    const reloaded = expectDefined(await new ProjectStore(app, () => SETTINGS).loadProject(file))
+    expect(reloaded.config?.pullForwardOnEarlyFinish).toBe(true)
+  })
+
+  it('pushes the dependent back out when the blocker is reopened', async () => {
+    const { store, project, blocked } = await chain(true)
+    const blocker = expectDefined(flattenTasks(project.tasks).find((f) => f.task.title === 'Blocker')).task
+    await store.updateTask(project, blocker.id, { status: 'todo' })
+    expect(blocked.start).toBe(addDays(BLOCKER_DUE, 1))
   })
 })
 

@@ -160,6 +160,18 @@ export class PMSettingTab extends PluginSettingTab {
         })
       )
 
+    new Setting(containerEl)
+      .setName('Pull dependents forward on early finish')
+      .setDesc(
+        'When a task is completed before its due date, move its dependent tasks earlier by the days it saved. Needs auto-schedule.'
+      )
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.pullForwardOnEarlyFinish).onChange(async (v) => {
+          this.plugin.settings.pullForwardOnEarlyFinish = v
+          await this.plugin.saveSettings()
+        })
+      )
+
     // ── Team Members ──────────────────────────────────────────────────────────
     new Setting(containerEl).setName('Team members').setHeading()
 

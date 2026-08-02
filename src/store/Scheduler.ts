@@ -72,8 +72,18 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
  *
  * Tasks with status `done` or `cancelled` are skipped — their dates are
  * historically meaningful and should not move.
+ *
+ * With `pullForward`, a predecessor that completed before its due date counts as
+ * finishing on its completion date, and its dependents move earlier by the days
+ * it saved — never past the day after their predecessors finish, and keeping
+ * whatever slack they already had.
  */
-export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses: StatusConfig[] = []): ScheduleResult {
+export function computeSchedule(
+  tasks: Task[],
+  changedTaskId?: string,
+  statuses: StatusConfig[] = [],
+  pullForward = false
+): ScheduleResult {
   const flat = flattenTasks(tasks).map((ft) => ft.task)
   const taskById = new Map<string, Task>()
   const dependentsOf = new Map<string, string[]>() // depId → [taskIds that depend on it]
@@ -151,9 +161,15 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
   // We work with a mutable copy of dates so cascading works within this run
   const startOf = new Map<string, string>()
   const dueOf = new Map<string, string>()
+  // Days by which a task's finish beat the date it was planned for.
+  const daysSavedBy = new Map<string, number>()
   for (const t of flat) {
     startOf.set(t.id, t.start)
     dueOf.set(t.id, t.due)
+    if (!pullForward || !t.completed || !t.due || t.completed >= t.due) continue
+    if (!isTerminalStatus(t.status, statuses)) continue
+    dueOf.set(t.id, t.completed)
+    daysSavedBy.set(t.id, daysBetween(t.completed, t.due))
   }
 
   const patches: SchedulePatch[] = []
@@ -170,23 +186,30 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
 
     // Find latest due among predecessors that have a due date
     // Skip archived predecessors — they are hidden from the UI
+    // `latestPlannedDue` is the same date had every predecessor finished on plan.
     let latestDue = ''
+    let latestPlannedDue = ''
     for (const depId of deps) {
       const dep = taskById.get(depId)
       if (dep?.archived) continue
       const depDue = dueOf.get(depId) ?? ''
-      if (depDue && (!latestDue || depDue > latestDue)) {
-        latestDue = depDue
-      }
+      if (!depDue) continue
+      if (!latestDue || depDue > latestDue) latestDue = depDue
+      const plannedDue = addDays(depDue, daysSavedBy.get(depId) ?? 0)
+      if (!latestPlannedDue || plannedDue > latestPlannedDue) latestPlannedDue = plannedDue
     }
     if (!latestDue) continue // no predecessors with due dates
 
     const earliestStart = addDays(latestDue, 1)
+    const daysSaved = daysBetween(latestDue, latestPlannedDue)
     const currentStart = startOf.get(id) ?? ''
     const currentDue = dueOf.get(id) ?? ''
 
+    const pullBy = (anchor: string) => Math.min(daysSaved, Math.max(0, daysBetween(earliestStart, anchor)))
+
     let newStart = currentStart
     let newDue = currentDue
+    let pulled = 0
 
     const isMilestone = task.type === 'milestone' || (!currentStart && currentDue)
 
@@ -194,6 +217,9 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
       // Milestone: shift due instead of start
       if (!currentDue || currentDue < earliestStart) {
         newDue = earliestStart
+      } else if (daysSaved > 0) {
+        pulled = pullBy(currentDue)
+        newDue = addDays(currentDue, -pulled)
       }
     } else if (currentStart && currentDue) {
       // Has both: preserve duration, shift if needed
@@ -203,16 +229,18 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
         const duration = daysBetween(currentStart, currentDue) + 1
         newStart = earliestStart
         newDue = addDays(earliestStart, duration - 1)
-      }
-    } else if (!currentStart && currentDue) {
-      // Has only due: shift due if needed (treat as milestone)
-      if (currentDue < earliestStart) {
-        newDue = earliestStart
+      } else if (daysSaved > 0) {
+        pulled = pullBy(currentStart)
+        newStart = addDays(currentStart, -pulled)
+        newDue = addDays(currentDue, -pulled)
       }
     } else if (currentStart && !currentDue) {
       // Start only: shift start if needed
       if (currentStart < earliestStart) {
         newStart = earliestStart
+      } else if (daysSaved > 0) {
+        pulled = pullBy(currentStart)
+        newStart = addDays(currentStart, -pulled)
       }
     } else {
       // Neither start nor due: set start
@@ -223,6 +251,7 @@ export function computeSchedule(tasks: Task[], changedTaskId?: string, statuses:
       // Update mutable maps for cascading
       startOf.set(id, newStart)
       dueOf.set(id, newDue)
+      if (pulled > 0) daysSavedBy.set(id, pulled)
       patches.push({ taskId: id, start: newStart, due: newDue })
     }
   }

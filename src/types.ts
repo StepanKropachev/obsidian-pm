@@ -116,6 +116,7 @@ export interface ProjectConfig {
   priorities?: PriorityConfig[]
   defaultView?: ViewMode
   autoSchedule?: boolean
+  pullForwardOnEarlyFinish?: boolean
   kanbanShowSubtasks?: boolean
   kanbanShowDescriptionPreview?: boolean
 }
@@ -130,6 +131,7 @@ export interface ResolvedProjectConfig {
   priorities: PriorityConfig[]
   defaultView: ViewMode
   autoSchedule: boolean
+  pullForwardOnEarlyFinish: boolean
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
 }
@@ -152,6 +154,7 @@ export interface PMSettings {
   notificationsEnabled: boolean
   notificationLeadDays: number
   autoSchedule: boolean
+  pullForwardOnEarlyFinish: boolean
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
   showTagColors: boolean
@@ -193,6 +196,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   notificationsEnabled: true,
   notificationLeadDays: 2,
   autoSchedule: true,
+  pullForwardOnEarlyFinish: false,
   saveTaskOnClose: true,
   projectFilters: {},
   collapsedTasks: {}

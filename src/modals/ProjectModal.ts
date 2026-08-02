@@ -271,6 +271,10 @@ export class ProjectModal extends Modal {
       { value: true, label: 'On' },
       { value: false, label: 'Off' }
     ])
+    this.renderOverrideSelect(behaviorGrid, 'Pull forward on early finish', 'pullForwardOnEarlyFinish', [
+      { value: true, label: 'On' },
+      { value: false, label: 'Off' }
+    ])
     this.renderOverrideSelect(behaviorGrid, 'Subtasks on board', 'kanbanShowSubtasks', [
       { value: true, label: 'Show' },
       { value: false, label: 'Hide' }
@@ -363,7 +367,12 @@ export class ProjectModal extends Modal {
   }
 
   private renderOverrideSelect<
-    K extends 'defaultView' | 'autoSchedule' | 'kanbanShowSubtasks' | 'kanbanShowDescriptionPreview'
+    K extends
+      | 'defaultView'
+      | 'autoSchedule'
+      | 'pullForwardOnEarlyFinish'
+      | 'kanbanShowSubtasks'
+      | 'kanbanShowDescriptionPreview'
   >(
     grid: HTMLElement,
     label: string,

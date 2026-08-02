@@ -34,6 +34,7 @@ describe('resolveProjectConfig', () => {
     expect(resolved.priorities).toEqual(DEFAULT_PRIORITIES)
     expect(resolved.defaultView).toBe(DEFAULT_SETTINGS.defaultView)
     expect(resolved.autoSchedule).toBe(DEFAULT_SETTINGS.autoSchedule)
+    expect(resolved.pullForwardOnEarlyFinish).toBe(DEFAULT_SETTINGS.pullForwardOnEarlyFinish)
     expect(resolved.kanbanShowSubtasks).toBe(DEFAULT_SETTINGS.kanbanShowSubtasks)
     expect(resolved.kanbanShowDescriptionPreview).toBe(DEFAULT_SETTINGS.kanbanShowDescriptionPreview)
   })
@@ -56,11 +57,17 @@ describe('resolveProjectConfig', () => {
 
   it('overrides behavior settings independently of the palettes', () => {
     const resolved = resolveProjectConfig(
-      makeOverrideProject({ defaultView: 'kanban', autoSchedule: false, kanbanShowSubtasks: true }),
+      makeOverrideProject({
+        defaultView: 'kanban',
+        autoSchedule: false,
+        pullForwardOnEarlyFinish: true,
+        kanbanShowSubtasks: true
+      }),
       DEFAULT_SETTINGS
     )
     expect(resolved.defaultView).toBe('kanban')
     expect(resolved.autoSchedule).toBe(false)
+    expect(resolved.pullForwardOnEarlyFinish).toBe(true)
     expect(resolved.kanbanShowSubtasks).toBe(true)
     expect(resolved.statuses).toEqual(DEFAULT_STATUSES)
     expect(resolved.kanbanShowDescriptionPreview).toBe(DEFAULT_SETTINGS.kanbanShowDescriptionPreview)

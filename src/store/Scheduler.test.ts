@@ -183,3 +183,83 @@ describe('computeSchedule', () => {
     expect(result.cycles).toEqual([])
   })
 })
+
+describe('computeSchedule with pullForward', () => {
+  const finishedEarly = task({
+    id: 'a',
+    start: '2026-07-06',
+    due: '2026-07-13',
+    completed: '2026-07-10',
+    status: 'done'
+  })
+
+  it('leaves dependents alone when the option is off', () => {
+    const tasks = [finishedEarly, task({ id: 'b', start: '2026-07-14', due: '2026-07-16', dependencies: ['a'] })]
+    expect(computeSchedule(tasks, undefined, statuses).patches).toEqual([])
+  })
+
+  it('pulls a dependent back by the days its predecessor saved', () => {
+    const tasks = [finishedEarly, task({ id: 'b', start: '2026-07-14', due: '2026-07-16', dependencies: ['a'] })]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-11', due: '2026-07-13' }])
+  })
+
+  it('keeps the slack a dependent already had', () => {
+    const tasks = [finishedEarly, task({ id: 'b', start: '2026-07-20', due: '2026-07-22', dependencies: ['a'] })]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-17', due: '2026-07-19' }])
+  })
+
+  it('never pulls a dependent before the day after its predecessor finished', () => {
+    const early = task({ id: 'a', start: '2026-07-01', due: '2026-07-13', completed: '2026-07-02', status: 'done' })
+    const tasks = [early, task({ id: 'b', start: '2026-07-05', due: '2026-07-08', dependencies: ['a'] })]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-03', due: '2026-07-06' }])
+  })
+
+  it('cascades the saved days down the chain', () => {
+    const tasks = [
+      finishedEarly,
+      task({ id: 'b', start: '2026-07-14', due: '2026-07-16', dependencies: ['a'] }),
+      task({ id: 'c', start: '2026-07-20', due: '2026-07-21', dependencies: ['b'] })
+    ]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([
+      { taskId: 'b', start: '2026-07-11', due: '2026-07-13' },
+      { taskId: 'c', start: '2026-07-17', due: '2026-07-18' }
+    ])
+  })
+
+  it('holds a dependent in place while another predecessor is still due later', () => {
+    const tasks = [
+      finishedEarly,
+      task({ id: 'gate', start: '2026-07-06', due: '2026-07-13' }),
+      task({ id: 'b', start: '2026-07-14', due: '2026-07-16', dependencies: ['a', 'gate'] })
+    ]
+    expect(computeSchedule(tasks, undefined, statuses, true).patches).toEqual([])
+  })
+
+  it('pulls a milestone by its due date', () => {
+    const tasks = [finishedEarly, task({ id: 'm', due: '2026-07-14', type: 'milestone', dependencies: ['a'] })]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([{ taskId: 'm', start: '', due: '2026-07-11' }])
+  })
+
+  it('ignores a task that completed on or after its due date', () => {
+    const onTime = task({ id: 'a', start: '2026-07-06', due: '2026-07-13', completed: '2026-07-13', status: 'done' })
+    const tasks = [onTime, task({ id: 'b', start: '2026-07-20', due: '2026-07-22', dependencies: ['a'] })]
+    expect(computeSchedule(tasks, undefined, statuses, true).patches).toEqual([])
+  })
+
+  it('ignores a completion date on a task that is not in a terminal status', () => {
+    const reopened = task({ id: 'a', start: '2026-07-06', due: '2026-07-13', completed: '2026-07-10' })
+    const tasks = [reopened, task({ id: 'b', start: '2026-07-14', due: '2026-07-16', dependencies: ['a'] })]
+    expect(computeSchedule(tasks, undefined, statuses, true).patches).toEqual([])
+  })
+
+  it('still pushes a dependent that starts too early', () => {
+    const tasks = [finishedEarly, task({ id: 'b', start: '2026-07-08', due: '2026-07-09', dependencies: ['a'] })]
+    const result = computeSchedule(tasks, undefined, statuses, true)
+    expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-11', due: '2026-07-12' }])
+  })
+})
