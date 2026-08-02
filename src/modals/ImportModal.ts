@@ -27,7 +27,6 @@ export class ImportModal extends Modal {
   private fileListContainer: HTMLDivElement | null = null
   private counterLabel: HTMLDivElement | null = null
 
-  // Phase 2 state
   private phase: 1 | 2 = 1
   private defaultStatus: TaskStatus
   private defaultPriority: TaskPriority
@@ -44,7 +43,7 @@ export class ImportModal extends Modal {
     this.defaultPriority = getDefaultPriorityId(plugin.settings.priorities)
   }
 
-  /** Palettes in effect for the import target; the global ones until setProject has run. */
+  /** The target project's palettes, or the global ones until setProject has run. */
   private get palettes(): { statuses: StatusConfig[]; priorities: PriorityConfig[] } {
     return this.project ? this.plugin.store.configFor(this.project) : this.plugin.settings
   }
@@ -59,7 +58,6 @@ export class ImportModal extends Modal {
     contentEl.addClass('import-modal')
     this.modalEl.addClass('import-modal-container')
 
-    // Load all markdown files from vault
     this.loadVaultFiles()
 
     this.render()
@@ -97,7 +95,6 @@ export class ImportModal extends Modal {
     const { contentEl } = this
     contentEl.empty()
 
-    // ── Header ──────────────────────────────────────────────────────────────
     const header = contentEl.createDiv('import-modal-header')
 
     header.createEl('h2', { text: 'Select notes to import' })
@@ -105,7 +102,6 @@ export class ImportModal extends Modal {
     this.counterLabel = header.createDiv('import-counter')
     this.updateCounter()
 
-    // ── Search input ────────────────────────────────────────────────────────
     const searchContainer = contentEl.createDiv('import-search-container')
 
     this.searchInput = searchContainer.createEl('input', {
@@ -115,12 +111,10 @@ export class ImportModal extends Modal {
     })
     this.searchInput.addEventListener('input', () => this.handleSearch())
 
-    // ── File list ───────────────────────────────────────────────────────────
     const listContainer = contentEl.createDiv('import-list-wrapper')
 
     this.fileListContainer = listContainer
 
-    // Select All row
     const selectAllRow = listContainer.createDiv('import-select-all-row')
 
     this.selectAllCheckbox = selectAllRow.createEl('input', {
@@ -136,10 +130,8 @@ export class ImportModal extends Modal {
       }
     })
 
-    // File list items
     this.renderFileList()
 
-    // ── Footer with Next button ────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer')
 
     new ButtonComponent(footer).setButtonText('Cancel').onClick(() => this.close())
@@ -155,14 +147,11 @@ export class ImportModal extends Modal {
     const { contentEl } = this
     contentEl.empty()
 
-    // ── Header ──────────────────────────────────────────────────────────────
     const header = contentEl.createDiv('import-options-header')
     header.createEl('h2', { text: 'Import options' })
 
-    // ── Content ──────────────────────────────────────────────────────────────
     const content = contentEl.createDiv('import-options-content')
 
-    // Status dropdown
     const statusGroup = content.createDiv('import-option-group')
     statusGroup.createEl('label', { text: 'Default status' })
 
@@ -178,7 +167,6 @@ export class ImportModal extends Modal {
       this.defaultStatus = (e.target as HTMLSelectElement).value
     })
 
-    // Priority dropdown
     const priorityGroup = content.createDiv('import-option-group')
     priorityGroup.createEl('label', { text: 'Default priority' })
 
@@ -194,13 +182,11 @@ export class ImportModal extends Modal {
       this.defaultPriority = (e.target as HTMLSelectElement).value
     })
 
-    // File handling radio
     const handlingGroup = content.createDiv('import-option-group')
     handlingGroup.createEl('label', { text: 'File handling' })
 
     const radioGroup = handlingGroup.createDiv('import-radio-group')
 
-    // Move option
     const moveLabel = radioGroup.createEl('label')
 
     const moveRadio = moveLabel.createEl('input', { type: 'radio' })
@@ -213,7 +199,6 @@ export class ImportModal extends Modal {
 
     moveLabel.createSpan({ text: 'Move to tasks folder (default)' })
 
-    // Copy option
     const copyLabel = radioGroup.createEl('label')
 
     const copyRadio = copyLabel.createEl('input', { type: 'radio' })
@@ -226,7 +211,6 @@ export class ImportModal extends Modal {
 
     copyLabel.createSpan({ text: 'Copy (keep original)' })
 
-    // ── Footer ───────────────────────────────────────────────────────────────
     const footer = contentEl.createDiv('import-modal-footer')
 
     new ButtonComponent(footer).setButtonText('Back').onClick(() => this.handleBack())
@@ -245,7 +229,6 @@ export class ImportModal extends Modal {
     const fileListContainer = this.fileListContainer
     if (!fileListContainer) return
 
-    // Clear existing items (keep the select-all row)
     const items = fileListContainer.querySelectorAll('.import-file-item')
     items.forEach((item) => item.remove())
 
@@ -268,10 +251,8 @@ export class ImportModal extends Modal {
       row.createSpan({ text: item.folder, cls: 'import-file-folder' })
 
       row.addEventListener('click', (e) => {
-        // Don't toggle if clicking the checkbox itself — let native change event handle it
         if (e.target === checkbox) return
 
-        // Toggle checkbox for clicks elsewhere in the row, which will trigger the change event
         checkbox.checked = !checkbox.checked
         checkbox.dispatchEvent(new Event('change', { bubbles: true }))
       })
@@ -384,11 +365,7 @@ export class ImportModal extends Modal {
     this.close()
   }
 
-  /**
-   * Convert TaskNotes tasks preserving their fields: scheduled/due dates,
-   * blockedBy dependencies and project-link hierarchy (within the selection),
-   * tags, time estimate, completion, and archive state.
-   */
+  /** Preserves dates, blockedBy edges, project-link hierarchy, tags, estimate, and archive state. */
   private async importTaskNotesTasks(
     api: TaskNotesApi,
     project: Project,

@@ -4,7 +4,6 @@ import type { Project, Task } from '../types'
 import { findTaskById } from './TaskIndex'
 import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
 
-/** Get the task subfolder path for a project */
 function projectTaskFolder(project: Project): string {
   return project.filePath.replace(/\.md$/, '_tasks')
 }
@@ -13,10 +12,10 @@ function subtree(task: Task): Task[] {
   return [task, ...task.subtasks.flatMap(subtree)]
 }
 
-/** Records a path the plugin is about to write, so the move doesn't read back as an external change. */
+/** Marks a path we're about to write, so the move doesn't read back as an external change. */
 type MarkSelfWrite = (path: string) => void
 
-/** Move a task's file (and attachments) into `targetFolder`. Reports whether the file ended up there. */
+/** Moves the file and its attachments, reporting whether they ended up there. */
 async function moveTaskFile(
   app: App,
   task: Task,

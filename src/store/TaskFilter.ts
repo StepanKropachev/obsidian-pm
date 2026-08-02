@@ -57,11 +57,7 @@ export function applyTaskFilter(tasks: Task[], filter: FilterState, statuses: St
     .map((t) => (t.subtasks.length ? { ...t, subtasks: applyTaskFilter(t.subtasks, filter, statuses) } : t))
 }
 
-/**
- * Tree-shaped filter that lifts orphaned matching descendants to the slot of
- * their dropped ancestor. Used by the gantt view so a matching subtask doesn't
- * disappear when its parent doesn't match.
- */
+/** Lifts a matching descendant into its dropped ancestor's slot, so it doesn't disappear. */
 export function applyTaskFilterPromote(tasks: Task[], filter: FilterState, statuses: StatusConfig[] = []): Task[] {
   const result: Task[] = []
   for (const t of tasks) {

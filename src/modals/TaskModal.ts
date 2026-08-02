@@ -47,7 +47,6 @@ export class TaskModal extends Modal {
     if (task) {
       this.task = JSON.parse(JSON.stringify(task)) as Task
       this.isNew = false
-      // Compute current parentId from tree if not explicitly provided
       if (parentId == null) {
         const flat = flattenTasks(project.tasks)
         const entry = flat.find((f) => f.task.id === task.id)
@@ -134,9 +133,8 @@ export class TaskModal extends Modal {
   }
 
   /**
-   * Only the fields the user actually changed. The editor works on a copy taken
-   * when it opened, so saving the whole task would write its view of every other
-   * field back over anything that moved in the meantime.
+   * Only what changed. The editor works on a copy taken when it opened, so saving the
+   * whole task would write its stale view of every other field back over disk.
    */
   private changedFields(): Partial<Task> {
     const patch: Partial<Task> = {}
@@ -234,14 +232,13 @@ export class TaskModal extends Modal {
     const { contentEl } = this
     contentEl.empty()
 
-    // ── Header: breadcrumb · overflow · close ───────────────────────────────
     const header = contentEl.createDiv('pm-te-header')
     const prio = getPriorityConfig(this.plugin.store.configFor(this.project).priorities, this.task.priority)
     if (prio?.color) header.setCssProps({ '--pm-accent-strip': prio.color })
     const crumb = header.createDiv('pm-te-crumb')
     if (this.project.icon) {
       const iconEl = crumb.createSpan({ cls: 'pm-te-crumb-icon' })
-      // project.icon is either an emoji or a Lucide icon name; render names as icons.
+      // project.icon is either an emoji or a Lucide icon name.
       if (/^[a-z0-9-]+$/.test(this.project.icon)) setIcon(iconEl, this.project.icon)
       else iconEl.setText(this.project.icon)
     }
@@ -272,10 +269,8 @@ export class TaskModal extends Modal {
       this.close()
     })
 
-    // ── Body ────────────────────────────────────────────────────────────────
     const body = contentEl.createDiv('pm-te-body')
 
-    // Title hero
     const titleWrap = body.createDiv('pm-te-title-wrap')
     const titleInput = titleWrap.createEl('textarea', { cls: 'pm-te-title' })
     titleInput.rows = 1
@@ -312,7 +307,6 @@ export class TaskModal extends Modal {
     titleInput.focus()
     if (this.isNew) titleInput.select()
 
-    // Properties
     const props = body.createDiv('pm-te-props')
     renderTaskFormFields(props, {
       task: this.task,
@@ -328,7 +322,6 @@ export class TaskModal extends Modal {
 
     body.createEl('hr', { cls: 'pm-te-divider' })
 
-    // ── Description (preview / edit) ─────────────────────────────────────────
     const descSection = body.createDiv('pm-modal-section pm-modal-desc-section')
     descSection.createEl('h4', { text: 'Description', cls: 'pm-modal-section-title' })
 
@@ -379,8 +372,7 @@ export class TaskModal extends Modal {
       })
     }
 
-    // MarkdownRenderer emits external anchors with target="_blank"; Electron
-    // silently drops file:// under that, so route file:// clicks through window.open.
+    // Electron silently drops file:// under the target="_blank" MarkdownRenderer emits.
     const attachFileLinkHandlers = () => {
       descPreview.querySelectorAll<HTMLAnchorElement>('a.external-link').forEach((a) => {
         if (!a.href.startsWith('file://')) return
@@ -463,7 +455,6 @@ export class TaskModal extends Modal {
       void this.insertAttachments(descArea, attachments, autoResize)
     })
 
-    // Note link suggest (inline [[ autocomplete)
     this.noteSuggest?.destroy()
     this.noteSuggest = new NoteLinkSuggest(this.app, descArea, (newValue) => {
       this.task.description = newValue
@@ -471,9 +462,8 @@ export class TaskModal extends Modal {
     })
     this.noteSuggest.attach(descSection)
 
-    // Walk the rendered text and the markdown source in step, skipping the source
-    // characters that produced no output, so a caret in the preview lands on the
-    // character that rendered it rather than on the syntax around it.
+    // Walk rendered text and markdown source in step, skipping source characters that
+    // produced no output, so a caret in the preview lands past the syntax around it.
     const sourceOffsetOf = (renderedIndex: number) => {
       const rendered = descPreview.textContent || ''
       const src = this.task.description
@@ -509,7 +499,6 @@ export class TaskModal extends Modal {
       const link = target.closest('a')
 
       if (link) {
-        // Internal link (Obsidian note link)
         if (link.classList.contains('internal-link')) {
           e.preventDefault()
           e.stopPropagation()
@@ -520,7 +509,6 @@ export class TaskModal extends Modal {
           void this.app.workspace.openLinkText(href, sourcePath)
           return
         }
-        // External link - let browser handle it
         return
       }
 
@@ -529,7 +517,6 @@ export class TaskModal extends Modal {
       const selection = activeWindow.getSelection()
       if (selection && !selection.isCollapsed && descPreview.contains(selection.anchorNode)) return
 
-      // Click on non-link text = edit
       showEdit(clickedSourceOffset(e))
     })
 
@@ -541,13 +528,10 @@ export class TaskModal extends Modal {
       window.setTimeout(autoResize, 0)
     }
 
-    // ── Subtasks ────────────────────────────────────────────────────────────
     renderSubtasksPanel(body, this.task, this.plugin, this.plugin.store.configFor(this.project).statuses)
 
-    // ── Time tracking ─────────────────────────────────────────────────────────
     renderTimeTrackingPanel(body, this.task)
 
-    // ── Footer ──────────────────────────────────────────────────────────────
     const footer = contentEl.createDiv('pm-te-footer')
 
     if (!this.isNew && this.task.filePath) {

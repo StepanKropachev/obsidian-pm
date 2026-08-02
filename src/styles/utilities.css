@@ -1,4 +1,3 @@
-/* -- Utility classes ------------------------------------------------------- */
 .pm-hidden {
   display: none !important;
 }
@@ -19,7 +18,6 @@ body.pm-resize-active * {
   user-select: none !important;
 }
 
-/* Prompt / Confirm modal typography */
 .pm-prompt-text {
   margin: 0 0 0.75rem 0;
   color: var(--text-normal);
@@ -47,7 +45,6 @@ body.pm-resize-active * {
   gap: 0.5rem;
 }
 
-/* -- Gantt label drag reorder ------------------------------------------ */
 .pm-gantt-label-row--dragging {
   opacity: 0.4;
 }
@@ -58,8 +55,7 @@ body.pm-resize-active * {
   box-shadow: inset 0 -2px 0 var(--interactive-accent);
 }
 
-/* -- Import Modal ----------------------------------------------------------- */
-/* Note: modals render outside .pm-root, so use Obsidian native vars only.   */
+/* Modals render outside .pm-root, so these use Obsidian's native vars only. */
 
 .import-modal-header {
   padding: 1rem;

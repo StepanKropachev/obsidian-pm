@@ -97,7 +97,6 @@ describe('indexAddSubtree / indexRemoveSubtree / indexSetParent', () => {
     expect(findTaskById(project, 'a1')).toBeNull()
     expect(findTaskById(project, 'a1x')).toBeNull()
     expect(findTaskById(project, 'a2')).toBeNull()
-    // siblings unaffected
     expect(findTaskById(project, 'b')?.id).toBe('b')
   })
 
@@ -107,9 +106,7 @@ describe('indexAddSubtree / indexRemoveSubtree / indexSetParent', () => {
     rebuildTaskIndex(project)
     indexSetParent(project, 'a1', 'b')
     expect(findParentId(project, 'a1')).toBe('b')
-    // descendants of a1 still point at a1
     expect(findParentId(project, 'a1x')).toBe('a1')
-    // siblings of a1 untouched
     expect(findParentId(project, 'a2')).toBe('a')
   })
 })

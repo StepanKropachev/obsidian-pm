@@ -4,12 +4,10 @@ import { flattenTasks } from './TaskTreeOps'
 const FALLBACK_COLOR = '#8a94a0'
 
 /**
- * Resolve the configuration in effect for a project: its own overrides where
- * defined, the global settings everywhere else. Status and priority values
- * that tasks still use but neither list defines are appended (borrowing the
- * global config when one exists) so nothing disappears from boards or
- * pickers. Use this everywhere a project's tasks are interpreted, including
- * terminal-status checks: an overridden status carries its own `complete` flag.
+ * The project's own overrides where defined, the global settings everywhere else. Values
+ * tasks still use but neither list defines are appended, so nothing vanishes from a board
+ * or picker. Read every palette through this, terminal-status checks included: an
+ * overridden status carries its own `complete` flag.
  */
 export function resolveProjectConfig(project: Project, settings: PMSettings): ResolvedProjectConfig {
   const config = project.config

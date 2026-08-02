@@ -77,8 +77,7 @@ describe('ProjectStore live project instance', () => {
     const project = await store.createProject('Race', 'Projects')
     await addNamed(store, project, 'Card')
 
-    // A second store stands in for a cold start: a view, the dashboard and the
-    // notifier all asking for the same project at once.
+    // A second store stands in for a cold start, with several callers racing to load.
     const cold = new ProjectStore(app, () => SETTINGS)
     const file = fileAt(app, project.filePath)
     const [a, b] = await Promise.all([cold.loadProject(file), cold.loadProject(file)])
@@ -282,7 +281,6 @@ describe('ProjectStore round-trip', () => {
     await store.updateTask(project, b.id, { status: 'in-progress' })
     const childOfA = await addNamed(store, project, 'Sub of design', a.id)
 
-    // Fresh store, same vault. Reload from disk.
     const store2 = new ProjectStore(app, () => SETTINGS)
     const file = vault.getAbstractFileByPath(project.filePath)
     if (!(file instanceof TFile)) throw new Error('project file missing')
@@ -335,11 +333,9 @@ describe('ProjectStore round-trip', () => {
     // markAllDirty should have flagged every embedded task; saving once writes them all.
     await store.saveProject(project)
 
-    // Files exist on disk now.
     expect(vault.getAbstractFileByPath('Projects/Legacy_tasks/first.md')).not.toBeNull()
     expect(vault.getAbstractFileByPath('Projects/Legacy_tasks/second.md')).not.toBeNull()
 
-    // Reload and verify the embedded tasks survived as per-file tasks.
     const reloaded = await store.loadProject(file)
     if (!reloaded) throw new Error('reload failed')
     const flat = flattenTasks(reloaded.tasks)
@@ -377,8 +373,8 @@ describe('ProjectStore completion date', () => {
   })
 
   it('stamps from a full-task patch that already carries the unchanged completed field', async () => {
-    // The task modal saves the whole task as the patch, so `completed` is present
-    // and equal to the stored value. Auto-stamping must still fire on the status flip.
+    // The editor saves the whole task, so `completed` is present and unchanged;
+    // auto-stamping must still fire on the status flip.
     const { store } = newStore()
     const project = await store.createProject('Modal', 'Projects')
     const task = await addNamed(store, project, 'Via modal')
@@ -425,8 +421,7 @@ describe('ProjectStore completion date', () => {
     await store.updateTask(project, finishing.id, { status: 'done' })
     open.completed = ''
 
-    // A shared patch object applied to a task that is already done must not carry
-    // a stamped date onto the open task in the same call.
+    // A shared patch must not carry the done task's stamped date onto the open one.
     await store.updateTasks(project, [finishing.id, open.id], { priority: 'high' })
     expect(open.completed).toBe('')
   })
@@ -857,8 +852,8 @@ describe('ProjectStore duplicate long titles', () => {
     const parent = await addNamed(store, project, longTitle)
     await addNamed(store, project, 'subtask', parent.id)
 
-    // Duplicate twice: the base is trimmed so the "(copy N)" suffix survives the
-    // slug cap, so both copies get distinct titles and distinct files.
+    // The base is trimmed so the "(copy N)" suffix survives the slug cap and both
+    // copies get distinct titles and files.
     expect(await store.duplicateTask(project, parent.id, true)).not.toBeNull()
     expect(await store.duplicateTask(project, parent.id, true)).not.toBeNull()
 
@@ -880,10 +875,8 @@ describe('ProjectStore concurrent-save race', () => {
     const bOldPath = expectDefined(b.filePath)
     vault.resetCounts()
 
-    // Kick off two updates back-to-back without awaiting the first.
-    // The second saveProject chains behind the first in the saveQueue, so any
-    // markDirty calls from the second mutator must survive the first save's
-    // dirty-set drain.
+    // The second save chains behind the first in the queue, so its markDirty calls
+    // must survive the first save's dirty-set drain.
     const first = store.updateTask(project, a.id, { title: 'A new' })
     const second = store.updateTask(project, b.id, { title: 'B new' })
     await Promise.all([first, second])

@@ -1,6 +1,6 @@
 import { Chip } from '../primitives/Chip'
 
-/** Logged/estimate hours chip; goes red solid when logged exceeds the estimate. */
+/** Goes solid red once logged hours exceed the estimate. */
 export function renderTimeChip(
   parent: HTMLElement,
   logged: number,

@@ -26,7 +26,6 @@ export function renderTaskLabel(
   el.style.paddingLeft = `${depth * 18 + 8}px`
   el.dataset.taskId = task.id
 
-  // Make draggable for reordering
   el.draggable = true
   el.addEventListener('dragstart', (e: DragEvent) => {
     e.dataTransfer?.setData('text/plain', task.id)
@@ -59,7 +58,6 @@ export function renderTaskLabel(
     })
   )
 
-  // Expand toggle
   if (task.subtasks.length > 0) {
     new CollapseToggle(el, {
       collapsed: task.collapsed,
@@ -72,21 +70,17 @@ export function renderTaskLabel(
     el.createSpan({ cls: 'pm-gantt-label-spacer' })
   }
 
-  // Color dot
   renderStatusDot(el, task.status, ctx.statuses, 'pm-gantt-label-dot')
 
-  // Title
   const titleEl = el.createSpan({ text: task.title, cls: 'pm-gantt-label-title' })
   titleEl.addEventListener('click', () => {
     openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() })
   })
 
-  // Progress %
   if (task.progress > 0) {
     el.createSpan({ text: `${task.progress}%`, cls: 'pm-gantt-label-progress' })
   }
 
-  // "+" button to add subtask (hover-visible)
   new IconButton(el)
     .setIcon('plus')
     .setTooltip('Add subtask')

@@ -35,7 +35,7 @@ export class ProjectView extends ItemView {
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private pendingRefresh: Promise<void> | null = null
   private initialized = false
-  /** File path whose default view mode has been applied, so reloads don't reset a user's mode switch. */
+  /** Set once the default view mode is applied, so reloads don't undo a mode switch. */
   private defaultViewAppliedFor: string | null = null
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
@@ -68,9 +68,8 @@ export class ProjectView extends ItemView {
   }
 
   onOpen(): Promise<void> {
-    // Setup only. setState is the sole loader: it is the only place filePath is
-    // set, and it loads the project itself. onOpen runs purely to guarantee the
-    // scaffold and listeners exist for hosts that open the view without setState.
+    // Setup only. setState is the sole loader; this just guarantees the scaffold and
+    // listeners exist for hosts that open the view without it.
     this.ensureInitialized()
     return Promise.resolve()
   }
@@ -85,10 +84,8 @@ export class ProjectView extends ItemView {
     return Promise.resolve()
   }
 
-  // Some workspace plugins (Pane Relief, Hover Editor) restore a deferred leaf by
-  // calling setState without ever calling onOpen. Run the one-time DOM and listener
-  // setup from whichever entry point fires first so the view never renders into a
-  // missing scaffold or loses its file-change and keyboard handlers.
+  // Pane Relief and Hover Editor restore a deferred leaf via setState without ever
+  // calling onOpen, so the one-time setup runs from whichever fires first.
   private ensureInitialized(): void {
     if (this.initialized) return
     this.initialized = true
@@ -117,9 +114,8 @@ export class ProjectView extends ItemView {
   }
 
   /**
-   * The project changed, from this view or another one. The store keeps a
-   * single instance per file, so `this.project` is already current and only
-   * the DOM needs catching up.
+   * The project changed somewhere. The store keeps one instance per file, so
+   * `this.project` is already current and only the DOM needs catching up.
    */
   private handleProjectChanged(): void {
     if (!this.project) return
@@ -127,8 +123,7 @@ export class ProjectView extends ItemView {
       this.renderMissingProject()
       return
     }
-    // Rebuilding the chrome would drop the caret out of the project title or
-    // the search box, so leave it alone while the user is in it.
+    // Rebuilding the chrome would drop the caret out of the title or search box.
     const focused = activeDocument.activeElement
     if (!this.toolbarEl.contains(focused) && !this.headerEl.contains(focused)) {
       this.renderProjectToolbar()
@@ -425,10 +420,8 @@ export class ProjectView extends ItemView {
   }
 
   /**
-   * Re-render from the project in memory, which the store keeps current.
-   * Coalesced, so a mutation that reports back through its own callback and
-   * through the store's change event paints once. Prefers the subview's
-   * in-place refresh over a full destroy-and-rebuild.
+   * Re-render from the project in memory. Coalesced, so a mutation reporting back
+   * through both its own callback and the store's change event paints once.
    */
   refreshProject(): Promise<void> {
     if (this.pendingRefresh) return this.pendingRefresh

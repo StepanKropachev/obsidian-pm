@@ -27,28 +27,23 @@ export interface MultiSelectOpts {
   placeholder?: string
   create?: (label: string) => void
   tag?: boolean
-  /** Render the value as a single trigger holding an overlapping avatar stack. Backs Assignees. */
+  /** One trigger holding an overlapping avatar stack. Backs Assignees. */
   avatarStack?: boolean
-  /** Render the values as a vertical list of id + title-link rows. Backs Depends on. */
+  /** A vertical list of id + title-link rows. Backs Depends on. */
   depsList?: boolean
 }
 
 /**
- * Multi-value inline control: shows the current values and an add affordance that opens a
- * searchable picker popover. The popover stays open across toggles so several values can be
- * added at once. Backs Tags, Assignees, and Depends on.
- *
- * Two value displays: chips (default) with a trailing add ghost, or a single avatar-stack
- * trigger (`avatarStack`) that doubles as the picker anchor.
+ * Backs Tags, Assignees, and Depends on. The picker popover stays open across toggles so
+ * several values can be added at once.
  */
 export function renderMultiSelect(opts: MultiSelectOpts): void {
   const labelOf = (id: string) => (opts.labelFor ? opts.labelFor(id) : id)
   const stackMode = !!opts.avatarStack
   const listMode = !!opts.depsList
 
-  // The picker anchor. In stack mode the trigger itself is the anchor and the value display;
-  // otherwise the values sit in their own row (chips, or a deps list) above a trailing ghost
-  // that anchors the picker.
+  // In stack mode the trigger is both the anchor and the value display; otherwise the values
+  // sit in their own row above a trailing ghost that anchors the picker.
   const chipsEl = stackMode || listMode ? null : opts.container.createDiv('pm-prop-chips')
   const depsEl = listMode ? opts.container.createDiv('pm-prop-deps') : null
   const anchorBtn = stackMode
@@ -95,7 +90,7 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     }
   }
 
-  // Depends on: one row per value (link icon + mono id + title link + remove).
+  // Depends on: link icon, mono id, title link, remove.
   const renderDepsList = () => {
     if (!depsEl) return
     depsEl.empty()

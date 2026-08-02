@@ -1,8 +1,5 @@
-/* ---------------------------------------------------------------------------
-   TASK MODAL
-   --------------------------------------------------------------------------- */
 .pm-modal {
-  /* Modals render outside .pm-root, so the two plugin tokens are re-declared here */
+  /* Modals render outside .pm-root, so the plugin tokens are re-declared here. */
   --pm-ghost-border: rgba(0, 0, 0, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.06);
 
@@ -33,7 +30,6 @@
   display: none;
 }
 
-/* Property rows */
 .pm-prop-row {
   display: grid;
   grid-template-columns: 140px 1fr;
@@ -90,7 +86,6 @@
   flex-wrap: wrap;
 }
 
-/* Modal sections */
 .pm-modal-section {
   padding: 14px 24px;
   border-top: 1px solid var(--background-modifier-border);
@@ -116,7 +111,6 @@
 .pm-modal-description {
   width: 100%;
   min-height: 80px;
-  /* Add the CSS variable for Obsidian bot compliance: */
   height: var(--desc-height, auto);
   padding: 6px 8px;
   border: 1px solid transparent;
@@ -129,9 +123,7 @@
   overflow: hidden;
   box-sizing: border-box;
 }
-/* The description edits in place. Hover and focus paint a subtle background and border so
-   the field reads as editable; focus deepens the border. The box-shadow ring core app.css
-   adds on textarea:hover/:focus is suppressed. */
+/* Hover and focus mark the field as editable, minus the ring core adds on textarea. */
 textarea.pm-modal-description:hover,
 textarea.pm-modal-description:focus {
   background: var(--background-modifier-hover);
@@ -143,7 +135,6 @@ textarea.pm-modal-description:focus {
   border-color: var(--background-modifier-border-focus);
 }
 
-/* Subtasks */
 .pm-modal-subtask-list {
   display: flex;
   flex-direction: column;
@@ -178,7 +169,6 @@ textarea.pm-modal-description:focus {
   background: var(--background-modifier-hover);
 }
 
-/* Modal footer */
 .pm-modal-footer {
   display: flex;
   align-items: center;
@@ -193,7 +183,6 @@ textarea.pm-modal-description:focus {
   flex: 1;
 }
 
-/* Confirm dialog */
 .pm-confirm-modal .modal-content {
   padding: 1rem 1.25rem;
 }

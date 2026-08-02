@@ -2,10 +2,8 @@ import type { App } from 'obsidian'
 import { TFolder, normalizePath } from 'obsidian'
 
 /**
- * Move a task's attachment folder so it follows the note when the task is renamed
- * or moved between folders (e.g. archived/unarchived). The folder lives at the
- * task file path minus `.md`. No-op when the task has no attachment folder or the
- * destination is already taken. Returns the moved paths, or null if nothing moved.
+ * Keeps a task's attachment folder with its note across renames and archiving. A no-op
+ * when there is no such folder or the destination is taken; returns null when nothing moved.
  */
 export async function moveTaskAttachmentFolder(
   app: App,
@@ -23,13 +21,9 @@ export async function moveTaskAttachmentFolder(
 }
 
 /**
- * Idempotently ensure a folder exists at `folderPath`.
- *
- * `getAbstractFileByPath` is case-sensitive, but macOS/Windows filesystems are
- * case-insensitive — a vault with `Projects/` and a settings value of
- * `projects` would miss the lookup and call `createFolder`, which then throws
- * "Folder already exists". We swallow that case (and also guard against
- * concurrent callers racing).
+ * `getAbstractFileByPath` is case-sensitive while macOS and Windows filesystems are not,
+ * so a settings value of `projects` misses an existing `Projects/` and `createFolder` then
+ * throws "Folder already exists". Swallowing that also covers concurrent callers racing.
  */
 export async function ensureFolder(app: App, folderPath: string): Promise<void> {
   const normalized = normalizePath(folderPath)

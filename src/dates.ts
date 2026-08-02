@@ -17,7 +17,7 @@ export function parsePlainDate(s: string): Temporal.PlainDate | null {
   }
 }
 
-/** Format a YYYY-MM-DD field as a short local date (e.g. "Jun 15, 2026"); '' when empty/invalid. */
+/** "Jun 15, 2026", or '' when empty or invalid. */
 export function formatDate(iso: string): string {
   const d = parsePlainDate(iso)
   return d ? d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
@@ -25,11 +25,7 @@ export function formatDate(iso: string): string {
 
 export type DueTone = 'overdue' | 'today' | 'soon' | 'outcome'
 
-/**
- * A short relative-due label for a YYYY-MM-DD date, or null when the date is
- * empty/invalid or far enough out (more than a week) that a hint adds nothing.
- * `from` is injectable so the result is deterministic in tests.
- */
+/** Null past a week out, where a relative hint adds nothing. `from` is injectable for tests. */
 export function relativeDue(iso: string, from: Temporal.PlainDate = today()): { text: string; tone: DueTone } | null {
   const due = parsePlainDate(iso)
   if (!due) return null

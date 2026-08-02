@@ -3,7 +3,7 @@ import type { Task, TaskStatus, TaskPriority, StatusConfig, PriorityConfig } fro
 import { getStatusConfig, getPriorityConfig, formatBadgeText, isIconName } from '../utils'
 import { Chip } from './primitives/Chip'
 
-/** Returns the config's icon when it's a named (Lucide) icon; emoji/text icons render inline via formatBadgeText. */
+/** Named icons only. Emoji and text render inline through formatBadgeText instead. */
 function namedIcon(config: { icon: string } | undefined): string | null {
   return config?.icon && isIconName(config.icon) ? config.icon : null
 }

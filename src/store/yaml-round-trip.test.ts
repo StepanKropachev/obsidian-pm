@@ -204,9 +204,8 @@ describe('project round-trip', () => {
   })
 })
 
-// On the metadataCache fast path the store passes Obsidian's live frontmatter
-// object straight into these hydrators, so the result must not share container
-// references with the input or an in-place edit would corrupt the cache.
+// The store passes Obsidian's live frontmatter object straight into these hydrators, so
+// sharing a container reference with the input would let an edit corrupt the cache.
 describe('hydration does not alias the source frontmatter', () => {
   it('copies task array and object containers', () => {
     const fm: Record<string, unknown> = {

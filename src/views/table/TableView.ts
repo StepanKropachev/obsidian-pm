@@ -76,8 +76,7 @@ export class TableView implements SubView {
       const wrapper = this.container.querySelector('.pm-table-wrapper')
       if (wrapper) {
         wrapper.scrollTop = this.pendingScrollTop
-        // Re-render the virtual window for the restored position synchronously,
-        // instead of waiting for the scroll event's animation frame.
+        // Synchronously, rather than waiting on the scroll event's animation frame.
         this.state.renderWindow?.()
       }
       this.pendingScrollTop = null

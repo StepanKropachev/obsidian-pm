@@ -35,16 +35,9 @@ import {
 import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
 import type { ImportNoteOptions, TaskSource } from './TaskSource'
 
-/**
- * 'fm' — only frontmatter changed; body content is unaffected. Save path can
- * use processFrontMatter and skip reading the body.
- * 'full' — body content depends on the change (description edited, file
- * renamed, archived flag flipped, structural relationships moved). Save path
- * rewrites the whole file atomically via vault.process.
- */
+/** 'fm' writes via processFrontMatter; 'full' rewrites the body too, via vault.process. */
 type DirtyKind = 'fm' | 'full'
 
-/** Patches that touch any of these require rewriting the body, not just the frontmatter. */
 function patchNeedsBodyRewrite(patch: Partial<Task>): boolean {
   // `subtasks` changes the parent's `## Subtasks` list, which lives in the body.
   return patch.description !== undefined || patch.archived !== undefined || patch.subtasks !== undefined
@@ -53,10 +46,7 @@ function patchNeedsBodyRewrite(patch: Partial<Task>): boolean {
 /** A basename of this exact length that prefixes the title's slug is kept as-is. */
 const LEGACY_SLUG_CAP = 40
 
-/**
- * Pick a save path. New tasks get the bare slug; an existing file is left where
- * it is when its name still matches the title, so an unchanged title isn't renamed.
- */
+/** New tasks get the bare slug; an existing file stays put while its name still matches the title. */
 function resolveTaskPath(task: Task, folder: string, previousPath: string | undefined): string {
   const desired = taskFilePath(task.title, folder)
   if (!previousPath) return desired
@@ -72,7 +62,6 @@ function resolveTaskPath(task: Task, folder: string, previousPath: string | unde
   return desired
 }
 
-/** Thrown when saving a task would collide with an existing file in the vault. */
 export class TaskFileNameConflictError extends Error {
   constructor(public readonly path: string) {
     super(`A note named "${fileNameFromPath(path)}" already exists.`)
@@ -89,55 +78,36 @@ function fileNameFromPath(path: string): string {
 }
 
 /**
- * Handles all read/write operations against the Obsidian vault.
- *
- * Storage layout:
- *   Projects/<ProjectName>.md         — project metadata (no task data)
- *   Projects/<ProjectName>/<slug>.md  — one .md per task
- *
- * The in-memory Project.tasks tree is assembled on load from individual
- * task files and remains unchanged for views.
+ * All read/write operations against the vault. `Projects/<name>.md` holds project
+ * metadata; `Projects/<name>_tasks/<slug>.md` holds one file per task. The in-memory
+ * `Project.tasks` tree is assembled from those files on load.
  */
 export class ProjectStore implements TaskSource {
-  /** Per-project promise chains to serialize concurrent saves */
   private saveQueues = new Map<string, Promise<void>>()
 
-  /**
-   * Task IDs whose .md file needs writing on the next save, with the kind of
-   * write required ('fm' for frontmatter-only, 'full' for whole-file rewrite).
-   * Tasks with no filePath are always written as 'full'.
-   */
+  /** Task IDs needing a write on the next save. Tasks with no filePath are always 'full'. */
   private dirtyTasks = new Map<string, Map<string, DirtyKind>>()
 
   /**
-   * Tasks and projects whose in-memory `description` is known to match disk
-   * (either we just wrote it, or we loaded it from the body). Cache-loaded
-   * objects start out absent — their description is empty until loadTaskBody /
-   * loadProjectBody fills it, or until a 'full' save reads it back inline.
+   * Objects whose in-memory `description` is known to match disk. Cache-loaded ones
+   * start out absent: their description is empty until loadTaskBody / loadProjectBody
+   * fills it, or a 'full' save reads it back inline.
    */
   private hydratedBodies = new WeakSet<Task | Project>()
 
   /**
-   * The one live Project per file path, keyed by path and held as the loading
-   * promise so concurrent loads collapse onto a single instance. Everything
-   * that holds a project holds this object: mutators keep it current, an
-   * external change reloads into it, and it is only ever replaced when the
-   * project is deleted.
+   * The one live Project per path, held as the loading promise so concurrent loads
+   * collapse onto a single instance. Mutators and reloads update that object in
+   * place; it is replaced only when the project is deleted.
    */
   private projectCache = new Map<string, Promise<Project | null>>()
 
-  /** Notified after any change to a project, whoever made it. */
   private changeHandlers = new Set<(path: string) => void>()
 
-  /** Pending external-change reloads, keyed by project path. */
   private reloadTimers = new Map<string, number>()
   private static readonly RELOAD_DEBOUNCE_MS = 300
 
-  /**
-   * Paths we've just written, created, or trashed ourselves, timestamped. The
-   * vault listeners check them so our own writes don't come back as external
-   * changes. Stale entries (older than the window) are treated as never-marked.
-   */
+  /** Paths we wrote ourselves, timestamped, so vault listeners can ignore the echo. */
   private selfWrites = new Map<string, number>()
   private static readonly SELF_WRITE_WINDOW_MS = 5000
 
@@ -153,8 +123,6 @@ export class ProjectStore implements TaskSource {
   private statusesFor(project: Project): StatusConfig[] {
     return this.configFor(project).statuses
   }
-
-  // ─── Dirty tracking ───────────────────────────────────────────────────────
 
   private markDirty(project: Project, taskIds: Iterable<string>, kind: DirtyKind): void {
     let map = this.dirtyTasks.get(project.filePath)
@@ -188,11 +156,7 @@ export class ProjectStore implements TaskSource {
     this.dirtyTasks.delete(project.filePath)
   }
 
-  // ─── Self-write tracking ──────────────────────────────────────────────────
-
   private markSelfWrite(path: string): void {
-    // Markers are only ever read within their window, so sweep the expired ones
-    // before they pile up.
     if (this.selfWrites.size > 256) {
       const cutoff = Date.now() - ProjectStore.SELF_WRITE_WINDOW_MS
       for (const [p, t] of this.selfWrites) {
@@ -207,9 +171,7 @@ export class ProjectStore implements TaskSource {
     return ts !== undefined && Date.now() - ts < ProjectStore.SELF_WRITE_WINDOW_MS
   }
 
-  // ─── Change notification ──────────────────────────────────────────────────
-
-  /** Subscribe to project changes. Returns the unsubscribe function. */
+  /** Returns the unsubscribe function. */
   onProjectChanged(handler: (path: string) => void): () => void {
     this.changeHandlers.add(handler)
     return () => this.changeHandlers.delete(handler)
@@ -219,11 +181,7 @@ export class ProjectStore implements TaskSource {
     for (const handler of this.changeHandlers) handler(path)
   }
 
-  /**
-   * Wire the vault events that keep loaded projects in step with the files.
-   * Call once from onload. This is the only place the plugin listens for
-   * changes to project files.
-   */
+  /** Call once from onload. The only place the plugin listens for project file changes. */
   registerVaultSync(plugin: Plugin): void {
     const onChange = (file: TAbstractFile): void => this.syncPath(file.path)
     plugin.registerEvent(this.app.vault.on('create', onChange))
@@ -241,7 +199,7 @@ export class ProjectStore implements TaskSource {
     })
   }
 
-  /** An external write landed. Reload the live project so every holder sees it. */
+  /** An external write landed: reload the live project so every holder sees it. */
   private syncPath(path: string): void {
     if (this.projectCache.size === 0) return
     if (this.peekSelfWrite(path)) return
@@ -277,11 +235,7 @@ export class ProjectStore implements TaskSource {
     })
   }
 
-  /**
-   * Copy a freshly read project onto the live instance. Views, modals and the
-   * notifier all hold that object, so a reload updates it in place rather than
-   * handing out a second copy of the same project.
-   */
+  /** Copy a freshly read project onto the live instance every holder already has. */
   private adopt(live: Project, fresh: Project): void {
     const { taskIndex, ...fields } = fresh
     Object.assign(live, fields)
@@ -310,22 +264,16 @@ export class ProjectStore implements TaskSource {
     return next
   }
 
-  // ─── Folder helpers ────────────────────────────────────────────────────────
-
   async ensureFolder(folderPath: string): Promise<void> {
     await ensureFolder(this.app, folderPath)
   }
 
-  /** Get the task subfolder path for a project */
   private projectTaskFolder(project: Project): string {
     return project.filePath.replace(/\.md$/, '_tasks')
   }
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
-
   async loadAllProjects(folder: string): Promise<Project[]> {
     await this.ensureFolder(folder)
-    // Walk the projects folder directly. Don't scan the whole vault.
     const folderObj = this.app.vault.getAbstractFileByPath(folder)
     const files: TFile[] = []
     if (folderObj instanceof TFolder) {
@@ -338,10 +286,7 @@ export class ProjectStore implements TaskSource {
     return projects.sort((a, b) => a.title.localeCompare(b.title))
   }
 
-  /**
-   * The live project for a file. Concurrent callers share the one in-flight
-   * read, so a project never exists twice in memory.
-   */
+  /** Concurrent callers share the one in-flight read, so a project never exists twice. */
   async loadProject(file: TFile): Promise<Project | null> {
     const live = this.projectCache.get(file.path)
     if (live) return live
@@ -354,10 +299,8 @@ export class ProjectStore implements TaskSource {
 
   private async readProject(file: TFile): Promise<Project | null> {
     try {
-      // Fast path: pull frontmatter from Obsidian's metadataCache, skip the disk read.
-      // Only safe for new-format projects (taskIds in frontmatter, no embedded tasks).
-      // For old-format projects we need the body anyway to migrate, so fall back to
-      // a real read.
+      // metadataCache lets us skip the disk read, but only for new-format projects;
+      // old-format ones need the body to migrate.
       const cached = this.app.metadataCache.getFileCache(file)?.frontmatter
       const cacheUsable =
         cached && cached[FRONTMATTER_KEY] === true && !Array.isArray(cached.tasks) && Array.isArray(cached.taskIds)
@@ -384,14 +327,13 @@ export class ProjectStore implements TaskSource {
       if (hasEmbeddedTasks) {
         project.tasks = hydrateTasks((frontmatter.tasks as unknown[]) ?? [])
         rebuildTaskIndex(project)
-        // Old format: no per-task files on disk yet, so mark everything dirty.
+        // Old format: no per-task files on disk yet.
         this.markAllDirty(project, 'full')
       } else {
         const taskFolder = this.projectTaskFolder(project)
         const taskIds = Array.isArray(frontmatter.taskIds) ? (frontmatter.taskIds as string[]) : []
         project.tasks = await this.loadTasksFromFolder(taskFolder, taskIds)
         rebuildTaskIndex(project)
-        // Memory matches disk now, drop any stale dirty entries.
         this.clearDirty(project)
       }
 
@@ -412,7 +354,6 @@ export class ProjectStore implements TaskSource {
     const parentIdMap = new Map<string, string>()
     const archivePrefix = normalizePath(folderPath + '/Archive') + '/'
 
-    // Walk the task folder directly (plus Archive). Don't scan the whole vault.
     const files: TFile[] = []
     const collect = (f: TFolder): void => {
       for (const child of f.children) {
@@ -445,20 +386,19 @@ export class ProjectStore implements TaskSource {
       }
     }
 
-    // Self-healing: re-parent orphaned tasks using parentId from their files
+    // Re-parent orphans from the parentId in their own file.
     const childIds = new Set<string>()
     for (const t of taskMap.values()) {
       for (const s of t.subtasks) childIds.add(s.id)
     }
     for (const [taskId, pid] of parentIdMap) {
-      if (childIds.has(taskId)) continue // already parented
+      if (childIds.has(taskId)) continue
       const parent = taskMap.get(pid)
       if (!parent) continue
       const task = taskMap.get(taskId)
       if (!task) continue
       parent.subtasks.push(task)
       childIds.add(taskId)
-      // Ensure parent's subtaskIds stay in sync
       if (!subtaskIdsMap.has(pid)) subtaskIdsMap.set(pid, [])
       const sids = subtaskIdsMap.get(pid)
       if (sids && !sids.includes(taskId)) sids.push(taskId)
@@ -487,9 +427,8 @@ export class ProjectStore implements TaskSource {
 
   async loadTaskFile(file: TFile): Promise<{ task: Task | null; subtaskIds: string[]; parentId: string | null }> {
     try {
-      // Fast path: pull frontmatter from Obsidian's metadataCache, skip the body
-      // read. The description stays empty until loadTaskBody fills it on modal
-      // open, or a 'full' save reads it back inline.
+      // metadataCache lets us skip the body read; description stays empty until
+      // loadTaskBody fills it.
       const cached = this.app.metadataCache.getFileCache(file)?.frontmatter
       if (cached && cached[TASK_FRONTMATTER_KEY] === true) {
         return hydrateTaskFromFile(cached, '', file.path)
@@ -515,11 +454,7 @@ export class ProjectStore implements TaskSource {
     }
   }
 
-  /**
-   * Read the task's file body and populate its description if not already
-   * loaded. Modal callers use this to render the real description in one paint.
-   * No-op for tasks whose description is already known to match disk.
-   */
+  /** Fill in the description from the file body. No-op once it matches disk. */
   async loadTaskBody(task: Task): Promise<void> {
     if (this.hydratedBodies.has(task)) return
     if (!task.filePath) {
@@ -552,17 +487,11 @@ export class ProjectStore implements TaskSource {
     this.hydratedBodies.add(project)
   }
 
-  // ─── Save ──────────────────────────────────────────────────────────────────
-
   async saveProject(project: Project): Promise<void> {
     return this.queue(project.filePath, () => this.doSaveProject(project))
   }
 
-  /**
-   * Apply a metadata patch to the live project and save it. The project editor
-   * works on a draft; only the fields it changed come back here, so a stale
-   * draft can't overwrite anything else about the project.
-   */
+  /** Patch-only, so the editor's stale draft can't overwrite fields it didn't change. */
   async updateProject(project: Project, patch: ProjectPatch): Promise<void> {
     Object.assign(project, patch)
     if (patch.description !== undefined) this.hydratedBodies.add(project)
@@ -570,8 +499,7 @@ export class ProjectStore implements TaskSource {
   }
 
   private async doSaveProject(project: Project): Promise<void> {
-    // Snapshot the dirty map and drop the live entry up front (before any await),
-    // so concurrent markDirty calls land in the next save's map, not this one's.
+    // Snapshot before any await, so concurrent markDirty calls land in the next save.
     const dirty = this.dirtyTasks.get(project.filePath) ?? new Map<string, DirtyKind>()
     this.dirtyTasks.delete(project.filePath)
 
@@ -586,8 +514,6 @@ export class ProjectStore implements TaskSource {
       const file = this.app.vault.getAbstractFileByPath(project.filePath)
       if (file instanceof TFile) {
         this.markSelfWrite(project.filePath)
-        // Atomic read-modify-write. The mutator recovers the on-disk description
-        // when the in-memory project hasn't been hydrated yet.
         await this.app.vault.process(file, (content) => {
           if (!this.hydratedBodies.has(project)) {
             const { frontmatter, body } = parseFrontmatter(content)
@@ -603,14 +529,14 @@ export class ProjectStore implements TaskSource {
         await this.app.vault.create(project.filePath, content)
         this.hydratedBodies.add(project)
       }
-      // A project saved before it was ever loaded (creation, migration) becomes
-      // the live instance. A save never replaces an instance others already hold.
+      // A project saved before it was ever loaded (creation, migration) becomes the
+      // live instance, but a save never replaces an instance others already hold.
       if (!this.projectCache.has(project.filePath)) {
         this.projectCache.set(project.filePath, Promise.resolve(project))
       }
       this.emitChange(project.filePath)
     } catch (e) {
-      // Save failed. Merge the snapshot back so the next save retries.
+      // Merge the snapshot back so the next save retries.
       for (const [id, kind] of dirty) this.markDirty(project, [id], kind)
       if (e instanceof TaskFileNameConflictError) throw e
       console.error(`[PM] Failed to save project "${project.title}":`, e)
@@ -619,14 +545,8 @@ export class ProjectStore implements TaskSource {
     }
   }
 
-  /**
-   * Write exactly the dirty tasks, located through the O(1) task index instead
-   * of walking the whole tree. Writes target distinct files, so they run
-   * concurrently — batched.
-   */
   private async saveDirtyTasks(project: Project, folder: string, dirty: Map<string, DirtyKind>): Promise<void> {
-    // Safety net: a task that has never been written to disk must get a file
-    // even if no mutator marked it.
+    // Safety net: a task never written to disk gets a file even if nothing marked it.
     for (const [id, entry] of project.taskIndex) {
       if (!entry.task.filePath && !dirty.has(id)) dirty.set(id, 'full')
     }
@@ -641,8 +561,8 @@ export class ProjectStore implements TaskSource {
       const { task, parentId } = entry
       const targetFolder = task.archived ? normalizePath(folder + '/Archive') : folder
       if (task.archived) hasArchived = true
-      // Two dirty tasks resolving to the same file would race below and surface
-      // as a generic create error; detect it up front and keep the typed error.
+      // Two dirty tasks resolving to one file would race below into a generic
+      // create error; catching it here keeps the typed one.
       const path = normalizePath(resolveTaskPath(task, targetFolder, task.filePath))
       if (targetPaths.has(path)) throw new TaskFileNameConflictError(path)
       targetPaths.add(path)
@@ -678,7 +598,6 @@ export class ProjectStore implements TaskSource {
     const renamed = previousPath !== undefined && previousPath !== filePath
 
     try {
-      // Frontmatter-only fast path: leave the body alone entirely.
       if (kind === 'fm' && previousPath && !renamed) {
         const existing = this.app.vault.getAbstractFileByPath(filePath)
         if (existing instanceof TFile) {
@@ -690,7 +609,7 @@ export class ProjectStore implements TaskSource {
           })
           return
         }
-        // File missing somehow; fall through to recreate it.
+        // File is missing; fall through and recreate it.
       }
 
       const existing = this.app.vault.getAbstractFileByPath(filePath)
@@ -699,7 +618,6 @@ export class ProjectStore implements TaskSource {
       }
 
       if (existing instanceof TFile) {
-        // In-place full rewrite, atomic. Recover description from disk when not hydrated.
         this.markSelfWrite(filePath)
         await this.app.vault.process(existing, (content) => {
           if (!this.hydratedBodies.has(task)) {
@@ -708,8 +626,8 @@ export class ProjectStore implements TaskSource {
           return serializeTask(task, project, parentTask, this.statusesFor(project))
         })
       } else {
-        // New file or rename target. For a rename of an unhydrated task, read
-        // the old file once to recover the description before creating the new one.
+        // Renaming an unhydrated task: recover the description from the old file
+        // before the new one is created.
         if (!this.hydratedBodies.has(task) && previousPath) {
           const oldFile = this.app.vault.getAbstractFileByPath(previousPath)
           if (oldFile instanceof TFile) {
@@ -743,11 +661,7 @@ export class ProjectStore implements TaskSource {
     }
   }
 
-  /**
-   * Pre-flight check: would saving this task (at its current title) collide
-   * with another file already in the vault? Returns a typed error callers can
-   * surface inline, or null if the save would proceed cleanly.
-   */
+  /** Pre-flight check so callers can surface the conflict inline instead of on save. */
   findTaskFileConflict(project: Project, task: Task): TaskFileNameConflictError | null {
     const baseFolder = this.projectTaskFolder(project)
     const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
@@ -756,8 +670,6 @@ export class ProjectStore implements TaskSource {
     const existing = this.app.vault.getAbstractFileByPath(desired)
     return existing instanceof TFile ? new TaskFileNameConflictError(desired) : null
   }
-
-  // ─── CRUD shortcuts ────────────────────────────────────────────────────────
 
   async createProject(title: string, folder: string): Promise<Project> {
     const safeName = title.replace(/[\\/:*?"<>|]/g, '-')
@@ -781,10 +693,8 @@ export class ProjectStore implements TaskSource {
   }
 
   /**
-   * Convert an arbitrary vault note into a top-level task file in the project's
-   * tasks folder. The note body becomes the task description; notes that are
-   * already pm-tasks are skipped. The task is picked up on the next project
-   * load via the orphan self-heal, matching how the tasks folder is scanned.
+   * Turn a vault note into a top-level task file; its body becomes the description.
+   * The project file isn't rewritten: the next load picks the task up as an orphan.
    */
   async importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'> {
     const content = await this.app.vault.read(file)
@@ -815,11 +725,9 @@ export class ProjectStore implements TaskSource {
   }
 
   /**
-   * Persist a converted task forest (e.g. a TaskNotes import) as task files.
-   * Each node's description comes from its source note body; 'move' turns the
-   * source file into the task file, 'copy' leaves sources untouched. The
-   * project file is not rewritten — the next load self-heals top-level order
-   * and parenting from the written parentId/subtaskIds.
+   * Persist a converted task forest as task files. 'move' turns each source note into
+   * the task file, 'copy' leaves sources untouched. The project file isn't rewritten:
+   * the next load recovers order and parenting from the written parentId/subtaskIds.
    */
   async importTaskForest(
     project: Project,
@@ -867,10 +775,9 @@ export class ProjectStore implements TaskSource {
     const source = findTaskById(project, sourceId)
     if (!source) return null
     const copy = cloneTaskSubtree(source, includeSubtasks)
-    // Every task in a project shares one flat folder and its filename comes from
-    // the title slug, so a clone that keeps the source title would write over the
-    // original. Reserve a free "(copy)" title for the whole subtree, not just the
-    // root, and across the clones we're about to add so siblings don't collide.
+    // Filenames come from the title slug within one flat folder, so a clone keeping
+    // the source title would write over the original. Reserve a free "(copy)" title
+    // for every node, checking the clones we're adding so siblings don't collide.
     const baseFolder = this.projectTaskFolder(project)
     const claimed = new Set<string>()
     const usedTitles = new Set(flattenTasks(project.tasks).map((f) => f.task.title))
@@ -878,8 +785,7 @@ export class ProjectStore implements TaskSource {
       const folder = task.archived ? normalizePath(baseFolder + '/Archive') : baseFolder
       this.assignCopyName(task, folder, usedTitles, claimed)
     }
-    // Clones don't have a filePath yet; their description in memory is whatever
-    // came from the source. We need to write that body verbatim.
+    // A clone has no file yet, and its in-memory description must be written verbatim.
     claimName(copy)
     this.hydratedBodies.add(copy)
     for (const ft of flattenTasks(copy.subtasks)) {
@@ -890,7 +796,6 @@ export class ProjectStore implements TaskSource {
     addTaskToTree(project.tasks, copy, parentId)
     moveTaskInTree(project.tasks, copy.id, sourceId, 'after')
     indexAddSubtree(project, copy, parentId)
-    // Copy and every cloned descendant are new files.
     this.markSubtreeDirty(project, copy.id, 'full')
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
@@ -924,9 +829,8 @@ export class ProjectStore implements TaskSource {
     deleteTaskFromTree(project.tasks, taskId)
     addTaskToTree(project.tasks, task, newParentId)
     indexSetParent(project, taskId, newParentId)
-    // Moved task's parentId is in frontmatter but its body's Parent: link also changes.
+    // The moved task's Parent link and both parents' Subtasks lists live in the body.
     this.markDirty(project, [taskId], 'full')
-    // Old and new parents' bodies (Subtasks list) change.
     if (oldParentId) this.markDirty(project, [oldParentId], 'full')
     if (newParentId) this.markDirty(project, [newParentId], 'full')
     await this.saveProject(project)
@@ -948,11 +852,8 @@ export class ProjectStore implements TaskSource {
   }
 
   /**
-   * Stamp or clear `completed` based on a status transition. Mutates `patch` so the
-   * date lands in the same save as the status change. A patch that changes
-   * `completed` away from the task's current value (a manual edit in the modal, or
-   * an import) wins and is left untouched; otherwise crossing the
-   * complete/incomplete boundary stamps today's date or clears it.
+   * Stamp or clear `completed` when a status crosses the complete boundary, mutating
+   * `patch` so it lands in the same save. An explicit `completed` in the patch wins.
    */
   private stampCompletion(project: Project, task: Task, patch: Partial<Task>): void {
     if (patch.status === undefined) return
@@ -980,24 +881,18 @@ export class ProjectStore implements TaskSource {
     const oldTitle = task?.title
     if (task) this.stampCompletion(project, task, patch)
     const completionMoved = task !== null && this.completionMoved(task, patch)
-    // The task editor saves the whole task, so a patch can add, rename, remove,
-    // or reorder subtasks. Snapshot the pre-edit subtree to diff against once the
-    // tree has the new one.
+    // The editor saves the whole task, so snapshot the subtree to diff against.
     const oldSubtree = task && patch.subtasks !== undefined ? flattenTasks(task.subtasks).map((f) => f.task) : []
     updateTaskInTree(project.tasks, taskId, patch)
     const titleChanged = task && patch.title !== undefined && patch.title !== oldTitle
-    // Title change renames the file, which forces the rename branch in saveTaskFile
-    // (body rewrite). Description/archived/subtasks patches require a body rewrite too.
+    // A title change renames the file, forcing saveTaskFile's rename branch.
     const kind: DirtyKind = patchNeedsBodyRewrite(patch) || titleChanged ? 'full' : 'fm'
     this.markDirty(project, [taskId], kind)
-    // Patch-set description is the caller's intent; trust it as the new body.
     if (task && patch.description !== undefined) this.hydratedBodies.add(task)
     if (task && patch.subtasks !== undefined) {
-      // Re-index the saved subtree and create/rename/trash the affected subtask
-      // files; this also covers the children's Parent-link rewrite on a rename.
       await this.reconcileSubtasks(project, task, oldSubtree)
     } else if (task && titleChanged) {
-      // Title change renames the file, which breaks direct children's Parent link.
+      // The rename breaks direct children's Parent link.
       for (const sub of task.subtasks) this.markDirty(project, [sub.id], 'full')
     }
     await this.saveProject(project)
@@ -1005,11 +900,9 @@ export class ProjectStore implements TaskSource {
   }
 
   /**
-   * After a save that carries a task's whole subtree (the task editor works on a
-   * deep clone), make the index and the on-disk files match it: re-point the
-   * index at the saved subtree objects, mark new/renamed/restatused subtasks for
-   * a write, and trash the files of subtasks removed in the editor. Unchanged
-   * subtasks aren't rewritten.
+   * Make the index and the on-disk files match a subtree the editor saved wholesale:
+   * re-point the index, mark new/renamed/restatused subtasks for a write, and trash
+   * files for the ones removed. Unchanged subtasks aren't rewritten.
    */
   private async reconcileSubtasks(project: Project, parent: Task, oldSubtree: Task[]): Promise<void> {
     indexAddSubtree(project, parent, findParentId(project, parent.id))
@@ -1020,7 +913,6 @@ export class ProjectStore implements TaskSource {
       liveIds.add(task.id)
       const prev = old.get(task.id)
       if (!prev) {
-        // Brand-new subtask: it needs its own file, body included.
         this.hydratedBodies.add(task)
         this.markDirty(project, [task.id], 'full')
       } else if (prev.title !== task.title) {
@@ -1034,15 +926,12 @@ export class ProjectStore implements TaskSource {
     for (const removed of oldSubtree) {
       if (liveIds.has(removed.id)) continue
       project.taskIndex.delete(removed.id)
-      // The flat snapshot already lists every descendant, so trash this file only.
+      // The snapshot is flat and already lists every descendant.
       if (removed.filePath) await this.deleteTaskFiles({ ...removed, subtasks: [] }, folder)
     }
   }
 
-  /**
-   * Apply a patch to several tasks in one save. `patch` may be a function
-   * producing a per-task patch; return null to leave that task untouched.
-   */
+  /** Patch several tasks in one save. A `patch` function returning null skips its task. */
   async updateTasks(
     project: Project,
     taskIds: string[],
@@ -1054,8 +943,7 @@ export class ProjectStore implements TaskSource {
       if (!task) continue
       const raw = typeof patch === 'function' ? patch(task) : patch
       if (!raw) continue
-      // Copy a shared patch object before stamping so one task's completion date
-      // doesn't bleed onto the next iteration through the same reference.
+      // Copy before stamping so one task's completion date doesn't bleed onto the next.
       const p = { ...raw }
       this.stampCompletion(project, task, p)
       if (this.completionMoved(task, p)) completionMovedIds.push(id)
@@ -1073,11 +961,7 @@ export class ProjectStore implements TaskSource {
     await this.scheduleAfterEarlyFinish(project, completionMovedIds)
   }
 
-  /**
-   * Move a task before/after a sibling. Sibling order persists in the parent's
-   * subtaskIds (or the project file's taskIds for top-level tasks), so only the
-   * parent needs a rewrite.
-   */
+  /** Sibling order lives in the parent's subtaskIds, so only the parent is rewritten. */
   async reorderTask(project: Project, taskId: string, targetId: string, position: 'before' | 'after'): Promise<void> {
     if (!moveTaskInTree(project.tasks, taskId, targetId, position)) return
     const parentId = findParentId(project, targetId)
@@ -1098,7 +982,7 @@ export class ProjectStore implements TaskSource {
       }
       deleteTaskFromTree(project.tasks, id)
     }
-    // Parents' bodies (Subtasks list) shrink.
+    // The parents' Subtasks lists shrink.
     if (dirtyParents.size) this.markDirty(project, dirtyParents, 'full')
     await this.saveProject(project)
   }
@@ -1121,7 +1005,7 @@ export class ProjectStore implements TaskSource {
       indexRemoveSubtree(project, task)
     }
     deleteTaskFromTree(project.tasks, taskId)
-    // Parent's Subtasks list shrinks.
+    // The parent's Subtasks list shrinks.
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
   }
@@ -1136,7 +1020,6 @@ export class ProjectStore implements TaskSource {
         this.markSelfWrite(task.filePath)
         await this.app.fileManager.trashFile(file)
       }
-      // Trash the task's own folder (its attachments) alongside the note.
       const taskDir = this.app.vault.getAbstractFileByPath(this.taskFolder(task.filePath))
       if (taskDir instanceof TFolder) {
         await this.deleteFolderRecursive(taskDir)
@@ -1144,16 +1027,12 @@ export class ProjectStore implements TaskSource {
     }
   }
 
-  /** A task's own folder, holding its attachments: the task file path minus `.md`. */
+  /** A task's own folder, holding its attachments. */
   private taskFolder(taskFilePath: string): string {
     return taskFilePath.replace(/\.md$/, '')
   }
 
-  /**
-   * Save a pasted or dropped file under the task's own `attachments` folder,
-   * keeping it with the task instead of Obsidian's vault-wide default attachment
-   * location. Returns the created file so the caller can embed it.
-   */
+  /** Keeps a pasted or dropped file with the task, not in the vault-wide default folder. */
   async saveTaskAttachment(project: Project, task: Task, fileName: string, data: ArrayBuffer): Promise<TFile> {
     const taskPath = task.filePath ?? taskFilePath(task.title, this.projectTaskFolder(project))
     const dir = normalizePath(`${this.taskFolder(taskPath)}/attachments`)
@@ -1205,13 +1084,9 @@ export class ProjectStore implements TaskSource {
     await this.app.fileManager.trashFile(folder)
   }
 
-  // ─── Scheduling ──────────────────────────────────────────────────────────
-
   /**
-   * Run dependency-based scheduling on the project. Applies computed date
-   * patches and saves; returns the number of tasks that were adjusted.
-   * A no-op when auto-scheduling is off for this project, so callers can
-   * invoke it unconditionally after a change.
+   * Apply dependency-based scheduling and save, returning the number of tasks
+   * adjusted. A no-op when auto-scheduling is off, so callers needn't check.
    */
   async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
     const config = this.configFor(project)
@@ -1221,7 +1096,6 @@ export class ProjectStore implements TaskSource {
 
     for (const p of patches) {
       updateTaskInTree(project.tasks, p.taskId, { start: p.start, due: p.due })
-      // Dates live in frontmatter only.
       this.markDirty(project, [p.taskId], 'fm')
     }
     await this.saveProject(project)

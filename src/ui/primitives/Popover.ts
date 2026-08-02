@@ -12,24 +12,15 @@ const VIEWPORT_MARGIN = 12
 const ANCHOR_GAP = 4
 
 /**
- * Floating panel anchored to a trigger element, for content Obsidian's `Menu`
- * can't host (date inputs, search fields, number fields). Position is written as
- * CSS custom properties (`--pop-top` / `--pop-left`) read by `.pm-pop`, so no
- * static inline styles are assigned.
+ * Floating panel anchored to a trigger, for focusable content Obsidian's `Menu` can't
+ * host (date inputs, search fields). The caller owns the lifecycle: fill `contentEl`,
+ * `open()`, then `close()` on selection. It also closes on outside pointer-down and on
+ * Escape, whose handler stops propagation so the host modal stays open. On phones it
+ * renders as a bottom sheet instead.
  *
- * The caller owns the lifecycle: fill `contentEl`, call `open()`, then `close()`
- * on selection. It also closes on outside pointer-down and on Escape (the Escape
- * handler stops propagation so the host modal stays open).
- *
- * When the anchor sits inside a modal the panel mounts into that modal element,
- * not `document.body`: Obsidian's modal traps focus and yanks it back to the
- * first field whenever focus lands on an element outside the modal, which would
- * make a focusable popover (a date input, a search box) impossible to type in.
- * `.pm-pop` is `position: fixed`, so it still escapes the modal's `overflow:
- * hidden` and positions by viewport coordinates.
- *
- * On phones it renders as a bottom sheet (`pm-pop--sheet`) instead of an anchored
- * box, so it stays usable without hover or precise positioning.
+ * Inside a modal it mounts into the modal element rather than the body: Obsidian's focus
+ * trap yanks focus back to the first field whenever it lands outside, which would make
+ * the panel impossible to type in. `position: fixed` still escapes the modal's overflow.
  */
 export class Popover {
   readonly contentEl: HTMLElement

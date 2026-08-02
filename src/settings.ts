@@ -300,7 +300,7 @@ export class PMSettingTab extends PluginSettingTab {
     }
   }
 
-  /** Whether an import would change anything right now, as a short value. */
+  /** Whether an import would change anything right now. */
   private taskNotesStatus(): string {
     const api = getTaskNotesApi(this.app)
     if (!api) return 'Update required'
@@ -402,7 +402,7 @@ export class PMSettingTab extends PluginSettingTab {
     const projects = await this.plugin.store.loadAllProjects(folder)
     let remapped = 0
     for (const project of projects) {
-      // A project that defines this status or priority itself is unaffected by the global delete.
+      // A project defining this status or priority itself is unaffected by a global delete.
       const own = field === 'status' ? project.config?.statuses : project.config?.priorities
       if (own?.some((entry) => entry.id === deletedId)) continue
       const ids = flattenTasks(project.tasks)

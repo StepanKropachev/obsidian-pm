@@ -61,7 +61,7 @@ export class DashboardView extends ItemView {
         this.render()
       }, 300)
     }
-    // The store reports changes within a project; the vault reports projects
+    // The store reports changes within a project; only the vault reports projects
     // appearing and disappearing, which is what changes this list.
     this.register(this.plugin.store.onProjectChanged(scheduleRender))
     this.registerEvent(this.app.vault.on('create', (file) => scheduleRender(file.path)))

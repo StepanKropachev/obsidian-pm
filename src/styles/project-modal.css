@@ -1,6 +1,3 @@
-/* ---------------------------------------------------------------------------
-   PROJECT MODAL
-   --------------------------------------------------------------------------- */
 .pm-modal--project {
   max-width: 560px;
 }
@@ -60,7 +57,6 @@
   align-items: flex-start;
 }
 
-/* Icon picker */
 .pm-icon-picker {
   position: relative;
   flex-shrink: 0;
@@ -113,7 +109,6 @@
   gap: 4px;
 }
 
-/* Color palette */
 .pm-color-palette {
   display: flex;
   gap: 6px;
@@ -148,7 +143,6 @@
   background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
 }
 
-/* Labels & inputs */
 .pm-label {
   font-size: 12px;
   font-weight: 600;
@@ -198,7 +192,6 @@
   flex: 1;
 }
 
-/* Custom field editor */
 .pm-cf-list {
   display: flex;
   flex-direction: column;
@@ -236,7 +229,6 @@
   flex: 1;
 }
 
-/* Settings */
 .pm-settings-statuses {
   display: flex;
   flex-direction: column;

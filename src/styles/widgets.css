@@ -1,4 +1,3 @@
-/* -- Scrollbar polish ------------------------------------------------------- */
 .pm-gantt-right::-webkit-scrollbar,
 .pm-kanban-board::-webkit-scrollbar,
 .pm-kanban-cards::-webkit-scrollbar,
@@ -26,17 +25,11 @@
   background: var(--text-muted);
 }
 
-/* ---------------------------------------------------------------------------
-   NEW: Milestone, Time Tracking, Recurrence, Drag Handles, Inline Edit
-   --------------------------------------------------------------------------- */
-
-/* -- SegmentedControl ---------------------------------------------------- */
 .pm-segmented {
   display: flex;
   gap: 6px;
 }
 
-/* -- Time tracking ------------------------------------------------------- */
 .pm-time-est-row {
   display: flex;
   align-items: center;
@@ -77,7 +70,6 @@
   flex: 1;
 }
 
-/* -- Kanban title row ---------------------------------------------------- */
 .pm-kanban-card-title-row {
   display: flex;
   align-items: center;
@@ -91,7 +83,6 @@
   line-height: 1.45;
 }
 
-/* -- Inline edit input --------------------------------------------------- */
 .pm-inline-edit {
   padding: 3px 6px;
   border: 1px solid var(--interactive-accent);
@@ -104,7 +95,6 @@
   width: 100%;
 }
 
-/* -- Gantt drag handles -------------------------------------------------- */
 .pm-gantt-drag-handle {
   fill: rgba(255, 255, 255, 0.08);
   opacity: 0;
@@ -123,7 +113,6 @@
   cursor: grabbing;
 }
 
-/* -- Gantt link dots (dependency connectors) ---------------------------- */
 .pm-gantt-link-dot {
   fill: transparent;
   stroke: var(--interactive-accent);
@@ -148,7 +137,6 @@
   filter: drop-shadow(0 0 3px var(--interactive-accent));
 }
 
-/* -- Gantt milestone ----------------------------------------------------- */
 .pm-gantt-milestone {
   transition:
     transform 0.15s,
@@ -168,7 +156,6 @@
   pointer-events: none;
 }
 
-/* -- Dark theme surface overrides ---------------------------------------- */
 .theme-dark .pm-root {
   --pm-ghost-border: rgba(255, 255, 255, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
@@ -178,7 +165,6 @@
   --pm-shadow-ambient: rgba(0, 0, 0, 0.15);
 }
 
-/* -- Description section ------------------------------------------------ */
 .pm-modal-desc-section {
   border-top: none;
   position: relative;
@@ -217,7 +203,6 @@
   color: var(--interactive-accent);
 }
 
-/* -- Note link suggest dropdown ------------------------------------- */
 .pm-note-suggest {
   position: absolute;
   z-index: 300;
@@ -290,7 +275,6 @@
   text-overflow: ellipsis;
 }
 
-/* -- Gantt add task row -------------------------------------------------- */
 .pm-gantt-add-row .pm-prop-add {
   margin-left: 20px;
 }

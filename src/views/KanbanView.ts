@@ -11,7 +11,7 @@ import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
   private dragTask: Task | null = null
-  /** Configuration in effect for this project, computed once per board render. */
+  /** Resolved once per board render. */
   private config!: ResolvedProjectConfig
 
   constructor(
@@ -55,10 +55,7 @@ export class KanbanView implements SubView {
     }
   }
 
-  /**
-   * Task descriptions live in the note body, which loads lazily. Pull the bodies
-   * for the cards on the board, then re-render once so previews fill in.
-   */
+  /** Descriptions load lazily from the note body, so previews fill in on a second render. */
   private async hydrateDescriptions(): Promise<void> {
     const candidates = this.config.kanbanShowSubtasks
       ? flattenTasks(this.project.tasks).map((ft) => ft.task)

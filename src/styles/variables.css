@@ -1,6 +1,5 @@
-/* Root layout plus the two plugin tokens with no Obsidian equivalent
-   (theme-dependent, overridden for dark mode in widgets.css). Everything
-   else uses Obsidian theme variables directly. */
+/* The two plugin tokens with no Obsidian equivalent. Both are theme-dependent and
+   overridden for dark mode in widgets.css; everything else uses theme variables directly. */
 .pm-root {
   --pm-ghost-border: rgba(0, 0, 0, 0.06);
   --pm-shadow-ambient: rgba(0, 0, 0, 0.06);

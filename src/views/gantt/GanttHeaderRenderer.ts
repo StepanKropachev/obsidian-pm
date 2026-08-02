@@ -5,8 +5,6 @@ import { Temporal } from '../../dates'
 
 import type { GanttWeekLabel } from '../../types'
 
-// ─── Week label formatting ────────────────────────────────────────────────
-
 function formatDateRange(weekStart: Temporal.PlainDate, days: number): string {
   const end = weekStart.add({ days: days - 1 })
   const startMonth = weekStart.toLocaleString(undefined, { month: 'short' })
@@ -23,8 +21,6 @@ function formatWeekLabel(weekStart: Temporal.PlainDate, days: number, weekNum: n
   if (mode === 'dateRange') return range
   return `W${weekNum}: ${range}`
 }
-
-// ─── Timeline header ───────────────────────────────────────────────────────
 
 export function renderTimelineHeader(ctx: RendererContext): void {
   const g = svgEl('g', { class: 'pm-gantt-header' })
@@ -82,12 +78,11 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
   const { startDate, totalDays, dayWidth } = ctx.cfg
   renderMonthBands(g, 0, 24, ctx)
 
-  // Align to actual Mondays so header ticks match grid lines
+  // Aligned to real Mondays so the header ticks match the grid lines.
   const offsetToMonday = startDate.dayOfWeek === 1 ? 0 : 8 - startDate.dayOfWeek
 
   const labelMode = ctx.plugin.settings.ganttWeekLabel
 
-  // Partial first week (before the first Monday)
   if (offsetToMonday > 0) {
     const weekNum = getWeekNumber(startDate)
     const w = offsetToMonday * dayWidth
@@ -100,7 +95,6 @@ function renderWeekHeader(g: SVGGElement, ctx: RendererContext): void {
     g.appendChild(text)
   }
 
-  // Full weeks from each Monday
   let i = offsetToMonday
   while (i < totalDays) {
     const d = startDate.add({ days: i })

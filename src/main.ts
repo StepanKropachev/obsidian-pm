@@ -189,8 +189,7 @@ export default class PMPlugin extends Plugin {
       }
     }
 
-    // ganttHideDone was a global gantt toggle; replaced by per-project filter.statuses
-    // excluding terminal statuses. Seed projects whose filter has no status selection yet.
+    // ganttHideDone was a global toggle, now expressed as a per-project status filter.
     const legacy = (saved ?? {}) as { ganttHideDone?: boolean }
     if (legacy.ganttHideDone === true) {
       const nonTerminal = this.settings.statuses.filter((s) => !s.complete).map((s) => s.id)
@@ -231,10 +230,7 @@ export default class PMPlugin extends Plugin {
     }
   }
 
-  /**
-   * Overlay the persisted collapsed-task state onto a freshly loaded project.
-   * Projects with no record yet keep whatever legacy frontmatter said.
-   */
+  /** A project with no record yet keeps whatever legacy frontmatter said. */
   applyCollapsedState(project: Project): void {
     const ids = this.settings.collapsedTasks[project.filePath]
     if (!ids) return
@@ -244,7 +240,7 @@ export default class PMPlugin extends Plugin {
     }
   }
 
-  /** Persist the project's current collapsed flags. Call after toggling task.collapsed. */
+  /** Call after toggling task.collapsed. */
   async persistCollapsedState(project: Project): Promise<void> {
     this.settings.collapsedTasks[project.filePath] = flattenTasks(project.tasks)
       .filter((f) => f.task.collapsed)
@@ -252,10 +248,7 @@ export default class PMPlugin extends Plugin {
     await this.saveSettings()
   }
 
-  /**
-   * Flip a task's collapsed flag and persist. Resolves the task by id against
-   * the live tree so it works even when a view renders filtered clones.
-   */
+  /** Resolves by id against the live tree, so it works when a view renders filtered clones. */
   async toggleTaskCollapsed(project: Project, taskId: string): Promise<void> {
     const task = findTask(project.tasks, taskId)
     if (!task) return
@@ -271,14 +264,14 @@ export default class PMPlugin extends Plugin {
     new Notice(msg, duration)
   }
 
-  /** Re-render every open project view, e.g. after a settings change affects rendering. */
+  /** For changes the store's own events don't cover, such as a settings edit. */
   refreshProjectViews(): void {
     for (const leaf of this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)) {
       if (leaf.view instanceof ProjectView) void leaf.view.refreshProject()
     }
   }
 
-  /** Show project picker, then open TaskModal to create a task (optionally pick parent for subtask) */
+  /** Picks a project, then a parent when creating a subtask, before opening the editor. */
   private async pickProjectThenCreateTask(mode: null | 'pick-parent'): Promise<void> {
     const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
     if (!projects.length) {

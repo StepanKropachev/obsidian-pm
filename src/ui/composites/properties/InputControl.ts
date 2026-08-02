@@ -10,11 +10,7 @@ export interface InputControlOpts {
   number?: { min?: number; max?: number }
 }
 
-/**
- * Inline input control: shows the current value and swaps to a native input on click.
- * `number` rounds and clamps the committed value and is read only when `inputType` is
- * 'number'. Backs Progress.
- */
+/** Backs Progress. `number` rounds and clamps on commit, and is read only for inputType 'number'. */
 export function renderInputControl(opts: InputControlOpts): void {
   const inputType = opts.inputType ?? 'text'
   const has = opts.value !== ''

@@ -2,7 +2,7 @@ import { Chip } from '../primitives/Chip'
 
 export type DueUrgency = 'normal' | 'near' | 'overdue'
 
-/** Due-date chip; orange when the date is near, red solid when overdue. The caller formats the label. */
+/** Orange when near, solid red when overdue. The caller formats the label. */
 export function renderDueChip(parent: HTMLElement, label: string, urgency: DueUrgency, size: 'md' | 'sm' = 'md'): Chip {
   const chip = new Chip(parent).setLabel(label).setSize(size)
   if (urgency === 'near') {
