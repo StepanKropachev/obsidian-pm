@@ -75,6 +75,14 @@ export interface Project {
   taskIndex: TaskIndex
 }
 
+/**
+ * The project fields the project editor may change. Tasks are excluded: they
+ * are edited through the task mutators, never by writing a whole project back.
+ */
+export type ProjectPatch = Partial<
+  Pick<Project, 'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config'>
+>
+
 export interface FilterState {
   text: string
   statuses: TaskStatus[]

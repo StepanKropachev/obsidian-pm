@@ -1,5 +1,10 @@
 import { parse } from 'yaml'
 
+// Plugin code schedules timers through `window`, as Obsidian requires. Point it
+// at the node globals so tests run without a DOM environment, and so vitest's
+// fake timers reach the code under test.
+Object.assign(globalThis, { window: globalThis })
+
 export const parseYaml = (raw: string): unknown => parse(raw)
 
 export class Notice {

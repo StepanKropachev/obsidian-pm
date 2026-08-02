@@ -23,6 +23,8 @@ import { NoteLinkSuggest } from './NoteLinkSuggest'
 
 export class TaskModal extends Modal {
   private task: Task
+  /** The task as it was when the editor opened, to diff against on save. */
+  private original: Task
   private isNew: boolean
   private originalParentId: string | null
   private cancelled = false
@@ -61,6 +63,7 @@ export class TaskModal extends Modal {
       })
       this.isNew = true
     }
+    this.original = JSON.parse(JSON.stringify(this.task)) as Task
     this.originalParentId = this.parentId
   }
 
@@ -130,14 +133,30 @@ export class TaskModal extends Modal {
     }
   }
 
+  /**
+   * Only the fields the user actually changed. The editor works on a copy taken
+   * when it opened, so saving the whole task would write its view of every other
+   * field back over anything that moved in the meantime.
+   */
+  private changedFields(): Partial<Task> {
+    const patch: Partial<Task> = {}
+    for (const key of Object.keys(this.task) as (keyof Task)[]) {
+      if (JSON.stringify(this.task[key]) !== JSON.stringify(this.original[key])) {
+        Object.assign(patch, { [key]: this.task[key] })
+      }
+    }
+    return patch
+  }
+
   private async runPersist(): Promise<void> {
     if (this.isNew) {
       await this.plugin.store.insertTask(this.project, this.task, this.parentId)
-    } else if (this.parentId !== this.originalParentId) {
-      await this.plugin.store.updateTask(this.project, this.task.id, this.task)
-      await this.plugin.store.moveTask(this.project, this.task.id, this.parentId)
     } else {
-      await this.plugin.store.updateTask(this.project, this.task.id, this.task)
+      const patch = this.changedFields()
+      const moved = this.parentId !== this.originalParentId
+      if (Object.keys(patch).length === 0 && !moved) return
+      await this.plugin.store.updateTask(this.project, this.task.id, patch)
+      if (moved) await this.plugin.store.moveTask(this.project, this.task.id, this.parentId)
     }
     await this.plugin.store.scheduleAfterChange(this.project, this.task.id)
     await this.onSave(this.task)

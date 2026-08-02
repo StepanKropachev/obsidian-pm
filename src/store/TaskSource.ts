@@ -1,5 +1,5 @@
 import type { Plugin, TFile } from 'obsidian'
-import type { Project, ResolvedProjectConfig, Task, TaskPriority, TaskStatus } from '../types'
+import type { Project, ProjectPatch, ResolvedProjectConfig, Task, TaskPriority, TaskStatus } from '../types'
 import type { TaskFileNameConflictError } from './ProjectStore'
 
 export interface ImportNoteOptions {
@@ -15,8 +15,15 @@ export interface ImportNoteOptions {
  * the same contract.
  */
 export interface TaskSource {
-  registerCacheInvalidation(plugin: Plugin): void
-  consumeSelfWrite(path: string): boolean
+  registerVaultSync(plugin: Plugin): void
+
+  /**
+   * Subscribe to project changes, whoever made them: a mutation from any view,
+   * or a reload after an external edit. Returns the unsubscribe function.
+   * This is how views learn they need to re-render.
+   */
+  onProjectChanged(handler: (path: string) => void): () => void
+
   ensureFolder(folderPath: string): Promise<void>
 
   /**
@@ -28,12 +35,18 @@ export interface TaskSource {
   configFor(project: Project): ResolvedProjectConfig
 
   loadAllProjects(folder: string): Promise<Project[]>
+
+  /**
+   * The live project for a file. Every caller gets the same instance for a
+   * given path, for as long as the project exists.
+   */
   loadProject(file: TFile): Promise<Project | null>
   loadTaskBody(task: Task): Promise<void>
   loadProjectBody(project: Project): Promise<void>
 
   createProject(title: string, folder: string): Promise<Project>
   saveProject(project: Project): Promise<void>
+  updateProject(project: Project, patch: ProjectPatch): Promise<void>
   deleteProject(project: Project): Promise<void>
 
   insertTask(project: Project, task: Task, parentId?: string | null): Promise<void>
