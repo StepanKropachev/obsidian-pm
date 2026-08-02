@@ -21,12 +21,18 @@ export interface TimeLog {
   note: string
 }
 
+export interface CustomFieldFilterSelection {
+  type: CustomFieldDef["type"];
+  value: string | string[] | number | boolean | null;
+}
+
 export interface CustomFieldDef {
   id: string
   name: string
   type: 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'person' | 'checkbox' | 'url'
   options?: string[] // for select / multiselect
   icon?: string // emoji or lucide icon name
+  filterable?: boolean
 }
 
 export interface Task {
@@ -83,6 +89,7 @@ export interface FilterState {
   tags: string[]
   dueDateFilter: DueDateFilter
   showArchived: boolean
+  customFields: Record<string, CustomFieldFilterSelection>
 }
 
 export interface SavedView {
@@ -260,6 +267,7 @@ export function makeDefaultFilter(): FilterState {
     assignees: [],
     tags: [],
     dueDateFilter: 'any',
-    showArchived: false
+    showArchived: false,
+    customFields: {},
   }
 }

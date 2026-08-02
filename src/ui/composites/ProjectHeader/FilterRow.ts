@@ -1,10 +1,10 @@
 import { Menu } from 'obsidian'
-import type { Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
+import type { CustomFieldDef, Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
 import { ChipButton } from '../../primitives/ChipButton'
-import { formatBadgeText } from '../../../utils'
+import { formatBadgeText, stringifyCustomValue } from '../../../utils'
 
 export interface FilterRowProps {
   project: Project
@@ -94,9 +94,144 @@ export class FilterRow {
       )
     }
 
+    for (const cf of project.customFields.filter((field) => field.filterable)) {
+      this.renderCustomFieldFilter(cf, notify)
+    }
+
     this.renderDueDateButton(notify)
     this.renderArchivedButton(notify)
     this.renderClearButton()
+  }
+
+  private renderCustomFieldFilter(cf: CustomFieldDef, notify: () => void): void {
+    const { filter, project } = this.props
+    const btn = new ChipButton(this.el).setAriaLabel(`Filter by ${cf.name}`)
+    const updateLabel = () => {
+      const current = filter.customFields[cf.id]
+      const active = this.isCustomFieldSelectionActive(current)
+      const label = active ? `${cf.name}: ${this.describeCustomFieldSelection(cf, current)}` : cf.name
+      btn.setLabel(label).setActive(active)
+    }
+    updateLabel()
+
+    btn.onClick((e) => {
+      const menu = new Menu()
+      const current = filter.customFields[cf.id]
+
+      if (cf.type === 'checkbox') {
+        for (const opt of [true, false]) {
+          const label = opt ? 'Yes' : 'No'
+          menu.addItem((item) =>
+            item
+              .setTitle(label)
+              .setChecked(current?.type === 'checkbox' && current.value === opt)
+              .onClick(() => {
+                filter.customFields[cf.id] = { type: cf.type, value: opt }
+                updateLabel()
+                notify()
+              })
+          )
+        }
+      } else if (cf.type === 'multiselect') {
+        const selected = Array.isArray(current?.value) ? current.value : []
+        const options = this.getCustomFieldOptions(cf, project)
+        for (const opt of options) {
+          menu.addItem((item) =>
+            item
+              .setTitle(opt)
+              .setChecked(selected.includes(opt))
+              .onClick(() => {
+                const next = selected.includes(opt) ? selected.filter((v) => v !== opt) : [...selected, opt]
+                filter.customFields[cf.id] = { type: cf.type, value: next }
+                updateLabel()
+                notify()
+              })
+          )
+        }
+      } else {
+        const selected = current?.type === cf.type ? String(current.value) : ''
+        const options = this.getCustomFieldOptions(cf, project)
+        for (const opt of options) {
+          menu.addItem((item) =>
+            item
+              .setTitle(opt)
+              .setChecked(selected === opt)
+              .onClick(() => {
+                filter.customFields[cf.id] = { type: cf.type, value: opt }
+                updateLabel()
+                notify()
+              })
+          )
+        }
+      }
+
+      if (this.isCustomFieldSelectionActive(current)) {
+        menu.addSeparator()
+        menu.addItem((item) =>
+          item.setTitle('Clear').onClick(() => {
+            delete filter.customFields[cf.id]
+            updateLabel()
+            notify()
+          })
+        )
+      }
+      menu.showAtMouseEvent(e)
+    })
+  }
+
+  private isCustomFieldSelectionActive(selection: { type: CustomFieldDef['type']; value: string | string[] | number | boolean | null } | undefined): boolean {
+    if (!selection) return false
+    if (selection.type === 'multiselect') {
+      return Array.isArray(selection.value) && selection.value.length > 0
+    }
+    return selection.value !== undefined && selection.value !== null && selection.value !== ''
+  }
+
+  private describeCustomFieldSelection(cf: CustomFieldDef, selection: { type: CustomFieldDef['type']; value: string | string[] | number | boolean | null } | undefined): string {
+    if (!selection) return cf.name
+    if (cf.type === 'multiselect' && Array.isArray(selection.value)) {
+      return selection.value.join(', ')
+    }
+    if (cf.type === 'checkbox') {
+      return selection.value ? 'Yes' : 'No'
+    }
+    return stringifyCustomValue(selection.value)
+  }
+
+  private getCustomFieldOptions(cf: CustomFieldDef, project: Project): string[] {
+    const values: string[] = []
+    const seen = new Set<string>()
+    const add = (value: unknown) => {
+      const text = stringifyCustomValue(value)
+      if (text && !seen.has(text)) {
+        values.push(text)
+        seen.add(text)
+      }
+    }
+
+    if (cf.type === 'select' || cf.type === 'multiselect') {
+      for (const opt of cf.options ?? []) {
+        add(opt)
+      }
+    }
+
+    if (cf.type === 'multiselect') {
+      for (const task of project.tasks) {
+        const current = task.customFields[cf.id]
+        if (Array.isArray(current)) {
+          for (const value of current) {
+            add(value)
+          }
+        }
+      }
+      return values
+    }
+
+    for (const task of project.tasks) {
+      add(task.customFields[cf.id])
+    }
+
+    return values
   }
 
   private renderDueDateButton(notify: () => void): void {

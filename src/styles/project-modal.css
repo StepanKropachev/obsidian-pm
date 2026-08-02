@@ -221,6 +221,15 @@
 .pm-cf-type {
   flex: 0 0 130px;
 }
+.pm-cf-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-left: auto;
+  align-self: center;
+}
 .pm-cf-options {
   width: 100%;
   display: flex;

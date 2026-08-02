@@ -38,6 +38,10 @@ describe('isFilterActive', () => {
     expect(isFilterActive(filter({ dueDateFilter: 'overdue' }))).toBe(true)
   })
 
+  it('returns true when a custom field filter is active', () => {
+    expect(isFilterActive(filter({ customFields: { impact: { value: 'high', type: 'text' } } } as never))).toBe(true)
+  })
+
   it('ignores showArchived (matches legacy semantics)', () => {
     expect(isFilterActive(filter({ showArchived: true }))).toBe(false)
   })
@@ -114,6 +118,18 @@ describe('matchesFilter', () => {
   it('treats no-date dueDateFilter correctly', () => {
     expect(matchesFilter(task({ id: 'a', due: '' }), filter({ dueDateFilter: 'no-date' }))).toBe(true)
     expect(matchesFilter(task({ id: 'b', due: '2026-01-01' }), filter({ dueDateFilter: 'no-date' }))).toBe(false)
+  })
+
+  it('matches custom field filters by value', () => {
+    const taskWithField = task({ id: 'a', customFields: { impact: 'high' } })
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: 'high', type: 'text' } } } as never))).toBe(true)
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: 'low', type: 'text' } } } as never))).toBe(false)
+  })
+
+  it('matches custom field filters by multiselect selection', () => {
+    const taskWithField = task({ id: 'a', customFields: { impact: ['high', 'urgent'] } })
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: ['high'], type: 'multiselect' } } } as never))).toBe(true)
+    expect(matchesFilter(taskWithField, filter({ customFields: { impact: { value: ['low'], type: 'multiselect' } } } as never))).toBe(false)
   })
 })
 

@@ -1,5 +1,5 @@
 import { parsePlainDate, Temporal, today } from '../dates'
-import type { DueDateFilter, FilterState, StatusConfig, Task } from '../types'
+import type { CustomFieldFilterSelection, DueDateFilter, FilterState, StatusConfig, Task } from '../types'
 import { isTerminalStatus } from '../utils'
 import type { FlatTask } from './TaskTreeOps'
 
@@ -10,7 +10,8 @@ export function isFilterActive(filter: FilterState): boolean {
     filter.priorities.length ||
     filter.assignees.length ||
     filter.tags.length ||
-    filter.dueDateFilter !== 'any'
+    filter.dueDateFilter !== 'any' ||
+    Object.values(filter.customFields ?? {}).some(isCustomFieldSelectionActive)
   )
 }
 
@@ -23,6 +24,7 @@ export function countActiveFilters(filter: FilterState): number {
   if (filter.tags.length) count++
   if (filter.dueDateFilter !== 'any') count++
   if (filter.showArchived) count++
+  count += Object.values(filter.customFields ?? {}).filter(isCustomFieldSelectionActive,).length
   return count
 }
 
@@ -48,6 +50,9 @@ export function matchesFilter(task: Task, filter: FilterState, statuses: StatusC
   if (filter.assignees.length && !task.assignees.some((a) => filter.assignees.includes(a))) return false
   if (filter.tags.length && !task.tags.some((t) => filter.tags.includes(t))) return false
   if (filter.dueDateFilter !== 'any' && !matchDueDateFilter(task, filter.dueDateFilter, statuses)) return false
+  for (const [fieldId, selection] of Object.entries(filter.customFields ?? {})) {
+    if (!matchesCustomFieldFilter(task.customFields[fieldId], selection)) return false
+  }
   return true
 }
 
@@ -55,6 +60,41 @@ export function applyTaskFilter(tasks: Task[], filter: FilterState, statuses: St
   return tasks
     .filter((t) => matchesFilter(t, filter, statuses))
     .map((t) => (t.subtasks.length ? { ...t, subtasks: applyTaskFilter(t.subtasks, filter, statuses) } : t))
+}
+
+function isCustomFieldSelectionActive(selection: CustomFieldFilterSelection | undefined): boolean {
+  if (!selection) return false
+  if (selection.type === 'multiselect') {
+    return Array.isArray(selection.value) && selection.value.length > 0
+  }
+  return selection.value !== undefined && selection.value !== null && selection.value !== ''
+}
+
+function matchesCustomFieldFilter(actual: unknown, selection: CustomFieldFilterSelection | undefined): boolean {
+  if (!selection || !isCustomFieldSelectionActive(selection)) return true
+  switch (selection.type) {
+    case 'checkbox':
+      return Boolean(actual) === Boolean(selection.value)
+    case 'multiselect': {
+      const selected = Array.isArray(selection.value) ? selection.value : []
+      const values = Array.isArray(actual) ? actual : []
+      return selected.some((option) => values.includes(option))
+    }
+    case 'number': {
+      const expected = Number(selection.value)
+      const actualNumber = typeof actual === 'number' ? actual : typeof actual === 'string' ? Number(actual) : Number.NaN
+      return Number.isNaN(expected) ? false : actualNumber === expected
+    }
+    default: {
+      const actualText =
+        typeof actual === 'string'
+          ? actual
+          : typeof actual === 'number' || typeof actual === 'boolean'
+            ? String(actual)
+            : ''
+      return actualText === String(selection.value)
+    }
+  }
 }
 
 /**
