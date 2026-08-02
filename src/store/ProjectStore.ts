@@ -885,10 +885,22 @@ export class ProjectStore implements TaskSource {
     else if (!nowComplete && wasComplete) patch.completed = ''
   }
 
+  /** Call between `stampCompletion` and the patch reaching the tree, while `task` still holds its old value. */
+  private completionMoved(task: Task, patch: Partial<Task>): boolean {
+    return patch.completed !== undefined && patch.completed !== task.completed
+  }
+
+  private async scheduleAfterEarlyFinish(project: Project, taskIds: string[]): Promise<void> {
+    if (taskIds.length === 0) return
+    if (!this.configFor(project).pullForwardOnEarlyFinish) return
+    for (const id of taskIds) await this.scheduleAfterChange(project, id)
+  }
+
   async updateTask(project: Project, taskId: string, patch: Partial<Task>): Promise<void> {
     const task = findTaskById(project, taskId)
     const oldTitle = task?.title
     if (task) this.stampCompletion(project, task, patch)
+    const completionMoved = task !== null && this.completionMoved(task, patch)
     // The task editor saves the whole task, so a patch can add, rename, remove,
     // or reorder subtasks. Snapshot the pre-edit subtree to diff against once the
     // tree has the new one.
@@ -910,6 +922,7 @@ export class ProjectStore implements TaskSource {
       for (const sub of task.subtasks) this.markDirty(project, [sub.id], 'full')
     }
     await this.saveProject(project)
+    if (completionMoved) await this.scheduleAfterEarlyFinish(project, [taskId])
   }
 
   /**
@@ -956,6 +969,7 @@ export class ProjectStore implements TaskSource {
     taskIds: string[],
     patch: Partial<Task> | ((task: Task) => Partial<Task> | null)
   ): Promise<void> {
+    const completionMovedIds: string[] = []
     for (const id of taskIds) {
       const task = findTaskById(project, id)
       if (!task) continue
@@ -965,6 +979,7 @@ export class ProjectStore implements TaskSource {
       // doesn't bleed onto the next iteration through the same reference.
       const p = { ...raw }
       this.stampCompletion(project, task, p)
+      if (this.completionMoved(task, p)) completionMovedIds.push(id)
       const oldTitle = task.title
       updateTaskInTree(project.tasks, id, p)
       const titleChanged = p.title !== undefined && p.title !== oldTitle
@@ -976,6 +991,7 @@ export class ProjectStore implements TaskSource {
       }
     }
     await this.saveProject(project)
+    await this.scheduleAfterEarlyFinish(project, completionMovedIds)
   }
 
   /**
@@ -1118,7 +1134,7 @@ export class ProjectStore implements TaskSource {
   async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
     const config = this.configFor(project)
     if (!config.autoSchedule) return 0
-    const { patches } = computeSchedule(project.tasks, changedTaskId, config.statuses)
+    const { patches } = computeSchedule(project.tasks, changedTaskId, config.statuses, config.pullForwardOnEarlyFinish)
     if (patches.length === 0) return 0
 
     for (const p of patches) {

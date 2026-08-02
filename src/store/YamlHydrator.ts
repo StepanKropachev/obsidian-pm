@@ -146,6 +146,7 @@ function hydrateProjectConfig(raw: unknown): ProjectConfig | undefined {
     config.defaultView = r.defaultView
   }
   if (typeof r.autoSchedule === 'boolean') config.autoSchedule = r.autoSchedule
+  if (typeof r.pullForwardOnEarlyFinish === 'boolean') config.pullForwardOnEarlyFinish = r.pullForwardOnEarlyFinish
   if (typeof r.kanbanShowSubtasks === 'boolean') config.kanbanShowSubtasks = r.kanbanShowSubtasks
   if (typeof r.kanbanShowDescriptionPreview === 'boolean') {
     config.kanbanShowDescriptionPreview = r.kanbanShowDescriptionPreview

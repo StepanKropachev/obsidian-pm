@@ -54,7 +54,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
 
 ### Scheduling & time
 - **Drag-and-drop scheduling** — Reschedule tasks by dragging bars on the Gantt chart.
-- **Smart scheduling** — Auto-adjust dependent task dates when a blocker's dates change. Cycle detection prevents circular dependencies.
+- **Smart scheduling** — Auto-adjust dependent task dates when a blocker's dates change. Cycle detection prevents circular dependencies. Optionally pull dependents earlier when a blocker is completed ahead of its due date.
 - **Recurring tasks** — Daily, weekly, monthly, or yearly recurrence with configurable end dates.
 - **Time estimates & logging** — Set estimated hours, log actual time with date and notes. Visual progress bar shows logged vs. estimated.
 - **Due date notifications** — Get reminders before tasks are due. Configurable lead time.
@@ -62,7 +62,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
 ### Customization
 - **Custom fields** — Add per-project fields: text, number, date, select, multi-select, person, checkbox, URL.
 - **Custom statuses & priorities** — Edit labels, colors, and icons for each status and priority level.
-- **Per-project settings** — A project can define its own statuses and priorities and override the default view, auto-scheduling, and board display options. Project-defined statuses replace the global ones everywhere in that project, from kanban columns to pickers; statuses still in use by tasks always stay visible.
+- **Per-project settings** — A project can define its own statuses and priorities and override the default view, auto-scheduling, early-finish pull-forward, and board display options. Project-defined statuses replace the global ones everywhere in that project, from kanban columns to pickers; statuses still in use by tasks always stay visible.
 - **Saved views** — Save filter/sort combinations in Table view and switch between them instantly.
 - **Team roster** — Manage a global team list for assignment across all projects, plus per-project team members.
 
@@ -141,6 +141,7 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 | Due date notifications | Reminders N days before due dates |
 | Notifications on/off | Master switch for due date reminders, separate from lead time |
 | Auto-schedule | When a blocking task moves, its dependents shift to match. Cycles are refused. |
+| Pull dependents forward on early finish | Off by default. When a task is completed before its due date, its dependents move earlier by the days it saved, keeping any slack they already had. |
 | Hide done in Gantt | Skip completed and cancelled tasks on the timeline |
 | Show subtasks in Kanban | Render subtasks as their own cards, not just inside the parent |
 | Custom statuses | Edit labels, colors, and icons for each status |
