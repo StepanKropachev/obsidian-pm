@@ -33,7 +33,7 @@
     "eslint-plugin-obsidianmd": "0.3.0",
     "lightningcss": "1.33.0",
     "npm-run-all2": "9.0.2",
-    "obsidian": "1.12.3",
+    "obsidian": "1.13.1",
     "oxfmt": "0.60.0",
     "oxlint": "1.75.0",
     "temporal-polyfill": "1.0.1",

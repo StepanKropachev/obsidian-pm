@@ -237,31 +237,32 @@
 }
 
 /* Settings */
-.pm-settings h3 {
-  margin-top: 24px;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-.pm-settings-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.pm-settings-members,
 .pm-settings-statuses {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 8px;
 }
-.pm-settings-member-row,
 .pm-settings-status-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.pm-settings-member-row input[type='text'] {
+.pm-palette-row .setting-item-info {
+  display: none;
+}
+.pm-palette-row .setting-item-control {
   flex: 1;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+.pm-palette-row .pm-settings-status-icon {
+  flex: 0 0 72px;
+  width: 72px;
+}
+.pm-palette-row .pm-settings-status-label {
+  min-width: 0;
 }
 .pm-settings-status-icon {
   width: 90px;
