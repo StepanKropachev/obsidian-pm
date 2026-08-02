@@ -4,10 +4,7 @@ import { makeTask } from '../types'
 import { IconButton } from '../ui/primitives/IconButton'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
-/**
- * Renders the subtasks section: a header with a completed count, the editable list, and an
- * inline add row. The count is derived from how many subtasks sit in a terminal status.
- */
+/** The header count is how many subtasks sit in a terminal status. */
 export function renderSubtasksPanel(
   container: HTMLElement,
   task: Task,

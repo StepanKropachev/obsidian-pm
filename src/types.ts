@@ -71,14 +71,11 @@ export interface Project {
   savedViews: SavedView[]
   /** Per-project overrides for the global settings. Absent fields inherit. */
   config?: ProjectConfig
-  /** Transient id → {task, parentId} index. Rebuilt on load, maintained by store mutators. Not serialized. */
+  /** Not serialized. Rebuilt on load, maintained by the store's mutators. */
   taskIndex: TaskIndex
 }
 
-/**
- * The project fields the project editor may change. Tasks are excluded: they
- * are edited through the task mutators, never by writing a whole project back.
- */
+/** Tasks are excluded: they change through the task mutators, never a whole-project write. */
 export type ProjectPatch = Partial<
   Pick<Project, 'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config'>
 >
@@ -115,10 +112,7 @@ export interface StatusConfig {
   complete: boolean
 }
 
-/**
- * The settings a project may override in its own file. Every field is
- * optional; an absent field falls back to the global plugin settings.
- */
+/** Overrides a project may set in its own file. An absent field falls back to the global settings. */
 export interface ProjectConfig {
   statuses?: StatusConfig[]
   priorities?: PriorityConfig[]
@@ -130,9 +124,8 @@ export interface ProjectConfig {
 }
 
 /**
- * A project's configuration with every fallback applied, as returned by
- * `TaskSource.configFor`. Views and modals read this instead of the global
- * settings so alternative task sources can supply their own catalogs.
+ * A project's config with every fallback applied. Views and modals read this rather
+ * than the global settings, so another task source can supply its own catalogs.
  */
 export interface ResolvedProjectConfig {
   statuses: StatusConfig[]
@@ -168,11 +161,9 @@ export interface PMSettings {
   showTagColors: boolean
   saveTaskOnClose: boolean
   projectFilters: Record<string, PerProjectFilter>
-  /** Collapsed task ids per project file path. UI state — lives here so toggles don't rewrite task files. */
+  /** Collapsed task ids per project path. Lives here so a toggle doesn't rewrite task files. */
   collapsedTasks: Record<string, string[]>
 }
-
-// ─── Defaults ────────────────────────────────────────────────────────────────
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
   { id: 'todo', label: 'To Do', color: '#8a94a0', icon: '', complete: false },
@@ -209,8 +200,6 @@ export const DEFAULT_SETTINGS: PMSettings = {
   projectFilters: {},
   collapsedTasks: {}
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function makeId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)

@@ -6,10 +6,7 @@ import { ProjectModal } from '../modals/ProjectModal'
 import { ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
 
-/**
- * Opens an Obsidian-native confirmation dialog.
- * Returns a promise that resolves to true if confirmed, false if cancelled.
- */
+/** Resolves true if confirmed, false if cancelled. */
 export function confirmDialog(app: App, message: string, confirmLabel = 'Delete'): Promise<boolean> {
   return new Promise((resolve) => {
     const modal = new ConfirmModal(app, message, confirmLabel, resolve)
@@ -17,10 +14,7 @@ export function confirmDialog(app: App, message: string, confirmLabel = 'Delete'
   })
 }
 
-/**
- * Asks the user whether to duplicate a task with or without its subtasks.
- * Resolves to the chosen mode, or null if cancelled.
- */
+/** Resolves to the chosen mode, or null if cancelled. */
 export function confirmDuplicateSubtasks(app: App, taskTitle: string): Promise<'with-subtasks' | 'task-only' | null> {
   return new Promise((resolve) => {
     const modal = new DuplicateSubtasksModal(app, taskTitle, resolve)
@@ -28,10 +22,7 @@ export function confirmDuplicateSubtasks(app: App, taskTitle: string): Promise<'
   })
 }
 
-/**
- * Opens an Obsidian-native text input prompt.
- * Returns the trimmed string, or null if cancelled/empty.
- */
+/** Returns the trimmed string, or null if cancelled or empty. */
 export function promptText(app: App, label: string, placeholder = ''): Promise<string | null> {
   return new Promise((resolve) => {
     const modal = new TextPromptModal(app, label, placeholder, resolve)
@@ -210,10 +201,7 @@ class DuplicateSubtasksModal extends Modal {
   }
 }
 
-/**
- * Centralized modal helpers. Instead of `new TaskModal(app, plugin, project, task, parentId, cb).open()`
- * everywhere (6 params, 14+ call sites), use `openTaskModal(plugin, project, { task, parentId, onSave })`.
- */
+/** Every modal is opened through these, never by constructing the class directly. */
 
 export interface OpenTaskModalOpts {
   task?: Task | null
@@ -234,9 +222,8 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
       opts.defaults
     ).open()
   }
-  // Tasks loaded via metadataCache have an empty description until the file
-  // body is read. Pre-load (no-op if already hydrated) so the modal renders the
-  // real description in one paint.
+  // Tasks loaded via metadataCache have an empty description until the body is read;
+  // pre-loading it lets the modal paint the real one once.
   if (opts.task) {
     const task = opts.task
     void (async () => {
@@ -250,7 +237,7 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
 
 export interface OpenProjectModalOpts {
   project?: Project | null
-  /** Only needed when the caller has to act on the saved project, e.g. open a newly created one. */
+  /** Only needed to act on the saved project, e.g. open a newly created one. */
   onSave?: (project: Project) => void | Promise<void>
 }
 

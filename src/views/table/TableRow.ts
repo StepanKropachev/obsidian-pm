@@ -19,8 +19,6 @@ import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { TitleCell } from '../../ui/composites/cells/TitleCell'
 
-// ─── Row orchestrator ──────────────────────────────────────────────────────────
-
 export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx: TableContext): void {
   const isDone = isTerminalStatus(task.status, ctx.statuses)
   const statusConfig = getStatusConfig(ctx.statuses, task.status)
@@ -152,8 +150,6 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx
     }
   })
 }
-
-// ─── Selection ─────────────────────────────────────────────────────────────────
 
 export function updateSelectAllCheckbox(state: TableState): void {
   if (!state.tableBody) return

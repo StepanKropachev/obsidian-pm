@@ -39,16 +39,7 @@ function draftOf(project: Project): ProjectDraft {
   return JSON.parse(JSON.stringify(draft)) as ProjectDraft
 }
 
-/**
- * Project create/edit modal.
- *
- * Edits a draft of the project's own fields, never the project itself, and
- * saves only what changed. Obsidian renders modals outside `.pm-root` in the
- * DOM. We apply `.pm-modal` to re-declare `--pm-*` CSS variables, then use CSS
- * classes from styles.css. Remaining inline styles are only for dynamic runtime
- * values (computed colors, avatar hashes, display toggles) that cannot be
- * expressed in static CSS.
- */
+/** Edits a draft of the project's own fields, never the project itself, and saves only what changed. */
 export class ProjectModal extends Modal {
   private draft: ProjectDraft
   private original: ProjectDraft
@@ -67,7 +58,7 @@ export class ProjectModal extends Modal {
     this.original = draftOf(base)
   }
 
-  /** Only the fields the user actually changed, so the form can't write back anything it never showed. */
+  /** Only what changed, so the form can't write back anything it never showed. */
   private changedFields(): ProjectPatch {
     const patch: ProjectPatch = {}
     for (const key of Object.keys(this.draft) as (keyof ProjectDraft)[]) {
@@ -91,7 +82,6 @@ export class ProjectModal extends Modal {
   }
 
   private buildForm(el: HTMLElement): void {
-    // ── Header ────────────────────────────────────────────────────────────────
     const header = el.createDiv('pm-project-modal-header')
     header.createSpan({ text: '✦', cls: 'pm-project-modal-header-icon' })
     header.createEl('h2', {
@@ -99,10 +89,8 @@ export class ProjectModal extends Modal {
       cls: 'pm-modal-heading'
     })
 
-    // ── Icon + Title ──────────────────────────────────────────────────────────
     const topRow = el.createDiv('pm-project-top-row')
 
-    // Icon picker
     const iconWrap = topRow.createDiv('pm-icon-picker')
     const iconBtn = iconWrap.createEl('button', { text: this.draft.icon, cls: 'pm-icon-picker-btn' })
 
@@ -120,7 +108,6 @@ export class ProjectModal extends Modal {
       iconGrid.toggleClass('pm-hidden', !iconGrid.hasClass('pm-hidden'))
     })
 
-    // Title
     const titleWrap = topRow.createDiv('pm-project-title-wrap')
     titleWrap.createEl('label', { text: 'Project name', cls: 'pm-label' })
     const titleInput = titleWrap.createEl('input', {
@@ -137,7 +124,6 @@ export class ProjectModal extends Modal {
       titleInput.select()
     }, 50)
 
-    // ── Color ─────────────────────────────────────────────────────────────────
     const colorSection = el.createDiv('pm-project-modal-section')
     colorSection.createEl('label', { text: 'Color', cls: 'pm-label' })
     const colorPalette = colorSection.createDiv('pm-color-palette')
@@ -159,7 +145,6 @@ export class ProjectModal extends Modal {
       colorPalette.querySelectorAll('.pm-color-swatch').forEach((s) => s.removeClass('pm-color-swatch--selected'))
     })
 
-    // ── Description ───────────────────────────────────────────────────────────
     const descSection = el.createDiv('pm-project-modal-section')
     descSection.createEl('label', { text: 'Description', cls: 'pm-label' })
     const descArea = descSection.createEl('textarea', { cls: 'pm-input pm-project-desc' })
@@ -169,7 +154,6 @@ export class ProjectModal extends Modal {
       this.draft.description = descArea.value
     })
 
-    // ── Team members ──────────────────────────────────────────────────────────
     const memberSection = el.createDiv('pm-modal-section')
     memberSection.createEl('label', { text: 'Team members', cls: 'pm-label' })
     const memberWrap = memberSection.createDiv('pm-member-list')
@@ -208,7 +192,6 @@ export class ProjectModal extends Modal {
     }
     renderMembers()
 
-    // ── Custom fields ─────────────────────────────────────────────────────────
     const cfSection = el.createDiv('pm-modal-section')
     const cfHeader = cfSection.createDiv('pm-modal-section-header')
     cfHeader.createSpan({ text: 'Custom fields', cls: 'pm-modal-subheading' })
@@ -232,7 +215,6 @@ export class ProjectModal extends Modal {
     }
     renderCFs()
 
-    // ── Statuses ──────────────────────────────────────────────────────────────
     this.renderPaletteOverride(el, {
       heading: 'Statuses',
       hint: 'The workflow for this project',
@@ -257,7 +239,6 @@ export class ProjectModal extends Modal {
         })
     })
 
-    // ── Priorities ────────────────────────────────────────────────────────────
     this.renderPaletteOverride(el, {
       heading: 'Priorities',
       hint: 'The priority scale for this project',
@@ -280,7 +261,6 @@ export class ProjectModal extends Modal {
         })
     })
 
-    // ── View & scheduling overrides ──────────────────────────────────────────
     const behaviorSection = el.createDiv('pm-modal-section')
     const behaviorHeader = behaviorSection.createDiv('pm-modal-section-header')
     behaviorHeader.createSpan({ text: 'View & scheduling', cls: 'pm-modal-subheading' })
@@ -309,7 +289,6 @@ export class ProjectModal extends Modal {
       { value: false, label: 'Hide' }
     ])
 
-    // ── Footer ────────────────────────────────────────────────────────────────
     const footer = el.createDiv('pm-modal-footer')
     footer.createDiv('pm-footer-spacer')
 

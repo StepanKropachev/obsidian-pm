@@ -3,8 +3,6 @@ import type { StatusConfig, Task } from '../types'
 import { isTerminalStatus } from '../utils'
 import { flattenTasks } from './TaskTreeOps'
 
-/* ── Types ─────────────────────────────────────────────────────── */
-
 export interface SchedulePatch {
   taskId: string
   start: string // YYYY-MM-DD
@@ -13,28 +11,20 @@ export interface SchedulePatch {
 
 export interface ScheduleResult {
   patches: SchedulePatch[]
-  cycles: string[][] // groups of task IDs forming cycles
+  cycles: string[][]
 }
 
-/* ── Date helpers ──────────────────────────────────────────────── */
-
-/** Number of calendar days between two YYYY-MM-DD strings. */
 export function daysBetween(a: string, b: string): number {
   return Temporal.PlainDate.from(b).since(Temporal.PlainDate.from(a), { largestUnit: 'days' }).days
 }
 
-/** Add `n` days to a YYYY-MM-DD string. */
 export function addDays(date: string, n: number): string {
   return Temporal.PlainDate.from(date).add({ days: n }).toString()
 }
 
-/* ── Cycle detection helper (for dependency-add UI) ───────────── */
-
 /**
- * Returns true if adding an edge `from → to` would create a cycle
- * in the dependency graph.
- * "from depends on to" means there is an edge to → from in scheduling terms,
- * so a cycle exists if `from` can already reach `to` via existing edges.
+ * Would making `from` depend on `to` close a cycle? "from depends on to" is the edge
+ * to -> from, so yes exactly when `from` can already reach `to`.
  */
 export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): boolean {
   const flat = flattenTasks(tasks).map((ft) => ft.task)
@@ -46,7 +36,6 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
       dependentsOf.set(depId, list)
     }
   }
-  // BFS from `fromId` along dependent edges — can we reach `toId`?
   const visited = new Set<string>()
   const queue = [fromId]
   while (queue.length > 0) {
@@ -62,21 +51,14 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
   return false
 }
 
-/* ── Main scheduling algorithm ─────────────────────────────────── */
-
 /**
- * Compute schedule patches for tasks based on their dependency graph.
+ * Date patches derived from the dependency graph. `changedTaskId` scopes the pass to
+ * that task's downstream dependents. Terminal-status tasks never move; their dates are
+ * a record of what happened.
  *
- * When `changedTaskId` is provided, only the downstream dependents of that
- * task are re-scheduled (scoped subtree). Otherwise all tasks are considered.
- *
- * Tasks with status `done` or `cancelled` are skipped — their dates are
- * historically meaningful and should not move.
- *
- * With `pullForward`, a predecessor that completed before its due date counts as
- * finishing on its completion date, and its dependents move earlier by the days
- * it saved — never past the day after their predecessors finish, and keeping
- * whatever slack they already had.
+ * With `pullForward`, a predecessor that finished early counts as ending on its
+ * completion date and its dependents move up by the days saved, keeping their existing
+ * slack and never starting before the day after a predecessor ends.
  */
 export function computeSchedule(
   tasks: Task[],
@@ -86,14 +68,13 @@ export function computeSchedule(
 ): ScheduleResult {
   const flat = flattenTasks(tasks).map((ft) => ft.task)
   const taskById = new Map<string, Task>()
-  const dependentsOf = new Map<string, string[]>() // depId → [taskIds that depend on it]
-  const predecessorsOf = new Map<string, string[]>() // taskId → [depIds]
+  const dependentsOf = new Map<string, string[]>()
+  const predecessorsOf = new Map<string, string[]>()
 
   for (const t of flat) {
     taskById.set(t.id, t)
   }
 
-  // Build adjacency — skip missing IDs
   for (const t of flat) {
     const validDeps: string[] = []
     for (const depId of t.dependencies) {
@@ -106,7 +87,6 @@ export function computeSchedule(
     predecessorsOf.set(t.id, validDeps)
   }
 
-  // Scope to affected subtree when changedTaskId provided
   let scopeIds: Set<string> | null = null
   if (changedTaskId) {
     scopeIds = new Set<string>()
@@ -122,7 +102,7 @@ export function computeSchedule(
     }
   }
 
-  // Kahn's algorithm for topological sort + cycle detection
+  // Kahn's algorithm: topological sort, with the leftovers being the cycles.
   const inDegree = new Map<string, number>()
   const relevantIds = scopeIds ? [...scopeIds] : flat.map((t) => t.id)
 
@@ -152,13 +132,11 @@ export function computeSchedule(
     }
   }
 
-  // Collect cycles — IDs not in topoOrder
   const sortedSet = new Set(topoOrder)
   const cycleIds = relevantIds.filter((id) => !sortedSet.has(id))
   const cycles: string[][] = cycleIds.length > 0 ? [cycleIds] : []
 
-  // Forward-pass scheduling in topological order
-  // We work with a mutable copy of dates so cascading works within this run
+  // Mutable copies of the dates, so a shift cascades within this run.
   const startOf = new Map<string, string>()
   const dueOf = new Map<string, string>()
   // Days by which a task's finish beat the date it was planned for.
@@ -178,15 +156,13 @@ export function computeSchedule(
     const task = taskById.get(id)
     if (!task) continue
 
-    // Skip done/cancelled tasks
     if (isTerminalStatus(task.status, statuses)) continue
 
     const deps = predecessorsOf.get(id) ?? []
     if (deps.length === 0) continue
 
-    // Find latest due among predecessors that have a due date
-    // Skip archived predecessors — they are hidden from the UI
-    // `latestPlannedDue` is the same date had every predecessor finished on plan.
+    // Latest due among unarchived predecessors; `latestPlannedDue` is the same
+    // date had every one of them finished on plan.
     let latestDue = ''
     let latestPlannedDue = ''
     for (const depId of deps) {
@@ -198,7 +174,7 @@ export function computeSchedule(
       const plannedDue = addDays(depDue, daysSavedBy.get(depId) ?? 0)
       if (!latestPlannedDue || plannedDue > latestPlannedDue) latestPlannedDue = plannedDue
     }
-    if (!latestDue) continue // no predecessors with due dates
+    if (!latestDue) continue
 
     const earliestStart = addDays(latestDue, 1)
     const daysSaved = daysBetween(latestDue, latestPlannedDue)
@@ -214,7 +190,7 @@ export function computeSchedule(
     const isMilestone = task.type === 'milestone' || (!currentStart && currentDue)
 
     if (isMilestone) {
-      // Milestone: shift due instead of start
+      // A milestone has no span, so its due date moves instead of its start.
       if (!currentDue || currentDue < earliestStart) {
         newDue = earliestStart
       } else if (daysSaved > 0) {
@@ -222,10 +198,8 @@ export function computeSchedule(
         newDue = addDays(currentDue, -pulled)
       }
     } else if (currentStart && currentDue) {
-      // Has both: preserve duration, shift if needed
       if (currentStart < earliestStart) {
-        // Duration spans from currentStart to currentDue (both inclusive)
-        // so the number of days is daysBetween + 1
+        // Both ends are inclusive, so the span is one day longer than the gap.
         const duration = daysBetween(currentStart, currentDue) + 1
         newStart = earliestStart
         newDue = addDays(earliestStart, duration - 1)
@@ -235,7 +209,6 @@ export function computeSchedule(
         newDue = addDays(currentDue, -pulled)
       }
     } else if (currentStart && !currentDue) {
-      // Start only: shift start if needed
       if (currentStart < earliestStart) {
         newStart = earliestStart
       } else if (daysSaved > 0) {
@@ -243,12 +216,10 @@ export function computeSchedule(
         newStart = addDays(currentStart, -pulled)
       }
     } else {
-      // Neither start nor due: set start
       newStart = earliestStart
     }
 
     if (newStart !== currentStart || newDue !== currentDue) {
-      // Update mutable maps for cascading
       startOf.set(id, newStart)
       dueOf.set(id, newDue)
       if (pulled > 0) daysSavedBy.set(id, pulled)

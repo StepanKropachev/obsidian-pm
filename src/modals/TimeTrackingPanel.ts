@@ -4,10 +4,6 @@ import { today } from '../dates'
 import { renderAddButton } from '../ui/composites/addButton'
 import { IconButton } from '../ui/primitives/IconButton'
 
-/**
- * Renders the time tracking section (estimate, log entries)
- * into the given container.
- */
 export function renderTimeTrackingPanel(container: HTMLElement, task: Task): void {
   if (task.type === 'milestone') return
 
@@ -18,7 +14,6 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
   const timeLabel = est > 0 ? `Time tracking (${logged}h / ${est}h)` : `Time tracking (${logged}h logged)`
   timeHeader.createEl('h4', { text: timeLabel, cls: 'pm-modal-section-title' })
 
-  // Estimate
   const estRow = timeSection.createDiv('pm-time-est-row')
   estRow.createSpan({ text: 'Estimate:', cls: 'pm-time-label' })
   const estInput = estRow.createEl('input', { type: 'number', cls: 'pm-prop-text pm-time-est-input' })
@@ -31,7 +26,6 @@ export function renderTimeTrackingPanel(container: HTMLElement, task: Task): voi
     task.timeEstimate = isNaN(v) || v <= 0 ? undefined : v
   })
 
-  // Log entries
   const logList = timeSection.createDiv('pm-time-log-list')
   const renderLogs = () => {
     logList.empty()

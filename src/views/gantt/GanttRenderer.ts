@@ -17,7 +17,7 @@ export interface RendererContext {
   cfg: TimelineCfg
   plugin: PMPlugin
   project: Project
-  /** Status definitions in effect for this project, computed once per render pass. */
+  /** Resolved once per render pass. */
   statuses: StatusConfig[]
   flatTasks: FlatTask[]
   drag: DragState
@@ -25,8 +25,6 @@ export interface RendererContext {
   onRefresh: () => Promise<void>
   cleanupFns: (() => void)[]
 }
-
-// ─── Grid lines ────────────────────────────────────────────────────────────
 
 export function renderGridLines(ctx: RendererContext, totalRows: number): void {
   const g = svgEl('g', { class: 'pm-gantt-grid' })
@@ -88,8 +86,6 @@ export function renderGridLines(ctx: RendererContext, totalRows: number): void {
   ctx.svgEl.appendChild(g)
 }
 
-// ─── Today line ────────────────────────────────────────────────────────────
-
 export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
   const x = dateToX(ctx.cfg, today())
   if (x < 0 || x > ctx.cfg.totalWidth) return
@@ -104,8 +100,7 @@ export function renderTodayLine(ctx: RendererContext, svgHeight: number): void {
     })
   )
 
-  // The diamond cap sits in the header band, so it rides the sticky header and
-  // stays visible while the rows scroll underneath.
+  // The cap sits in the header band, so it rides the sticky header as rows scroll under it.
   ctx.headerSvgEl.appendChild(
     svgEl('polygon', {
       points: `${x},${HEADER_HEIGHT - 16} ${x + 6},${HEADER_HEIGHT - 8} ${x},${HEADER_HEIGHT} ${x - 6},${HEADER_HEIGHT - 8}`,

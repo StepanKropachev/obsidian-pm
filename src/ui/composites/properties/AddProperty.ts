@@ -8,10 +8,7 @@ export interface HiddenProperty {
   icon: string
 }
 
-/**
- * Progressive-disclosure affordance: an "Add property" button that lists the currently hidden
- * (empty, rarely-used) properties in a popover and reveals the chosen one.
- */
+/** Lists the properties currently hidden for being empty, and reveals the chosen one. */
 export function renderAddProperty(
   container: HTMLElement,
   hidden: HiddenProperty[],

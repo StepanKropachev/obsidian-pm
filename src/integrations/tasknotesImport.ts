@@ -2,22 +2,22 @@ import type { Recurrence, Task } from '../types'
 import { makeTask } from '../types'
 import type { TaskNotesTaskInfo } from './tasknotes'
 
-/** One selected TaskNotes task with its link references already resolved to vault paths. */
+/** A selected TaskNotes task, its link references already resolved to vault paths. */
 export interface TaskNotesImportItem {
   path: string
   info: TaskNotesTaskInfo
-  /** Resolved `projects` link paths; the first one that is also being imported becomes the parent. */
+  /** The first one that is also being imported becomes the parent. */
   parentPaths: string[]
-  /** Resolved `blockedBy` paths; entries that are also being imported become dependencies. */
+  /** Entries that are also being imported become dependencies. */
   blockedByPaths: string[]
 }
 
 export interface TaskNotesImportOptions {
   defaultStatus: string
   defaultPriority: string
-  /** TaskNotes' task-identification tag, stripped from imported tags (usually "task"). */
+  /** TaskNotes' task-identification tag, stripped from imported tags. */
   taskTag: string
-  /** TaskNotes' archive tag, stripped from imported tags (usually "archived"). */
+  /** TaskNotes' archive tag, stripped from imported tags. */
   archiveTag: string
 }
 
@@ -28,7 +28,7 @@ const RRULE_INTERVALS: Record<string, Recurrence['interval']> = {
   YEARLY: 'yearly'
 }
 
-/** Map a simple RRULE (FREQ + optional INTERVAL) to our recurrence model; complex rules are dropped. */
+/** Handles FREQ with an optional INTERVAL. Anything more complex is dropped. */
 function mapRecurrence(rrule: string | undefined): Recurrence | undefined {
   const freq = rrule?.match(/FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/)
   if (!freq) return undefined
@@ -62,10 +62,8 @@ function mapItemToTask(item: TaskNotesImportItem, opts: TaskNotesImportOptions):
 }
 
 /**
- * Convert resolved TaskNotes tasks into a task forest: project links between
- * imported tasks become parent/child edges (first match wins, cycles break to
- * root), and blockedBy references between imported tasks become dependencies.
- * References to notes outside the import selection are dropped.
+ * Project links become parent/child edges (first match wins, cycles break to root) and
+ * blockedBy becomes dependencies. References outside the import selection are dropped.
  */
 export function buildImportForest(
   items: TaskNotesImportItem[],
@@ -80,8 +78,7 @@ export function buildImportForest(
   for (const item of items) {
     const candidate = item.parentPaths.find((p) => p !== item.path && byPath.has(p))
     if (!candidate) continue
-    // Walk the ancestor chain; adopting a parent whose ancestry includes this
-    // task would create a cycle, so such a task stays a root.
+    // Adopting a parent whose ancestry includes this task would close a cycle.
     let ancestor: string | undefined = candidate
     let cycle = false
     while (ancestor) {

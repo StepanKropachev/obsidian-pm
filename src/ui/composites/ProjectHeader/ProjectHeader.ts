@@ -31,12 +31,12 @@ export class ProjectHeader {
     this.render()
   }
 
-  /** Re-render after a filter or activeSavedViewId replacement (e.g., apply saved view, clear). */
+  /** Re-render after the filter or activeSavedViewId is replaced wholesale. */
   refresh(): void {
     this.render()
   }
 
-  /** In-place sync after the user mutated filter via the header (no full re-render). */
+  /** In-place sync after the header itself mutated the filter. */
   notifyMutation(): void {
     this.primaryRow?.refreshVolatile()
     this.syncFilterRowVisibility()

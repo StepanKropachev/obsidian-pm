@@ -24,7 +24,7 @@ export interface TaskNotesDependency {
   gap?: string
 }
 
-/** A TaskNotes task as returned by its runtime API, with field names already normalized by their field mapping. */
+/** A TaskNotes task from its runtime API, field names already normalized by their mapping. */
 export interface TaskNotesTaskInfo {
   path: string
   title: string
@@ -59,12 +59,12 @@ function getTaskNotesPlugin(app: App): { api?: unknown } | null {
   return plugin && typeof plugin === 'object' ? plugin : null
 }
 
-/** True when the TaskNotes plugin is installed and enabled, regardless of its version. */
+/** Installed and enabled, whatever its version. */
 export function isTaskNotesInstalled(app: App): boolean {
   return getTaskNotesPlugin(app) !== null
 }
 
-/** The TaskNotes runtime API, or null when the plugin is missing or predates API v1 (TaskNotes 4.10). */
+/** Null when the plugin is missing or predates API v1 (TaskNotes 4.10). */
 export function getTaskNotesApi(app: App): TaskNotesApi | null {
   const api = getTaskNotesPlugin(app)?.api as TaskNotesApi | undefined
   if (!api || api.apiVersion !== 1 || !api.hasCapability('catalog.read')) return null
@@ -79,10 +79,8 @@ interface PaletteUpsert<T> {
 }
 
 /**
- * Upsert one ordered TaskNotes palette into ours. Entries with a matching id are
- * patched in place; missing entries are inserted right after the last TaskNotes
- * entry we matched, so relative TaskNotes order carries over without disturbing
- * entries TaskNotes doesn't know.
+ * Patch matching ids in place and insert missing ones after the last match, so
+ * TaskNotes' relative order carries over without disturbing entries it doesn't know.
  */
 function upsertPalette<T extends { id: string }>(
   target: T[],
@@ -123,10 +121,7 @@ function countPaletteChanges<T extends { id: string }>(
   return { added, updated }
 }
 
-/**
- * Resolve a TaskNotes reference (a "[[wikilink]]" or a plain vault path) to a
- * vault file path, or null when it doesn't resolve.
- */
+/** Resolves a "[[wikilink]]" or plain vault path, or null when it doesn't resolve. */
 export function resolveTaskNotesRef(app: App, ref: string, sourcePath: string): string | null {
   const inner = ref.replace(/^\[\[/, '').replace(/\]\]$/, '').split('|')[0].split('#')[0].trim()
   if (!inner) return null
@@ -135,9 +130,8 @@ export function resolveTaskNotesRef(app: App, ref: string, sourcePath: string): 
 }
 
 /**
- * Add palette entries (appended at the end) for TaskNotes status/priority values
- * that imported tasks use but our settings don't define yet, so those tasks stay
- * visible in status-driven views. Returns how many entries were added.
+ * Append entries for TaskNotes values imported tasks use but our settings don't define,
+ * so those tasks stay visible in status-driven views. Returns how many were added.
  */
 export function ensurePaletteEntries(
   api: TaskNotesApi,

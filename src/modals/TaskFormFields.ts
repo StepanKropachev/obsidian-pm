@@ -42,9 +42,8 @@ const REPEAT_OPTIONS: SelectItem[] = [
 ]
 
 /**
- * Renders the compact property grid: core properties (type, status, priority, due, assignees,
- * tags) always show; rarely-used ones (progress, repeat, depends on) hide when empty behind
- * "Add property". Single-selects and dates re-render the form on change; multi-selects mutate
+ * The property grid. Core properties always show; the rest hide when empty behind "Add
+ * property". Single-selects and dates re-render the form on change; multi-selects mutate
  * the task in place and refresh their own chips.
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
@@ -52,7 +51,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   const { statuses, priorities } = plugin.store.configFor(project)
   const grid = container.createDiv('pm-prop-grid')
 
-  // Type
   renderPropRow(
     grid,
     'Type',
@@ -77,8 +75,8 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'shapes'
   )
 
-  // Parent task shares the type row: the picker shows only for subtasks; otherwise an empty
-  // cell holds the right column so switching the type never reflows the rest of the grid.
+  // The parent picker shares the type row and shows only for subtasks; an empty cell holds
+  // the column otherwise, so switching type never reflows the grid.
   if (task.type === 'subtask') {
     renderPropRow(
       grid,
@@ -109,7 +107,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     grid.createDiv()
   }
 
-  // Status
   renderPropRow(
     grid,
     'Status',
@@ -129,7 +126,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'circle-dot'
   )
 
-  // Priority
   renderPropRow(
     grid,
     'Priority',
@@ -154,7 +150,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'flag'
   )
 
-  // Due (Date for milestones)
   renderPropRow(
     grid,
     task.type === 'milestone' ? 'Date' : 'Due',
@@ -175,8 +170,8 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'calendar-clock'
   )
 
-  // Start shares the dates row with Due. Milestones have no start, so an empty cell holds the
-  // slot there so Assignees still leads the next row.
+  // Start shares the dates row with Due. Milestones have no start, so an empty cell holds
+  // the slot and Assignees still leads the next row.
   if (task.type !== 'milestone') {
     renderPropRow(
       grid,
@@ -200,7 +195,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     grid.createDiv()
   }
 
-  // Assignees
   renderPropRow(
     grid,
     'Assignees',
@@ -230,7 +224,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'users'
   )
 
-  // Completed (when complete or in a terminal status)
   if (task.completed || isTerminalStatus(task.status, statuses)) {
     renderPropRow(
       grid,
@@ -253,7 +246,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     )
   }
 
-  // Progress (extra; milestones have none)
   if (task.type !== 'milestone' && (task.progress > 0 || shownExtras.has('progress'))) {
     renderPropRow(
       grid,
@@ -277,7 +269,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     )
   }
 
-  // Repeat (extra)
   if (task.recurrence || shownExtras.has('repeat')) {
     renderPropRow(
       grid,
@@ -307,7 +298,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     )
   }
 
-  // Tags
   const tagsRow = renderPropRow(
     grid,
     'Tags',
@@ -339,7 +329,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   )
   tagsRow.addClass('pm-prop-row--wide')
 
-  // Depends on (extra)
   if (task.dependencies.length > 0 || shownExtras.has('depends')) {
     const allTasks = flattenTasks(project.tasks)
       .map((f) => f.task)
@@ -377,7 +366,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     depRow.addClass('pm-prop-row--wide')
   }
 
-  // Progressive disclosure for the remaining empty extras
   const hidden: HiddenProperty[] = []
   if (task.type !== 'milestone' && task.progress === 0 && !shownExtras.has('progress')) {
     hidden.push({ id: 'progress', label: 'Progress', icon: 'percent' })
@@ -396,7 +384,6 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     })
   }
 
-  // Custom fields
   if (project.customFields.length > 0) {
     const cfSection = container.createDiv('pm-modal-section')
     cfSection.createEl('h4', { text: 'Custom fields', cls: 'pm-modal-section-title' })

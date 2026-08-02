@@ -264,11 +264,9 @@ export function attachBarMove(
   }
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
 const HANDLE_W = 8
 
-/** Reposition label, handles, and progress overlay to match new bar x/width during resize. */
+/** Keeps the label, handles, and progress overlay on the bar while it resizes. */
 function repositionBarChildren(barGroup: SVGGElement, newX: number, newW: number): void {
   const label = barGroup.querySelector('.pm-gantt-bar-label')
   if (label) {

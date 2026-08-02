@@ -10,8 +10,7 @@
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
-  /* shadow-s matches Obsidian's native menu/dropdown shadow; shadow-l is modal-scale
-     and reads as an oversized drop on a small popover */
+  /* shadow-s matches Obsidian's native menus; shadow-l is oversized on a small popover. */
   box-shadow: var(--shadow-s);
 }
 
@@ -60,18 +59,14 @@
   }
 }
 
-/* The title is a borderless heading-style textarea. Core app.css gives every
-   textarea a hover/focus form-field background and a focus box-shadow ring
-   (textarea:hover and textarea:focus, 0,1,1) that outrank the bare-class
-   transparent base; the element-prefixed selectors cancel them so the title
-   never reveals an input box. */
+/* Core's textarea:hover/:focus outrank a bare class, so these element-prefixed
+   selectors are what keep the title from revealing an input box. */
 textarea.pm-te-title:hover,
 textarea.pm-te-title:focus {
   background: transparent;
   box-shadow: none;
 }
 
-/* Leading glyph (shared by inline triggers and popover rows) */
 .pm-glyph-icon {
   display: inline-flex;
   flex-shrink: 0;
@@ -90,9 +85,8 @@ textarea.pm-te-title:focus {
   background: var(--pm-glyph-color, var(--text-muted));
 }
 
-/* Inline property value control. The `button` prefix is required: Obsidian's core
-   `button:not(.clickable-icon)` rule outranks a bare class, so without it these
-   controls inherit the default grey button fill and inset shadow. */
+/* The `button` prefix is required: core's `button:not(.clickable-icon)` outranks a bare
+   class, and without it these inherit the default grey fill and inset shadow. */
 button.pm-prop-inline {
   display: inline-flex;
   align-items: center;
@@ -115,8 +109,7 @@ button.pm-prop-inline {
 .pm-prop-inline:hover {
   background: var(--background-modifier-hover);
 }
-/* Open state: while the trigger's popover is up it holds the hover fill plus a
-   hairline inset ring, so the active control reads as engaged. */
+/* While the trigger's popover is up, the control reads as engaged. */
 .pm-prop-inline[aria-expanded='true'] {
   background: var(--background-modifier-hover);
   box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
@@ -136,7 +129,6 @@ button.pm-prop-inline--empty {
   --icon-size: 13px;
 }
 
-/* Relative-due hint */
 .pm-due {
   font-size: var(--font-ui-smaller);
   font-weight: 500;
@@ -152,8 +144,7 @@ button.pm-prop-inline--empty {
   color: var(--text-muted);
 }
 
-/* Ghost add affordance (add property / add value). `button` prefix outranks core
-   button chrome (see pm-prop-inline). */
+/* `button` prefix outranks core button chrome, as in pm-prop-inline. */
 button.pm-prop-add {
   display: inline-flex;
   align-items: center;
@@ -177,7 +168,6 @@ button.pm-prop-add {
   margin: -1px 0;
 }
 
-/* Multi-value (chips + add) */
 .pm-prop-chips {
   display: inline-flex;
   flex-wrap: wrap;
@@ -187,8 +177,7 @@ button.pm-prop-add {
   display: none;
 }
 
-/* Assignees: a single trigger holding an overlapping avatar stack. Two classes beat the
-   element-prefixed .pm-prop-inline base (0,1,1) for the gap. */
+/* Two classes beat the element-prefixed .pm-prop-inline base for the gap. */
 .pm-prop-inline.pm-assignees-trigger {
   gap: 8px;
 }
@@ -199,9 +188,8 @@ button.pm-prop-add {
   color: var(--text-normal);
 }
 
-/* Depends on: a vertical list of id + title-link rows. Each row is a full-height
-   control like every other value, so the label lines up with the first one using
-   the same rule that aligns it to the pickers. An empty list reserves no space. */
+/* Each row is a full-height control like every other value, so the label lines up with
+   the first one. An empty list reserves no space. */
 .pm-prop-deps {
   display: flex;
   flex-direction: column;
@@ -237,7 +225,6 @@ button.pm-prop-add {
   color: var(--text-accent);
 }
 
-/* Popover contents */
 .pm-pop-list {
   display: flex;
   flex-direction: column;
@@ -298,8 +285,7 @@ button.pm-pop-item--danger {
   font-size: var(--font-ui-smaller);
   font-family: inherit;
 }
-/* The date input carries a type attribute, so Obsidian core adds a box-shadow ring on
-   focus that the attribute-less text inputs never get. Suppress it so both look the same. */
+/* A type attribute earns a focus ring from core that the text inputs never get. */
 input.pm-pop-field:focus {
   box-shadow: none;
   border-color: var(--background-modifier-border);
@@ -310,7 +296,6 @@ input.pm-pop-field:focus {
   margin-top: 6px;
 }
 
-/* Property-row label with leading icon */
 .pm-prop-label--with-icon {
   display: inline-flex;
   align-items: center;
@@ -323,19 +308,18 @@ input.pm-pop-field:focus {
   --icon-size: 15px;
 }
 
-/* Subtasks: heading with inline count + derived progress + inline add */
 .pm-subtasks-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
 }
-/* The heading is a flex item here, not inside .pm-modal-section-header, so it keeps the
-   section title's default bottom margin. Zero it so the header's own margin sets the spacing. */
+/* Outside .pm-modal-section-header the title keeps its default bottom margin; zero it
+   so the header's own margin sets the spacing. */
 .pm-subtasks-header .pm-modal-section-title {
   margin: 0;
 }
-/* The count lives inside the heading (Subtasks 1/4); keep it quiet next to the label. */
+/* The count sits inside the heading (Subtasks 1/4), so it stays quiet next to the label. */
 .pm-subtasks-count {
   margin-left: 2px;
   color: var(--text-faint);
@@ -364,31 +348,25 @@ input.pm-pop-field:focus {
   outline: none;
 }
 
-/* ── Task editor shell ──────────────────────────────────────────────────── */
 .pm-task-modal {
   padding: 0;
 }
 
-/* Obsidian's .modal insets its content with 16px of padding; drop it so the
-   header and footer backgrounds bleed to both modal edges (the body keeps its
-   own horizontal padding). overflow:hidden re-clips the bled bands to the
-   modal's rounded corners. */
+/* Dropping .modal's 16px inset lets the header and footer bleed to both edges; the
+   overflow:hidden re-clips those bands to the modal's rounded corners. */
 .pm-modal--task {
   padding: 0;
   overflow: hidden;
 }
 
-/* The editor draws its own close button in the header row (matching the design),
-   so suppress Obsidian's native corner close button to avoid two X's. */
+/* The editor draws its own close button, so the native corner one would be a second X. */
 .pm-modal--task .modal-close-button,
 .pm-modal--task .modal-header-button {
   display: none;
 }
 
-/* The editor renders its own header inside the content; Obsidian's empty native
-   .modal-header still carries a margin-bottom that pushed our header (and its
-   accent strip) ~12px below the modal's top edge. Drop it so the strip sits
-   flush against the top of the window. */
+/* The empty native .modal-header still carries a margin-bottom, which pushes our own
+   header and its accent strip off the top edge. */
 .pm-modal--task .modal-header {
   display: none;
 }
@@ -402,7 +380,7 @@ input.pm-pop-field:focus {
   background: var(--background-primary);
   border-bottom: 1px solid var(--background-modifier-border);
 }
-/* Priority-tinted accent strip pinned to the top of the header */
+/* Priority-tinted accent strip, pinned to the top of the header. */
 .pm-te-header::before {
   content: '';
   position: absolute;
@@ -464,10 +442,8 @@ input.pm-pop-field:focus {
   overflow-y: auto;
   padding: 20px 24px 8px;
 }
-/* The body sections (description, subtasks, time, custom fields) reuse the shared
-   .pm-modal-section, whose 24px horizontal padding would indent their content past
-   the title and property grid. Inside the editor they align to the body inset; their
-   full-width top borders still divide the sections. */
+/* .pm-modal-section's 24px horizontal padding would indent these past the title and
+   property grid. Their full-width top borders still divide the sections. */
 .pm-task-modal .pm-modal-section {
   padding-left: 0;
   padding-right: 0;
@@ -533,7 +509,6 @@ input.pm-pop-field:focus {
   --icon-size: 13px;
 }
 
-/* ── Compact property grid ──────────────────────────────────────────────── */
 .pm-prop-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -565,7 +540,6 @@ input.pm-pop-field:focus {
   }
 }
 
-/* Keyboard focus affordance for the custom inline controls */
 .pm-prop-inline:focus-visible,
 .pm-prop-add:focus-visible,
 .pm-pop-item:focus-visible {

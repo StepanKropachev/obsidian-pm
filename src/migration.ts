@@ -2,10 +2,7 @@ import { Notice } from 'obsidian'
 import type PMPlugin from './main'
 import { parseFrontmatter, isOldFormat } from './store/YamlParser'
 
-/**
- * Migrates old-format projects (tasks embedded in YAML frontmatter)
- * to new format (individual .md files per task).
- */
+/** Rewrites projects whose tasks are embedded in frontmatter as one file per task. */
 export async function migrateProjects(plugin: PMPlugin): Promise<void> {
   const folder = plugin.settings.projectsFolder
   const files = plugin.app.vault
@@ -21,13 +18,11 @@ export async function migrateProjects(plugin: PMPlugin): Promise<void> {
       if (!frontmatter || frontmatter['pm-project'] !== true) continue
       if (!isOldFormat(frontmatter)) continue
 
-      // This project needs migration
       const project = await plugin.store.loadProject(file)
       if (!project || project.tasks.length === 0) continue
 
       new Notice(`Migrating project: ${project.title}...`)
 
-      // saveProject will create individual task files
       await plugin.store.saveProject(project)
       migrated++
     } catch (e) {

@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian'
 
-/** Ghost "+ label" add button, the pm-prop-add pattern shared by every add row. */
+/** The ghost "+ label" shared by every add row. */
 export function renderAddButton(
   parent: HTMLElement,
   label: string,

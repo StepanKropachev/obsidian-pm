@@ -17,8 +17,6 @@ import { attachDragHandle, attachBarMove } from './GanttDragHandler'
 import { handleLinkDotClick } from './GanttLinkHandler'
 import type { RendererContext } from './GanttRenderer'
 
-// ─── Task bars ─────────────────────────────────────────────────────────────
-
 export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: number, ctx: RendererContext): void {
   const startDate = parsePlainDate(task.start)
   const endDate = parsePlainDate(task.due)
@@ -33,7 +31,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   const y = rowY + BAR_PADDING
   const height = ROW_HEIGHT - BAR_PADDING * 2
 
-  // Row hover background
   g.appendChild(
     svgEl('rect', {
       x: 0,
@@ -44,14 +41,12 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     })
   )
 
-  // Milestone → render diamond
   if (task.type === 'milestone') {
     renderMilestoneDiamond(g, task, row, color, ctx)
     return
   }
 
-  // Normal task bar. A task with end date E occupies the day E, so the bar
-  // right edge sits at the start of E+1.
+  // A task due on E occupies day E, so the bar's right edge sits at the start of E+1.
   const effectiveStart = startDate ?? endDate
   if (!effectiveStart) return
   const effectiveEnd = (endDate ?? effectiveStart).add({ days: 1 })
@@ -60,11 +55,9 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   const xEnd = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, effectiveEnd))
   const width = Math.max(8, xEnd - x)
 
-  // Group for bar + handles
   const barGroup = svgEl('g', { class: 'pm-gantt-bar-group' })
   g.appendChild(barGroup)
 
-  // Main bar — flat fill, no gradient/shadow/sheen
   const rect = svgEl('rect', {
     x,
     y,
@@ -78,7 +71,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   })
   barGroup.appendChild(rect)
 
-  // Completed portion — solid fill over the faint track so progress reads at a glance
   if (task.progress > 0) {
     const pw = (task.progress / 100) * width
     barGroup.appendChild(
@@ -96,7 +88,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     )
   }
 
-  // Recurrence indicator
   if (task.recurrence) {
     const icon = svgEl('text', {
       x: x + width + 4,
@@ -107,7 +98,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     barGroup.appendChild(icon)
   }
 
-  // Label inside bar
   if (width > 55) {
     const label = svgEl('text', {
       x: x + 8,
@@ -119,13 +109,11 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     barGroup.appendChild(label)
   }
 
-  // Tooltip
   const ttEl = svgEl('title', {})
   const assigneesStr = task.assignees.length ? `\nAssignees: ${task.assignees.join(', ')}` : ''
   ttEl.textContent = `${task.title}\n${statusConfig?.label ?? task.status} \u00b7 ${task.priority}\nStart: ${task.start || '\u2014'}  Due: ${task.due || '\u2014'}\nProgress: ${task.progress}%${assigneesStr}`
   rect.appendChild(ttEl)
 
-  // Drag handles
   const HANDLE_W = 8
   for (const side of ['left', 'right'] as const) {
     const hx = side === 'left' ? x : x + width - HANDLE_W
@@ -157,7 +145,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     barGroup.appendChild(handle)
   }
 
-  // Link dots (dependency connectors) — positioned outside bar edges
   const DOT_R = 4
   const DOT_GAP = 4
   for (const side of ['left', 'right'] as const) {
@@ -180,7 +167,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     barGroup.appendChild(dot)
   }
 
-  // Move whole bar by dragging (only when both dates exist)
   if (task.start && task.due) {
     const moveCleanup = attachBarMove(
       rect,
@@ -200,7 +186,6 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     rect.setAttribute('cursor', 'pointer')
   }
 
-  // Click to open modal (suppressed if drag occurred)
   rect.addEventListener('click', () => {
     if (ctx.drag.dragMoved) {
       ctx.drag.dragMoved = false
@@ -210,12 +195,9 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   })
 }
 
-// ─── Empty row click-to-set-dates ─────────────────────────────────────────
-
 function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx: RendererContext): void {
   const rowY = HEADER_HEIGHT + row * ROW_HEIGHT
 
-  // Invisible rect covering the full row — acts as click target
   const hitArea = svgEl('rect', {
     x: 0,
     y: rowY,
@@ -226,7 +208,6 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
     class: 'pm-gantt-empty-row-hit'
   })
 
-  // Hover preview bar (hidden until mouseover)
   const previewY = rowY + BAR_PADDING
   const previewH = ROW_HEIGHT - BAR_PADDING * 2
   const previewW = Math.max(ctx.cfg.dayWidth, 8)
@@ -248,7 +229,6 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
   const snapPoints = getSnapPoints(ctx.cfg)
   const snapThreshold = ctx.cfg.dayWidth * 0.4
 
-  // Track mouse to position the preview bar
   hitArea.addEventListener('mousemove', (e: MouseEvent) => {
     const svgRect = ctx.svgEl.getBoundingClientRect()
     const rawX = e.clientX - svgRect.left
@@ -261,7 +241,6 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
     preview.classList.add('pm-hidden')
   })
 
-  // Click to set start=due=clicked date and save
   hitArea.addEventListener(
     'click',
     safeAsync(async (e: MouseEvent) => {
@@ -282,13 +261,10 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
     })
   )
 
-  // Tooltip
   const tt = svgEl('title', {})
   tt.textContent = 'Click to set dates'
   hitArea.appendChild(tt)
 }
-
-// ─── Milestone diamond ────────────────────────────────────────────────────
 
 function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: string, ctx: RendererContext): void {
   const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
@@ -316,8 +292,6 @@ function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: 
     openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() })
   })
 }
-
-// ─── Milestone labels ─────────────────────────────────────────────────────
 
 export function renderMilestoneLabels(ctx: RendererContext): void {
   const milestones = ctx.flatTasks.filter((f) => f.task.type === 'milestone' && (f.task.due || f.task.start))
@@ -361,8 +335,6 @@ export function renderMilestoneLabels(ctx: RendererContext): void {
   ctx.svgEl.appendChild(linesG)
 }
 
-// ─── Dependency arrows ─────────────────────────────────────────────────────
-
 export function renderDependencyArrows(ctx: RendererContext): void {
   const indexMap = new Map<string, number>()
   ctx.flatTasks.forEach((f, i) => indexMap.set(f.task.id, i))
@@ -398,7 +370,6 @@ export function renderDependencyArrows(ctx: RendererContext): void {
     }
   }
 
-  // Arrowhead marker
   const defs = getOrCreateDefs(ctx.svgEl)
   const marker = svgEl('marker', {
     id: 'pm-arrowhead',
@@ -418,8 +389,6 @@ export function renderDependencyArrows(ctx: RendererContext): void {
 
   ctx.svgEl.appendChild(arrowGroup)
 }
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
 
 function getOrCreateDefs(el: SVGSVGElement): SVGDefsElement {
   return (

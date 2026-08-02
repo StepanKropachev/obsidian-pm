@@ -2,7 +2,7 @@ import { AbstractInputSuggest, App, Notice, getIconIds, setIcon } from 'obsidian
 import type { PriorityConfig, StatusConfig } from '../types'
 import { IconButton } from './primitives/IconButton'
 
-/** Suggests Lucide icon ids for the status/priority icon inputs. Typed emoji are kept as-is. */
+/** Typed emoji are kept as-is; only Lucide ids are suggested. */
 class IconSuggest extends AbstractInputSuggest<string> {
   protected getSuggestions(query: string): string[] {
     const q = query.trim().toLowerCase()
@@ -19,7 +19,7 @@ class IconSuggest extends AbstractInputSuggest<string> {
   }
 }
 
-/** Wire icon-name suggestions to an icon input; picking a suggestion saves through the input's change handler. */
+/** Picking a suggestion saves through the input's own change handler. */
 export function attachIconSuggest(app: App, input: HTMLInputElement): void {
   const suggest = new IconSuggest(app, input)
   suggest.onSelect((id) => {
@@ -29,7 +29,7 @@ export function attachIconSuggest(app: App, input: HTMLInputElement): void {
   })
 }
 
-/** Wire drag-to-reorder on a config row; on drop, moves the dragged item to this row's index. */
+/** On drop, moves the dragged item to this row's index. */
 export function wireRowDragReorder<T>(row: HTMLElement, index: number, items: T[], onChanged: () => void): void {
   row.createSpan({ text: '⠿', cls: 'pm-settings-drag-handle' })
   row.draggable = true
@@ -60,10 +60,7 @@ export interface PaletteEntry {
   icon: string
 }
 
-/**
- * The icon, label, and color inputs shared by the project modal's palette rows
- * and the plugin settings pages. Appends to `parent` in that order.
- */
+/** Appends the icon, label, and color inputs to `parent`, in that order. */
 export function renderPaletteFields(parent: HTMLElement, app: App, item: PaletteEntry, onChanged: () => void): void {
   const icon = parent.createEl('input', { type: 'text', value: item.icon })
   icon.addClass('pm-settings-status-icon')
@@ -88,7 +85,7 @@ export function renderPaletteFields(parent: HTMLElement, app: App, item: Palette
   })
 }
 
-/** The per-status Done checkbox, marking which statuses count as complete. */
+/** Marks which statuses count as complete. */
 export function renderStatusDoneToggle(parent: HTMLElement, status: StatusConfig, onChanged: () => void): void {
   const wrapper = parent.createEl('label', { cls: 'pm-settings-complete-toggle' })
   const checkbox = wrapper.createEl('input', { type: 'checkbox' })
@@ -102,9 +99,8 @@ export function renderStatusDoneToggle(parent: HTMLElement, status: StatusConfig
 
 interface PaletteListEditorOpts<T extends PaletteEntry> {
   app: App
-  /** The list to edit; mutated in place. */
   items: T[]
-  /** Called after every mutation (edit, reorder, delete) so the owner can persist. */
+  /** Called after every mutation, so the owner can persist. */
   onChanged: () => void
   /** Called after an entry is removed, e.g. to remap orphaned tasks. */
   onDeleted?: (deleted: T) => void
@@ -114,11 +110,7 @@ interface PaletteListEditorOpts<T extends PaletteEntry> {
   renderExtra?: (row: HTMLElement, item: T) => void
 }
 
-/**
- * The palette row editor (drag handle, icon with suggestions, label, color,
- * delete) shared by the status and priority lists in both the plugin settings
- * and the per-project overrides in the project modal.
- */
+/** Drag handle, icon with suggestions, label, color, delete. */
 function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement, opts: PaletteListEditorOpts<T>): void {
   const rerender = (): void => renderPaletteListEditor(container, opts)
   container.empty()
@@ -157,7 +149,7 @@ export interface StatusListEditorOpts {
   onDeleted?: (deleted: StatusConfig) => void
 }
 
-/** Status list editor: palette rows plus the per-status Done toggle. */
+/** Palette rows plus the per-status Done toggle. */
 export function renderStatusListEditor(container: HTMLElement, opts: StatusListEditorOpts): void {
   renderPaletteListEditor<StatusConfig>(container, {
     app: opts.app,

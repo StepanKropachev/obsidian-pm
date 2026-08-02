@@ -59,8 +59,7 @@ describe('wouldCreateCycle', () => {
   })
 
   it('returns true when from can already reach to via dependents', () => {
-    // b depends on a → there is a path a → b in scheduling direction.
-    // Adding "a depends on b" (edge b → a) would close the cycle.
+    // b depends on a, so adding "a depends on b" closes the cycle.
     const tasks = [task({ id: 'a' }), task({ id: 'b', dependencies: ['a'] })]
     expect(wouldCreateCycle(tasks, 'a', 'b')).toBe(true)
   })

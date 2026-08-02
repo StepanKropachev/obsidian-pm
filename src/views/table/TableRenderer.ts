@@ -21,18 +21,15 @@ export interface TableState {
   selectedTaskIds: Set<string>
   lastCheckedTaskId: string | null
   tableBody: HTMLElement | null
-  /** Scroll container (.pm-table-wrapper). Set by renderTable. */
   wrapper: HTMLElement | null
-  /** Display list after filter/sort/collapse. Source of truth for the virtual window and selection. */
+  /** Display list after filter/sort/collapse. Drives the virtual window and selection. */
   visibleRows: FlatTask[]
-  /** Row height in px. Starts as an estimate; calibrated once from the first painted row. */
+  /** An estimate until calibrated against the first painted row. */
   rowHeight: number
-  /** True once rowHeight has been measured from a real row. */
   heightCalibrated: boolean
-  /** Bounds of the currently rendered window into visibleRows. -1 forces a repaint. */
+  /** Bounds of the rendered window into visibleRows. -1 forces a repaint. */
   windowStart: number
   windowEnd: number
-  /** Re-renders the current virtual window. Wired by fillTableBody. */
   renderWindow: (() => void) | null
 }
 
@@ -40,9 +37,8 @@ export interface TableContext {
   container: HTMLElement
   project: Project
   plugin: PMPlugin
-  /** Status definitions in effect for this project, computed once per render pass. */
+  /** Resolved once per render pass. */
   statuses: StatusConfig[]
-  /** Priority definitions in effect for this project, computed once per render pass. */
   priorities: PriorityConfig[]
   state: TableState
   onRefresh: () => Promise<void>
@@ -59,10 +55,8 @@ export function renderTable(ctx: TableContext): void {
     scrollScheduled = true
     window.requestAnimationFrame(() => {
       scrollScheduled = false
-      // Repaint only when the visible window actually moved. Rebuilding the
-      // tbody can itself nudge scrollTop (clamping near the edges), which
-      // fires another scroll event — without this guard that feeds back into
-      // an endless repaint loop.
+      // Rebuilding the tbody nudges scrollTop near the edges, firing another scroll
+      // event; repainting only on a real move stops that feeding back forever.
       const { start, end } = computeWindow(ctx.state)
       if (start === ctx.state.windowStart && end === ctx.state.windowEnd) return
       ctx.state.renderWindow?.()
@@ -70,11 +64,9 @@ export function renderTable(ctx: TableContext): void {
   })
   const table = wrapper.createEl('table', { cls: 'pm-table' })
 
-  // Header
   const thead = table.createEl('thead')
   const hrow = thead.createEl('tr')
 
-  // Select-all checkbox
   const selectAllTh = hrow.createEl('th', { cls: 'pm-table-cell-select' })
   const selectAllCb = selectAllTh.createEl('input', { type: 'checkbox', cls: 'pm-select-all-checkbox' })
   selectAllCb.addEventListener('change', () => {
@@ -141,7 +133,7 @@ export function renderTable(ctx: TableContext): void {
     th.setCssStyles({ width: '120px' })
   }
 
-  // Actions column header (must be last)
+  // Actions column, which must stay last.
   const actionsTh = hrow.createEl('th')
   actionsTh.setCssStyles({ width: '40px' })
 
@@ -165,8 +157,7 @@ function fillTableBody(ctx: TableContext): void {
 
   const filteredIds = new Set(flat.map((f) => f.task.id))
 
-  // Pre-group by parentId once: O(N) tree walk instead of O(N^2).
-  // Orphans whose parent got filtered out get promoted to root.
+  // Group by parentId once, O(N), promoting orphans whose parent was filtered out.
   const childrenByParent = new Map<string | null, FlatTask[]>()
   for (const f of flat) {
     let bucket: string | null
@@ -202,7 +193,7 @@ function fillTableBody(ctx: TableContext): void {
   // When filtering, show all matches regardless of collapsed parent.
   ctx.state.visibleRows = hasActiveFilter ? sorted : sorted.filter((f) => f.visible)
   ctx.state.renderWindow = () => renderWindowRows(ctx)
-  // Data changed: always repaint, even if the window bounds happen to match.
+  // The data changed, so repaint even if the window bounds happen to match.
   ctx.state.windowStart = -1
   ctx.state.windowEnd = -1
   renderWindowRows(ctx)
@@ -211,7 +202,7 @@ function fillTableBody(ctx: TableContext): void {
 const ROW_OVERSCAN = 8
 export const ROW_HEIGHT_ESTIMATE = 36
 
-/** Compute the [start, end) slice of visibleRows that should be rendered for the current scroll position. */
+/** The [start, end) slice of visibleRows to render at the current scroll position. */
 function computeWindow(state: TableState): { start: number; end: number } {
   const wrapper = state.wrapper
   if (!wrapper) return { start: 0, end: state.visibleRows.length }
@@ -227,11 +218,7 @@ function computeWindow(state: TableState): { start: number; end: number } {
   return { start, end }
 }
 
-/**
- * Render only the rows inside the scroll viewport (plus overscan), bracketed
- * by spacer rows sized to keep the scrollbar honest. Render cost is
- * O(viewport), independent of project size.
- */
+/** Renders the viewport rows only, bracketed by spacers that keep the scrollbar honest. */
 function renderWindowRows(ctx: TableContext): void {
   const { state } = ctx
   const tbody = state.tableBody
@@ -250,16 +237,14 @@ function renderWindowRows(ctx: TableContext): void {
   }
   if (end < rows.length) spacerRow(tbody, colCount, (rows.length - end) * state.rowHeight)
 
-  // "Add task" row
   const addRow = tbody.createEl('tr', { cls: 'pm-table-add-row' })
   const addCell = addRow.createEl('td', { attr: { colspan: String(colCount) } })
   renderAddButton(addCell, 'Add task', () => {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() })
   })
 
-  // Calibrate the estimated row height against a real painted row, exactly
-  // once. Re-calibrating on every pass feeds back into the window math (row
-  // heights are not perfectly uniform) and can oscillate forever.
+  // Calibrate exactly once. Row heights are not perfectly uniform, so re-measuring
+  // every pass feeds back into the window math and oscillates.
   if (!state.heightCalibrated) {
     const first = tbody.querySelector('tr[data-task-id]')
     if (first instanceof HTMLElement && first.offsetHeight > 0) {
@@ -289,8 +274,6 @@ export function updateSelectCheckboxes(state: TableState): void {
   }
   updateSelectAllCheckbox(state)
 }
-
-// ─── Keyboard handling ──────────────────────────────────────────────────────
 
 export function handleTableKeyDown(e: KeyboardEvent, ctx: TableContext): void {
   const active = activeDocument.activeElement

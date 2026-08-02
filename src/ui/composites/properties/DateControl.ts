@@ -10,10 +10,7 @@ export interface DateControlOpts {
   hint?: { text: string; tone: DueTone } | null
 }
 
-/**
- * Inline date control: shows the formatted date plus an optional caller-supplied hint, opening a
- * popover with a native date input plus Today / Clear shortcuts. Backs Due, Start, and Completed.
- */
+/** Backs Due, Start, and Completed. */
 export function renderDateControl(opts: DateControlOpts): void {
   const has = !!opts.value
   const trigger = opts.container.createEl('button', { cls: 'pm-prop-inline' })
@@ -32,11 +29,9 @@ export function renderDateControl(opts: DateControlOpts): void {
       pop.close()
       return
     }
-    // The value to commit on close. A native date input fires `change` the moment its
-    // value is valid again, which for an already-set date means after the first edited
-    // segment — committing there would re-render the modal and yank focus to the title
-    // mid-edit. Instead the popover reports the final value once, when it closes (the
-    // user clicks away, presses Enter, or picks Today/Clear), so manual editing is free.
+    // A native date input fires `change` as soon as its value is valid again, which for
+    // an already-set date is after the first edited segment; committing there would
+    // re-render the modal and yank focus mid-edit. So the value is held until close.
     let next: string | null = null
     pop = new Popover({
       anchor: trigger,

@@ -9,37 +9,29 @@ export interface ImportNoteOptions {
 }
 
 /**
- * The task persistence surface views, modals, and commands program against
- * (`plugin.store`). ProjectStore is the default implementation over pm-task
- * markdown files; alternative backends (e.g. TaskNotes-managed notes) implement
- * the same contract.
+ * The persistence surface views, modals, and commands program against (`plugin.store`).
+ * ProjectStore implements it over pm-task markdown files; other backends can too.
  */
 export interface TaskSource {
   registerVaultSync(plugin: Plugin): void
 
   /**
-   * Subscribe to project changes, whoever made them: a mutation from any view,
-   * or a reload after an external edit. Returns the unsubscribe function.
-   * This is how views learn they need to re-render.
+   * How views learn they need to re-render, whoever caused the change. Returns the
+   * unsubscribe function.
    */
   onProjectChanged(handler: (path: string) => void): () => void
 
   ensureFolder(folderPath: string): Promise<void>
 
   /**
-   * The configuration in effect for a project (statuses, priorities, view and
-   * scheduling behavior), with the project's overrides applied over the
-   * source's defaults. Views and modals must read palettes through this
-   * instead of the global settings.
+   * The project's overrides applied over the source's defaults. Views and modals must
+   * read palettes through this, never from the global settings.
    */
   configFor(project: Project): ResolvedProjectConfig
 
   loadAllProjects(folder: string): Promise<Project[]>
 
-  /**
-   * The live project for a file. Every caller gets the same instance for a
-   * given path, for as long as the project exists.
-   */
+  /** Every caller gets the same instance for a path, for as long as the project exists. */
   loadProject(file: TFile): Promise<Project | null>
   loadTaskBody(task: Task): Promise<void>
   loadProjectBody(project: Project): Promise<void>

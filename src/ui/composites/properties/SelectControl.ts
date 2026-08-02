@@ -13,11 +13,7 @@ export interface SelectControlOpts {
   width?: number
 }
 
-/**
- * Single-select inline control: a quiet trigger showing the current value that opens a
- * popover option list, optionally filtered by a search box. Backs Status, Priority, Type,
- * Repeat, and Parent task.
- */
+/** Backs Status, Priority, Type, Repeat, and Parent task. */
 export function renderSelectControl(opts: SelectControlOpts): void {
   const selected = opts.options.find((o) => o.id === opts.value) ?? null
   const trigger = opts.container.createEl('button', { cls: 'pm-prop-inline' })

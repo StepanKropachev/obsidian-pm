@@ -1,13 +1,9 @@
-/* ---------------------------------------------------------------------------
-   TABLE VIEW
-   --------------------------------------------------------------------------- */
 .pm-table-view {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-/* -- Bulk Action Bar ------------------------------------------------------- */
 .pm-bulk-bar {
   display: flex;
   align-items: center;
@@ -46,8 +42,7 @@
   padding-right: 4px;
 }
 
-/* -- Capsule base shared by ChipButton and Chip ------------------------------- */
-/* `button` prefix on the chip-btn selectors outranks core button chrome (see pm-prop-add) */
+/* `button` prefix outranks core button chrome, as in pm-prop-add. */
 button.pm-chip-btn,
 .pm-chip {
   display: inline-flex;
@@ -58,9 +53,7 @@ button.pm-chip-btn,
   white-space: nowrap;
 }
 
-/* -- ChipButton ---------------------------------------------------------------- */
-/* A compact native button: the etched input-shadow chrome comes from app.css.
-   Active carries the plugin's 12% accent-tint selection signature. */
+/* The etched input-shadow chrome comes from app.css. */
 button.pm-chip-btn {
   height: auto;
   padding: 4px 10px;
@@ -81,7 +74,6 @@ button.pm-chip-btn--active:hover {
   background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
 }
 
-/* -- Selected Row ----------------------------------------------------------- */
 .pm-table-row--selected {
   background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
   box-shadow: inset 3px 0 0 var(--interactive-accent);
@@ -217,7 +209,6 @@ button.pm-chip-btn--active:hover {
   margin-top: 2px;
 }
 
-/* -- Avatar ------------------------------------------------------------- */
 .pm-avatar {
   display: inline-flex;
   align-items: center;
@@ -249,7 +240,6 @@ button.pm-chip-btn--active:hover {
   margin-left: -6px;
 }
 
-/* -- ProgressBar -------------------------------------------------------- */
 .pm-progress {
   display: flex;
   align-items: center;
@@ -277,7 +267,6 @@ button.pm-chip-btn--active:hover {
   min-width: 28px;
 }
 
-/* -- IconButton ---------------------------------------------------------- */
 .pm-icon-btn--hover-only {
   opacity: 0;
   transition: opacity 0.15s;
@@ -291,7 +280,6 @@ button.pm-chip-btn--active:hover {
   opacity: 1;
 }
 
-/* -- Chip (unified label primitive: status, priority, tags, due, badges) -- */
 .pm-chip {
   --pm-chip-color: var(--text-muted);
   gap: 6px;
@@ -323,8 +311,7 @@ button.pm-chip-btn--active:hover {
 .pm-chip--tag .pm-chip-dot {
   width: 5px;
   height: 5px;
-  /* Drop the dot onto the text's x-height center; the tall line-height otherwise
-     centers it above the visual weight of the label. */
+  /* The tall line-height would otherwise center the dot above the label's visual weight. */
   position: relative;
   top: 0.75px;
 }
@@ -374,8 +361,7 @@ button.pm-chip-rm {
   color: inherit;
   padding: 0;
   margin: 0;
-  /* reset Obsidian core's `button { height: var(--input-height) }`, which otherwise
-     forces a ~30px box and stretches the whole chip */
+  /* Core's `button { height: var(--input-height) }` would stretch the whole chip. */
   height: auto;
   box-shadow: none;
   opacity: 0.6;
@@ -393,13 +379,12 @@ button.pm-chip-rm {
   font-style: italic;
 }
 
-/* Virtual-scroll spacer rows: height is set inline by the renderer */
+/* Virtual-scroll spacers; the renderer sets their height inline. */
 .pm-table-spacer td {
   padding: 0;
   border: 0;
 }
 
-/* Add task row */
 .pm-table-add-row td {
   padding: 8px 10px;
 }

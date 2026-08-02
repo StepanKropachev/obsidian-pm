@@ -1,15 +1,11 @@
 import { App, prepareFuzzySearch, TFile } from 'obsidian'
 
-/** File-type metadata for suggest dropdown. */
 const FILE_TYPE_LABELS: Record<string, string> = {
   canvas: 'Canvas',
   base: 'Database'
 }
 
-/**
- * Inline note-link suggest dropdown for textareas.
- * Triggers on `[[` and shows matching vault files (notes, canvases, databases).
- */
+/** Triggers on `[[` in a textarea and lists matching vault files. */
 export class NoteLinkSuggest {
   private container: HTMLDivElement
   private mirror: HTMLDivElement
@@ -36,7 +32,6 @@ export class NoteLinkSuggest {
     this.textarea.addEventListener('scroll', this.onScroll)
   }
 
-  /** Must be called to attach the dropdown to the DOM. */
   attach(parent: HTMLElement): void {
     parent.appendChild(this.container)
   }
@@ -49,8 +44,6 @@ export class NoteLinkSuggest {
     this.container.remove()
     this.mirror.remove()
   }
-
-  // ── Event handlers ──────────────────────────────────────────────────────
 
   private onInput = (): void => {
     const pos = this.textarea.selectionStart
@@ -102,7 +95,7 @@ export class NoteLinkSuggest {
   }
 
   private onBlur = (): void => {
-    // Delay to allow click on suggestion item
+    // Delayed so a click on a suggestion still lands.
     window.setTimeout(() => this.hide(), 150)
   }
 
@@ -110,14 +103,11 @@ export class NoteLinkSuggest {
     if (this.open) this.position()
   }
 
-  // ── Core logic ──────────────────────────────────────────────────────────
-
   private updateItems(): void {
     const files = this.app.vault
       .getFiles()
       .filter((f) => /\.(md|canvas|base)$/.test(f.extension ? `.${f.extension}` : f.path))
     if (!this.query) {
-      // Show recently modified files when no query
       this.items = files.sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 8)
     } else {
       const fuzzy = prepareFuzzySearch(this.query)
@@ -126,8 +116,8 @@ export class NoteLinkSuggest {
       for (const file of files) {
         const nameResult = fuzzy(file.basename)
         if (!nameResult) continue
-        // Boost exact substring matches and penalise long names
-        // so "Week 15" beats "gantt-week-label--date-display..."
+        // Boost substring hits and penalise long names, so "Week 15" beats
+        // "gantt-week-label--date-display...".
         let score = nameResult.score
         const nameLower = file.basename.toLowerCase()
         if (nameLower.startsWith(queryLower)) score -= 10
@@ -170,10 +160,7 @@ export class NoteLinkSuggest {
     this.triggerStart = -1
   }
 
-  // ── Positioning ─────────────────────────────────────────────────────────
-
   private position(): void {
-    // Sync mirror styles with textarea
     const style = activeWindow.getComputedStyle(this.textarea)
     const props = [
       'fontFamily',
@@ -202,7 +189,7 @@ export class NoteLinkSuggest {
     }
     this.mirror.style.width = this.textarea.clientWidth + 'px'
 
-    // Copy text up to cursor, add a marker span
+    // A marker span at the cursor gives the caret's pixel position.
     const textToCursor = this.textarea.value.slice(0, this.textarea.selectionStart)
     this.mirror.textContent = ''
     const textNode = activeDocument.createTextNode(textToCursor)
@@ -215,7 +202,6 @@ export class NoteLinkSuggest {
     const markerLeft = marker.offsetLeft
     const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.4
 
-    // Position relative to textarea
     const taRect = this.textarea.getBoundingClientRect()
     const parentRect = this.container.offsetParent
       ? (this.container.offsetParent as HTMLElement).getBoundingClientRect()
@@ -227,15 +213,13 @@ export class NoteLinkSuggest {
     this.container.style.top = top + 'px'
     this.container.style.left = left + 'px'
 
-    // Clamp to not overflow right side of modal
+    // Clamp so the dropdown doesn't overflow the modal's right edge.
     const parentWidth = (this.container.offsetParent as HTMLElement)?.clientWidth ?? 600
     const maxLeft = parentWidth - 280
     if (left > maxLeft) {
       this.container.style.left = Math.max(0, maxLeft) + 'px'
     }
   }
-
-  // ── Rendering ───────────────────────────────────────────────────────────
 
   private renderItems(): void {
     this.container.empty()
@@ -262,7 +246,6 @@ export class NoteLinkSuggest {
       })
     })
 
-    // Scroll active item into view
     const activeEl = this.container.querySelector('.pm-note-suggest-item--active')
     if (activeEl) activeEl.scrollIntoView({ block: 'nearest' })
   }

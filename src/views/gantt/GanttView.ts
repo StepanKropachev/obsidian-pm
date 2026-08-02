@@ -117,7 +117,6 @@ export class GanttView implements SubView {
   private renderGantt(): void {
     const wrapper = this.container.createDiv('pm-gantt-wrapper')
 
-    // Left panel: task labels
     const leftPanel = wrapper.createDiv('pm-gantt-left')
     leftPanel.style.width = `${this.labelWidth}px`
     leftPanel.style.minWidth = `${this.labelWidth}px`
@@ -126,7 +125,6 @@ export class GanttView implements SubView {
     leftHeader.createSpan({ text: 'Task', cls: 'pm-gantt-left-header-label' })
     const leftBody = leftPanel.createDiv('pm-gantt-left-body')
 
-    // Resize handle
     const resizeHandle = wrapper.createDiv('pm-gantt-resize-handle')
     let resizing = false
     let startX = 0
@@ -157,13 +155,11 @@ export class GanttView implements SubView {
       activeDocument.removeEventListener('mouseup', onMouseUp)
     })
 
-    // Right panel: timeline
     const rightPanel = wrapper.createDiv('pm-gantt-right')
     this.scrollEl = rightPanel
 
-    // Timeline header lives in its own SVG inside a sticky wrapper. It shares the
-    // right panel's horizontal scroll (so it tracks the body left/right) but pins to
-    // the top on vertical scroll, keeping the time period visible while rows scroll.
+    // The header has its own SVG in a sticky wrapper: it shares the body's horizontal
+    // scroll but pins to the top, so the time period stays visible as rows scroll.
     const headerSticky = rightPanel.createDiv('pm-gantt-header-sticky')
     headerSticky.style.width = `${this.cfg.totalWidth}px`
     headerSticky.style.height = `${HEADER_HEIGHT}px`
@@ -189,10 +185,8 @@ export class GanttView implements SubView {
     })
     svgContainer.appendChild(this.svgEl)
 
-    // Escape to cancel linking mode; Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z
-    // or Ctrl/Cmd+Y to redo the last drag. Only fire when the gantt view's
-    // leaf is the active workspace leaf, so we don't hijack undo/redo while
-    // the user is editing an unrelated note.
+    // Gated on this leaf being the active one, so undo/redo isn't hijacked while the
+    // user is editing an unrelated note.
     const isGanttActive = (): boolean => {
       const leafEl = this.container.closest('.workspace-leaf')
       return leafEl?.classList.contains('mod-active') ?? false
@@ -225,8 +219,7 @@ export class GanttView implements SubView {
     renderDependencyArrows(ctx)
     renderMilestoneLabels(ctx)
 
-    // Forward wheel events from left panel to the scroll container
-    // (left panel has overflow:hidden, so wheel events are swallowed otherwise)
+    // The left panel is overflow:hidden, so its wheel events would be swallowed.
     const onLeftWheel = (e: WheelEvent) => {
       rightPanel.scrollTop += e.deltaY
       rightPanel.scrollLeft += e.deltaX
@@ -235,16 +228,14 @@ export class GanttView implements SubView {
     leftPanel.addEventListener('wheel', onLeftWheel, { passive: false })
     this.cleanupFns.push(() => leftPanel.removeEventListener('wheel', onLeftWheel))
 
-    // Add task button
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row')
     addRow.style.height = `${ROW_HEIGHT}px`
     renderAddButton(addRow, 'Add task', () => {
       openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() })
     })
 
-    // Spacer compensates for horizontal scrollbar in the right panel.
-    // The scrollbar reduces the right panel's viewport height, letting it
-    // scroll further than the left body. Without this, rows desync at the bottom.
+    // The right panel's horizontal scrollbar eats into its viewport height, letting it
+    // scroll further than the left body; without this spacer the rows desync at the bottom.
     const leftSpacer = leftBody.createDiv()
     leftSpacer.addClass('pm-no-shrink')
     const syncSpacer = () => {
@@ -252,7 +243,6 @@ export class GanttView implements SubView {
       leftSpacer.style.height = `${hScrollbarH}px`
     }
 
-    // Sync vertical scroll: right → left
     rightPanel.addEventListener('scroll', () => {
       syncSpacer()
       leftBody.scrollTop = rightPanel.scrollTop

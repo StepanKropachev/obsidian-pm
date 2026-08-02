@@ -1,6 +1,5 @@
-/* Layout for the dev-only styleguide gallery (src/views/styleguide/StyleguideView.ts).
-   The view is compiled out of prod builds, but these rules still ship as dead CSS
-   since Obsidian only loads one styles.css. */
+/* The view is compiled out of prod builds, but these rules still ship as dead CSS:
+   Obsidian only loads one styles.css. */
 
 .pm-styleguide {
   padding: var(--size-4-4);
@@ -38,7 +37,7 @@
   gap: var(--size-4-2);
 }
 
-/* These normally get their width from a table cell or kanban column; give them one here. */
+/* These normally take their width from a table cell or kanban column. */
 .pm-sg-row .pm-progress {
   width: 160px;
 }

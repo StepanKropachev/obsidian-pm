@@ -14,7 +14,7 @@ export interface GlyphSpec {
   icon?: string
 }
 
-/** Renders a leading glyph for an option: a tinted named icon or emoji text if `icon` is set, else a colored dot. */
+/** A tinted icon or emoji when `icon` is set, otherwise a colored dot. */
 export function renderGlyph(parent: HTMLElement, spec: GlyphSpec): void {
   if (spec.icon && isIconName(spec.icon)) {
     const ic = parent.createSpan({ cls: 'pm-glyph-icon' })
@@ -32,13 +32,12 @@ export interface OptionRow extends GlyphSpec {
   label: string
   selected?: boolean
   accent?: boolean
-  /** Render a leading avatar (initials from this name) instead of a glyph. Used by the
-      assignee picker. */
+  /** Draws initials from this name instead of a glyph. Used by the assignee picker. */
   avatar?: string
   onPick: () => void
 }
 
-/** Renders one selectable row (glyph/avatar + label + optional check) into a popover list. */
+/** One selectable row in a popover list. */
 export function renderOptionRow(parent: HTMLElement, row: OptionRow): HTMLElement {
   const item = parent.createEl('button', { cls: 'pm-pop-item' })
   if (row.accent) item.addClass('pm-pop-item--accent')

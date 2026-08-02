@@ -43,10 +43,9 @@ const PEOPLE = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Margaret Hamilto
 const WIKILINK_PERSON = '[[People/Alan Turing|Alan]]'
 
 /**
- * Dev-only gallery of every primitive and key composite in all their variants,
- * rendered in a real Obsidian pane so the CSS cascade (app.css included) is the
- * one users actually get. Only compiled in when `__STYLEGUIDE__` is true.
- * Catalog: docs/styleguide.md. Mock data only, no store or vault access.
+ * Gallery of every primitive and composite variant, in a real pane so the CSS cascade is
+ * the one users get. Mock data only. Compiled in only when `__STYLEGUIDE__` is true;
+ * the catalog is docs/styleguide.md.
  */
 export class StyleguideView extends ItemView {
   constructor(leaf: WorkspaceLeaf) {
@@ -413,8 +412,7 @@ export function registerStyleguide(plugin: PMPlugin): void {
     id: 'open-styleguide',
     name: 'Open styleguide gallery',
     callback: safeAsync(async () => {
-      // Opened directly rather than via plugin.router so no styleguide code
-      // ends up in prod builds.
+      // Opened directly, not via plugin.router, so no styleguide code reaches prod builds.
       const leaf = plugin.app.workspace.getLeaf('tab')
       await leaf.setViewState({ type: PM_STYLEGUIDE_VIEW_TYPE, state: {} })
       await plugin.app.workspace.revealLeaf(leaf)

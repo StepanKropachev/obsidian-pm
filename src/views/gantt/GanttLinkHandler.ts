@@ -14,9 +14,7 @@ export function makeLinkState(): LinkState {
   return { active: false, taskId: null, side: null, dotEl: null }
 }
 
-/**
- * Cancel linking mode: reset state and remove highlight from the active dot.
- */
+/** Resets the state and clears the highlight on the active dot. */
 export function cancelLink(link: LinkState): void {
   if (link.dotEl) link.dotEl.classList.remove('pm-gantt-link-dot--active')
   link.active = false
@@ -25,10 +23,7 @@ export function cancelLink(link: LinkState): void {
   link.dotEl = null
 }
 
-/**
- * Handle a click on a link dot. Returns true if a dependency was created
- * (caller should refresh).
- */
+/** Returns true if a dependency was created, meaning the caller should refresh. */
 export function handleLinkDotClick(
   dotEl: SVGElement,
   taskId: string,
@@ -38,7 +33,6 @@ export function handleLinkDotClick(
   project: Project,
   onRefresh: () => Promise<void>
 ): void {
-  // Nothing active yet — start linking
   if (!link.active) {
     link.active = true
     link.taskId = taskId
@@ -48,7 +42,6 @@ export function handleLinkDotClick(
     return
   }
 
-  // Same task — cancel
   if (link.taskId === taskId) {
     cancelLink(link)
     return
@@ -60,20 +53,18 @@ export function handleLinkDotClick(
     return
   }
 
-  // Same side — invalid (need one left + one right)
   if (link.side === side) {
     new Notice('Connect a right dot (output) to a left dot (input).')
     return
   }
 
-  // Determine predecessor (right dot) and successor (left dot)
-  // Finish-to-start: successor.dependencies includes predecessor.id
+  // Finish-to-start: the right dot is the predecessor, and the successor (left dot)
+  // is the one that carries the dependency.
   const predecessorId = side === 'right' ? taskId : otherTaskId
   const successorId = side === 'left' ? taskId : otherTaskId
 
   cancelLink(link)
 
-  // Check for duplicate
   const allTasks = flattenAll(project.tasks)
   const successor = allTasks.find((t) => t.id === successorId)
   if (successor?.dependencies?.includes(predecessorId)) {
@@ -81,14 +72,13 @@ export function handleLinkDotClick(
     return
   }
 
-  // Check for reverse (would create cycle)
+  // The reverse edge would close a cycle.
   const predecessor = allTasks.find((t) => t.id === predecessorId)
   if (predecessor?.dependencies?.includes(successorId)) {
     new Notice('Reverse dependency exists — would create a cycle.')
     return
   }
 
-  // Save
   const deps = [...(successor?.dependencies ?? []), predecessorId]
   void safeAsync(async () => {
     try {
@@ -103,7 +93,7 @@ export function handleLinkDotClick(
   })()
 }
 
-// Simple flatten helper (avoids circular import with TaskTreeOps)
+// Local copy: importing TaskTreeOps here would be circular.
 function flattenAll(tasks: Task[]): Task[] {
   const result: Task[] = []
   const walk = (list: Task[]) => {

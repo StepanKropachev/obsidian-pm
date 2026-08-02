@@ -48,11 +48,9 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
   let startDate = dates.reduce((min, d) => (Temporal.PlainDate.compare(d, min) < 0 ? d : min), dates[0])
   let endDate = dates.reduce((max, d) => (Temporal.PlainDate.compare(d, max) > 0 ? d : max), dates[0])
 
-  // Add padding
   startDate = startDate.subtract({ days: 7 })
   endDate = endDate.add({ days: 14 })
 
-  // Enforce minimum visible range based on granularity
   const currentSpan = endDate.since(startDate, { largestUnit: 'days' }).days
   if (currentSpan < MIN_DAYS[granularity]) {
     const extra = Math.ceil((MIN_DAYS[granularity] - currentSpan) / 2)
@@ -60,7 +58,6 @@ export function buildTimelineConfig(tasks: Task[], granularity: GanttGranularity
     endDate = endDate.add({ days: extra })
   }
 
-  // Snap to month start for cleaner headers
   if (granularity === 'week' || granularity === 'month' || granularity === 'quarter') {
     startDate = startDate.with({ day: 1 })
   }
@@ -86,11 +83,8 @@ export function xToDate(cfg: TimelineCfg, x: number): Temporal.PlainDate {
 }
 
 /**
- * Returns snap-point X positions for the given granularity.
- * - day: every day border
- * - week: every Monday + mid-week (Thursday)
- * - month: 1st, ~8th, ~15th, ~22nd of each month
- * - quarter: 1st of each month
+ * Snap-point X positions. day: every day border. week: Monday and Thursday.
+ * month: 1st, ~8th, ~15th, ~22nd. quarter: the 1st of each month.
  */
 export function getSnapPoints(cfg: TimelineCfg): number[] {
   const points: number[] = []
@@ -103,7 +97,7 @@ export function getSnapPoints(cfg: TimelineCfg): number[] {
     if (granularity === 'day') {
       points.push(x)
     } else if (granularity === 'week') {
-      // Temporal dayOfWeek: Mon=1..Sun=7
+      // Temporal dayOfWeek runs Mon=1 to Sun=7.
       if (d.dayOfWeek === 1 || d.dayOfWeek === 4) points.push(x)
     } else if (granularity === 'month') {
       if (d.day === 1 || d.day === 8 || d.day === 15 || d.day === 22) points.push(x)

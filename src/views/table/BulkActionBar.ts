@@ -27,10 +27,7 @@ export interface BulkActionBarOpts {
   onAction: (action: BulkAction) => void
 }
 
-/**
- * Render or update the bulk action bar.
- * Shows when selectedTaskIds.size > 0, hidden otherwise.
- */
+/** Shown only while something is selected. */
 export function renderBulkActionBar(opts: BulkActionBarOpts): void {
   const { ctx, onAction } = opts
   const existing = ctx.container.querySelector('.pm-bulk-bar')
@@ -40,7 +37,6 @@ export function renderBulkActionBar(opts: BulkActionBarOpts): void {
     return
   }
 
-  // Reuse existing bar or create a new one
   const bar = existing ?? createBar(ctx.container)
   updateBarContent(bar as HTMLElement, ctx, onAction)
 }
@@ -55,11 +51,9 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   bar.empty()
   const count = ctx.state.selectedTaskIds.size
 
-  // Left section: count + actions
   const left = bar.createDiv('pm-bulk-bar-left')
   left.createSpan({ text: `${count} selected`, cls: 'pm-bulk-bar-count' })
 
-  // Status button
   new ButtonComponent(left).setButtonText('Set status').onClick((e) => {
     const menu = new Menu()
     for (const s of ctx.statuses) {
@@ -70,7 +64,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Priority button
   new ButtonComponent(left).setButtonText('Set priority').onClick((e) => {
     const menu = new Menu()
     for (const p of ctx.priorities) {
@@ -83,7 +76,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Assignee button
   new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
     const allMembers = collectAllAssignees(ctx.project.tasks, [
@@ -107,7 +99,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Tag button
   new ButtonComponent(left).setButtonText('Set tag').onClick((e) => {
     const menu = new Menu()
     const allTags = collectAllTags(ctx.project.tasks)
@@ -126,7 +117,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Due Date button
   new ButtonComponent(left).setButtonText('Set due date').onClick((e) => {
     const menu = new Menu()
     const now = today()
@@ -163,7 +153,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Progress button
   new ButtonComponent(left).setButtonText('Set progress').onClick((e) => {
     const menu = new Menu()
     for (const pct of [0, 25, 50, 75, 100]) {
@@ -172,10 +161,9 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  // Set parent / Remove parent buttons
   new ButtonComponent(left).setButtonText('Set parent').onClick(() => {
     const selectedIdSet = new Set(ctx.state.selectedTaskIds)
-    // Collect all descendants of selected tasks to prevent circular refs
+    // A selected task's own descendants can't become its parent.
     const excludedIds = new Set<string>(selectedIdSet)
     for (const id of selectedIdSet) {
       const task = findTaskById(ctx.project, id)
@@ -196,7 +184,6 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Remove parent').onClick(() => onAction({ type: 'remove-parent' }))
 
-  // Archive / Unarchive button — show based on selected tasks' state
   const selectedIds = [...ctx.state.selectedTaskIds]
   const selectedTasks = selectedIds.map((id) => findTaskById(ctx.project, id)).filter(Boolean) as Task[]
   const hasArchived = selectedTasks.some((t) => t.archived)
@@ -209,13 +196,11 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     new ButtonComponent(left).setButtonText('Unarchive').onClick(() => onAction({ type: 'unarchive' }))
   }
 
-  // Delete button
   new ButtonComponent(left)
     .setButtonText('Delete')
     .setDestructive()
     .onClick(() => onAction({ type: 'delete' }))
 
-  // Right section: clear selection
   const right = bar.createDiv('pm-bulk-bar-right')
   new ExtraButtonComponent(right)
     .setIcon('x')
