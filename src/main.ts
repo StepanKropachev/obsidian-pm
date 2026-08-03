@@ -19,8 +19,8 @@ export default class PMPlugin extends Plugin {
   store!: TaskSource
   notifier!: Notifier
   router!: PMViewRouter
-  /** Path deliberately sent to the markdown editor, so the swap lets it through once. */
-  private markdownEscapeHatch: string | null = null
+  /** Paths deliberately sent to the markdown editor, which the swap then leaves alone. */
+  private markdownEscapes = new Set<string>()
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
   redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
 
@@ -178,26 +178,34 @@ export default class PMPlugin extends Plugin {
     this.notifier.stop()
   }
 
-  /** Opens a task note in Obsidian's own editor, letting it past the swap once. */
+  /** Opens a task note in Obsidian's own editor, where the swap leaves it alone. */
   async openAsMarkdown(path: string): Promise<void> {
-    this.markdownEscapeHatch = path
+    this.markdownEscapes.add(path)
     await this.app.workspace.openLinkText(path, '', true)
   }
 
   private registerTaskNoteSwap(): void {
-    this.registerEvent(
-      this.app.workspace.on('file-open', (file) => {
-        if (!file || this.settings.taskEditorSurface !== 'tab') return
-        if (this.markdownEscapeHatch === file.path) {
-          this.markdownEscapeHatch = null
-          return
-        }
-        if (this.app.metadataCache.getFileCache(file)?.frontmatter?.['pm-task'] !== true) return
-        const md = this.app.workspace.getActiveViewOfType(MarkdownView)
-        if (!md || md.file?.path !== file.path) return
-        void md.leaf.setViewState({ type: PM_TASK_VIEW_TYPE, state: { filePath: file.path } })
-      })
-    )
+    const swap = (): void => this.swapTaskNotes()
+    this.registerEvent(this.app.workspace.on('file-open', swap))
+    this.registerEvent(this.app.workspace.on('layout-change', swap))
+    this.registerEvent(this.app.workspace.on('active-leaf-change', swap))
+  }
+
+  /**
+   * Sweeps every markdown leaf rather than the one being opened: a note opened into a
+   * background tab reports no file-open at all, and one that replaces the active leaf
+   * reports it while Obsidian is still building the view it is about to overwrite.
+   */
+  private swapTaskNotes(): void {
+    if (this.settings.taskEditorSurface !== 'tab') return
+    for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+      const view = leaf.view
+      if (!(view instanceof MarkdownView)) continue
+      const file = view.file
+      if (!file || this.markdownEscapes.has(file.path)) continue
+      if (this.app.metadataCache.getFileCache(file)?.frontmatter?.['pm-task'] !== true) continue
+      void leaf.setViewState({ type: PM_TASK_VIEW_TYPE, state: { filePath: file.path } })
+    }
   }
 
   async loadSettings(): Promise<void> {
