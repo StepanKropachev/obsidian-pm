@@ -34,8 +34,10 @@ export function renderSubtasksPanel(
     for (const sub of task.subtasks) {
       const row = subList.createDiv('pm-modal-subtask-row')
 
+      const done = isTerminalStatus(sub.status, statuses)
+
       const cb = row.createEl('input', { type: 'checkbox', cls: 'pm-subtask-checkbox' })
-      cb.checked = isTerminalStatus(sub.status, statuses)
+      cb.checked = done
       cb.addEventListener('change', () => {
         sub.status = cb.checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
         sub.progress = cb.checked ? 100 : 0
@@ -43,7 +45,10 @@ export function renderSubtasksPanel(
         renderCount()
       })
 
-      const titleEl = row.createSpan({ text: sub.title, cls: 'pm-subtask-title' })
+      const titleEl = row.createSpan({
+        text: sub.title,
+        cls: done ? 'pm-subtask-title pm-subtask-title--done' : 'pm-subtask-title'
+      })
       titleEl.contentEditable = 'true'
       titleEl.addEventListener('blur', () => {
         sub.title = titleEl.textContent?.trim() ?? sub.title
@@ -64,7 +69,8 @@ export function renderSubtasksPanel(
   renderSubtasks()
   renderCount()
 
-  const addRow = subSection.createDiv('pm-subtask-add-row')
+  const addRow = subSection.createDiv('pm-modal-subtask-row pm-subtask-add-row')
+  addRow.createSpan({ cls: 'pm-subtask-checkbox-ghost', attr: { 'aria-hidden': 'true' } })
   const addInput = addRow.createEl('input', {
     cls: 'pm-subtask-add-input',
     attr: { placeholder: 'Add subtask…' }

@@ -327,24 +327,31 @@ input.pm-pop-field:focus {
   font-variant-numeric: tabular-nums;
 }
 .pm-subtask-add-row {
-  margin-top: 6px;
+  margin-top: 4px;
+}
+/* Stands in for the checkbox so the add row lines up with the rows above. */
+.pm-subtask-checkbox-ghost {
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  flex-shrink: 0;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--checkbox-radius);
 }
 .pm-subtask-add-input {
-  width: 100%;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-s);
+  flex: 1;
+  min-width: 0;
+  padding: 1px 3px;
+  border: none;
+  border-radius: 3px;
   background: transparent;
+  box-shadow: none;
   color: var(--text-normal);
-  font-size: var(--font-ui-smaller);
+  font-size: 13px;
   font-family: inherit;
 }
-.pm-subtask-add-input:hover {
-  background: var(--background-modifier-hover);
-}
 .pm-subtask-add-input:focus {
-  border-color: var(--background-modifier-border-focus);
-  background: var(--background-primary);
+  background: var(--background-modifier-hover);
+  box-shadow: none;
   outline: none;
 }
 
