@@ -97,8 +97,8 @@
   margin-bottom: 10px;
 }
 .pm-modal-section-title {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -140,16 +140,28 @@ textarea.pm-modal-description:focus {
   flex-direction: column;
   gap: 4px;
 }
+/* min-height is the padding plus the button below it, so a row without a button
+   still matches the rows that have one. */
 .pm-modal-subtask-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 34px;
   padding: 5px 8px;
   border-radius: var(--radius-s);
   transition: background 0.1s;
 }
+.pm-modal-subtask-row .pm-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
 .pm-modal-subtask-row:hover {
   background: var(--background-modifier-hover);
+}
+.pm-modal-subtask-row .pm-subtask-checkbox {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .pm-subtask-dot {
@@ -167,6 +179,10 @@ textarea.pm-modal-description:focus {
 }
 .pm-subtask-title:focus {
   background: var(--background-modifier-hover);
+}
+.pm-subtask-title--done {
+  color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .pm-modal-footer {

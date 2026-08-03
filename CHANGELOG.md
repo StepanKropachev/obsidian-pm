@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The time tracking section in the task editor no longer shows a progress bar
 - The kanban card no longer shows a subtask count next to the progress bar
 - Every property row in the task editor is the same height
+- Section labels in the task editor are smaller and lighter
+- A completed subtask is crossed out in the task editor
+- The field for adding a subtask lines up with the subtasks above it
 
 ### Fixed
 
