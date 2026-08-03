@@ -211,6 +211,16 @@ export interface OpenTaskModalOpts {
 }
 
 export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTaskModalOpts): void {
+  // A tab is addressed by path, so a task with no note of its own still needs the modal.
+  const canOpenTab = !opts.task || Boolean(opts.task.filePath)
+  if (plugin.settings.taskEditorSurface === 'tab' && canOpenTab) {
+    void plugin.router.openTask(
+      opts.task?.filePath
+        ? { filePath: opts.task.filePath }
+        : { projectPath: project.filePath, parentId: opts.parentId ?? null, defaults: opts.defaults }
+    )
+    return
+  }
   const open = (): void => {
     new TaskModal(
       plugin.app,

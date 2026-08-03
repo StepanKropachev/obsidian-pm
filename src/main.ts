@@ -6,6 +6,7 @@ import type { TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
+import { TaskView, PM_TASK_VIEW_TYPE } from './views/TaskView'
 import { registerStyleguide } from './views/styleguide/StyleguideView'
 import { PMViewRouter } from './views/PMViewRouter'
 import { openProjectModal, openTaskModal, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
@@ -18,6 +19,8 @@ export default class PMPlugin extends Plugin {
   store!: TaskSource
   notifier!: Notifier
   router!: PMViewRouter
+  /** Path deliberately sent to the markdown editor, so the swap lets it through once. */
+  private markdownEscapeHatch: string | null = null
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
   redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
 
@@ -52,6 +55,8 @@ export default class PMPlugin extends Plugin {
 
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
     this.registerView(PM_DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this))
+    this.registerView(PM_TASK_VIEW_TYPE, (leaf) => new TaskView(leaf, this))
+    this.registerTaskNoteSwap()
     if (__STYLEGUIDE__) registerStyleguide(this)
 
     this.app.workspace.onLayoutReady(
@@ -171,6 +176,28 @@ export default class PMPlugin extends Plugin {
 
   onunload(): void {
     this.notifier.stop()
+  }
+
+  /** Opens a task note in Obsidian's own editor, letting it past the swap once. */
+  async openAsMarkdown(path: string): Promise<void> {
+    this.markdownEscapeHatch = path
+    await this.app.workspace.openLinkText(path, '', true)
+  }
+
+  private registerTaskNoteSwap(): void {
+    this.registerEvent(
+      this.app.workspace.on('file-open', (file) => {
+        if (!file || this.settings.taskEditorSurface !== 'tab') return
+        if (this.markdownEscapeHatch === file.path) {
+          this.markdownEscapeHatch = null
+          return
+        }
+        if (this.app.metadataCache.getFileCache(file)?.frontmatter?.['pm-task'] !== true) return
+        const md = this.app.workspace.getActiveViewOfType(MarkdownView)
+        if (!md || md.file?.path !== file.path) return
+        void md.leaf.setViewState({ type: PM_TASK_VIEW_TYPE, state: { filePath: file.path } })
+      })
+    )
   }
 
   async loadSettings(): Promise<void> {
