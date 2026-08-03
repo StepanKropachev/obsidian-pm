@@ -34,6 +34,7 @@ export {
   updateTaskInTree
 } from './TaskTreeOps'
 export type { FlatTask } from './TaskTreeOps'
+export { projectPathForTaskPath } from './vaultFs'
 export { hydrateTasks } from './YamlHydrator'
 export { appendYaml, isOldFormat, parseFrontmatter } from './YamlParser'
 export { serializeProject, serializeTask } from './YamlSerializer'

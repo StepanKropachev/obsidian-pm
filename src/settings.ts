@@ -54,6 +54,15 @@ export class PMSettingTab extends PluginSettingTab {
             }
           },
           {
+            name: 'Open tasks in',
+            desc: "Tab also opens task notes in the task editor instead of Obsidian's.",
+            control: {
+              type: 'dropdown',
+              key: 'taskEditorSurface',
+              options: { modal: 'Modal', tab: 'Tab' }
+            }
+          },
+          {
             name: 'Save tasks on close',
             desc: 'Save changes when the task editor is closed.',
             control: { type: 'toggle', key: 'saveTaskOnClose' }

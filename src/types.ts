@@ -160,6 +160,7 @@ export interface PMSettings {
   kanbanShowDescriptionPreview: boolean
   showTagColors: boolean
   saveTaskOnClose: boolean
+  taskEditorSurface: 'modal' | 'tab'
   projectFilters: Record<string, PerProjectFilter>
   /** Collapsed task ids per project path. Lives here so a toggle doesn't rewrite task files. */
   collapsedTasks: Record<string, string[]>
@@ -197,6 +198,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   autoSchedule: true,
   pullForwardOnEarlyFinish: false,
   saveTaskOnClose: true,
+  taskEditorSurface: 'modal',
   projectFilters: {},
   collapsedTasks: {}
 }

@@ -451,9 +451,20 @@ input.pm-pop-field:focus {
 }
 /* .pm-modal-section's 24px horizontal padding would indent these past the title and
    property grid. Their full-width top borders still divide the sections. */
-.pm-task-modal .pm-modal-section {
+.pm-te-surface .pm-modal-section {
   padding-left: 0;
   padding-right: 0;
+}
+
+.pm-te-view {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+/* The header and footer span the tab; the body holds a reading-width column. */
+.pm-te-view .pm-te-body > * {
+  max-width: 760px;
+  margin-inline: auto;
 }
 .pm-te-title-wrap {
   margin-bottom: 16px;
