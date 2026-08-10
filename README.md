@@ -1,16 +1,21 @@
 <div align="center">
 
-# Project Manager for Obsidian
+# Project ManagerX
 *Full-featured project management, natively in your vault.*
 
-[![Obsidian community plugin](https://img.shields.io/badge/Obsidian-Community%20Plugin-7c3aed?style=for-the-badge&logo=obsidian&logoColor=white)](https://community.obsidian.md/plugins/project-manager)
-[![Downloads](https://img.shields.io/github/downloads/StepanKropachev/obsidian-pm/total?style=for-the-badge&color=2ea44f)](https://github.com/StepanKropachev/obsidian-pm/releases)
-[![Stars](https://img.shields.io/github/stars/StepanKropachev/obsidian-pm?style=for-the-badge&color=007acc)](https://github.com/StepanKropachev/obsidian-pm/stargazers)
-[![Support](https://img.shields.io/badge/Donate-Buy%20Me%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/kropachev)
+> **This is a community fork of the [Project Manager](https://github.com/StepanKropachev/obsidian-pm) plugin by [Stepan Kropachev](https://github.com/StepanKropachev).** Changes and customizations by [Kamil Rdzanek](https://github.com/rdzanekkamil).
 
-**[Install from Obsidian](https://community.obsidian.md/plugins/project-manager)** · **[Website](https://stepankropachev.github.io/obsidian-pm-site/)** · **[Changelog](CHANGELOG.md)**
+**[Install via BRAT](#installation)** · **[Changelog](CHANGELOG.md)**
 
 </div>
+
+## What changed in this fork
+
+- Added `tableShowSubtasks` setting — toggle subtask rows in Table view on/off
+- Fork version `0.1.1` (independent versioning from upstream)
+- Authored and maintained by Kamil Rdzanek
+
+---
 
 Table views, Gantt charts, Kanban boards, custom fields, time tracking, smart scheduling — all stored as plain Markdown with YAML frontmatter. No external services. No sync subscriptions. Your data stays yours.
 
@@ -30,19 +35,13 @@ Table views, Gantt charts, Kanban boards, custom fields, time tracking, smart sc
 
 Sortable, filterable task grid with inline editing. Save custom filter/sort combinations as named views. Quick-add tasks from the top bar. Select multiple tasks and apply bulk actions — change status, priority, assignee, or delete in one move.
 
-<video src="https://github.com/user-attachments/assets/104bd993-d4c1-42e7-9d6a-ae46fd7ce6a8" autoplay loop muted playsinline width="400"></video>
-
 ### Gantt
 
 Interactive timeline with draggable bars, resizable edges, and dependency arrows. Zoom from day to quarter. Drag to reschedule, resize to adjust duration. Milestones render as diamonds. A "today" line keeps you oriented.
 
-<video src="https://github.com/user-attachments/assets/916f7100-44ef-401c-abb3-e003a0f7720a" autoplay loop muted playsinline width="400"></video>
-
 ### Kanban
 
 Card-based board grouped by status. Drag cards between columns to update status instantly. Cards show priority, assignees, and tags at a glance.
-
-<video src="https://github.com/user-attachments/assets/316fc43b-6915-499a-a6ad-0680c462d014" autoplay loop muted playsinline width="400"></video>
 
 ## Features
 
@@ -138,12 +137,15 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 | Default view | Table, Gantt, or Kanban |
 | Gantt granularity | Default timeline scale (day / week / month / quarter) |
 | Gantt week labels | Week number, date range, or both |
+| Show subtasks in Table | Display subtask rows in Table view |
+| Show subtasks in Kanban | Display subtasks as individual cards |
+| Show description preview | Display first few lines of each task description in Kanban |
 | Due date notifications | Reminders N days before due dates |
 | Notifications on/off | Master switch for due date reminders, separate from lead time |
 | Auto-schedule | When a blocking task moves, its dependents shift to match. Cycles are refused. |
 | Pull dependents forward on early finish | Off by default. When a task is completed before its due date, its dependents move earlier by the days it saved, keeping any slack they already had. |
 | Hide done in Gantt | Skip completed and cancelled tasks on the timeline |
-| Show subtasks in Kanban | Render subtasks as their own cards, not just inside the parent |
+| Show tag colors | Give each tag a colored dot derived from its name |
 | Custom statuses | Edit labels, colors, and icons for each status |
 | Custom priorities | Edit labels, colors, and icons for each priority |
 | Team members | Global roster for task assignment |
@@ -172,20 +174,16 @@ Each task is a `.md` file in your vault supporting:
 
 ## Installation
 
-### From Obsidian (recommended)
-
-1. Open **Settings > Community plugins** and make sure Restricted mode is off.
-2. Click **Browse**, search for **Project Manager**, and click **Install**.
-3. Click **Enable**.
-
-Or open the listing directly: [community.obsidian.md/plugins/project-manager](https://community.obsidian.md/plugins/project-manager).
-
-### Via BRAT (beta releases)
+### Via BRAT (recommended for this fork)
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from the community store.
 2. Open BRAT settings > **Add Beta Plugin**.
-3. Enter: `https://github.com/StepanKropachev/obsidian-pm`
+3. Enter: `https://github.com/rdzanekkamil/obsidian-pmx`
 4. Enable the plugin in **Settings > Community plugins**.
+
+### From Obsidian community store (upstream)
+
+The original plugin by Stepan Kropachev is available at [community.obsidian.md/plugins/project-manager](https://community.obsidian.md/plugins/project-manager).
 
 ### Manual
 
@@ -234,36 +232,14 @@ dependencies: ["task-abc123"]
 Task description in Markdown goes here.
 ```
 
-## Settings
-
-| Setting | Description |
-|---|---|
-| Projects folder | Vault folder where project and task files are stored |
-| Default view | Table, Gantt, or Kanban |
-| Gantt granularity | Default timeline scale (day / week / month / quarter) |
-| Gantt week labels | Week number, date range, or both |
-| Due date notifications | Reminders N days before due dates |
-| Custom statuses | Edit labels, colors, and icons for each status |
-| Custom priorities | Edit labels, colors, and icons for each priority |
-| Team members | Global roster for task assignment |
-
 ## Requirements
 
-- Obsidian **1.4.0** or later
+- Obsidian **1.13.0** or later
 - Desktop and mobile supported
 
 ## Contributing
 
-I appreciate community interest in the project! However, since this plugin is maintained by one person in their spare time, I have strict rules to keep the codebase clean, stable, and manageable. 
-
-If you want to contribute, please follow these rules:
-
-1. **Open an Issue first:** Do not submit a Pull Request for new features, architecture changes, or major refactoring without discussing it in an issue first. Uncoordinated PRs will be closed.
-2. **No AI-generated bulk code:** I do not accept massive, AI-generated PRs. Code must be human-readable, minimalistic, and match the existing project style.
-3. **Pass the CI:** Make sure your code passes all strict type checks, linters, and tests. Run `pnpm check`, `pnpm check:submission`, and `pnpm test` locally before pushing.
-4. **Keep it small:** PRs should be strictly focused on a single issue. 
-
-Bug fixes and thoroughly discussed features are always welcome!
+See the upstream [Project Manager](https://github.com/StepanKropachev/obsidian-pm) repository for contribution guidelines. For changes specific to this fork, open an issue or PR at [github.com/rdzanekkamil/obsidian-pmx](https://github.com/rdzanekkamil/obsidian-pmx).
 
 ## License
 

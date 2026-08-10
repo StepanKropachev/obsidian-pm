@@ -158,6 +158,7 @@ export interface PMSettings {
   pullForwardOnEarlyFinish: boolean
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
+  tableShowSubtasks: boolean
   showTagColors: boolean
   saveTaskOnClose: boolean
   projectFilters: Record<string, PerProjectFilter>
@@ -191,6 +192,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   globalTeamMembers: [],
   kanbanShowSubtasks: false,
   kanbanShowDescriptionPreview: false,
+  tableShowSubtasks: true,
   showTagColors: true,
   notificationsEnabled: true,
   notificationLeadDays: 2,
