@@ -1,10 +1,10 @@
 {
   "id": "project-manager",
-  "name": "Project Manager",
-  "version": "1.8.0",
+  "name": "Project ManagerX",
+  "version": "0.1.1",
   "minAppVersion": "1.13.0",
-  "description": "Full-featured project management: stunning Gantt charts, Kanban boards, Table views, customizable fields, due date notifications.",
-  "author": "Stepan Kropachev",
-  "authorUrl": "https://github.com/StepanKropachev",
+  "description": "Fork of the Project Manager plugin by Stepan Kropachev. Changes by Kamil Rdzanek.",
+  "author": "Kamil Rdzanek",
+  "authorUrl": "https://github.com/rdzanekkamil/obsidian-pmx",
   "isDesktopOnly": false
 }

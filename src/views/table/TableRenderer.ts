@@ -191,7 +191,10 @@ function fillTableBody(ctx: TableContext): void {
   addWithChildren(null)
 
   // When filtering, show all matches regardless of collapsed parent.
-  ctx.state.visibleRows = hasActiveFilter ? sorted : sorted.filter((f) => f.visible)
+  // When tableShowSubtasks is false, hide all subtask rows (depth > 0).
+  ctx.state.visibleRows = hasActiveFilter
+    ? sorted
+    : sorted.filter((f) => f.visible && (ctx.plugin.settings.tableShowSubtasks || f.depth === 0))
   ctx.state.renderWindow = () => renderWindowRows(ctx)
   // The data changed, so repaint even if the window bounds happen to match.
   ctx.state.windowStart = -1
