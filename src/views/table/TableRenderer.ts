@@ -31,9 +31,10 @@ export interface TableState {
   wrapper: HTMLElement | null
   /** Display list after filter/sort/collapse. Drives the virtual window and selection. */
   visibleRows: TableTreeRow[]
-  /** An estimate until calibrated against the first painted row. */
+  /** An estimate until the painted rows are measured. */
   rowHeight: number
-  heightCalibrated: boolean
+  calibrating: boolean
+  resizeObserver: ResizeObserver | null
   /** Bounds of the rendered window into visibleRows. -1 forces a repaint. */
   windowStart: number
   windowEnd: number
@@ -148,6 +149,19 @@ export function renderTable(ctx: TableContext): void {
 
   ctx.state.tableBody = table.createEl('tbody')
   fillTableBody(ctx)
+
+  void remeasureOnceFontsLoad(ctx)
+
+  ctx.state.resizeObserver?.disconnect()
+  ctx.state.resizeObserver = new ResizeObserver(() => {
+    const before = ctx.state.rowHeight
+    calibrateRowHeight(ctx)
+    if (ctx.state.rowHeight !== before) return
+    const { start, end } = computeWindow(ctx.state)
+    if (start === ctx.state.windowStart && end === ctx.state.windowEnd) return
+    ctx.state.renderWindow?.()
+  })
+  ctx.state.resizeObserver.observe(wrapper)
 }
 
 export function refreshTableBody(ctx: TableContext): void {
@@ -267,18 +281,29 @@ function renderWindowRows(ctx: TableContext): void {
     openTaskModal(ctx.plugin, ctx.project, { onSave: () => ctx.onRefresh() })
   })
 
-  // Calibrate exactly once. Row heights are not perfectly uniform, so re-measuring
-  // every pass feeds back into the window math and oscillates.
-  if (!state.heightCalibrated) {
-    const first = tbody.querySelector('tr[data-task-id]')
-    if (first instanceof HTMLElement && first.offsetHeight > 0) {
-      state.heightCalibrated = true
-      if (Math.abs(first.offsetHeight - state.rowHeight) > 0.5) {
-        state.rowHeight = first.offsetHeight
-        renderWindowRows(ctx)
-      }
-    }
-  }
+  calibrateRowHeight(ctx)
+}
+
+/** Fallback font metrics wrap the tags, so rows paint taller until the real font loads. */
+async function remeasureOnceFontsLoad(ctx: TableContext): Promise<void> {
+  await activeDocument.fonts.ready
+  if (ctx.state.tableBody?.isConnected) calibrateRowHeight(ctx)
+}
+
+function calibrateRowHeight(ctx: TableContext): void {
+  const { state } = ctx
+  const tbody = state.tableBody
+  if (state.calibrating || !tbody) return
+
+  const rows = Array.from(tbody.querySelectorAll<HTMLElement>('tr[data-task-id]'))
+  if (!rows.length) return
+  const measured = rows.reduce((total, row) => total + row.offsetHeight, 0) / rows.length
+  if (measured <= 0 || Math.abs(measured - state.rowHeight) <= 1) return
+
+  state.rowHeight = measured
+  state.calibrating = true
+  renderWindowRows(ctx)
+  state.calibrating = false
 }
 
 function spacerRow(tbody: HTMLElement, colCount: number, height: number): void {
