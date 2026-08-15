@@ -73,6 +73,8 @@ export class VaultIndex {
     children: new Map()
   }
   private treeDirty = true
+  /** False until the first build, so a view can tell "none yet" from "none at all". */
+  ready = false
 
   constructor(
     private app: App,
@@ -88,10 +90,20 @@ export class VaultIndex {
     this.treeDirty = true
     for (const file of this.app.vault.getMarkdownFiles()) this.read(file)
     this.resolveUnowned()
+    this.ready = true
     this.emitChange()
   }
 
   register(plugin: Plugin): void {
+    // On a cold start the metadata cache is still filling when the layout is ready, so
+    // the first build can see an empty vault. 'resolved' is Obsidian saying it caught up;
+    // after that, 'changed' keeps the index current on its own.
+    const onResolved = this.app.metadataCache.on('resolved', () => {
+      this.build()
+      this.app.metadataCache.offref(onResolved)
+    })
+    plugin.registerEvent(onResolved)
+
     plugin.registerEvent(
       this.app.metadataCache.on('changed', (file) => {
         this.read(file)
