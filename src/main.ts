@@ -273,13 +273,32 @@ export default class PMPlugin extends Plugin {
     if (migrated) await this.saveSettings()
   }
 
+  /**
+   * A scope key is `vault`, or a kind and a path. Only the path-bearing ones can go
+   * stale, and a key that names no path at all is kept rather than guessed at.
+   */
+  private scopeKeyResolves(key: string): boolean {
+    const separator = key.indexOf(':')
+    if (separator === -1) return true
+    const path = key.slice(separator + 1)
+    return path === '' || this.app.vault.getAbstractFileByPath(path) !== null
+  }
+
   async cleanupStaleProjectFilters(): Promise<void> {
     const filters = this.settings.projectFilters
     const cleaned: typeof filters = {}
     let dirty = false
-    for (const [path, entry] of Object.entries(filters)) {
-      if (this.app.vault.getAbstractFileByPath(path)) {
-        cleaned[path] = entry
+    for (const [key, entry] of Object.entries(filters)) {
+      if (this.scopeKeyResolves(key)) {
+        cleaned[key] = entry
+      } else {
+        dirty = true
+      }
+    }
+    const cleanedScopeViews: typeof this.settings.scopeViews = {}
+    for (const [key, views] of Object.entries(this.settings.scopeViews)) {
+      if (this.scopeKeyResolves(key)) {
+        cleanedScopeViews[key] = views
       } else {
         dirty = true
       }
@@ -298,6 +317,7 @@ export default class PMPlugin extends Plugin {
     if (collapsedProjects.length !== this.settings.collapsedProjects.length) dirty = true
     if (dirty) {
       this.settings.projectFilters = cleaned
+      this.settings.scopeViews = cleanedScopeViews
       this.settings.collapsedTasks = cleanedCollapsed
       this.settings.collapsedProjects = collapsedProjects
       await this.saveSettings()
