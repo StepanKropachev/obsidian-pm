@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { Project, FilterState, PriorityConfig, StatusConfig } from '../../types'
+import type { Project, FilterState, LineBorders, PriorityConfig, StatusConfig } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
@@ -48,6 +48,7 @@ export interface TableContext {
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   showSubtreeConnections: boolean
+  lineBorders: LineBorders
   state: TableState
   onRefresh: () => Promise<void>
   onSelectionChange: () => void
@@ -158,6 +159,10 @@ export function refreshTableBody(ctx: TableContext): void {
 function fillTableBody(ctx: TableContext): void {
   const tbody = ctx.state.tableBody
   if (!tbody) return
+
+  // Set here rather than at build time: a settings change refills the body without
+  // rebuilding the table around it.
+  ctx.state.wrapper?.setAttr('data-borders', ctx.lineBorders)
 
   let flat = flattenTasks(ctx.project.tasks)
   const hasActiveFilter = isFilterActive(ctx.state.filter)

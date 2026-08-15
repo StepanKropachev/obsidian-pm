@@ -90,6 +90,16 @@ export class PMSettingTab extends PluginSettingTab {
             desc: 'Draw lines tying a subtask row back to its parent.',
             aliases: ['tree', 'indent', 'subtask'],
             control: { type: 'toggle', key: 'showSubtreeConnections' }
+          },
+          {
+            name: 'Line borders',
+            desc: 'Rules drawn between rows, between columns, or both.',
+            aliases: ['grid', 'lines'],
+            control: {
+              type: 'dropdown',
+              key: 'lineBorders',
+              options: { none: 'None', horizontal: 'Horizontal', vertical: 'Vertical', both: 'Both' }
+            }
           }
         ]
       },

@@ -12,6 +12,7 @@ function serializeProjectConfig(config: ProjectConfig | undefined): Record<strin
   if (config.autoSchedule !== undefined) out.autoSchedule = config.autoSchedule
   if (config.pullForwardOnEarlyFinish !== undefined) out.pullForwardOnEarlyFinish = config.pullForwardOnEarlyFinish
   if (config.showSubtreeConnections !== undefined) out.showSubtreeConnections = config.showSubtreeConnections
+  if (config.lineBorders) out.lineBorders = config.lineBorders
   if (config.kanbanShowSubtasks !== undefined) out.kanbanShowSubtasks = config.kanbanShowSubtasks
   if (config.kanbanShowDescriptionPreview !== undefined) {
     out.kanbanShowDescriptionPreview = config.kanbanShowDescriptionPreview

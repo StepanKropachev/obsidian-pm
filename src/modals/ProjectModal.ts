@@ -284,6 +284,12 @@ export class ProjectModal extends Modal {
       { value: true, label: 'Show' },
       { value: false, label: 'Hide' }
     ])
+    this.renderOverrideSelect(behaviorGrid, 'Line borders in table', 'lineBorders', [
+      { value: 'none', label: 'None' },
+      { value: 'horizontal', label: 'Horizontal' },
+      { value: 'vertical', label: 'Vertical' },
+      { value: 'both', label: 'Both' }
+    ])
     this.renderOverrideSelect(behaviorGrid, 'Subtasks on board', 'kanbanShowSubtasks', [
       { value: true, label: 'Show' },
       { value: false, label: 'Hide' }
@@ -384,6 +390,7 @@ export class ProjectModal extends Modal {
       | 'autoSchedule'
       | 'pullForwardOnEarlyFinish'
       | 'showSubtreeConnections'
+      | 'lineBorders'
       | 'kanbanShowSubtasks'
       | 'kanbanShowDescriptionPreview'
   >(

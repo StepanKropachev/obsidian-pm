@@ -193,6 +193,7 @@ export class TableView implements SubView {
       statuses: config.statuses,
       priorities: config.priorities,
       showSubtreeConnections: config.showSubtreeConnections,
+      lineBorders: config.lineBorders,
       state: this.state,
       onRefresh: this.onRefresh,
       onSelectionChange: () => {

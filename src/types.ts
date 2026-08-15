@@ -6,6 +6,7 @@ export type TaskPriority = string
 export type GanttGranularity = 'day' | 'week' | 'month' | 'quarter'
 export type GanttWeekLabel = 'weekNumber' | 'dateRange' | 'both'
 export type ViewMode = 'table' | 'gantt' | 'kanban'
+export type LineBorders = 'none' | 'horizontal' | 'vertical' | 'both'
 export type DueDateFilter = 'any' | 'overdue' | 'this-week' | 'this-month' | 'no-date'
 export type TaskType = 'task' | 'milestone' | 'subtask'
 
@@ -120,6 +121,7 @@ export interface ProjectConfig {
   autoSchedule?: boolean
   pullForwardOnEarlyFinish?: boolean
   showSubtreeConnections?: boolean
+  lineBorders?: LineBorders
   kanbanShowSubtasks?: boolean
   kanbanShowDescriptionPreview?: boolean
 }
@@ -135,6 +137,7 @@ export interface ResolvedProjectConfig {
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
   showSubtreeConnections: boolean
+  lineBorders: LineBorders
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
 }
@@ -159,6 +162,7 @@ export interface PMSettings {
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
   showSubtreeConnections: boolean
+  lineBorders: LineBorders
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
   showTagColors: boolean
@@ -194,6 +198,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],
   showSubtreeConnections: true,
+  lineBorders: 'none',
   kanbanShowSubtasks: false,
   kanbanShowDescriptionPreview: false,
   showTagColors: true,
