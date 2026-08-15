@@ -1,7 +1,7 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
-import { wouldCreateCycle } from '../store/Scheduler'
+import { dependentsFromTasks, reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { Chip } from '../ui/primitives/Chip'
 import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
@@ -365,14 +365,17 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           depsList: true,
           labelFor: titleOf,
           selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
-          options: () =>
-            allTasks.filter(
+          options: () => {
+            // Both graphs are built once per open, not once per candidate. The local one
+            // includes edits the editor has not saved yet; the vault one reaches further.
+            const localEdges = dependentsFromTasks(project.tasks)
+            const vaultEdges = plugin.index.dependentsMap()
+            return allTasks.filter(
               (t) =>
                 task.dependencies.includes(t.id) ||
-                !(ownIds.has(t.id)
-                  ? wouldCreateCycle(project.tasks, task.id, t.id)
-                  : plugin.index.wouldCreateCycle(task.id, t.id))
-            ),
+                !(ownIds.has(t.id) ? reaches(localEdges, task.id, t.id) : reaches(vaultEdges, task.id, t.id))
+            )
+          },
           add: (id) => {
             if (!task.dependencies.includes(id)) task.dependencies.push(id)
           },
