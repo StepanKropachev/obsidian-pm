@@ -73,7 +73,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
 
   new TitleCell(row, {
     task,
-    treeGuides: ctx.subtaskConnectors === 'tree' ? flat.guides : null,
+    treeGuides: ctx.showSubtreeConnections ? flat.guides : null,
     isLastChild: flat.isLastChild,
     showTagColors: ctx.plugin.settings.showTagColors,
     onTitleClick: () => {

@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tasks open in a tab instead of a modal when the new task opening setting is set to tab
 - A task note opens in the task editor when tasks are set to open in a tab
 - The task menu moves the task being edited into a tab
-- Subtasks in the table are joined to their parent by tree lines, which can be turned off with the new subtask connectors setting
+- Subtasks in the table are joined to their parent by tree lines, which can be turned off with the new show subtree connections setting
 
 ### Changed
 

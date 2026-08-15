@@ -35,7 +35,7 @@ describe('resolveProjectConfig', () => {
     expect(resolved.defaultView).toBe(DEFAULT_SETTINGS.defaultView)
     expect(resolved.autoSchedule).toBe(DEFAULT_SETTINGS.autoSchedule)
     expect(resolved.pullForwardOnEarlyFinish).toBe(DEFAULT_SETTINGS.pullForwardOnEarlyFinish)
-    expect(resolved.tableSubtaskConnectors).toBe(DEFAULT_SETTINGS.tableSubtaskConnectors)
+    expect(resolved.showSubtreeConnections).toBe(DEFAULT_SETTINGS.showSubtreeConnections)
     expect(resolved.kanbanShowSubtasks).toBe(DEFAULT_SETTINGS.kanbanShowSubtasks)
     expect(resolved.kanbanShowDescriptionPreview).toBe(DEFAULT_SETTINGS.kanbanShowDescriptionPreview)
   })
@@ -62,7 +62,7 @@ describe('resolveProjectConfig', () => {
         defaultView: 'kanban',
         autoSchedule: false,
         pullForwardOnEarlyFinish: true,
-        tableSubtaskConnectors: 'indent',
+        showSubtreeConnections: false,
         kanbanShowSubtasks: true
       }),
       DEFAULT_SETTINGS
@@ -70,7 +70,7 @@ describe('resolveProjectConfig', () => {
     expect(resolved.defaultView).toBe('kanban')
     expect(resolved.autoSchedule).toBe(false)
     expect(resolved.pullForwardOnEarlyFinish).toBe(true)
-    expect(resolved.tableSubtaskConnectors).toBe('indent')
+    expect(resolved.showSubtreeConnections).toBe(false)
     expect(resolved.kanbanShowSubtasks).toBe(true)
     expect(resolved.statuses).toEqual(DEFAULT_STATUSES)
     expect(resolved.kanbanShowDescriptionPreview).toBe(DEFAULT_SETTINGS.kanbanShowDescriptionPreview)

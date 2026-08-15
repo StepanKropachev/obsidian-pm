@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { Project, FilterState, PriorityConfig, StatusConfig, TableSubtaskConnectors } from '../../types'
+import type { Project, FilterState, PriorityConfig, StatusConfig } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
@@ -47,7 +47,7 @@ export interface TableContext {
   /** Resolved once per render pass. */
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
-  subtaskConnectors: TableSubtaskConnectors
+  showSubtreeConnections: boolean
   state: TableState
   onRefresh: () => Promise<void>
   onSelectionChange: () => void

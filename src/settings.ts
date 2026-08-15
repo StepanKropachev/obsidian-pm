@@ -86,14 +86,10 @@ export class PMSettingTab extends PluginSettingTab {
         heading: 'Table',
         items: [
           {
-            name: 'Subtask connectors',
-            desc: 'How a subtask row is tied back to its parent.',
-            aliases: ['tree', 'indent'],
-            control: {
-              type: 'dropdown',
-              key: 'tableSubtaskConnectors',
-              options: { tree: 'Tree lines', indent: 'Indent only' }
-            }
+            name: 'Show subtree connections',
+            desc: 'Draw lines tying a subtask row back to its parent.',
+            aliases: ['tree', 'indent', 'subtask'],
+            control: { type: 'toggle', key: 'showSubtreeConnections' }
           }
         ]
       },
