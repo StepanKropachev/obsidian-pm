@@ -177,6 +177,12 @@
   gap: 16px;
 }
 
+.pm-project-children {
+  grid-column: 1 / -1;
+  padding-left: 24px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+
 .pm-project-card {
   border: 1px solid var(--pm-ghost-border);
   border-radius: var(--radius-m);
@@ -197,9 +203,14 @@
 .pm-project-card-body {
   padding: 16px;
 }
+.pm-project-card-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
 .pm-project-card-icon {
   font-size: 28px;
-  margin-bottom: 6px;
 }
 .pm-project-card-title {
   font-size: 15px;

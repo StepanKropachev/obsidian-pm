@@ -82,9 +82,9 @@ Horizontal progress track with optional percent label.
 
 Obsidian-native collapse triangle for tree rows.
 
-- API: `new CollapseToggle(parent, { collapsed, onToggle })` (constructor-only)
+- API: `new CollapseToggle(parent, { collapsed, onToggle, subject? })` (constructor-only); `subject` names what collapses in the aria label, defaulting to subtasks
 - CSS: `tree-item-icon collapse-icon pm-collapse-toggle`, `is-collapsed`
-- Use when: expanding/collapsing subtask trees
+- Use when: expanding/collapsing subtask trees, or sub-projects in the project list
 
 ### EmptyState - `EmptyState.ts`
 
@@ -123,7 +123,7 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 
 - **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip.
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
-- **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, onClick, onContextMenu. Composes ProgressBar.
+- **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, childCount, collapsed, onToggleCollapsed, onClick, onContextMenu. Composes ProgressBar, plus CollapseToggle and a plain Chip when `childCount` is above zero. With sub-projects the counts are the caller's rollup over the subtree; the project list nests the children in a `.pm-project-children` grid on the row below.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
 - **addButton** - `addButton.ts`. `renderAddButton(parent, label, onClick)` -> ghost "+ label" button (`pm-prop-add`). The only way to render an add button.
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.

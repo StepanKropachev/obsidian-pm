@@ -35,6 +35,18 @@ export function projectPathForTaskPath(taskPath: string): string | null {
 }
 
 /**
+ * Resolves a project's `parent` frontmatter link to a vault path. A wikilink so Obsidian
+ * updates it on rename and shows the edge in the graph; null when it points nowhere.
+ */
+export function resolveProjectLink(app: App, raw: unknown, sourcePath: string): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  const inner = /^\[\[(.+?)\]\]$/.exec(raw.trim())?.[1] ?? raw.trim()
+  const linkpath = inner.split('|')[0].trim()
+  if (!linkpath) return undefined
+  return app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath)?.path ?? undefined
+}
+
+/**
  * `getAbstractFileByPath` is case-sensitive while macOS and Windows filesystems are not,
  * so a settings value of `projects` misses an existing `Projects/` and `createFolder` then
  * throws "Folder already exists". Swallowing that also covers concurrent callers racing.

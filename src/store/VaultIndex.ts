@@ -2,7 +2,7 @@ import type { App, Plugin, TAbstractFile } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
 import type { PMSettings, StatusConfig } from '../types'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
-import { projectPathForTaskPath } from './vaultFs'
+import { projectPathForTaskPath, resolveProjectLink } from './vaultFs'
 
 export interface ProjectRef {
   path: string
@@ -10,6 +10,8 @@ export interface ProjectRef {
   title: string
   icon: string
   color: string
+  /** Where its `parent` link points, before cycles are taken out. Use `parentOf`. */
+  parentPath: string | undefined
   /** Status ids the project's own palette marks complete. Null inherits the global palette. */
   completeStatusIds: string[] | null
 }
@@ -63,6 +65,11 @@ export class VaultIndex {
   private tasks = new Map<string, TaskRef>()
   private tasksByProject = new Map<string, Set<string>>()
   private changeHandlers = new Set<() => void>()
+  private cachedTree: { parents: Map<string, string | null>; children: Map<string, string[]> } = {
+    parents: new Map(),
+    children: new Map()
+  }
+  private treeDirty = true
 
   constructor(
     private app: App,
@@ -75,6 +82,7 @@ export class VaultIndex {
     this.projectPathById.clear()
     this.tasks.clear()
     this.tasksByProject.clear()
+    this.treeDirty = true
     for (const file of this.app.vault.getMarkdownFiles()) this.read(file)
     this.resolveUnowned()
     this.emitChange()
@@ -111,6 +119,51 @@ export class VaultIndex {
 
   projectRefs(): ProjectRef[] {
     return [...this.projects.values()].sort((a, b) => a.title.localeCompare(b.title))
+  }
+
+  /** Projects with no parent, plus any whose parent link is broken or circular. */
+  rootRefs(): ProjectRef[] {
+    const parents = this.tree().parents
+    return this.projectRefs().filter((ref) => !parents.get(ref.path))
+  }
+
+  childRefs(path: string): ProjectRef[] {
+    const paths = this.tree().children.get(normalizePath(path))
+    if (!paths) return []
+    return paths
+      .map((child) => this.projects.get(child))
+      .filter((ref): ref is ProjectRef => ref !== undefined)
+      .sort((a, b) => a.title.localeCompare(b.title))
+  }
+
+  /** The effective parent: a link that resolves to a live project without closing a cycle. */
+  parentOf(path: string): ProjectRef | null {
+    const parent = this.tree().parents.get(normalizePath(path))
+    return parent ? (this.projects.get(parent) ?? null) : null
+  }
+
+  /** Every descendant, depth first. */
+  descendantRefs(path: string): ProjectRef[] {
+    const out: ProjectRef[] = []
+    const walk = (from: string): void => {
+      for (const child of this.childRefs(from)) {
+        out.push(child)
+        walk(child.path)
+      }
+    }
+    walk(normalizePath(path))
+    return out
+  }
+
+  /** Counts for a project and everything under it, for a program or portfolio card. */
+  rollupCounts(ref: ProjectRef): { total: number; done: number } {
+    const totals = this.counts(ref)
+    for (const descendant of this.descendantRefs(ref.path)) {
+      const counts = this.counts(descendant)
+      totals.total += counts.total
+      totals.done += counts.done
+    }
+    return totals
   }
 
   projectRef(path: string): ProjectRef | null {
@@ -176,10 +229,12 @@ export class VaultIndex {
       title: str(frontmatter.title, file.basename),
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
+      parentPath: resolveProjectLink(this.app, frontmatter.parent, path),
       completeStatusIds: completeIdsOf(frontmatter)
     }
     this.projects.set(path, ref)
     this.projectPathById.set(ref.id, path)
+    this.treeDirty = true
   }
 
   private addTask(path: string, frontmatter: Record<string, unknown>): void {
@@ -242,9 +297,44 @@ export class VaultIndex {
     if (project) {
       this.projects.delete(normalized)
       if (this.projectPathById.get(project.id) === normalized) this.projectPathById.delete(project.id)
+      this.treeDirty = true
       return true
     }
     return false
+  }
+
+  /**
+   * Parent and child edges, with cycles taken out. A project whose ancestors lead back to
+   * it is treated as a root, so a bad link costs the tree one edge rather than hanging it.
+   */
+  private tree(): { parents: Map<string, string | null>; children: Map<string, string[]> } {
+    if (!this.treeDirty) return this.cachedTree
+    const parents = new Map<string, string | null>()
+    for (const [path, ref] of this.projects) {
+      const parent = ref.parentPath ? normalizePath(ref.parentPath) : null
+      parents.set(path, parent && parent !== path && this.projects.has(parent) ? parent : null)
+    }
+    for (const path of parents.keys()) {
+      const seen = new Set([path])
+      for (let current = parents.get(path); current; current = parents.get(current)) {
+        if (seen.has(current)) {
+          console.error(`[PM] Circular parent link on project ${path}; treating it as a root.`)
+          parents.set(path, null)
+          break
+        }
+        seen.add(current)
+      }
+    }
+    const children = new Map<string, string[]>()
+    for (const [path, parent] of parents) {
+      if (!parent) continue
+      const siblings = children.get(parent)
+      if (siblings) siblings.push(path)
+      else children.set(parent, [path])
+    }
+    this.cachedTree = { parents, children }
+    this.treeDirty = false
+    return this.cachedTree
   }
 
   private isExcluded(path: string): boolean {

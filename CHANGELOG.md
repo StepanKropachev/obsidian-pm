@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Projects are listed wherever their files live in the vault
+- A project can sit under another one, chosen in the project settings
+- The project list nests sub-projects under their parent, whose card counts the tasks of the whole group
 - Folders can be left out of the project list with the new excluded folders setting
 - The rebuild project index command looks through the vault for projects again
 - Priorities can be added, renamed, recolored, and reordered in settings

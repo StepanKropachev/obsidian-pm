@@ -305,6 +305,21 @@ describe('ProjectStore round-trip', () => {
     expect(reloadedB.status).toBe('in-progress')
   })
 
+  it('writes the parent as a wikilink and resolves it back on load', async () => {
+    const { app, vault } = makeFakeApp({ liveMetadataCache: true })
+    const store = new ProjectStore(app as unknown as App, () => SETTINGS)
+    await store.createProject('Platform', 'Projects')
+    const child = await store.createProject('Billing', 'Work')
+    await store.updateProject(child, { parentPath: 'Projects/Platform.md' })
+
+    const content = await vault.cachedRead(fileAt(app as unknown as App, child.filePath))
+    expect(content).toContain('parent: "[[Projects/Platform]]"')
+
+    const store2 = new ProjectStore(app as unknown as App, () => SETTINGS)
+    const reloaded = await store2.loadProject(fileAt(app as unknown as App, child.filePath))
+    expect(reloaded?.parentPath).toBe('Projects/Platform.md')
+  })
+
   it('migrates an old-format (embedded tasks) project on load and save', async () => {
     const { store, vault } = newStore()
     // Manually write an old-format project file (tasks embedded in frontmatter).

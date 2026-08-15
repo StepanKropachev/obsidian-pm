@@ -230,6 +230,8 @@ export default class PMPlugin extends Plugin {
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
     if (!this.settings.projectFilters) this.settings.projectFilters = {}
     if (!this.settings.collapsedTasks) this.settings.collapsedTasks = {}
+    if (!this.settings.collapsedProjects) this.settings.collapsedProjects = []
+    if (!this.settings.excludedFolders) this.settings.excludedFolders = []
 
     let migrated = false
     for (const s of this.settings.statuses) {
@@ -273,9 +275,14 @@ export default class PMPlugin extends Plugin {
         dirty = true
       }
     }
+    const collapsedProjects = this.settings.collapsedProjects.filter((path) =>
+      this.app.vault.getAbstractFileByPath(path)
+    )
+    if (collapsedProjects.length !== this.settings.collapsedProjects.length) dirty = true
     if (dirty) {
       this.settings.projectFilters = cleaned
       this.settings.collapsedTasks = cleanedCollapsed
+      this.settings.collapsedProjects = collapsedProjects
       await this.saveSettings()
     }
   }
@@ -295,6 +302,18 @@ export default class PMPlugin extends Plugin {
     this.settings.collapsedTasks[project.filePath] = flattenTasks(project.tasks)
       .filter((f) => f.task.collapsed)
       .map((f) => f.task.id)
+    await this.saveSettings()
+  }
+
+  isProjectCollapsed(path: string): boolean {
+    return this.settings.collapsedProjects.includes(path)
+  }
+
+  async toggleProjectCollapsed(path: string): Promise<void> {
+    const collapsed = this.settings.collapsedProjects
+    const at = collapsed.indexOf(path)
+    if (at === -1) collapsed.push(path)
+    else collapsed.splice(at, 1)
     await this.saveSettings()
   }
 

@@ -26,10 +26,10 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
 
 /** Draws from the index alone: a card needs a title, an icon and two counts, not a load. */
 export function renderProjectListContent(ctx: ProjectListContext): void {
-  const projects = ctx.plugin.index.projectRefs()
+  const roots = ctx.plugin.index.rootRefs()
   ctx.contentEl.empty()
 
-  if (projects.length === 0) {
+  if (roots.length === 0) {
     new EmptyState(ctx.contentEl)
       .setIcon('📋')
       .setTitle('No projects yet')
@@ -38,21 +38,39 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
     return
   }
 
-  const grid = ctx.contentEl.createDiv('pm-project-grid')
-  for (const project of projects) {
-    const { total, done } = ctx.plugin.index.counts(project)
+  renderProjectCards(ctx, ctx.contentEl.createDiv('pm-project-grid'), roots)
+}
+
+/** Sub-projects render in their own grid on the row below their parent's card. */
+function renderProjectCards(ctx: ProjectListContext, grid: HTMLElement, refs: ProjectRef[]): void {
+  const index = ctx.plugin.index
+  for (const ref of refs) {
+    const children = index.childRefs(ref.path)
+    const collapsed = ctx.plugin.isProjectCollapsed(ref.path)
+    // A parent's own count says little about the program under it.
+    const { total, done } = children.length ? index.rollupCounts(ref) : index.counts(ref)
     new ProjectCard(grid, {
-      title: project.title,
-      icon: project.icon,
-      color: project.color,
+      title: ref.title,
+      icon: ref.icon,
+      color: ref.color,
       tasksDone: done,
       tasksTotal: total,
+      childCount: children.length,
+      collapsed,
+      onToggleCollapsed: safeAsync(async () => {
+        await ctx.plugin.toggleProjectCollapsed(ref.path)
+        renderProjectListContent(ctx)
+      }),
       onClick: safeAsync(async () => {
-        const file = ctx.plugin.app.vault.getAbstractFileByPath(project.path)
+        const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
         if (file instanceof TFile) await ctx.openProjectFile(file)
       }),
-      onContextMenu: (e) => openProjectContextMenu(ctx, project, e)
+      onContextMenu: (e) => openProjectContextMenu(ctx, ref, e)
     })
+    if (children.length && !collapsed) {
+      const nested = grid.createDiv('pm-project-children')
+      renderProjectCards(ctx, nested.createDiv('pm-project-grid'), children)
+    }
   }
 }
 

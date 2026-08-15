@@ -70,6 +70,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** The project this one sits under, resolved from its `parent` link. */
+  parentPath?: string
   /** Per-project overrides for the global settings. Absent fields inherit. */
   config?: ProjectConfig
   /** Not serialized. Rebuilt on load, maintained by the store's mutators. */
@@ -78,7 +80,10 @@ export interface Project {
 
 /** Tasks are excluded: they change through the task mutators, never a whole-project write. */
 export type ProjectPatch = Partial<
-  Pick<Project, 'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config'>
+  Pick<
+    Project,
+    'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config' | 'parentPath'
+  >
 >
 
 export interface FilterState {
@@ -174,6 +179,8 @@ export interface PMSettings {
   projectFilters: Record<string, PerProjectFilter>
   /** Collapsed task ids per project path. Lives here so a toggle doesn't rewrite task files. */
   collapsedTasks: Record<string, string[]>
+  /** Paths of projects whose sub-projects are collapsed in the project list. */
+  collapsedProjects: string[]
 }
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
@@ -213,7 +220,8 @@ export const DEFAULT_SETTINGS: PMSettings = {
   saveTaskOnClose: true,
   taskEditorSurface: 'modal',
   projectFilters: {},
-  collapsedTasks: {}
+  collapsedTasks: {},
+  collapsedProjects: []
 }
 
 export function makeId(): string {

@@ -296,13 +296,40 @@ export class StyleguideView extends ItemView {
 
   private renderCards(): void {
     const sec = this.section('Cards', 'cards')
-    const projectRow = this.row(sec, 'ProjectCard')
+    const projectRow = this.row(sec, 'ProjectCard: plain / with sub-projects / collapsed')
     new ProjectCard(projectRow, {
       title: 'Website relaunch',
       icon: '📋',
       color: '#8b72be',
       tasksDone: 4,
       tasksTotal: 10,
+      childCount: 0,
+      collapsed: false,
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop
+    })
+    new ProjectCard(projectRow, {
+      title: 'Platform',
+      icon: '🚀',
+      color: '#7a9ec4',
+      tasksDone: 12,
+      tasksTotal: 40,
+      childCount: 3,
+      collapsed: false,
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop
+    })
+    new ProjectCard(projectRow, {
+      title: 'Platform',
+      icon: '🚀',
+      color: '#7a9ec4',
+      tasksDone: 12,
+      tasksTotal: 40,
+      childCount: 1,
+      collapsed: true,
+      onToggleCollapsed: noop,
       onClick: noop,
       onContextMenu: noop
     })
