@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The completed date shows whether a task finished on time or how many days late it was
 - Task progress can be set from 0 to 100 in the task editor and by clicking the progress bar in the table
 - Dependent tasks move earlier when a task is completed before its due date, using the new pull-forward setting ([#154](https://github.com/StepanKropachev/obsidian-pm/issues/154))
+- Tasks open in a tab instead of a modal when the new task opening setting is set to tab
+- A task note opens in the task editor when tasks are set to open in a tab
+- The task menu moves the task being edited into a tab
 
 ### Changed
 

@@ -21,6 +21,20 @@ export async function moveTaskAttachmentFolder(
 }
 
 /**
+ * The project a task note belongs to, from its path alone: tasks live in
+ * `<project>_tasks/`, archived ones a level deeper in `Archive/`. Null for any path
+ * outside that layout.
+ */
+export function projectPathForTaskPath(taskPath: string): string | null {
+  const parts = normalizePath(taskPath).split('/')
+  parts.pop()
+  if (parts[parts.length - 1] === 'Archive') parts.pop()
+  const folder = parts.join('/')
+  if (!folder.endsWith('_tasks')) return null
+  return folder.slice(0, -'_tasks'.length) + '.md'
+}
+
+/**
  * `getAbstractFileByPath` is case-sensitive while macOS and Windows filesystems are not,
  * so a settings value of `projects` misses an existing `Projects/` and `createFolder` then
  * throws "Folder already exists". Swallowing that also covers concurrent callers racing.
