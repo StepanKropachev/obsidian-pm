@@ -40,7 +40,8 @@ export class TableView implements SubView {
       wrapper: null,
       visibleRows: [],
       rowHeight: ROW_HEIGHT_ESTIMATE,
-      heightCalibrated: false,
+      calibrating: false,
+      resizeObserver: null,
       windowStart: -1,
       windowEnd: -1,
       renderWindow: null
@@ -85,6 +86,11 @@ export class TableView implements SubView {
 
   handleKeyDown(e: KeyboardEvent): void {
     handleTableKeyDown(e, this.makeTableContext())
+  }
+
+  destroy(): void {
+    this.state.resizeObserver?.disconnect()
+    this.state.resizeObserver = null
   }
 
   refresh(): void {
