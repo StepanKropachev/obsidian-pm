@@ -1,9 +1,10 @@
 import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../../main'
-import type { Project, Task, GanttGranularity, FilterState } from '../../types'
+import type { Task, GanttGranularity, FilterState } from '../../types'
+import type { ProjectScope } from '../../store'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { applyTaskFilterPromote } from '../../store/TaskFilter'
-import { openTaskModal } from '../../ui/ModalFactory'
+import { openAddTask } from '../addTask'
 import { renderAddButton } from '../../ui/composites/addButton'
 import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import type { SubView } from '../SubView'
@@ -48,7 +49,7 @@ export class GanttView implements SubView {
 
   constructor(
     private container: HTMLElement,
-    private project: Project,
+    private scope: ProjectScope,
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
     private filter: FilterState
@@ -230,8 +231,8 @@ export class GanttView implements SubView {
 
     const addRow = leftBody.createDiv('pm-gantt-label-row pm-gantt-add-row')
     addRow.style.height = `${ROW_HEIGHT}px`
-    renderAddButton(addRow, 'Add task', () => {
-      openTaskModal(this.plugin, this.project, { onSave: () => this.onRefresh() })
+    renderAddButton(addRow, 'Add task', (e) => {
+      openAddTask(this.plugin, this.scope, { event: e, onSave: () => this.onRefresh() })
     })
 
     // The right panel's horizontal scrollbar eats into its viewport height, letting it
@@ -266,8 +267,8 @@ export class GanttView implements SubView {
 
     const labelCtx = {
       plugin: this.plugin,
-      project: this.project,
-      statuses: this.plugin.store.configFor(this.project).statuses,
+      scope: this.scope,
+      statuses: this.scope.config.statuses,
       onRefresh: this.onRefresh
     }
     let rowIndex = 0
@@ -290,8 +291,8 @@ export class GanttView implements SubView {
       headerSvgEl: this.headerSvgEl,
       cfg: this.cfg,
       plugin: this.plugin,
-      project: this.project,
-      statuses: this.plugin.store.configFor(this.project).statuses,
+      scope: this.scope,
+      statuses: this.scope.config.statuses,
       flatTasks: this.flatTasks,
       drag: this.drag,
       link: this.link,
@@ -301,7 +302,7 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    return applyTaskFilterPromote(this.project.tasks, this.filter, this.plugin.store.configFor(this.project).statuses)
+    return applyTaskFilterPromote(this.scope.tasks(), this.filter, this.scope.config.statuses)
   }
 
   private scrollToToday(): void {
@@ -312,10 +313,10 @@ export class GanttView implements SubView {
   }
 
   private setAllCollapsed(collapsed: boolean): void {
-    for (const { task } of flattenTasks(this.project.tasks)) {
+    for (const { task } of flattenTasks(this.scope.tasks())) {
       if (task.subtasks.length > 0) task.collapsed = collapsed
     }
-    void this.plugin.persistCollapsedState(this.project)
+    for (const project of this.scope.projects) void this.plugin.persistCollapsedState(project)
     this.render()
   }
 }

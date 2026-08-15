@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The project list nests sub-projects under their parent, whose card counts the tasks of the whole group
 - Folders can be left out of the project list with the new excluded folders setting
 - The rebuild project index command looks through the vault for projects again
+- The table, board, and timeline can show several projects at once, chosen from the switcher next to the project name
+- The open all projects command puts every project in the vault in one view
+- Rows, cards, and timeline labels name their project when a view covers more than one
+- Saved views and filters belong to the set of projects on screen, so a project and its sub-projects keep separate ones
 - Priorities can be added, renamed, recolored, and reordered in settings
 - Status and priority icons accept emoji or any icon available in Obsidian, including Lucide icons and icons added by other plugins, with suggestions while typing in settings
 - TaskNotes tasks can be imported with their dates, dependencies, subtasks, tags, and archive state ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))

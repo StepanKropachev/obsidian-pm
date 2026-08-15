@@ -1,5 +1,6 @@
 import type PMPlugin from '../../main'
-import type { Project, StatusConfig } from '../../types'
+import type { StatusConfig } from '../../types'
+import type { ProjectScope } from '../../store'
 import type { FlatTask } from '../../store/TaskTreeOps'
 import type { TimelineCfg } from './TimelineConfig'
 import { ROW_HEIGHT, HEADER_HEIGHT, dateToX } from './TimelineConfig'
@@ -16,7 +17,7 @@ export interface RendererContext {
   headerSvgEl: SVGSVGElement
   cfg: TimelineCfg
   plugin: PMPlugin
-  project: Project
+  scope: ProjectScope
   /** Resolved once per render pass. */
   statuses: StatusConfig[]
   flatTasks: FlatTask[]

@@ -1,6 +1,7 @@
-import { ButtonComponent, ExtraButtonComponent, ItemView, WorkspaceLeaf, TFile } from 'obsidian'
+import { ButtonComponent, ExtraButtonComponent, ItemView, Menu, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ViewMode, type FilterState, type SavedView, makeDefaultFilter, makeId } from '../types'
+import { ProjectScope, resolveScopePaths, scopeKey, type ScopeSpec } from '../store'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -8,20 +9,29 @@ import type { TableViewState } from './table/TableView'
 import { GanttView } from './gantt/GanttView'
 import { KanbanView } from './KanbanView'
 import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
+import { ChipButton } from '../ui/primitives/ChipButton'
 import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
 import { ProjectHeader } from '../ui/composites/ProjectHeader'
 
 export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
 interface ProjectViewState {
-  filePath: string
+  scope?: ScopeSpec
+  /** How a project view was addressed before scopes; still accepted from saved layouts. */
+  filePath?: string
   [key: string]: unknown
+}
+
+function specOf(state: ProjectViewState): ScopeSpec | null {
+  if (state.scope) return state.scope
+  if (state.filePath) return { kind: 'project', path: state.filePath }
+  return null
 }
 
 export class ProjectView extends ItemView {
   plugin: PMPlugin
-  project: Project | null = null
-  filePath = ''
+  projectScope: ProjectScope | null = null
+  private spec: ScopeSpec | null = null
   currentView: ViewMode
   filter: FilterState = makeDefaultFilter()
   activeSavedViewId: string | null = null
@@ -49,22 +59,28 @@ export class ProjectView extends ItemView {
     return PM_PROJECT_VIEW_TYPE
   }
   getDisplayText(): string {
-    return truncateTitle(this.project?.title ?? 'Project', 10)
+    return truncateTitle(this.projectScope?.label() ?? 'Project', 10)
   }
   getIcon(): string {
     return 'chart-gantt'
   }
 
+  /** The project a command should act on: the only one, or the group's primary. */
+  get project(): Project | null {
+    return this.projectScope?.primary ?? null
+  }
+
   async setState(state: ProjectViewState, result: unknown): Promise<void> {
-    if (state.filePath && state.filePath !== this.filePath) {
-      this.filePath = state.filePath
-      await this.loadProject()
+    const spec = specOf(state)
+    if (spec && (!this.spec || scopeKey(this.spec) !== scopeKey(spec))) {
+      this.spec = spec
+      await this.loadScope()
     }
     await super.setState(state, result as import('obsidian').ViewStateResult)
   }
 
   getState(): ProjectViewState {
-    return { filePath: this.filePath }
+    return { scope: this.spec ?? undefined, filePath: this.projectScope?.primary?.filePath }
   }
 
   onOpen(): Promise<void> {
@@ -108,22 +124,35 @@ export class ProjectView extends ItemView {
 
     this.register(
       this.plugin.store.onProjectChanged((path) => {
-        if (path === this.filePath) this.redraw()
+        if (this.projectScope?.projects.some((project) => project.filePath === path)) this.redraw()
+      })
+    )
+    // A scope covering several projects also changes when one joins or leaves it.
+    this.register(
+      this.plugin.index.onChange(() => {
+        if (!this.spec || this.spec.kind === 'project') return
+        const paths = resolveScopePaths(this.spec, this.plugin.index)
+        const current = this.projectScope?.projects.map((project) => project.filePath) ?? []
+        if (paths.length !== current.length || paths.some((path, i) => path !== current[i])) {
+          void this.loadScope()
+        }
       })
     )
   }
 
   /**
-   * Something outside the DOM changed: the project itself, or a setting that decides how
-   * it is drawn. The store keeps one instance per file, so `this.project` is already
+   * Something outside the DOM changed: a project in scope, or a setting that decides how
+   * it is drawn. The store keeps one instance per file, so the projects are already
    * current and only the DOM needs catching up.
    */
   redraw(): void {
-    if (!this.project) return
-    if (!(this.app.vault.getAbstractFileByPath(this.filePath) instanceof TFile)) {
-      this.renderMissingProject()
+    if (!this.projectScope || !this.spec) return
+    if (!this.projectScope.primary) {
+      this.renderEmptyScope()
       return
     }
+    // A settings edit may have changed a palette, which the scope has resolved and kept.
+    this.projectScope.invalidate()
     // Rebuilding the chrome would drop the caret out of the title or search box.
     const focused = activeDocument.activeElement
     if (!this.toolbarEl.contains(focused) && !this.headerEl.contains(focused)) {
@@ -133,22 +162,20 @@ export class ProjectView extends ItemView {
     void this.refreshProject()
   }
 
-  private async loadProject(): Promise<void> {
+  private async loadScope(): Promise<void> {
     this.ensureInitialized()
-    const file = this.app.vault.getAbstractFileByPath(this.filePath)
-    if (!(file instanceof TFile)) {
-      this.renderMissingProject()
+    if (!this.spec) return
+    const paths = resolveScopePaths(this.spec, this.plugin.index)
+    const projects = await this.plugin.store.loadProjects(paths)
+    this.projectScope = new ProjectScope(this.spec, projects, this.plugin.store)
+    if (!this.projectScope.primary) {
+      this.renderEmptyScope()
       return
     }
-    this.project = await this.plugin.store.loadProject(file)
-    if (!this.project) {
-      this.renderMissingProject()
-      return
-    }
-    this.plugin.applyCollapsedState(this.project)
-    if (this.defaultViewAppliedFor !== this.filePath) {
-      this.defaultViewAppliedFor = this.filePath
-      this.currentView = this.plugin.store.configFor(this.project).defaultView
+    for (const project of projects) this.plugin.applyCollapsedState(project)
+    if (this.defaultViewAppliedFor !== this.projectScope.key) {
+      this.defaultViewAppliedFor = this.projectScope.key
+      this.currentView = this.projectScope.config.defaultView
     }
     this.loadFilterFromSettings()
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
@@ -157,8 +184,14 @@ export class ProjectView extends ItemView {
     this.renderCurrentView()
   }
 
+  private async switchScope(spec: ScopeSpec): Promise<void> {
+    this.spec = spec
+    await this.loadScope()
+    await this.leaf.setViewState({ type: PM_PROJECT_VIEW_TYPE, state: this.getState() })
+  }
+
   private loadFilterFromSettings(): void {
-    const saved = this.plugin.settings.projectFilters[this.filePath]
+    const saved = this.projectScope ? this.plugin.settings.projectFilters[this.projectScope.key] : undefined
     if (saved) {
       this.filter = saved.filter
       this.activeSavedViewId = saved.activeSavedViewId
@@ -169,30 +202,50 @@ export class ProjectView extends ItemView {
   }
 
   private async persistFilter(): Promise<void> {
-    if (!this.filePath) return
-    this.plugin.settings.projectFilters[this.filePath] = {
+    if (!this.projectScope) return
+    this.plugin.settings.projectFilters[this.projectScope.key] = {
       filter: this.filter,
       activeSavedViewId: this.activeSavedViewId
     }
     await this.plugin.saveSettings()
   }
 
-  private renderMissingProject(): void {
+  /** One project owns its saved views; a group of them has no file to keep them in. */
+  private savedViews(): SavedView[] {
+    if (!this.projectScope) return []
+    if (this.projectScope.spec.kind === 'project') return this.projectScope.primary?.savedViews ?? []
+    return this.plugin.settings.scopeViews[this.projectScope.key] ?? []
+  }
+
+  private async persistSavedViews(views: SavedView[]): Promise<void> {
+    if (!this.projectScope) return
+    const primary = this.projectScope.primary
+    if (this.projectScope.spec.kind === 'project' && primary) {
+      primary.savedViews = views
+      await this.plugin.store.saveProject(primary)
+      return
+    }
+    this.plugin.settings.scopeViews[this.projectScope.key] = views
+    await this.plugin.saveSettings()
+  }
+
+  private renderEmptyScope(): void {
     this.toolbarEl.empty()
     this.headerEl.empty()
     this.header = null
     this.bodyEl.empty()
     const msg = this.bodyEl.createDiv('pm-empty-state')
-    msg.createEl('h3', { text: 'Project not found' })
-    msg.createEl('p', { text: `No project at ${this.filePath}. It may have been deleted or renamed.` })
+    msg.createEl('h3', { text: 'Nothing to show' })
+    msg.createEl('p', { text: 'No project here. It may have been deleted or renamed.' })
   }
 
   private renderProjectHeader(): void {
-    if (!this.project) return
+    if (!this.projectScope?.primary) return
     this.headerEl.empty()
-    const config = this.plugin.store.configFor(this.project)
+    const config = this.projectScope.config
     this.header = new ProjectHeader(this.headerEl, {
-      project: this.project,
+      tasks: this.projectScope.tasks(),
+      savedViews: this.savedViews(),
       statuses: config.statuses,
       priorities: config.priorities,
       filter: this.filter,
@@ -226,12 +279,12 @@ export class ProjectView extends ItemView {
   }
 
   private handleSavedViewSelect(id: string | null): void {
-    if (!this.project) return
+    if (!this.projectScope) return
     if (id === null) {
       Object.assign(this.filter, makeDefaultFilter())
       this.activeSavedViewId = null
     } else {
-      const sv = this.project.savedViews.find((v) => v.id === id)
+      const sv = this.savedViews().find((v) => v.id === id)
       if (!sv) return
       Object.assign(this.filter, sv.filter)
       this.activeSavedViewId = sv.id
@@ -249,7 +302,7 @@ export class ProjectView extends ItemView {
   }
 
   private async handleSavedViewSave(name: string): Promise<void> {
-    if (!this.project) return
+    if (!this.projectScope) return
     const sortMeta =
       this.subview instanceof TableView ? this.subview.getViewState() : { sortKey: 'status', sortDir: 'asc' as const }
     const sv: SavedView = {
@@ -260,16 +313,15 @@ export class ProjectView extends ItemView {
       sortDir: sortMeta.sortDir,
       viewMode: this.currentView
     }
-    this.project.savedViews.push(sv)
     this.activeSavedViewId = sv.id
-    await this.plugin.store.saveProject(this.project)
+    await this.persistSavedViews([...this.savedViews(), sv])
     void this.persistFilter()
-    this.header?.refresh()
+    this.renderProjectHeader()
   }
 
   private async handleSavedViewUpdate(id: string): Promise<void> {
-    if (!this.project) return
-    const sv = this.project.savedViews.find((v) => v.id === id)
+    const views = this.savedViews()
+    const sv = views.find((v) => v.id === id)
     if (!sv) return
     sv.filter = { ...this.filter }
     sv.viewMode = this.currentView
@@ -278,17 +330,15 @@ export class ProjectView extends ItemView {
       sv.sortKey = ts.sortKey
       sv.sortDir = ts.sortDir
     }
-    await this.plugin.store.saveProject(this.project)
+    await this.persistSavedViews(views)
     this.header?.refresh()
   }
 
   private async handleSavedViewDelete(id: string): Promise<void> {
-    if (!this.project) return
-    this.project.savedViews = this.project.savedViews.filter((v) => v.id !== id)
     if (this.activeSavedViewId === id) this.activeSavedViewId = null
-    await this.plugin.store.saveProject(this.project)
+    await this.persistSavedViews(this.savedViews().filter((v) => v.id !== id))
     void this.persistFilter()
-    this.header?.refresh()
+    this.renderProjectHeader()
   }
 
   private refreshSubview(): void {
@@ -296,30 +346,36 @@ export class ProjectView extends ItemView {
   }
 
   private renderProjectToolbar(): void {
-    if (!this.project) return
+    const scope = this.projectScope
+    const primary = scope?.primary
+    if (!scope || !primary) return
     this.toolbarEl.empty()
 
     const left = this.toolbarEl.createDiv('pm-toolbar-left')
-    const iconEl = left.createSpan({
-      text: this.project.icon,
-      cls: 'pm-toolbar-icon',
-      attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' }
-    })
-    iconEl.addEventListener('click', () => {
-      openProjectModal(this.plugin, { project: this.project })
-    })
-
-    this.titleEl2 = left.createEl('h2', { text: this.project.title, cls: 'pm-toolbar-title' })
-    this.titleEl2.contentEditable = 'true'
-    this.titleEl2.addEventListener(
-      'blur',
-      safeAsync(async () => {
-        if (!this.project) return
-        const title = this.titleEl2.textContent?.trim()
-        if (!title || title === this.project.title) return
-        await this.plugin.store.updateProject(this.project, { title })
+    if (!scope.isMulti) {
+      const iconEl = left.createSpan({
+        text: primary.icon,
+        cls: 'pm-toolbar-icon',
+        attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' }
       })
-    )
+      iconEl.addEventListener('click', () => {
+        openProjectModal(this.plugin, { project: primary })
+      })
+    }
+
+    this.titleEl2 = left.createEl('h2', { text: scope.label(), cls: 'pm-toolbar-title' })
+    if (!scope.isMulti) {
+      this.titleEl2.contentEditable = 'true'
+      this.titleEl2.addEventListener(
+        'blur',
+        safeAsync(async () => {
+          const title = this.titleEl2.textContent?.trim()
+          if (!title || title === primary.title) return
+          await this.plugin.store.updateProject(primary, { title })
+        })
+      )
+    }
+    this.renderScopeSwitcher(left)
 
     new ViewSwitcher<ViewMode>(this.toolbarEl, {
       options: [
@@ -338,37 +394,87 @@ export class ProjectView extends ItemView {
     new ButtonComponent(right)
       .setButtonText('+ add task')
       .setCta()
-      .onClick(() => {
-        if (!this.project) return
-        openTaskModal(this.plugin, this.project, {
-          onSave: async () => {
-            await this.refreshProject()
-          }
-        })
-      })
+      .onClick((e) => this.addTask(e))
 
     if (this.currentView === 'gantt') {
-      new ButtonComponent(right).setButtonText('+ milestone').onClick(() => {
-        if (!this.project) return
-        openTaskModal(this.plugin, this.project, {
-          defaults: { type: 'milestone' },
-          onSave: async () => {
-            await this.refreshProject()
-          }
-        })
-      })
+      new ButtonComponent(right).setButtonText('+ milestone').onClick((e) => this.addTask(e, { type: 'milestone' }))
     }
 
-    new ExtraButtonComponent(right)
-      .setIcon('settings')
-      .setTooltip('Project settings')
-      .onClick(() => {
-        openProjectModal(this.plugin, { project: this.project })
+    if (!scope.isMulti) {
+      new ExtraButtonComponent(right)
+        .setIcon('settings')
+        .setTooltip('Project settings')
+        .onClick(() => {
+          openProjectModal(this.plugin, { project: primary })
+        })
+    }
+  }
+
+  /** With several projects in view, a new task has to say which one it belongs to. */
+  private addTask(e: MouseEvent, defaults?: Parameters<typeof openTaskModal>[2]['defaults']): void {
+    const scope = this.projectScope
+    if (!scope?.primary) return
+    const open = (project: Project): void => {
+      openTaskModal(this.plugin, project, {
+        defaults,
+        onSave: async () => {
+          await this.refreshProject()
+        }
+      })
+    }
+    if (!scope.isMulti) {
+      open(scope.primary)
+      return
+    }
+    const menu = new Menu()
+    for (const project of scope.projects) {
+      menu.addItem((item) =>
+        item
+          .setTitle(project.title)
+          .setIcon('plus')
+          .onClick(() => open(project))
+      )
+    }
+    menu.showAtMouseEvent(e)
+  }
+
+  private renderScopeSwitcher(parent: HTMLElement): void {
+    const scope = this.projectScope
+    const primary = scope?.primary
+    if (!scope || !primary) return
+    const path = scope.spec.kind === 'vault' ? primary.filePath : scope.spec.path
+    const projectPath = scope.spec.kind === 'project' || scope.spec.kind === 'subtree' ? path : primary.filePath
+    const folder = projectPath.slice(0, projectPath.lastIndexOf('/'))
+
+    const options: { label: string; spec: ScopeSpec }[] = [
+      { label: 'This project', spec: { kind: 'project', path: projectPath } },
+      { label: 'With sub-projects', spec: { kind: 'subtree', path: projectPath } },
+      { label: folder ? `Folder: ${folder}` : 'Vault folder', spec: { kind: 'folder', path: folder } },
+      { label: 'All projects', spec: { kind: 'vault' } }
+    ]
+    const current = options.find((option) => scope.key === scopeKey(option.spec))
+
+    new ChipButton(parent)
+      .setLabel(current?.label ?? 'This project')
+      .setShape('pill')
+      .setAriaLabel('Change which projects this view shows')
+      .onClick((e) => {
+        const menu = new Menu()
+        for (const option of options) {
+          menu.addItem((item) =>
+            item
+              .setTitle(option.label)
+              .setChecked(scope.key === scopeKey(option.spec))
+              .onClick(safeAsync(() => this.switchScope(option.spec)))
+          )
+        }
+        menu.showAtMouseEvent(e)
       })
   }
 
   private renderCurrentView(): void {
-    if (!this.project) return
+    const scope = this.projectScope
+    if (!scope?.primary) return
 
     let savedGanttScroll: ReturnType<GanttView['getScrollPosition']> | null = null
     let savedGanttLabelWidth: number | null = null
@@ -395,7 +501,7 @@ export class ProjectView extends ItemView {
       case 'table': {
         const table = new TableView(
           this.bodyEl,
-          this.project,
+          scope,
           this.plugin,
           () => this.refreshProject(),
           this.filter,
@@ -406,14 +512,14 @@ export class ProjectView extends ItemView {
         break
       }
       case 'gantt': {
-        const gantt = new GanttView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
+        const gantt = new GanttView(this.bodyEl, scope, this.plugin, () => this.refreshProject(), this.filter)
         if (savedGanttScroll) gantt.setPendingScroll(savedGanttScroll)
         if (savedGanttLabelWidth !== null) gantt.setLabelWidth(savedGanttLabelWidth)
         this.subview = gantt
         break
       }
       case 'kanban':
-        this.subview = new KanbanView(this.bodyEl, this.project, this.plugin, () => this.refreshProject(), this.filter)
+        this.subview = new KanbanView(this.bodyEl, scope, this.plugin, () => this.refreshProject(), this.filter)
         break
     }
     this.bodyEl.toggleClass('pm-content--kanban', this.currentView === 'kanban')
@@ -421,7 +527,7 @@ export class ProjectView extends ItemView {
   }
 
   /**
-   * Re-render from the project in memory. Coalesced, so a mutation reporting back
+   * Re-render from the projects in memory. Coalesced, so a mutation reporting back
    * through both its own callback and the store's change event paints once.
    */
   refreshProject(): Promise<void> {
@@ -429,7 +535,7 @@ export class ProjectView extends ItemView {
     this.pendingRefresh = new Promise((resolve) => {
       window.setTimeout(() => {
         this.pendingRefresh = null
-        if (this.project) {
+        if (this.projectScope?.primary) {
           if (this.subview?.refresh) this.subview.refresh()
           else if (this.subview) this.subview.render()
           else this.renderCurrentView()

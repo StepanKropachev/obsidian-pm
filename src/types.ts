@@ -176,7 +176,10 @@ export interface PMSettings {
   showTagColors: boolean
   saveTaskOnClose: boolean
   taskEditorSurface: 'modal' | 'tab'
+  /** Keyed by scope key, e.g. `project:Projects/Roadmap.md`. */
   projectFilters: Record<string, PerProjectFilter>
+  /** Saved views for a scope covering several projects, which has no file to keep them in. */
+  scopeViews: Record<string, SavedView[]>
   /** Collapsed task ids per project path. Lives here so a toggle doesn't rewrite task files. */
   collapsedTasks: Record<string, string[]>
   /** Paths of projects whose sub-projects are collapsed in the project list. */
@@ -220,6 +223,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   saveTaskOnClose: true,
   taskEditorSurface: 'modal',
   projectFilters: {},
+  scopeViews: {},
   collapsedTasks: {},
   collapsedProjects: []
 }

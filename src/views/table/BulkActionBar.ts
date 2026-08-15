@@ -1,7 +1,6 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
-import { findTaskById } from '../../store/TaskIndex'
 import { formatBadgeText } from '../../utils'
 import { today } from '../../dates'
 import { promptText } from '../../ui/ModalFactory'
@@ -78,8 +77,8 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
-    const allMembers = collectAllAssignees(ctx.project.tasks, [
-      ...ctx.project.teamMembers,
+    const allMembers = collectAllAssignees(ctx.scope.tasks(), [
+      ...ctx.scope.teamMembers(),
       ...ctx.plugin.settings.globalTeamMembers
     ])
     for (const m of allMembers) {
@@ -101,7 +100,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Set tag').onClick((e) => {
     const menu = new Menu()
-    const allTags = collectAllTags(ctx.project.tasks)
+    const allTags = collectAllTags(ctx.scope.tasks())
     for (const t of allTags) {
       menu.addItem((item) => item.setTitle(t).onClick(() => onAction({ type: 'set-tag', tag: t })))
     }
@@ -161,31 +160,37 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
     menu.showAtMouseEvent(e)
   })
 
-  new ButtonComponent(left).setButtonText('Set parent').onClick(() => {
-    const selectedIdSet = new Set(ctx.state.selectedTaskIds)
-    // A selected task's own descendants can't become its parent.
-    const excludedIds = new Set<string>(selectedIdSet)
-    for (const id of selectedIdSet) {
-      const task = findTaskById(ctx.project, id)
-      if (task) {
-        for (const ft of flattenTasks(task.subtasks)) {
-          excludedIds.add(ft.task.id)
+  // A parent and its subtask live in the same project, so this is offered only when the
+  // whole selection does too.
+  const groups = ctx.scope.groupByProject([...ctx.state.selectedTaskIds])
+  if (groups.length === 1) {
+    const owner = groups[0].project
+    new ButtonComponent(left).setButtonText('Set parent').onClick(() => {
+      const selectedIdSet = new Set(ctx.state.selectedTaskIds)
+      // A selected task's own descendants can't become its parent.
+      const excludedIds = new Set<string>(selectedIdSet)
+      for (const id of selectedIdSet) {
+        const task = ctx.scope.taskById(id)
+        if (task) {
+          for (const ft of flattenTasks(task.subtasks)) {
+            excludedIds.add(ft.task.id)
+          }
         }
       }
-    }
-    const candidates = flattenTasks(ctx.project.tasks)
-      .filter((ft) => !excludedIds.has(ft.task.id))
-      .map((ft) => ft.task)
-    const modal = new TaskPickerModal(ctx.plugin.app, candidates, (chosen) => {
-      onAction({ type: 'set-parent', parentId: chosen.id })
+      const candidates = flattenTasks(owner.tasks)
+        .filter((ft) => !excludedIds.has(ft.task.id))
+        .map((ft) => ft.task)
+      const modal = new TaskPickerModal(ctx.plugin.app, candidates, (chosen) => {
+        onAction({ type: 'set-parent', parentId: chosen.id })
+      })
+      modal.open()
     })
-    modal.open()
-  })
+  }
 
   new ButtonComponent(left).setButtonText('Remove parent').onClick(() => onAction({ type: 'remove-parent' }))
 
   const selectedIds = [...ctx.state.selectedTaskIds]
-  const selectedTasks = selectedIds.map((id) => findTaskById(ctx.project, id)).filter(Boolean) as Task[]
+  const selectedTasks = selectedIds.map((id) => ctx.scope.taskById(id)).filter(Boolean) as Task[]
   const hasArchived = selectedTasks.some((t) => t.archived)
   const hasNonArchived = selectedTasks.some((t) => !t.archived)
 

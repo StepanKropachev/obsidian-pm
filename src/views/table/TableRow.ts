@@ -12,6 +12,7 @@ import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
 import { ExpandCell } from '../../ui/composites/cells/ExpandCell'
 import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
+import { ProjectCell } from '../../ui/composites/cells/ProjectCell'
 import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
 import { SelectCell } from '../../ui/composites/cells/SelectCell'
 import { StatusCell } from '../../ui/composites/cells/StatusCell'
@@ -20,7 +21,10 @@ import { TitleCell } from '../../ui/composites/cells/TitleCell'
 
 export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: TableContext): void {
   const { task, depth } = flat
-  const isDone = isTerminalStatus(task.status, ctx.statuses)
+  // One row belongs to one project, so ownership is resolved here and used throughout.
+  const project = ctx.scope.projectOf(task.id)
+  if (!project) return
+  const isDone = isTerminalStatus(task.status, ctx.scope.configOf(task.id).statuses)
   const statusConfig = getStatusConfig(ctx.statuses, task.status)
 
   const { el: row } = new TaskRow(tbody, {
@@ -66,7 +70,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     hasSubtasks: task.subtasks.length > 0,
     collapsed: task.collapsed,
     onToggle: safeAsync(async () => {
-      await ctx.plugin.toggleTaskCollapsed(ctx.project, task.id)
+      await ctx.plugin.toggleTaskCollapsed(project, task.id)
       await ctx.onRefresh()
     })
   })
@@ -77,7 +81,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     isLastChild: flat.isLastChild,
     showTagColors: ctx.plugin.settings.showTagColors,
     onTitleClick: () => {
-      openTaskModal(ctx.plugin, ctx.project, {
+      openTaskModal(ctx.plugin, project, {
         task,
         onSave: async () => {
           await ctx.onRefresh()
@@ -85,11 +89,11 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
       })
     },
     onTitleSave: async (title) => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { title })
+      await ctx.plugin.store.updateTask(project, task.id, { title })
       await ctx.onRefresh()
     },
     onAddSubtask: () => {
-      openTaskModal(ctx.plugin, ctx.project, {
+      openTaskModal(ctx.plugin, project, {
         parentId: task.id,
         onSave: async () => {
           await ctx.onRefresh()
@@ -98,11 +102,15 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     }
   })
 
+  if (ctx.scope.isMulti) {
+    new ProjectCell(row, { title: project.title, color: project.color })
+  }
+
   new StatusCell(row, {
     task,
     statuses: ctx.statuses,
     onChange: safeAsync(async (status) => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { status })
+      await ctx.plugin.store.updateTask(project, task.id, { status })
       await ctx.onRefresh()
     })
   })
@@ -111,7 +119,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     task,
     priorities: ctx.priorities,
     onChange: safeAsync(async (priority) => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { priority })
+      await ctx.plugin.store.updateTask(project, task.id, { priority })
       await ctx.onRefresh()
     })
   })
@@ -122,8 +130,8 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     task,
     urgency: dueUrgency(task, ctx.statuses),
     onSave: async (val) => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { due: val })
-      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id)
+      await ctx.plugin.store.updateTask(project, task.id, { due: val })
+      await ctx.plugin.store.scheduleAfterChange(project, task.id)
       await ctx.onRefresh()
     }
   })
@@ -132,13 +140,13 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     value: task.progress,
     color: statusConfig?.color ?? 'var(--interactive-accent)',
     onSave: async (progress) => {
-      await ctx.plugin.store.updateTask(ctx.project, task.id, { progress })
+      await ctx.plugin.store.updateTask(project, task.id, { progress })
       await ctx.onRefresh()
     }
   })
   new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
 
-  for (const cf of ctx.project.customFields) {
+  for (const cf of ctx.scope.customFields()) {
     const val = task.customFields[cf.id]
     new CustomFieldCell(row, val !== undefined ? stringifyCustomValue(val) : '')
   }
@@ -146,7 +154,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
   new ActionsCell(row, {
     onClick: (e) => {
       const menu = new Menu()
-      buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project: ctx.project, onRefresh: ctx.onRefresh })
+      buildTaskContextMenu(menu, task, { plugin: ctx.plugin, project, onRefresh: ctx.onRefresh })
       menu.showAtMouseEvent(e)
     }
   })

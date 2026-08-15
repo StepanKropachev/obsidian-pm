@@ -1,5 +1,6 @@
 import { TFile } from 'obsidian'
 import type PMPlugin from '../main'
+import type { ScopeSpec } from '../store'
 import { PM_DASHBOARD_VIEW_TYPE } from './DashboardView'
 import { PM_PROJECT_VIEW_TYPE } from './ProjectView'
 import { PM_TASK_VIEW_TYPE, type TaskViewState } from './TaskView'
@@ -15,9 +16,13 @@ export class PMViewRouter {
   }
 
   async openProject(file: TFile): Promise<void> {
+    await this.openScope({ kind: 'project', path: file.path })
+  }
+
+  async openScope(scope: ScopeSpec): Promise<void> {
     const ws = this.plugin.app.workspace
     const leaf = ws.getLeaf('tab')
-    await leaf.setViewState({ type: PM_PROJECT_VIEW_TYPE, state: { filePath: file.path } })
+    await leaf.setViewState({ type: PM_PROJECT_VIEW_TYPE, state: { scope } })
     await ws.revealLeaf(leaf)
   }
 

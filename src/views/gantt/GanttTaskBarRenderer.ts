@@ -18,6 +18,8 @@ import { handleLinkDotClick } from './GanttLinkHandler'
 import type { RendererContext } from './GanttRenderer'
 
 export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: number, ctx: RendererContext): void {
+  const project = ctx.scope.projectOf(task.id)
+  if (!project) return
   const startDate = parsePlainDate(task.start)
   const endDate = parsePlainDate(task.due)
   if (!startDate && !endDate) {
@@ -138,7 +140,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
       ctx.cfg,
       ctx.drag,
       ctx.plugin,
-      ctx.project,
+      project,
       ctx.onRefresh
     )
     ctx.cleanupFns.push(cleanup)
@@ -162,7 +164,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     })
     dot.addEventListener('click', (e: MouseEvent) => {
       e.stopPropagation()
-      handleLinkDotClick(dot, task.id, side, ctx.link, ctx.plugin, ctx.project, ctx.onRefresh)
+      handleLinkDotClick(dot, task.id, side, ctx.link, ctx.plugin, project, ctx.onRefresh)
     })
     barGroup.appendChild(dot)
   }
@@ -177,7 +179,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
       ctx.cfg,
       ctx.drag,
       ctx.plugin,
-      ctx.project,
+      project,
       ctx.onRefresh
     )
     ctx.cleanupFns.push(moveCleanup)
@@ -191,11 +193,13 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
       ctx.drag.dragMoved = false
       return
     }
-    openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() })
+    openTaskModal(ctx.plugin, project, { task, onSave: () => ctx.onRefresh() })
   })
 }
 
 function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx: RendererContext): void {
+  const project = ctx.scope.projectOf(task.id)
+  if (!project) return
   const rowY = HEADER_HEIGHT + row * ROW_HEIGHT
 
   const hitArea = svgEl('rect', {
@@ -250,13 +254,13 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
       const iso = xToDate(ctx.cfg, snapped).toString()
 
       try {
-        await ctx.plugin.store.updateTask(ctx.project, task.id, { start: iso, due: iso })
+        await ctx.plugin.store.updateTask(project, task.id, { start: iso, due: iso })
       } catch (err) {
         new Notice('Failed to set task dates. Please try again.')
         console.error('GanttTaskBarRenderer: click-to-set-dates failed', err)
         return
       }
-      await ctx.plugin.store.scheduleAfterChange(ctx.project, task.id)
+      await ctx.plugin.store.scheduleAfterChange(project, task.id)
       await ctx.onRefresh()
     })
   )
@@ -269,6 +273,8 @@ function renderEmptyRowClickTarget(g: SVGGElement, task: Task, row: number, ctx:
 function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: string, ctx: RendererContext): void {
   const date = parsePlainDate(task.due) ?? parsePlainDate(task.start)
   if (!date) return
+  const project = ctx.scope.projectOf(task.id)
+  if (!project) return
 
   const cx = dateToX(ctx.cfg, date) + ctx.cfg.dayWidth / 2
   const cy = HEADER_HEIGHT + row * ROW_HEIGHT + ROW_HEIGHT / 2
@@ -289,7 +295,7 @@ function renderMilestoneDiamond(g: SVGGElement, task: Task, row: number, color: 
   diamond.appendChild(tt)
 
   diamond.addEventListener('click', () => {
-    openTaskModal(ctx.plugin, ctx.project, { task, onSave: () => ctx.onRefresh() })
+    openTaskModal(ctx.plugin, project, { task, onSave: () => ctx.onRefresh() })
   })
 }
 

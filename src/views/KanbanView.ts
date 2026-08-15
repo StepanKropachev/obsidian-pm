@@ -1,6 +1,7 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Project, Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
+import type { Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../types'
+import type { ProjectScope } from '../store'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
 import { dueUrgency, getPriorityConfig } from '../utils'
@@ -16,7 +17,7 @@ export class KanbanView implements SubView {
 
   constructor(
     private container: HTMLElement,
-    private project: Project,
+    private scope: ProjectScope,
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
     private filter: FilterState
@@ -30,7 +31,7 @@ export class KanbanView implements SubView {
   }
 
   private renderBoard(): void {
-    this.config = this.plugin.store.configFor(this.project)
+    this.config = this.scope.config
     this.container.empty()
     this.container.addClass('pm-kanban-view')
 
@@ -58,8 +59,8 @@ export class KanbanView implements SubView {
   /** Descriptions load lazily from the note body, so previews fill in on a second render. */
   private async hydrateDescriptions(): Promise<void> {
     const candidates = this.config.kanbanShowSubtasks
-      ? flattenTasks(this.project.tasks).map((ft) => ft.task)
-      : this.project.tasks
+      ? flattenTasks(this.scope.tasks()).map((ft) => ft.task)
+      : this.scope.tasks()
     const pending = candidates.filter(
       (t) => t.filePath && !t.description && matchesFilter(t, this.filter, this.config.statuses)
     )
@@ -70,8 +71,8 @@ export class KanbanView implements SubView {
 
   private getTasksForStatus(status: TaskStatus): Task[] {
     const candidates = this.config.kanbanShowSubtasks
-      ? flattenTasks(this.project.tasks).map((ft) => ft.task)
-      : this.project.tasks
+      ? flattenTasks(this.scope.tasks()).map((ft) => ft.task)
+      : this.scope.tasks()
     return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.config.statuses))
   }
 
@@ -99,11 +100,15 @@ export class KanbanView implements SubView {
       if (parent) parentTitle = parent.title
     }
 
+    const owner = this.scope.isMulti ? this.scope.projectOf(task.id) : null
+
     return {
       task,
       priorityColor,
       descriptionPreview,
       parentTitle,
+      projectTitle: owner?.title,
+      projectColor: owner?.color,
       loggedHours: totalLoggedHours(task),
       overdue: dueUrgency(task, this.config.statuses) === 'overdue',
       showTagColors: this.plugin.settings.showTagColors
@@ -111,7 +116,7 @@ export class KanbanView implements SubView {
   }
 
   private findParentTask(taskId: string): Task | null {
-    for (const ft of flattenTasks(this.project.tasks)) {
+    for (const ft of flattenTasks(this.scope.tasks())) {
       const parent = ft.task
       if (parent.subtasks.some((s) => s.id === taskId)) return parent
     }
@@ -119,7 +124,9 @@ export class KanbanView implements SubView {
   }
 
   private openTask(task: Task): void {
-    openTaskModal(this.plugin, this.project, {
+    const owner = this.scope.projectOf(task.id)
+    if (!owner) return
+    openTaskModal(this.plugin, owner, {
       task,
       onSave: async () => {
         await this.onRefresh()
@@ -128,15 +135,19 @@ export class KanbanView implements SubView {
   }
 
   private openContextMenu(task: Task, e: MouseEvent): void {
+    const owner = this.scope.projectOf(task.id)
+    if (!owner) return
     const menu = new Menu()
-    buildTaskContextMenu(menu, task, { plugin: this.plugin, project: this.project, onRefresh: this.onRefresh })
+    buildTaskContextMenu(menu, task, { plugin: this.plugin, project: owner, onRefresh: this.onRefresh })
     menu.showAtMouseEvent(e)
   }
 
   private async handleDrop(taskId: string, newStatus: TaskStatus): Promise<void> {
     if (!this.dragTask || this.dragTask.id !== taskId) return
     if (newStatus === this.dragTask.status) return
-    await this.plugin.store.updateTask(this.project, this.dragTask.id, { status: newStatus })
+    const owner = this.scope.projectOf(taskId)
+    if (!owner) return
+    await this.plugin.store.updateTask(owner, this.dragTask.id, { status: newStatus })
     await this.onRefresh()
   }
 }

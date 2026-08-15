@@ -129,6 +129,14 @@ export default class PMPlugin extends Plugin {
     })
 
     this.addCommand({
+      id: 'open-all-projects',
+      name: 'Open all projects in one view',
+      callback: () => {
+        void this.router.openScope({ kind: 'vault' })
+      }
+    })
+
+    this.addCommand({
       id: 'rebuild-project-index',
       name: 'Rebuild project index',
       callback: () => {
@@ -229,11 +237,20 @@ export default class PMPlugin extends Plugin {
     if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses
     if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
     if (!this.settings.projectFilters) this.settings.projectFilters = {}
+    if (!this.settings.scopeViews) this.settings.scopeViews = {}
     if (!this.settings.collapsedTasks) this.settings.collapsedTasks = {}
     if (!this.settings.collapsedProjects) this.settings.collapsedProjects = []
     if (!this.settings.excludedFolders) this.settings.excludedFolders = []
 
     let migrated = false
+    // Filters were keyed by project path before a view could cover several projects.
+    for (const key of Object.keys(this.settings.projectFilters)) {
+      if (key.includes(':')) continue
+      this.settings.projectFilters[`project:${key}`] = this.settings.projectFilters[key]
+      Reflect.deleteProperty(this.settings.projectFilters, key)
+      migrated = true
+    }
+
     for (const s of this.settings.statuses) {
       if (s.complete === undefined) {
         s.complete = s.id === 'done' || s.id === 'cancelled'

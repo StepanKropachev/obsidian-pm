@@ -10,6 +10,7 @@ import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
 import { ExpandCell } from '../../ui/composites/cells/ExpandCell'
 import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
+import { ProjectCell } from '../../ui/composites/cells/ProjectCell'
 import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
 import { SelectCell } from '../../ui/composites/cells/SelectCell'
 import { StatusCell } from '../../ui/composites/cells/StatusCell'
@@ -356,6 +357,8 @@ export class StyleguideView extends ItemView {
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
+      projectTitle: 'Platform',
+      projectColor: '#7a9ec4',
       loggedHours: 11,
       overdue: true,
       showTagColors: true,
@@ -370,7 +373,7 @@ export class StyleguideView extends ItemView {
     const sec = this.section('Table row and cells', 'table')
     sec.createDiv({
       cls: 'pm-sg-caption',
-      text: 'TaskRow + one of each cell composite, with TitleCell tree connectors'
+      text: 'TaskRow + one of each cell composite, with TitleCell tree connectors. ProjectCell only appears when a view covers several projects.'
     })
     const table = sec.createEl('table', { cls: 'pm-table' })
     const tbody = table.createEl('tbody')
@@ -445,6 +448,7 @@ export class StyleguideView extends ItemView {
         onTitleSave: noopAsync,
         onAddSubtask: noop
       })
+      new ProjectCell(tr.el, { title: 'Platform', color: '#7a9ec4' })
       new StatusCell(tr.el, { task, statuses: DEFAULT_STATUSES, onChange: noop })
       new PriorityCell(tr.el, { task, priorities: DEFAULT_PRIORITIES, onChange: noop })
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })

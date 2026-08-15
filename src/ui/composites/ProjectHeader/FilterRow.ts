@@ -1,5 +1,5 @@
 import { Menu } from 'obsidian'
-import type { Project, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
+import type { Task, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
@@ -7,7 +7,7 @@ import { ChipButton } from '../../primitives/ChipButton'
 import { formatBadgeText } from '../../../utils'
 
 export interface FilterRowProps {
-  project: Project
+  tasks: Task[]
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   filter: FilterState
@@ -37,7 +37,7 @@ export class FilterRow {
 
   private render(): void {
     this.el.empty()
-    const { filter, statuses, priorities, project } = this.props
+    const { filter, statuses, priorities, tasks } = this.props
 
     const notify = () => {
       this.props.onFilterChange()
@@ -66,7 +66,7 @@ export class FilterRow {
       }
     )
 
-    const allAssignees = collectAllAssignees(project.tasks)
+    const allAssignees = collectAllAssignees(tasks)
     if (allAssignees.length) {
       renderFilterDropdown(
         this.el,
@@ -80,7 +80,7 @@ export class FilterRow {
       )
     }
 
-    const allTags = collectAllTags(project.tasks)
+    const allTags = collectAllTags(tasks)
     if (allTags.length) {
       renderFilterDropdown(
         this.el,

@@ -85,6 +85,14 @@ function openCreateProjectModal(ctx: ProjectListContext): void {
 
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {
   const menu = new Menu()
+  if (ctx.plugin.index.childRefs(ref.path).length) {
+    menu.addItem((item) =>
+      item
+        .setTitle('Open with sub-projects')
+        .setIcon('layers')
+        .onClick(safeAsync(() => ctx.plugin.router.openScope({ kind: 'subtree', path: ref.path })))
+    )
+  }
   menu.addItem((item) =>
     item
       .setTitle('Edit project')

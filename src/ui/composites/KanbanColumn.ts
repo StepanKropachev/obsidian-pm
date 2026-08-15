@@ -15,6 +15,8 @@ export interface KanbanCardData {
   priorityColor?: string
   descriptionPreview?: string
   parentTitle?: string
+  projectTitle?: string
+  projectColor?: string
   loggedHours: number
   overdue: boolean
   showTagColors: boolean
