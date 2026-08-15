@@ -141,6 +141,14 @@ function hydrateProjectConfig(raw: unknown): ProjectConfig | undefined {
   if (typeof r.autoSchedule === 'boolean') config.autoSchedule = r.autoSchedule
   if (typeof r.pullForwardOnEarlyFinish === 'boolean') config.pullForwardOnEarlyFinish = r.pullForwardOnEarlyFinish
   if (typeof r.showSubtreeConnections === 'boolean') config.showSubtreeConnections = r.showSubtreeConnections
+  if (
+    r.lineBorders === 'none' ||
+    r.lineBorders === 'horizontal' ||
+    r.lineBorders === 'vertical' ||
+    r.lineBorders === 'both'
+  ) {
+    config.lineBorders = r.lineBorders
+  }
   if (typeof r.kanbanShowSubtasks === 'boolean') config.kanbanShowSubtasks = r.kanbanShowSubtasks
   if (typeof r.kanbanShowDescriptionPreview === 'boolean') {
     config.kanbanShowDescriptionPreview = r.kanbanShowDescriptionPreview

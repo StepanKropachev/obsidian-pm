@@ -22,9 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A task note opens in the task editor when tasks are set to open in a tab
 - The task menu moves the task being edited into a tab
 - Subtasks in the table are joined to their parent by tree lines, which can be turned off with the new show subtree connections setting
+- The table draws lines between rows, between columns, or both, using the new line borders setting
 
 ### Changed
 
+- Table rows have no line between them unless line borders are turned on
 - The plugin requires Obsidian 1.13
 - Settings are grouped by area, with statuses, priorities, team members, and TaskNotes each on their own page
 - Settings can be found from Obsidian's settings search
