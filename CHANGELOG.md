@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tasks open in a tab instead of a modal when the new task opening setting is set to tab
 - A task note opens in the task editor when tasks are set to open in a tab
 - The task menu moves the task being edited into a tab
+- Subtasks in the table are joined to their parent by tree lines, which can be turned off with the new subtask connectors setting
 
 ### Changed
 
@@ -49,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A project open in two views showed the older state in one of them ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A task edited in the task editor lost changes made to it elsewhere while the editor was open
 - Edits to a project file made outside the plugin reached an open project view only after reopening it
+- A settings change reached an open project or project list only after reopening it
 - The sort arrow in the table stayed on the column that was sorted before
 - Start and completed dates were labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))
 - The due date of a done task was labelled overdue in the task editor ([#156](https://github.com/StepanKropachev/obsidian-pm/issues/156))

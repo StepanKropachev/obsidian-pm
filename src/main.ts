@@ -21,6 +21,7 @@ export default class PMPlugin extends Plugin {
   router!: PMViewRouter
   /** Paths deliberately sent to the markdown editor, which the swap then leaves alone. */
   private markdownEscapes = new Set<string>()
+  private viewRefreshScheduled = false
   undoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
   redoStack: Array<{ undo: () => Promise<void>; redo: () => Promise<void> }> = []
 
@@ -299,11 +300,23 @@ export default class PMPlugin extends Plugin {
     new Notice(msg, duration)
   }
 
-  /** For changes the store's own events don't cover, such as a settings edit. */
-  refreshProjectViews(): void {
-    for (const leaf of this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)) {
-      if (leaf.view instanceof ProjectView) void leaf.view.refreshProject()
-    }
+  /**
+   * A settings edit changed a palette or how a view draws itself. Nothing in the vault
+   * moved, so the store's own change events say nothing about it. Coalesced, because a
+   * list editor persists on every keystroke.
+   */
+  refreshViews(): void {
+    if (this.viewRefreshScheduled) return
+    this.viewRefreshScheduled = true
+    window.setTimeout(() => {
+      this.viewRefreshScheduled = false
+      for (const leaf of this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)) {
+        if (leaf.view instanceof ProjectView) leaf.view.redraw()
+      }
+      for (const leaf of this.app.workspace.getLeavesOfType(PM_DASHBOARD_VIEW_TYPE)) {
+        if (leaf.view instanceof DashboardView) leaf.view.render()
+      }
+    }, 0)
   }
 
   /** Picks a project, then a parent when creating a subtask, before opening the editor. */

@@ -108,16 +108,17 @@ export class ProjectView extends ItemView {
 
     this.register(
       this.plugin.store.onProjectChanged((path) => {
-        if (path === this.filePath) this.handleProjectChanged()
+        if (path === this.filePath) this.redraw()
       })
     )
   }
 
   /**
-   * The project changed somewhere. The store keeps one instance per file, so
-   * `this.project` is already current and only the DOM needs catching up.
+   * Something outside the DOM changed: the project itself, or a setting that decides how
+   * it is drawn. The store keeps one instance per file, so `this.project` is already
+   * current and only the DOM needs catching up.
    */
-  private handleProjectChanged(): void {
+  redraw(): void {
     if (!this.project) return
     if (!(this.app.vault.getAbstractFileByPath(this.filePath) instanceof TFile)) {
       this.renderMissingProject()

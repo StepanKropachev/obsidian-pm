@@ -14,6 +14,7 @@ import { ProgressCell } from '../../ui/composites/cells/ProgressCell'
 import { SelectCell } from '../../ui/composites/cells/SelectCell'
 import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
+import { TitleCell } from '../../ui/composites/cells/TitleCell'
 import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectCard } from '../../ui/composites/ProjectCard'
 import { TaskRow } from '../../ui/composites/TaskRow'
@@ -340,12 +341,16 @@ export class StyleguideView extends ItemView {
 
   private renderTable(): void {
     const sec = this.section('Table row and cells', 'table')
-    sec.createDiv({ cls: 'pm-sg-caption', text: 'TaskRow + one of each cell composite' })
+    sec.createDiv({
+      cls: 'pm-sg-caption',
+      text: 'TaskRow + one of each cell composite, with TitleCell tree connectors'
+    })
     const table = sec.createEl('table', { cls: 'pm-table' })
     const tbody = table.createEl('tbody')
     const rows: {
       task: Task
       props: { depth: number; isDone: boolean; isSelected: boolean }
+      tree: { guides: boolean[]; isLastChild: boolean }
       urgency: 'normal' | 'near' | 'overdue'
       time: { logged: number; estimate: number }
     }[] = [
@@ -360,6 +365,7 @@ export class StyleguideView extends ItemView {
           subtasks: [makeTask({ title: 'Pick a layout' })]
         }),
         props: { depth: 0, isDone: false, isSelected: false },
+        tree: { guides: [], isLastChild: false },
         urgency: 'normal',
         time: { logged: 5, estimate: 10 }
       },
@@ -373,17 +379,26 @@ export class StyleguideView extends ItemView {
           assignees: ['Alan Turing']
         }),
         props: { depth: 1, isDone: false, isSelected: true },
+        tree: { guides: [false], isLastChild: false },
         urgency: 'overdue',
         time: { logged: 6, estimate: 4 }
       },
       {
+        task: makeTask({ title: 'Sweep the leftover copy', status: 'review', priority: 'low' }),
+        props: { depth: 2, isDone: false, isSelected: false },
+        tree: { guides: [true, false], isLastChild: true },
+        urgency: 'normal',
+        time: { logged: 1, estimate: 2 }
+      },
+      {
         task: makeTask({ title: 'Archive old sprints', status: 'done', progress: 100 }),
-        props: { depth: 0, isDone: true, isSelected: false },
+        props: { depth: 1, isDone: true, isSelected: false },
+        tree: { guides: [false], isLastChild: true },
         urgency: 'normal',
         time: { logged: 0, estimate: 0 }
       }
     ]
-    for (const { task, props, urgency, time } of rows) {
+    for (const { task, props, tree, urgency, time } of rows) {
       const tr = new TaskRow(tbody, {
         taskId: task.id,
         depth: props.depth,
@@ -394,7 +409,15 @@ export class StyleguideView extends ItemView {
       })
       new ExpandCell(tr.el, { hasSubtasks: task.subtasks.length > 0, collapsed: false, onToggle: noop })
       new SelectCell(tr.el, { checked: props.isSelected, onClick: noop })
-      tr.el.createEl('td', { cls: 'pm-table-cell-title', text: task.title })
+      new TitleCell(tr.el, {
+        task,
+        treeGuides: tree.guides,
+        isLastChild: tree.isLastChild,
+        showTagColors: true,
+        onTitleClick: noop,
+        onTitleSave: noopAsync,
+        onAddSubtask: noop
+      })
       new StatusCell(tr.el, { task, statuses: DEFAULT_STATUSES, onChange: noop })
       new PriorityCell(tr.el, { task, priorities: DEFAULT_PRIORITIES, onChange: noop })
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })

@@ -140,6 +140,9 @@ function hydrateProjectConfig(raw: unknown): ProjectConfig | undefined {
   }
   if (typeof r.autoSchedule === 'boolean') config.autoSchedule = r.autoSchedule
   if (typeof r.pullForwardOnEarlyFinish === 'boolean') config.pullForwardOnEarlyFinish = r.pullForwardOnEarlyFinish
+  if (r.tableSubtaskConnectors === 'tree' || r.tableSubtaskConnectors === 'indent') {
+    config.tableSubtaskConnectors = r.tableSubtaskConnectors
+  }
   if (typeof r.kanbanShowSubtasks === 'boolean') config.kanbanShowSubtasks = r.kanbanShowSubtasks
   if (typeof r.kanbanShowDescriptionPreview === 'boolean') {
     config.kanbanShowDescriptionPreview = r.kanbanShowDescriptionPreview

@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { Project, FilterState, PriorityConfig, StatusConfig } from '../../types'
+import type { Project, FilterState, PriorityConfig, StatusConfig, TableSubtaskConnectors } from '../../types'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
@@ -13,6 +13,13 @@ type SortDir = 'asc' | 'desc'
 
 export type { SortKey, SortDir }
 
+/** A display row plus what the tree connectors need to know about its siblings. */
+export interface TableTreeRow extends FlatTask {
+  /** One entry per indent column: does an ancestor at that column still have rows below it. */
+  guides: boolean[]
+  isLastChild: boolean
+}
+
 export interface TableState {
   sortKey: SortKey
   sortDir: SortDir
@@ -23,7 +30,7 @@ export interface TableState {
   tableBody: HTMLElement | null
   wrapper: HTMLElement | null
   /** Display list after filter/sort/collapse. Drives the virtual window and selection. */
-  visibleRows: FlatTask[]
+  visibleRows: TableTreeRow[]
   /** An estimate until calibrated against the first painted row. */
   rowHeight: number
   heightCalibrated: boolean
@@ -40,6 +47,7 @@ export interface TableContext {
   /** Resolved once per render pass. */
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  subtaskConnectors: TableSubtaskConnectors
   state: TableState
   onRefresh: () => Promise<void>
   onSelectionChange: () => void
@@ -179,16 +187,17 @@ function fillTableBody(ctx: TableContext): void {
     list.sort((a, b) => compareTask(a.task, b.task, ctx.state, ctx.statuses, ctx.priorities))
   }
 
-  const sorted: FlatTask[] = []
-  const addWithChildren = (parentId: string | null) => {
+  const sorted: TableTreeRow[] = []
+  const addWithChildren = (parentId: string | null, trail: boolean[]) => {
     const items = childrenByParent.get(parentId)
     if (!items) return
-    for (const item of items) {
-      sorted.push(item)
-      addWithChildren(item.task.id)
-    }
+    items.forEach((item, i) => {
+      const isLastChild = i === items.length - 1
+      sorted.push({ ...item, guides: padGuides(trail, item.depth), isLastChild })
+      addWithChildren(item.task.id, [...trail, !isLastChild])
+    })
   }
-  addWithChildren(null)
+  addWithChildren(null, [])
 
   // When filtering, show all matches regardless of collapsed parent.
   ctx.state.visibleRows = hasActiveFilter ? sorted : sorted.filter((f) => f.visible)
@@ -197,6 +206,16 @@ function fillTableBody(ctx: TableContext): void {
   ctx.state.windowStart = -1
   ctx.state.windowEnd = -1
   renderWindowRows(ctx)
+}
+
+/**
+ * Rows keep their original tree depth for indentation, but a filter can promote a task
+ * whose parent was filtered out to the top of the display list. Padding to `depth` keeps
+ * the connectors under the title they belong to and leaves the promoted gap blank.
+ */
+function padGuides(trail: boolean[], depth: number): boolean[] {
+  if (trail.length >= depth) return trail.slice(0, depth)
+  return [...Array.from<boolean>({ length: depth - trail.length }).fill(false), ...trail]
 }
 
 const ROW_OVERSCAN = 8
@@ -233,7 +252,7 @@ function renderWindowRows(ctx: TableContext): void {
   tbody.empty()
   if (start > 0) spacerRow(tbody, colCount, start * state.rowHeight)
   for (let i = start; i < end; i++) {
-    renderTaskRow(tbody, rows[i].task, rows[i].depth, ctx)
+    renderTaskRow(tbody, rows[i], ctx)
   }
   if (end < rows.length) spacerRow(tbody, colCount, (rows.length - end) * state.rowHeight)
 

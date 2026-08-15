@@ -83,6 +83,22 @@ export class PMSettingTab extends PluginSettingTab {
       },
       {
         type: 'group',
+        heading: 'Table',
+        items: [
+          {
+            name: 'Subtask connectors',
+            desc: 'How a subtask row is tied back to its parent.',
+            aliases: ['tree', 'indent'],
+            control: {
+              type: 'dropdown',
+              key: 'tableSubtaskConnectors',
+              options: { tree: 'Tree lines', indent: 'Indent only' }
+            }
+          }
+        ]
+      },
+      {
+        type: 'group',
         heading: 'Gantt',
         items: [
           {
@@ -192,7 +208,7 @@ export class PMSettingTab extends PluginSettingTab {
 
   async setControlValue(key: string, value: unknown): Promise<void> {
     await super.setControlValue(key, value)
-    if (key === 'kanbanShowDescriptionPreview') this.plugin.refreshProjectViews()
+    this.plugin.refreshViews()
     this.refreshDomState()
   }
 
@@ -366,6 +382,7 @@ export class PMSettingTab extends PluginSettingTab {
 
   private persist(): void {
     void this.plugin.saveSettings()
+    this.plugin.refreshViews()
   }
 
   private reorder<T>(items: T[], from: number, to: number): void {
