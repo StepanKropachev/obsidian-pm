@@ -192,6 +192,7 @@ export class TableView implements SubView {
       plugin: this.plugin,
       statuses: config.statuses,
       priorities: config.priorities,
+      showSubtreeConnections: config.showSubtreeConnections,
       state: this.state,
       onRefresh: this.onRefresh,
       onSelectionChange: () => {

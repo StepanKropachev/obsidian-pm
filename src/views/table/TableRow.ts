@@ -1,9 +1,8 @@
 import { Menu } from 'obsidian'
 import { getStatusConfig, dueUrgency, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
-import type { Task } from '../../types'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
-import type { TableContext, TableState } from './TableRenderer'
+import type { TableContext, TableState, TableTreeRow } from './TableRenderer'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { TaskRow } from '../../ui/composites/TaskRow'
@@ -19,7 +18,8 @@ import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { TitleCell } from '../../ui/composites/cells/TitleCell'
 
-export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx: TableContext): void {
+export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: TableContext): void {
+  const { task, depth } = flat
   const isDone = isTerminalStatus(task.status, ctx.statuses)
   const statusConfig = getStatusConfig(ctx.statuses, task.status)
 
@@ -73,7 +73,8 @@ export function renderTaskRow(tbody: HTMLElement, task: Task, depth: number, ctx
 
   new TitleCell(row, {
     task,
-    depth,
+    treeGuides: ctx.showSubtreeConnections ? flat.guides : null,
+    isLastChild: flat.isLastChild,
     showTagColors: ctx.plugin.settings.showTagColors,
     onTitleClick: () => {
       openTaskModal(ctx.plugin, ctx.project, {

@@ -119,6 +119,7 @@ export interface ProjectConfig {
   defaultView?: ViewMode
   autoSchedule?: boolean
   pullForwardOnEarlyFinish?: boolean
+  showSubtreeConnections?: boolean
   kanbanShowSubtasks?: boolean
   kanbanShowDescriptionPreview?: boolean
 }
@@ -133,6 +134,7 @@ export interface ResolvedProjectConfig {
   defaultView: ViewMode
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
+  showSubtreeConnections: boolean
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
 }
@@ -156,6 +158,7 @@ export interface PMSettings {
   notificationLeadDays: number
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
+  showSubtreeConnections: boolean
   kanbanShowSubtasks: boolean
   kanbanShowDescriptionPreview: boolean
   showTagColors: boolean
@@ -190,6 +193,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
   globalTeamMembers: [],
+  showSubtreeConnections: true,
   kanbanShowSubtasks: false,
   kanbanShowDescriptionPreview: false,
   showTagColors: true,
