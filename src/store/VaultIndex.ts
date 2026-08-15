@@ -1,6 +1,7 @@
 import type { App, Plugin, TAbstractFile } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
 import type { PMSettings, StatusConfig } from '../types'
+import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
 import { projectPathForTaskPath, resolveProjectLink } from './vaultFs'
 
@@ -26,6 +27,8 @@ export interface TaskRef {
   priority: string
   start: string
   due: string
+  completed: string
+  dependencies: string[]
   archived: boolean
 }
 
@@ -207,6 +210,47 @@ export class VaultIndex {
     return { total, done }
   }
 
+  /**
+   * A task anywhere in the vault. This is what lets a dependency point outside its own
+   * project: ids are resolved here rather than inside one project's tree.
+   */
+  task(taskId: string): TaskRef | null {
+    for (const ref of this.tasks.values()) {
+      if (ref.id === taskId) return ref
+    }
+    return null
+  }
+
+  allTaskRefs(): TaskRef[] {
+    return [...this.tasks.values()]
+  }
+
+  /**
+   * Would making `fromId` depend on `toId` close a cycle, following dependencies wherever
+   * they lead? The graph spans projects, so a cycle can too.
+   */
+  wouldCreateCycle(fromId: string, toId: string): boolean {
+    return reaches(this.dependentsMap(), fromId, toId)
+  }
+
+  /** Tasks anywhere in the vault that list this one as a dependency. */
+  dependents(taskId: string): TaskRef[] {
+    return [...this.tasks.values()].filter((ref) => ref.dependencies.includes(taskId))
+  }
+
+  /** Predecessor id -> ids of everything waiting on it, across every project. */
+  dependentsMap(): Map<string, string[]> {
+    const map = new Map<string, string[]>()
+    for (const ref of this.tasks.values()) {
+      for (const depId of ref.dependencies) {
+        const list = map.get(depId)
+        if (list) list.push(ref.id)
+        else map.set(depId, [ref.id])
+      }
+    }
+    return map
+  }
+
   /** The project owning a task note, by location first and by its `projectId` when it moved. */
   projectPathForTask(taskPath: string): string | null {
     return this.tasks.get(normalizePath(taskPath))?.projectPath ?? this.resolveOwner(normalizePath(taskPath), '')
@@ -249,6 +293,8 @@ export class VaultIndex {
       priority: str(frontmatter.priority, 'medium'),
       start: str(frontmatter.start),
       due: str(frontmatter.due),
+      completed: str(frontmatter.completed),
+      dependencies: Array.isArray(frontmatter.dependencies) ? (frontmatter.dependencies as string[]) : [],
       archived: path.split('/').at(-2) === 'Archive'
     }
     this.tasks.set(path, ref)

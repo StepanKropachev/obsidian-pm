@@ -181,6 +181,35 @@ describe('VaultIndex', () => {
     })
   })
 
+  describe('cross-project references', () => {
+    beforeEach(async () => {
+      await vault.create('A.md', projectNote('p1', 'A'))
+      await vault.create('B.md', projectNote('p2', 'B'))
+      await vault.create('A_tasks/one.md', taskNote('t1', 'One', 'p1'))
+      await vault.create(
+        'B_tasks/two.md',
+        `---\npm-task: true\nid: t2\nprojectId: p2\ntitle: Two\nstatus: todo\ndependencies:\n  - t1\n---\n`
+      )
+      index.build()
+    })
+
+    it('resolves a task id from any project', () => {
+      expect(index.task('t1')?.path).toBe('A_tasks/one.md')
+      expect(index.task('nope')).toBeNull()
+    })
+
+    it('reports what depends on a task, across projects', () => {
+      expect(index.dependents('t1').map((r) => r.id)).toEqual(['t2'])
+      expect(index.dependents('t2')).toEqual([])
+    })
+
+    it('sees a cycle that spans two projects', () => {
+      // t2 already depends on t1, so making t1 depend on t2 closes the loop.
+      expect(index.wouldCreateCycle('t1', 't2')).toBe(true)
+      expect(index.wouldCreateCycle('t2', 't1')).toBe(false)
+    })
+  })
+
   describe('incremental maintenance', () => {
     beforeEach(async () => {
       await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))

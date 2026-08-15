@@ -52,7 +52,7 @@ export default class PMPlugin extends Plugin {
     await this.loadSettings()
     this.index = new VaultIndex(this.app, () => this.settings)
     this.index.register(this)
-    this.store = new ProjectStore(this.app, () => this.settings)
+    this.store = new ProjectStore(this.app, () => this.settings, this.index)
     this.store.registerVaultSync(this)
     this.notifier = new Notifier(this)
     this.router = new PMViewRouter(this)

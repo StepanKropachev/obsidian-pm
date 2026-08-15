@@ -262,3 +262,29 @@ describe('computeSchedule with pullForward', () => {
     expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-11', due: '2026-07-12' }])
   })
 })
+
+describe('computeSchedule with predecessors in other projects', () => {
+  const statuses: StatusConfig[] = [
+    { id: 'todo', label: 'Todo', color: '#888', icon: '', complete: false },
+    { id: 'done', label: 'Done', color: '#0a0', icon: '', complete: true }
+  ]
+
+  it('pushes a task out to clear a predecessor it does not share a project with', () => {
+    const external = task({ id: 'ext', start: '2026-07-06', due: '2026-07-20' })
+    const tasks = [task({ id: 'b', start: '2026-07-08', due: '2026-07-10', dependencies: ['ext'] })]
+    const result = computeSchedule(tasks, undefined, statuses, false, [external])
+    expect(result.patches).toEqual([{ taskId: 'b', start: '2026-07-21', due: '2026-07-23' }])
+  })
+
+  it('never moves the outside predecessor itself', () => {
+    const external = task({ id: 'ext', start: '2026-07-20', due: '2026-07-22', dependencies: ['b'] })
+    const tasks = [task({ id: 'b', start: '2026-07-06', due: '2026-07-08' })]
+    const result = computeSchedule(tasks, undefined, statuses, false, [external])
+    expect(result.patches.some((p) => p.taskId === 'ext')).toBe(false)
+  })
+
+  it('ignores a dependency that resolves nowhere at all', () => {
+    const tasks = [task({ id: 'b', start: '2026-07-08', due: '2026-07-10', dependencies: ['gone'] })]
+    expect(computeSchedule(tasks, undefined, statuses).patches).toEqual([])
+  })
+})

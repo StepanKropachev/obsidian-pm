@@ -958,6 +958,51 @@ describe('ProjectStore bulk mutators', () => {
   })
 })
 
+describe('ProjectStore.moveTaskToProject', () => {
+  it('moves the task and its subtasks into the target project, keeping their ids', async () => {
+    const { store, vault, app } = newStore()
+    const from = await store.createProject('From', 'Projects')
+    const to = await store.createProject('To', 'Work')
+    const parent = await addNamed(store, from, 'Parent')
+    const child = await addNamed(store, from, 'Child', parent.id)
+
+    await store.moveTaskToProject(from, to, parent.id)
+
+    expect(from.tasks).toHaveLength(0)
+    expect(to.tasks.map((t) => t.id)).toEqual([parent.id])
+    expect(to.tasks[0].subtasks.map((t) => t.id)).toEqual([child.id])
+    expect(vault.getAbstractFileByPath('Projects/From_tasks/parent.md')).toBeNull()
+    expect(vault.getAbstractFileByPath('Work/To_tasks/parent.md')).not.toBeNull()
+    expect(vault.getAbstractFileByPath('Work/To_tasks/child.md')).not.toBeNull()
+
+    const store2 = new ProjectStore(app, () => SETTINGS)
+    const reloaded = await store2.loadProject(fileAt(app, to.filePath))
+    expect(flattenTasks(reloaded?.tasks ?? []).map((f) => f.task.id)).toEqual([parent.id, child.id])
+  })
+
+  it('writes the target project id into the moved task file', async () => {
+    const { store, app } = newStore()
+    const from = await store.createProject('From', 'Projects')
+    const to = await store.createProject('To', 'Work')
+    const task = await addNamed(store, from, 'Solo')
+
+    await store.moveTaskToProject(from, to, task.id)
+
+    const content = await app.vault.cachedRead(fileAt(app, 'Work/To_tasks/solo.md'))
+    expect(content).toContain(`projectId: "${to.id}"`)
+  })
+
+  it('does nothing when the source and target are the same project', async () => {
+    const { store } = newStore()
+    const project = await store.createProject('Same', 'Projects')
+    const task = await addNamed(store, project, 'Stay')
+
+    await store.moveTaskToProject(project, project, task.id)
+
+    expect(project.tasks.map((t) => t.id)).toEqual([task.id])
+  })
+})
+
 describe('ProjectStore project cache', () => {
   it('returns the cached instance on repeated loads', async () => {
     const { store, vault } = newStore()

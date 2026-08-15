@@ -58,6 +58,8 @@ export interface TaskSource {
     patch: Partial<Task> | ((task: Task) => Partial<Task> | null)
   ): Promise<void>
   moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void>
+  /** Moves a task and its subtasks to another project, keeping their ids. */
+  moveTaskToProject(from: Project, to: Project, taskId: string, newParentId?: string | null): Promise<void>
   moveTasks(project: Project, taskIds: string[], newParentId: string | null): Promise<void>
   reorderTask(project: Project, taskId: string, targetId: string, position: 'before' | 'after'): Promise<void>
   deleteTask(project: Project, taskId: string): Promise<void>

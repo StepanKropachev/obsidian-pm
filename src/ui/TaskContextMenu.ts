@@ -1,8 +1,8 @@
-import { Menu, Notice } from 'obsidian'
+import { Menu, Notice, TFile } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task, Project } from '../types'
 import { safeAsync } from '../utils'
-import { openTaskModal, confirmDialog, confirmDuplicateSubtasks } from './ModalFactory'
+import { openTaskModal, confirmDialog, confirmDuplicateSubtasks, openProjectPicker } from './ModalFactory'
 
 export interface TaskMenuContext {
   plugin: PMPlugin
@@ -54,6 +54,30 @@ export function buildTaskContextMenu(menu: Menu, task: Task, ctx: TaskMenuContex
           await ctx.onRefresh()
         })
       )
+  )
+  menu.addItem((item) =>
+    item
+      .setTitle('Move to project')
+      .setIcon('folder-input')
+      .onClick(() => {
+        const targets = ctx.plugin.index.projectRefs().filter((ref) => ref.path !== ctx.project.filePath)
+        if (!targets.length) {
+          new Notice('There is no other project to move this task to.')
+          return
+        }
+        openProjectPicker(
+          ctx.plugin,
+          targets,
+          safeAsync(async (ref) => {
+            const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
+            const target = file instanceof TFile ? await ctx.plugin.store.loadProject(file) : null
+            if (!target) return
+            await ctx.plugin.store.moveTaskToProject(ctx.project, target, task.id)
+            new Notice(`Moved "${task.title}" to ${target.title}`)
+            await ctx.onRefresh()
+          })
+        )
+      })
   )
   menu.addSeparator()
   if (task.archived) {

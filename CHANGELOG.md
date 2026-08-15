@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The open all projects command puts every project in the vault in one view
 - Rows, cards, and timeline labels name their project when a view covers more than one
 - Saved views and filters belong to the set of projects on screen, so a project and its sub-projects keep separate ones
+- A task can depend on a task in another project, and its dates follow that one
+- The task editor lists the tasks a task blocks, wherever they live
+- The task menu moves a task and its subtasks to another project
+- A timeline row says when a task depends on something outside the view
 - Priorities can be added, renamed, recolored, and reordered in settings
 - Status and priority icons accept emoji or any icon available in Obsidian, including Lucide icons and icons added by other plugins, with suggestions while typing in settings
 - TaskNotes tasks can be imported with their dates, dependencies, subtasks, tags, and archive state ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))

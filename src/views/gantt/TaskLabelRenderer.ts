@@ -1,6 +1,6 @@
 import type PMPlugin from '../../main'
 import type { StatusConfig, Task } from '../../types'
-import type { ProjectScope } from '../../store'
+import type { ProjectScope, TaskRef } from '../../store'
 import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { IconButton } from '../../ui/primitives/IconButton'
@@ -85,6 +85,23 @@ export function renderTaskLabel(
   // With one project the rows are all its own; with several, each says where it belongs.
   if (ctx.scope.isMulti) {
     new Chip(el).setLabel(project.title).setVariant('plain').setSize('sm').setDot(true).setColor(project.color)
+  }
+
+  // A predecessor outside this view draws no arrow, so the row says it is there.
+  const elsewhere = task.dependencies
+    .filter((id) => !ctx.scope.taskById(id))
+    .map((id) => ctx.plugin.index.task(id))
+    .filter((ref): ref is TaskRef => ref !== null)
+  if (elsewhere.length) {
+    const names = elsewhere.map((ref) => {
+      const owner = ref.projectPath ? ctx.plugin.index.projectRef(ref.projectPath) : null
+      return owner ? `${ref.title} (${owner.title})` : ref.title
+    })
+    new Chip(el)
+      .setLabel(`Depends on ${elsewhere.length} elsewhere`)
+      .setVariant('plain')
+      .setSize('sm')
+      .setTooltip(names.join('\n'))
   }
 
   if (task.progress > 0) {

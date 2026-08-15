@@ -3,6 +3,7 @@ import type { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { wouldCreateCycle } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
+import { Chip } from '../ui/primitives/Chip'
 import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
 import { isTerminalStatus, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
@@ -330,10 +331,26 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
   tagsRow.addClass('pm-prop-row--wide')
 
   if (task.dependencies.length > 0 || shownExtras.has('depends')) {
-    const allTasks = flattenTasks(project.tasks)
+    const ownTasks = flattenTasks(project.tasks)
       .map((f) => f.task)
       .filter((t) => t.id !== task.id)
-    const titleOf = (id: string) => allTasks.find((t) => t.id === id)?.title ?? id
+    const ownIds = new Set(ownTasks.map((t) => t.id))
+    // Tasks in other projects can be depended on too, so the picker offers the whole
+    // vault, this project first and everything else labelled with its project.
+    const foreign = plugin.index
+      .allTaskRefs()
+      .filter((ref) => ref.id !== task.id && !ownIds.has(ref.id))
+      .map((ref) => ({
+        id: ref.id,
+        label: ref.projectPath
+          ? `${ref.title}  ·  ${plugin.index.projectRef(ref.projectPath)?.title ?? ''}`.trimEnd()
+          : ref.title
+      }))
+    const allTasks: { id: string; label: string }[] = [
+      ...ownTasks.map((t) => ({ id: t.id, label: t.title })),
+      ...foreign
+    ]
+    const titleOf = (id: string) => allTasks.find((t) => t.id === id)?.label ?? id
     const depRow = renderPropRow(
       grid,
       'Depends on',
@@ -349,9 +366,13 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           labelFor: titleOf,
           selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
           options: () =>
-            allTasks
-              .filter((t) => task.dependencies.includes(t.id) || !wouldCreateCycle(project.tasks, task.id, t.id))
-              .map((t) => ({ id: t.id, label: t.title })),
+            allTasks.filter(
+              (t) =>
+                task.dependencies.includes(t.id) ||
+                !(ownIds.has(t.id)
+                  ? wouldCreateCycle(project.tasks, task.id, t.id)
+                  : plugin.index.wouldCreateCycle(task.id, t.id))
+            ),
           add: (id) => {
             if (!task.dependencies.includes(id)) task.dependencies.push(id)
           },
@@ -364,6 +385,30 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       'link-2'
     )
     depRow.addClass('pm-prop-row--wide')
+  }
+
+  // The other side of a dependency, which is otherwise only visible from the task that
+  // declared it, and invisible altogether when that task is in another project.
+  const blocks = plugin.index.dependents(task.id)
+  if (blocks.length) {
+    const blocksRow = renderPropRow(
+      grid,
+      'Blocks',
+      () => {
+        const cell = createDiv('pm-prop-value')
+        for (const ref of blocks) {
+          const owner = ref.projectPath ? plugin.index.projectRef(ref.projectPath) : null
+          new Chip(cell)
+            .setLabel(ref.title)
+            .setVariant('outline')
+            .setSize('sm')
+            .setTooltip(owner ? `In ${owner.title}` : 'Task')
+        }
+        return cell
+      },
+      'link-2'
+    )
+    blocksRow.addClass('pm-prop-row--wide')
   }
 
   const hidden: HiddenProperty[] = []
