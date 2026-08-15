@@ -31,9 +31,8 @@ export interface TableState {
   wrapper: HTMLElement | null
   /** Display list after filter/sort/collapse. Drives the virtual window and selection. */
   visibleRows: TableTreeRow[]
-  /** An estimate until measured against the painted rows. */
+  /** An estimate until the painted rows are measured. */
   rowHeight: number
-  /** Set while calibration repaints, so that repaint does not calibrate again. */
   calibrating: boolean
   resizeObserver: ResizeObserver | null
   /** Bounds of the rendered window into visibleRows. -1 forces a repaint. */
@@ -153,9 +152,6 @@ export function renderTable(ctx: TableContext): void {
 
   void remeasureOnceFontsLoad(ctx)
 
-  // A resize changes how many rows fit, and a zoom change resizes every row with it.
-  // Dragging the window fires this every frame, so repaint on the same terms as a scroll:
-  // only once the bounds actually move, not for every pixel of width.
   ctx.state.resizeObserver?.disconnect()
   ctx.state.resizeObserver = new ResizeObserver(() => {
     const before = ctx.state.rowHeight
@@ -288,22 +284,12 @@ function renderWindowRows(ctx: TableContext): void {
   calibrateRowHeight(ctx)
 }
 
-/**
- * Until the interface font loads, wider fallback metrics wrap the tags onto a second line
- * and every row paints far taller than it ends up, so the first measurement is taken
- * against rows that are about to shrink.
- */
+/** Fallback font metrics wrap the tags, so rows paint taller until the real font loads. */
 async function remeasureOnceFontsLoad(ctx: TableContext): Promise<void> {
   await activeDocument.fonts.ready
   if (ctx.state.tableBody?.isConnected) calibrateRowHeight(ctx)
 }
 
-/**
- * The spacers that keep the scrollbar honest are all sized from this one number, so it has
- * to track the rows on screen. Averaging the window instead of trusting a single row stops
- * one wrapped title from standing in for the rest, and the dead band keeps the average from
- * chasing itself as taller and shorter rows scroll through.
- */
 function calibrateRowHeight(ctx: TableContext): void {
   const { state } = ctx
   const tbody = state.tableBody
