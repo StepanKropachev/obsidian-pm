@@ -30,6 +30,12 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
   ctx.contentEl.empty()
 
   if (roots.length === 0) {
+    // On a cold start the vault has not been read yet, and offering to create a first
+    // project would be wrong in a vault that already has twenty.
+    if (!ctx.plugin.index.ready) {
+      new EmptyState(ctx.contentEl).setIcon('📋').setTitle('Looking for projects')
+      return
+    }
     new EmptyState(ctx.contentEl)
       .setIcon('📋')
       .setTitle('No projects yet')
@@ -41,15 +47,20 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
   renderProjectCards(ctx, ctx.contentEl.createDiv('pm-project-grid'), roots)
 }
 
-/** Sub-projects render in their own grid on the row below their parent's card. */
+/**
+ * A project with sub-projects takes a row of its own, with the children indented directly
+ * beneath it. Otherwise a parent at the end of a row and its children at the start of the
+ * next one read as unrelated.
+ */
 function renderProjectCards(ctx: ProjectListContext, grid: HTMLElement, refs: ProjectRef[]): void {
   const index = ctx.plugin.index
   for (const ref of refs) {
     const children = index.childRefs(ref.path)
     const collapsed = ctx.plugin.isProjectCollapsed(ref.path)
+    const host = children.length ? grid.createDiv('pm-project-branch') : grid
     // A parent's own count says little about the program under it.
     const { total, done } = children.length ? index.rollupCounts(ref) : index.counts(ref)
-    new ProjectCard(grid, {
+    new ProjectCard(host, {
       title: ref.title,
       icon: ref.icon,
       color: ref.color,
@@ -68,7 +79,7 @@ function renderProjectCards(ctx: ProjectListContext, grid: HTMLElement, refs: Pr
       onContextMenu: (e) => openProjectContextMenu(ctx, ref, e)
     })
     if (children.length && !collapsed) {
-      const nested = grid.createDiv('pm-project-children')
+      const nested = host.createDiv('pm-project-children')
       renderProjectCards(ctx, nested.createDiv('pm-project-grid'), children)
     }
   }

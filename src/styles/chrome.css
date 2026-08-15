@@ -177,9 +177,16 @@
   gap: 16px;
 }
 
-.pm-project-children {
+.pm-project-branch {
   grid-column: 1 / -1;
-  padding-left: 24px;
+}
+.pm-project-branch > .pm-project-card {
+  max-width: 300px;
+}
+
+.pm-project-children {
+  margin: 12px 0 0 20px;
+  padding-left: 20px;
   border-left: 1px solid var(--background-modifier-border);
 }
 

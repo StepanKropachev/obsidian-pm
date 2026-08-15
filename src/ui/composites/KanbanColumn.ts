@@ -71,6 +71,8 @@ export class KanbanColumn {
         priorityColor: card.priorityColor,
         descriptionPreview: card.descriptionPreview,
         parentTitle: card.parentTitle,
+        projectTitle: card.projectTitle,
+        projectColor: card.projectColor,
         loggedHours: card.loggedHours,
         overdue: card.overdue,
         showTagColors: card.showTagColors,
