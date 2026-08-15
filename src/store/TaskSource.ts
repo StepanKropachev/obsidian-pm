@@ -29,7 +29,8 @@ export interface TaskSource {
    */
   configFor(project: Project): ResolvedProjectConfig
 
-  loadAllProjects(folder: string): Promise<Project[]>
+  /** Loads the projects at the given paths, skipping any that no longer resolve to a file. */
+  loadProjects(paths: string[]): Promise<Project[]>
 
   /** Every caller gets the same instance for a path, for as long as the project exists. */
   loadProject(file: TFile): Promise<Project | null>

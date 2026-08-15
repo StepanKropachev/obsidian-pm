@@ -272,14 +272,11 @@ export class ProjectStore implements TaskSource {
     return project.filePath.replace(/\.md$/, '_tasks')
   }
 
-  async loadAllProjects(folder: string): Promise<Project[]> {
-    await this.ensureFolder(folder)
-    const folderObj = this.app.vault.getAbstractFileByPath(folder)
+  async loadProjects(paths: string[]): Promise<Project[]> {
     const files: TFile[] = []
-    if (folderObj instanceof TFolder) {
-      for (const child of folderObj.children) {
-        if (child instanceof TFile && child.extension === 'md') files.push(child)
-      }
+    for (const path of paths) {
+      const file = this.app.vault.getAbstractFileByPath(normalizePath(path))
+      if (file instanceof TFile) files.push(file)
     }
     const loaded = await Promise.all(files.map((f) => this.loadProject(f)))
     const projects = loaded.filter((p): p is Project => p !== null)

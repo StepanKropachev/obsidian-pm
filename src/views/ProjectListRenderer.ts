@@ -1,7 +1,8 @@
 import { TFile, Menu, ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Project, Task, StatusConfig } from '../types'
-import { safeAsync, isTerminalStatus } from '../utils'
+import type { Project } from '../types'
+import type { ProjectRef } from '../store'
+import { safeAsync } from '../utils'
 import { openProjectModal } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectCard } from '../ui/composites/ProjectCard'
@@ -10,7 +11,6 @@ export interface ProjectListContext {
   plugin: PMPlugin
   toolbarEl: HTMLElement
   contentEl: HTMLElement
-  isStale: () => boolean
   openProjectFile: (file: TFile) => Promise<void>
 }
 
@@ -24,9 +24,9 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
     .onClick(() => openCreateProjectModal(ctx))
 }
 
-export async function renderProjectListContent(ctx: ProjectListContext): Promise<void> {
-  const projects = await ctx.plugin.store.loadAllProjects(ctx.plugin.settings.projectsFolder)
-  if (ctx.isStale()) return
+/** Draws from the index alone: a card needs a title, an icon and two counts, not a load. */
+export function renderProjectListContent(ctx: ProjectListContext): void {
+  const projects = ctx.plugin.index.projectRefs()
   ctx.contentEl.empty()
 
   if (projects.length === 0) {
@@ -40,9 +40,7 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
 
   const grid = ctx.contentEl.createDiv('pm-project-grid')
   for (const project of projects) {
-    const statuses = ctx.plugin.store.configFor(project).statuses
-    const total = countTasks(project.tasks, false, statuses)
-    const done = countTasks(project.tasks, true, statuses)
+    const { total, done } = ctx.plugin.index.counts(project)
     new ProjectCard(grid, {
       title: project.title,
       icon: project.icon,
@@ -50,7 +48,7 @@ export async function renderProjectListContent(ctx: ProjectListContext): Promise
       tasksDone: done,
       tasksTotal: total,
       onClick: safeAsync(async () => {
-        const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
+        const file = ctx.plugin.app.vault.getAbstractFileByPath(project.path)
         if (file instanceof TFile) await ctx.openProjectFile(file)
       }),
       onContextMenu: (e) => openProjectContextMenu(ctx, project, e)
@@ -67,20 +65,22 @@ function openCreateProjectModal(ctx: ProjectListContext): void {
   })
 }
 
-function openProjectContextMenu(ctx: ProjectListContext, project: Project, e: MouseEvent): void {
+function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {
   const menu = new Menu()
   menu.addItem((item) =>
     item
       .setTitle('Edit project')
       .setIcon('settings')
-      .onClick(() => {
-        openProjectModal(ctx.plugin, {
-          project,
-          onSave: async () => {
-            await renderProjectListContent(ctx)
-          }
+      .onClick(
+        safeAsync(async () => {
+          const project = await loadRef(ctx, ref)
+          if (!project) return
+          openProjectModal(ctx.plugin, {
+            project,
+            onSave: () => renderProjectListContent(ctx)
+          })
         })
-      })
+      )
   )
   menu.addItem((item) =>
     item
@@ -88,19 +88,17 @@ function openProjectContextMenu(ctx: ProjectListContext, project: Project, e: Mo
       .setIcon('trash')
       .onClick(
         safeAsync(async () => {
+          const project = await loadRef(ctx, ref)
+          if (!project) return
           await ctx.plugin.store.deleteProject(project)
-          await renderProjectListContent(ctx)
+          renderProjectListContent(ctx)
         })
       )
   )
   menu.showAtMouseEvent(e)
 }
 
-function countTasks(tasks: Task[], doneOnly: boolean, statuses: StatusConfig[]): number {
-  let n = 0
-  for (const t of tasks) {
-    if (!doneOnly || isTerminalStatus(t.status, statuses)) n++
-    n += countTasks(t.subtasks, doneOnly, statuses)
-  }
-  return n
+async function loadRef(ctx: ProjectListContext, ref: ProjectRef): Promise<Project | null> {
+  const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
+  return file instanceof TFile ? ctx.plugin.store.loadProject(file) : null
 }

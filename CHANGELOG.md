@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Projects are listed wherever their files live in the vault
+- Folders can be left out of the project list with the new excluded folders setting
+- The rebuild project index command looks through the vault for projects again
 - Priorities can be added, renamed, recolored, and reordered in settings
 - Status and priority icons accept emoji or any icon available in Obsidian, including Lucide icons and icons added by other plugins, with suggestions while typing in settings
 - TaskNotes tasks can be imported with their dates, dependencies, subtasks, tags, and archive state ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))
@@ -26,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The projects folder setting decides where new projects are created, not which projects the plugin shows
 - Table rows have no line between them unless line borders are turned on
 - The plugin requires Obsidian 1.13
 - Settings are grouped by area, with statuses, priorities, team members, and TaskNotes each on their own page

@@ -34,8 +34,9 @@ export class PMSettingTab extends PluginSettingTab {
         heading: 'General',
         items: [
           {
-            name: 'Projects folder',
-            desc: 'Vault folder where project files are stored.',
+            name: 'New project folder',
+            desc: 'Where new projects are created. Existing projects are found wherever they live in the vault.',
+            aliases: ['projects folder', 'location'],
             control: {
               type: 'folder',
               key: 'projectsFolder',
@@ -44,6 +45,7 @@ export class PMSettingTab extends PluginSettingTab {
               validate: (value) => (value.trim() ? undefined : 'Enter a folder name.')
             }
           },
+          this.excludedFoldersPage(),
           {
             name: 'Default view',
             desc: 'View that opens when a project is opened.',
@@ -340,6 +342,53 @@ export class PMSettingTab extends PluginSettingTab {
     return total === 0 ? 'Up to date' : plural(total, 'change', 'changes')
   }
 
+  private excludedFoldersPage(): SettingDefinitionPage {
+    const folders = this.plugin.settings.excludedFolders
+    return {
+      type: 'page',
+      name: 'Excluded folders',
+      desc: 'Folders to skip when looking for projects and tasks, such as templates.',
+      displayValue: () => plural(this.plugin.settings.excludedFolders.length, 'folder', 'folders'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Excluded folders',
+          emptyState: 'No folders excluded.',
+          items: folders.map((folder, index) => ({
+            name: folder || 'Unnamed folder',
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              setting.addText((text) =>
+                text
+                  .setPlaceholder('Templates')
+                  .setValue(folder)
+                  .onChange((value) => {
+                    this.plugin.settings.excludedFolders[index] = value
+                    this.persist()
+                    this.plugin.index.build()
+                  })
+              )
+            }
+          })),
+          onDelete: (index) => {
+            folders.splice(index, 1)
+            this.persist()
+            this.plugin.index.build()
+            this.update()
+          },
+          addItem: {
+            name: 'Add folder',
+            action: () => {
+              folders.push('')
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
+    }
+  }
+
   private teamMembersPage(): SettingDefinitionPage {
     const members = this.plugin.settings.globalTeamMembers
     return {
@@ -430,8 +479,12 @@ export class PMSettingTab extends PluginSettingTab {
     const configs = field === 'status' ? this.plugin.settings.statuses : this.plugin.settings.priorities
     if (configs.length === 0) return
     const fallback = configs[0]
-    const folder = this.plugin.settings.projectsFolder
-    const projects = await this.plugin.store.loadAllProjects(folder)
+    // Only projects the index says still use the deleted value are worth loading.
+    const affected = this.plugin.index
+      .projectRefs()
+      .filter((ref) => this.plugin.index.taskRefs(ref.path).some((task) => task[field] === deletedId))
+      .map((ref) => ref.path)
+    const projects = await this.plugin.store.loadProjects(affected)
     let remapped = 0
     for (const project of projects) {
       // A project defining this status or priority itself is unaffected by a global delete.

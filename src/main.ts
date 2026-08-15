@@ -1,8 +1,8 @@
-import { MarkdownView, Plugin, Notice } from 'obsidian'
+import { MarkdownView, Plugin, Notice, TFile } from 'obsidian'
 import { DEFAULT_SETTINGS, type PMSettings, type Project, type Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
-import { ProjectStore } from './store'
-import type { TaskSource } from './store'
+import { ProjectStore, VaultIndex } from './store'
+import type { ProjectRef, TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
@@ -17,6 +17,7 @@ import { safeAsync } from './utils'
 export default class PMPlugin extends Plugin {
   settings: PMSettings = { ...DEFAULT_SETTINGS }
   store!: TaskSource
+  index!: VaultIndex
   notifier!: Notifier
   router!: PMViewRouter
   /** Paths deliberately sent to the markdown editor, which the swap then leaves alone. */
@@ -49,6 +50,8 @@ export default class PMPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings()
+    this.index = new VaultIndex(this.app, () => this.settings)
+    this.index.register(this)
     this.store = new ProjectStore(this.app, () => this.settings)
     this.store.registerVaultSync(this)
     this.notifier = new Notifier(this)
@@ -62,8 +65,10 @@ export default class PMPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(
       safeAsync(async () => {
+        this.index.build()
         await migrateProjects(this)
         await this.cleanupStaleProjectFilters()
+        this.notifier.check()
       })
     )
 
@@ -95,7 +100,7 @@ export default class PMPlugin extends Plugin {
       id: 'new-task',
       name: 'Create new task',
       callback: () => {
-        void this.pickProjectThenCreateTask(null)
+        this.pickProjectThenCreateTask(null)
       }
     })
 
@@ -103,7 +108,7 @@ export default class PMPlugin extends Plugin {
       id: 'new-subtask',
       name: 'Create new subtask',
       callback: () => {
-        void this.pickProjectThenCreateTask('pick-parent')
+        this.pickProjectThenCreateTask('pick-parent')
       }
     })
 
@@ -124,10 +129,19 @@ export default class PMPlugin extends Plugin {
     })
 
     this.addCommand({
+      id: 'rebuild-project-index',
+      name: 'Rebuild project index',
+      callback: () => {
+        this.index.build()
+        this.showNotice(`Found ${this.index.projectRefs().length} project(s).`)
+      }
+    })
+
+    this.addCommand({
       id: 'import-notes-as-tasks',
       name: 'Import notes as tasks',
       callback: () => {
-        void this.importNotes()
+        this.importNotes()
       }
     })
 
@@ -138,7 +152,7 @@ export default class PMPlugin extends Plugin {
         const selection = editor.getSelection().trim()
         if (!selection) return false
         if (checking) return true
-        void this.createTaskFromText(selection)
+        this.createTaskFromText(selection)
         return true
       }
     })
@@ -151,7 +165,7 @@ export default class PMPlugin extends Plugin {
           item
             .setTitle('Create task from selection')
             .setIcon('list-plus')
-            .onClick(() => void this.createTaskFromText(selection))
+            .onClick(() => this.createTaskFromText(selection))
         )
       })
     )
@@ -319,14 +333,34 @@ export default class PMPlugin extends Plugin {
     }, 0)
   }
 
-  /** Picks a project, then a parent when creating a subtask, before opening the editor. */
-  private async pickProjectThenCreateTask(mode: null | 'pick-parent'): Promise<void> {
-    const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
-    if (!projects.length) {
+  /**
+   * Offers every project in the vault, loading only the one chosen. `autoSelectSingle`
+   * skips a picker that would have exactly one entry.
+   */
+  private pickProject(onChoose: (project: Project) => void, autoSelectSingle: boolean): void {
+    const refs = this.index.projectRefs()
+    if (!refs.length) {
       this.showNotice('No projects yet. Create a project first.')
       return
     }
-    openProjectPicker(this, projects, (project) => {
+    const choose = (ref: ProjectRef): void => {
+      void (async () => {
+        const file = this.app.vault.getAbstractFileByPath(ref.path)
+        const project = file instanceof TFile ? await this.store.loadProject(file) : null
+        if (!project) {
+          this.showNotice(`Could not open "${ref.title}".`)
+          return
+        }
+        onChoose(project)
+      })()
+    }
+    if (autoSelectSingle && refs.length === 1) choose(refs[0])
+    else openProjectPicker(this, refs, choose)
+  }
+
+  /** Picks a project, then a parent when creating a subtask, before opening the editor. */
+  private pickProjectThenCreateTask(mode: null | 'pick-parent'): void {
+    this.pickProject((project) => {
       if (mode === 'pick-parent') {
         const flat = flattenTasks(project.tasks)
         if (!flat.length) {
@@ -343,7 +377,7 @@ export default class PMPlugin extends Plugin {
       } else {
         this.openTaskModalForProject(project, null)
       }
-    })
+    }, false)
   }
 
   private openTaskModalForProject(project: Project, parentId: string | null, defaults?: Partial<Task>): void {
@@ -358,7 +392,7 @@ export default class PMPlugin extends Plugin {
   }
 
   /** Open the task modal pre-filled from selected text, targeting a chosen project. */
-  private async createTaskFromText(text: string): Promise<void> {
+  private createTaskFromText(text: string): void {
     const trimmed = text.trim()
     if (!trimmed) return
 
@@ -368,21 +402,12 @@ export default class PMPlugin extends Plugin {
         ? { title: trimmed }
         : { title: trimmed.slice(0, newlineIdx).trim(), description: trimmed.slice(newlineIdx + 1).trim() }
 
-    const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
-    if (!projects.length) {
-      this.showNotice('No projects yet. Create a project first.')
-      return
-    }
-    if (projects.length === 1) {
-      this.openTaskModalForProject(projects[0], null, defaults)
-      return
-    }
-    openProjectPicker(this, projects, (project) => {
+    this.pickProject((project) => {
       this.openTaskModalForProject(project, null, defaults)
-    })
+    }, true)
   }
 
-  private async importNotes(): Promise<void> {
+  private importNotes(): void {
     const activeLeaves = this.app.workspace.getLeavesOfType(PM_PROJECT_VIEW_TYPE)
     let activeProject: Project | null = null
 
@@ -403,17 +428,11 @@ export default class PMPlugin extends Plugin {
       return
     }
 
-    const projects = await this.store.loadAllProjects(this.settings.projectsFolder)
-    if (!projects.length) {
-      this.showNotice('No projects yet. Create a project first.')
-      return
-    }
-
-    openProjectPicker(this, projects, (project) => {
+    this.pickProject((project) => {
       const onImportComplete = async () => {
         await this.router.openProjectByPath(project.filePath)
       }
       openImportModal(this, project, onImportComplete)
-    })
+    }, false)
   }
 }

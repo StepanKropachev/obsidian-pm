@@ -1,8 +1,5 @@
 import { Notice } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Project } from '../types'
-import { flattenTasks } from '../store/TaskTreeOps'
-import { isTerminalStatus } from '../utils'
 import { Temporal, today, parsePlainDate } from '../dates'
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // check every hour
@@ -13,10 +10,10 @@ export class Notifier {
 
   constructor(private plugin: PMPlugin) {}
 
+  /** The first sweep runs once the index is built; this only schedules the later ones. */
   start(): void {
-    void this.check()
     this.intervalId = window.setInterval(() => {
-      void this.check()
+      this.check()
     }, CHECK_INTERVAL_MS)
     this.plugin.registerInterval(this.intervalId)
   }
@@ -28,26 +25,20 @@ export class Notifier {
     }
   }
 
-  async check(): Promise<void> {
+  /** Reads due dates from the index, so an hourly sweep loads nothing. */
+  check(): void {
     if (!this.plugin.settings.notificationsEnabled) return
 
     const leadDays = this.plugin.settings.notificationLeadDays
     const now = today()
     const threshold = now.add({ days: leadDays })
 
-    let projects: Project[]
-    try {
-      projects = await this.plugin.store.loadAllProjects(this.plugin.settings.projectsFolder)
-    } catch {
-      return
-    }
-
-    for (const project of projects) {
-      const flat = flattenTasks(project.tasks)
-      for (const { task } of flat) {
+    for (const project of this.plugin.index.projectRefs()) {
+      const complete = this.plugin.index.completeStatuses(project)
+      for (const task of this.plugin.index.taskRefs(project.path)) {
         const due = parsePlainDate(task.due)
         if (!due) continue
-        if (isTerminalStatus(task.status, this.plugin.store.configFor(project).statuses)) continue
+        if (task.archived || complete.has(task.status)) continue
 
         const cmpToToday = Temporal.PlainDate.compare(due, now)
         const isOverdue = cmpToToday < 0
