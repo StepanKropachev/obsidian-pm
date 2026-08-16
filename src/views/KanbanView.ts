@@ -8,6 +8,7 @@ import { dueUrgency, getPriorityConfig, safeAsync } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
+import { renderProjectChip } from '../ui/composites/projectChip'
 import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
@@ -107,9 +108,14 @@ export class KanbanView implements SubView {
       priorityColor,
       descriptionPreview,
       parentTitle,
-      projectTitle: owner?.title,
-      projectColor: owner?.color,
-      onProjectClick: owner ? safeAsync(() => this.plugin.router.openProjectOverview(owner.filePath)) : undefined,
+      renderSource: owner
+        ? (el) =>
+            renderProjectChip(el, {
+              title: owner.title,
+              color: owner.color,
+              onClick: safeAsync(() => this.plugin.router.openProjectOverview(owner.filePath))
+            })
+        : undefined,
       loggedHours: totalLoggedHours(task),
       overdue: dueUrgency(task, this.config.statuses) === 'overdue',
       showTagColors: this.plugin.settings.showTagColors

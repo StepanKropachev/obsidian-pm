@@ -1,23 +1,11 @@
-import { Chip } from '../../primitives/Chip'
+import { renderProjectChip, type ProjectChipProps } from '../projectChip'
 
 /** Which project a row's task belongs to. Only rendered when the table spans several. */
 export class ProjectCell {
   el: HTMLTableCellElement
 
-  constructor(parentRow: HTMLElement, props: { title: string; color: string; onClick?: () => void }) {
+  constructor(parentRow: HTMLElement, props: ProjectChipProps) {
     this.el = parentRow.createEl('td', { cls: 'pm-table-cell' })
-    const chip = new Chip(this.el)
-      .setLabel(props.title)
-      .setVariant('outline')
-      .setSize('sm')
-      .setDot(true)
-      .setColor(props.color)
-    const onClick = props.onClick
-    if (onClick) {
-      chip.setTooltip(`Open ${props.title}`).onClick((e) => {
-        e.stopPropagation()
-        onClick()
-      })
-    }
+    renderProjectChip(this.el, props)
   }
 }

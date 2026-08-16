@@ -7,6 +7,7 @@ import { renderTagChip } from '../../ui/composites/tagChip'
 import { renderTimeChip } from '../../ui/composites/timeChip'
 import { renderMetricStrip } from '../../ui/composites/metricStrip'
 import { renderMilestoneTimeline } from '../../ui/composites/milestoneTimeline'
+import { renderProjectChip } from '../../ui/composites/projectChip'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
@@ -297,6 +298,9 @@ export class StyleguideView extends ItemView {
     renderDueChip(dueRow, 'Jul 20, 2026', 'normal')
     renderDueChip(dueRow, 'Jul 6, 2026', 'near')
     renderDueChip(dueRow, 'Jun 20, 2026', 'overdue')
+    const projectRow = this.row(sec, 'renderProjectChip: plain / clickable')
+    renderProjectChip(projectRow, { title: 'Platform', color: '#7a9ec4' })
+    renderProjectChip(projectRow, { title: 'Website relaunch', color: '#8b72be', onClick: noop })
   }
 
   private renderCards(): void {
@@ -361,8 +365,7 @@ export class StyleguideView extends ItemView {
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
-      projectTitle: 'Platform',
-      projectColor: '#7a9ec4',
+      renderSource: (el) => renderProjectChip(el, { title: 'Platform', color: '#7a9ec4', onClick: noop }),
       loggedHours: 11,
       overdue: true,
       showTagColors: true,

@@ -12,10 +12,8 @@ export interface KanbanCardProps {
   priorityColor?: string
   descriptionPreview?: string
   parentTitle?: string
-  /** Set when the board covers more than one project, so a card says which it is from. */
-  projectTitle?: string
-  projectColor?: string
-  onProjectClick?: () => void
+  /** Leading slot in the footer. The board fills it in when a card needs to say where it is from. */
+  renderSource?: (parent: HTMLElement) => void
   loggedHours: number
   overdue: boolean
   showTagColors: boolean
@@ -91,21 +89,7 @@ export class KanbanCard {
     }
 
     const footer = body.createDiv('pm-kanban-card-footer')
-    if (props.projectTitle) {
-      const chip = new Chip(footer)
-        .setLabel(props.projectTitle)
-        .setVariant('outline')
-        .setSize('sm')
-        .setDot(true)
-        .setColor(props.projectColor ?? 'var(--text-muted)')
-      const onProjectClick = props.onProjectClick
-      if (onProjectClick) {
-        chip.setTooltip(`Open ${props.projectTitle}`).onClick((e) => {
-          e.stopPropagation()
-          onProjectClick()
-        })
-      }
-    }
+    props.renderSource?.(footer)
     new AvatarStack(footer).setNames(task.assignees).setMax(3).setSize('sm')
 
     if (task.due) {
