@@ -1,112 +1,87 @@
-.pm-modal--project {
-  max-width: 560px;
+.pm-edit {
+  padding: 24px 28px 48px;
+  overflow: auto;
 }
 
-.pm-project-modal {
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-height: 85vh;
-  overflow-y: auto;
-  color: var(--text-normal);
-}
-.pm-project-modal * {
-  color: inherit;
-}
-.pm-modal-heading {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 700;
-}
-.pm-modal-subheading {
-  margin: 8px 0 4px;
-  font-size: 15px;
-  font-weight: 700;
+.pm-edit-header,
+.pm-edit-section,
+.pm-edit-danger {
+  max-width: 720px;
+  margin: 0 auto;
 }
 
-.pm-project-modal-header {
+.pm-edit-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 2px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
-.pm-project-modal-header-icon {
-  font-size: 18px;
-  color: var(--interactive-accent);
+
+.pm-edit-section {
+  margin-top: 28px;
 }
-.pm-project-modal-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+
+.pm-edit-props {
+  margin-top: 4px;
 }
-.pm-input--lg {
-  font-size: 15px;
-  font-weight: 500;
-  padding: 10px 14px;
+.pm-edit-props .pm-prop-row {
+  grid-template-columns: 200px 1fr;
 }
+
+.pm-edit-block {
+  margin-top: 12px;
+}
+
+.pm-edit-desc {
+  min-height: 72px;
+  resize: vertical;
+}
+
 .pm-modal-hint {
   margin: 0;
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.pm-project-top-row {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
+.pm-edit-icons {
+  flex-wrap: wrap;
+  gap: 2px;
 }
-
-.pm-icon-picker {
-  position: relative;
-  flex-shrink: 0;
-}
-.pm-icon-picker-btn {
-  font-size: 32px;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: background 0.15s;
-  line-height: 1;
-}
-.pm-icon-picker-btn:hover {
-  background: var(--background-modifier-hover);
-}
-.pm-icon-grid {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 200;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-.pm-icon-option {
-  font-size: 20px;
+button.pm-icon-option {
+  font-size: 18px;
   padding: 4px;
   border: none;
+  box-shadow: none;
   background: transparent;
   border-radius: var(--radius-s);
   cursor: pointer;
   transition: background 0.1s;
   line-height: 1;
+  height: auto;
 }
-.pm-icon-option:hover {
+button.pm-icon-option:hover {
   background: var(--background-modifier-hover);
 }
+button.pm-icon-option--selected {
+  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  box-shadow: 0 0 0 1px var(--interactive-accent);
+}
 
-.pm-project-title-wrap {
-  flex: 1;
+.pm-edit-danger {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  padding: 16px 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+.pm-edit-danger-text {
+  flex: 1;
+}
+.pm-edit-danger-title {
+  font-size: var(--font-ui-small);
+  font-weight: 500;
 }
 
 .pm-color-palette {
@@ -172,24 +147,6 @@
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 26px;
-}
-
-.pm-project-desc {
-  min-height: 72px;
-  resize: vertical;
-}
-.pm-member-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.pm-member-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.pm-member-input {
-  flex: 1;
 }
 
 .pm-cf-list {
@@ -302,20 +259,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 6px 0 10px;
   font-size: var(--font-ui-smaller);
   cursor: pointer;
-}
-
-.pm-config-override-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-}
-.pm-config-override-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.pm-config-override-row .pm-select {
-  width: 100%;
 }

@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Project settings open in a page of their own, keeping each change as it is made
+- Creating a project asks for a name and opens its settings
 - The projects folder setting decides where new projects are created, not which projects the plugin shows
 - Table rows have no line between them unless line borders are turned on
 - The plugin requires Obsidian 1.13

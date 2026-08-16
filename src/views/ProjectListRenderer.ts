@@ -3,7 +3,7 @@ import type PMPlugin from '../main'
 import type { Project } from '../types'
 import type { ProjectRef } from '../store'
 import { safeAsync } from '../utils'
-import { openProjectModal } from '../ui/ModalFactory'
+import { createProject } from './createProject'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectCard } from '../ui/composites/ProjectCard'
 
@@ -21,7 +21,11 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
   new ButtonComponent(ctx.toolbarEl)
     .setButtonText('+ new project')
     .setCta()
-    .onClick(() => openCreateProjectModal(ctx))
+    .onClick(
+      safeAsync(async () => {
+        await createProject(ctx.plugin)
+      })
+    )
 }
 
 /** Draws from the index alone: a card needs a title, an icon and two counts, not a load. */
@@ -40,7 +44,12 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
       .setIcon('📋')
       .setTitle('No projects yet')
       .setBody('Create your first project to get started.')
-      .setAction('+ new project', () => openCreateProjectModal(ctx))
+      .setAction(
+        '+ new project',
+        safeAsync(async () => {
+          await createProject(ctx.plugin)
+        })
+      )
     return
   }
 
@@ -85,15 +94,6 @@ function renderProjectCards(ctx: ProjectListContext, grid: HTMLElement, refs: Pr
   }
 }
 
-function openCreateProjectModal(ctx: ProjectListContext): void {
-  openProjectModal(ctx.plugin, {
-    onSave: async (project) => {
-      const file = ctx.plugin.app.vault.getAbstractFileByPath(project.filePath)
-      if (file instanceof TFile) await ctx.openProjectFile(file)
-    }
-  })
-}
-
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {
   const menu = new Menu()
   menu.addItem((item) =>
@@ -114,16 +114,7 @@ function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: Mou
     item
       .setTitle('Edit project')
       .setIcon('settings')
-      .onClick(
-        safeAsync(async () => {
-          const project = await loadRef(ctx, ref)
-          if (!project) return
-          openProjectModal(ctx.plugin, {
-            project,
-            onSave: () => renderProjectListContent(ctx)
-          })
-        })
-      )
+      .onClick(safeAsync(() => ctx.plugin.router.openProjectEdit(ref.path)))
   )
   menu.addItem((item) =>
     item

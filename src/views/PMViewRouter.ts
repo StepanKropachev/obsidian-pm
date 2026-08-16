@@ -2,6 +2,7 @@ import { TFile, type WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import type { ScopeSpec } from '../store'
 import { PM_DASHBOARD_VIEW_TYPE } from './DashboardView'
+import { PM_PROJECT_EDIT_VIEW_TYPE } from './ProjectEditView'
 import { PM_PROJECT_OVERVIEW_VIEW_TYPE } from './ProjectOverviewView'
 import { PM_PROJECT_VIEW_TYPE } from './ProjectView'
 import { PM_TASK_VIEW_TYPE, type TaskViewState } from './TaskView'
@@ -33,6 +34,14 @@ export class PMViewRouter {
     const ws = this.plugin.app.workspace
     const target = leaf ?? ws.getLeaf('tab')
     await target.setViewState({ type: PM_PROJECT_OVERVIEW_VIEW_TYPE, state: { filePath: path } })
+    await ws.revealLeaf(target)
+  }
+
+  /** That project's settings. */
+  async openProjectEdit(path: string, leaf?: WorkspaceLeaf): Promise<void> {
+    const ws = this.plugin.app.workspace
+    const target = leaf ?? ws.getLeaf('tab')
+    await target.setViewState({ type: PM_PROJECT_EDIT_VIEW_TYPE, state: { filePath: path } })
     await ws.revealLeaf(target)
   }
 

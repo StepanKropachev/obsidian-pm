@@ -169,6 +169,9 @@ export class ProjectOverviewView extends ItemView {
     identity.createDiv({ cls: 'pm-overview-subline', text: bits.join(' · ') })
 
     new ButtonComponent(header)
+      .setButtonText('Edit project')
+      .onClick(safeAsync(() => this.plugin.router.openProjectEdit(project.filePath, this.leaf)))
+    new ButtonComponent(header)
       .setButtonText('Open tasks')
       .setCta()
       .onClick(safeAsync(() => this.plugin.router.openScope({ kind: 'project', path: project.filePath }, this.leaf)))

@@ -3,7 +3,6 @@ import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
 import type { ProjectRef } from '../store'
 import { TaskModal } from '../modals/TaskModal'
-import { ProjectModal } from '../modals/ProjectModal'
 import { ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
 
@@ -239,27 +238,6 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
     const task = opts.task
     void (async () => {
       await plugin.store.loadTaskBody(task)
-      open()
-    })()
-  } else {
-    open()
-  }
-}
-
-export interface OpenProjectModalOpts {
-  project?: Project | null
-  /** Only needed to act on the saved project, e.g. open a newly created one. */
-  onSave?: (project: Project) => void | Promise<void>
-}
-
-export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): void {
-  const open = (): void => {
-    new ProjectModal(plugin.app, plugin, opts.project ?? null, opts.onSave ?? (() => {})).open()
-  }
-  if (opts.project) {
-    const project = opts.project
-    void (async () => {
-      await plugin.store.loadProjectBody(project)
       open()
     })()
   } else {
