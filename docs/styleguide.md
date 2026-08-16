@@ -2,7 +2,7 @@
 
 Read this before building or changing any UI. It's the component API catalog: what exists and what to reach for. The design language (color, typography, spacing, radii, shadows, voice) lives in `docs/design-system.md`. The layer rules (primitives / composites / orchestrators and what each may import) live in CLAUDE.md under "UI layers".
 
-The static HTML previews under `docs/design-system/project/preview/` are design references only; they misrender CSS because Obsidian's core `app.css` is absent. For visual verification use the live gallery (see "Live gallery" below).
+Verify appearance in the live gallery (see "Live gallery" below), never in an offline HTML page: without Obsidian's core `app.css` the controls misrender.
 
 ## Decision tree
 
@@ -20,11 +20,15 @@ Before writing any new UI element, find your case here:
 - Need a status or priority indicator -> `renderStatusBadge` / `renderPriorityBadge` / `renderStatusDot`
 - Need a logged/estimate hours chip -> `renderTimeChip`
 - Need a due-date chip with urgency colors -> `renderDueChip`
+- Need to say which project something belongs to -> `renderProjectChip`
 - Need user initials -> `Avatar` / `AvatarStack`
 - Need a progress indicator -> `ProgressBar`
 - Need an empty placeholder -> `EmptyState`
+- Need to pick an icon or emoji -> `renderIconControl`
 - Need a label + value form row -> `renderPropRow`
 - Need a removable-token list -> `renderChipList`
+- Need a row of headline numbers -> `renderMetricStrip`
+- Need dated points on one track -> `renderMilestoneTimeline`
 
 Nothing fits? Extend an existing primitive with a new setter or variant instead of adding a new class or one-off element. Adding a brand-new primitive requires updating this file and `src/views/styleguide/StyleguideView.ts` in the same change.
 
@@ -121,19 +125,22 @@ Floating panel anchored to a trigger, for content Obsidian's `Menu` can't host (
 
 Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh`. If a composite needs `plugin`, it's the wrong shape; push the store access up to the orchestrator view.
 
-- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, projectTitle, projectColor, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges, plus a dot-led project Chip in the footer when `projectTitle` is set), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip.
+- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, renderSource, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip. It knows nothing about projects: `renderSource` is a slot the board fills, with `renderProjectChip`, when a card has to say where it is from.
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
-- **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, childCount, collapsed, onToggleCollapsed, onClick, onContextMenu. Composes ProgressBar, plus CollapseToggle and a plain Chip when `childCount` is above zero. With sub-projects the counts are the caller's rollup over the subtree; the project list nests the children in a `.pm-project-children` grid on the row below.
+- **ProjectRow** - `ProjectRow.ts`. Props: title, icon, color, depth, childCount, collapsed, tasksDone, tasksTotal, overdue, members, dueLabel, dueUrgency + onToggleCollapsed/onClick/onContextMenu/onActions. One `<tr>` of the project list, built on the same `pm-table` chrome as the task table: CollapseToggle when it has sub-projects, ProgressBar, a red overdue Chip, AvatarStack, renderDueChip, and a hover-revealed IconButton. Indents from `--depth`; with sub-projects the counts are the caller's rollup over the subtree.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
 - **addButton** - `addButton.ts`. `renderAddButton(parent, label, onClick)` -> ghost "+ label" button (`pm-prop-add`). The only way to render an add button.
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
 - **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
+- **projectChip** - `projectChip.ts`. `renderProjectChip(parent, { title, color, onClick? })` -> dot-led outline Chip naming a project; with `onClick` it gets a tooltip and stops the click reaching the row or card under it. The only way to render a project token, used by the table's ProjectCell, the board's cards, and the timeline's labels.
 - **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
+- **metricStrip** - `metricStrip.ts`. `renderMetricStrip(parent, stats)` -> bordered row of `{ label, value, sub?, extra?, alert? }` cells; `extra` composes a bar or chip beside the value, `alert` colors it red. The project overview's stats row.
+- **milestoneTimeline** - `milestoneTimeline.ts`. `renderMilestoneTimeline(parent, points, todayPos)` -> one track with date-proportional dots (`done` / `next` / `plan`) and a dashed today marker. The caller converts dates to 0-100 positions; labels closer than one label-width drop to a second row, and the track scrolls horizontally once it holds more milestones than fit.
 - **ProjectHeader** - `ProjectHeader/`. Props: tasks (every task in scope, for the assignee and tag options), savedViews, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view ChipButtons, save button) and FilterRow (filter dropdowns, due/archived ChipButtons).
-- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, ProjectCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. ProjectCell (a dot-led outline Chip) is rendered only when the view covers several projects. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date/number editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
+- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, ProjectCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. ProjectCell (a `renderProjectChip` in a `<td>`) is rendered only when the view covers several projects. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date/number editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
   - **TitleCell** indents from `--depth` on the parent `TaskRow` (CSS, not an inline style) and draws subtask tree connectors from `treeGuides` + `isLastChild`: one `.pm-tree-guide` span per indent column, the deepest carrying `--elbow`. Pass `treeGuides: null` to indent without lines. The caller reads `config.showSubtreeConnections` to decide.
   - The grid is off by default. `TableRenderer` stamps `config.lineBorders` onto the wrapper as `data-borders`, re-applied on every body fill so a settings change lands without rebuilding the table; cells carry no rules of their own.
-- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
+- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderIconControl` (icon preview that opens a searchable grid of every icon Obsidian knows; a query that isn't a plain icon name is offered as a literal glyph, which is how emoji are picked, and "No icon" clears it - backs the status and priority icon fields, the new project dialog, and the project edit page), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
 
 ## Shared widgets (`src/ui/*.ts`)
 
@@ -143,8 +150,8 @@ Richer than primitives, used across views. Avoid expanding this bucket; prefer c
 - **FormField** - `renderPropRow(container, label, valueBuilder, icon?)` (label + value form row), `renderChipList(container, items, { variant, shape, onRemove, onAdd?, ... })` (removable-token list with add affordance).
 - **StatusBadge** - `renderStatusBadge(container, task, statuses, onChange)` (solid dot-led Chip + picker Menu), `renderPriorityBadge(...)` (plain Chip with chevron icon + picker Menu), `renderStatusDot(container, status, statuses, cls?)` (bare colored dot), `PRIORITY_CHEVRONS`. The only way to render status/priority.
 - **TaskContextMenu** - `buildTaskContextMenu(menu, task, ctx)`: the task right-click menu.
-- **ModalFactory** - all modal opening: `openTaskModal`, `openProjectModal`, `openProjectPicker`, `openTaskPicker`, `openImportModal`, `confirmDialog`, `confirmDuplicateSubtasks`, `promptText`. Never instantiate a modal directly from a view.
-- **PaletteListEditor** - `renderPaletteFields(parent, app, item, onChanged)` (icon + label + color inputs) and `renderStatusDoneToggle` are the row internals, used by the plugin settings pages. `renderStatusListEditor` / `renderPriorityListEditor` wrap them with their own drag handle and delete button for the project modal's per-project overrides; plugin settings get those affordances from Obsidian's list settings instead. Plus `attachIconSuggest`, `wireRowDragReorder`.
+- **ModalFactory** - all modal opening: `openTaskModal`, `openProjectCreate`, `openProjectPicker`, `openTaskPicker`, `openImportModal`, `confirmDialog`, `confirmDuplicateSubtasks`, `promptText`. Never instantiate a modal directly from a view. A new project is asked for in a dialog (`openProjectCreate`); an existing one is edited on a page of its own (`plugin.router.openProjectEdit`).
+- **PaletteListEditor** - `renderPaletteFields(parent, item, onChanged)` (icon picker + label + color inputs) and `renderStatusDoneToggle` are the row internals, used by the plugin settings pages. `renderStatusListEditor` / `renderPriorityListEditor` wrap them with their own drag handle and delete button for the project edit page's per-project overrides; plugin settings get those affordances from Obsidian's list settings instead. Plus `wireRowDragReorder`.
 
 ## Native Obsidian components to use directly
 
@@ -171,7 +178,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
 
 ## Maintenance
 

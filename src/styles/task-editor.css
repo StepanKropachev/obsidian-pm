@@ -296,6 +296,61 @@ input.pm-pop-field:focus {
   margin-top: 6px;
 }
 
+.pm-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  gap: 2px;
+  max-height: 216px;
+  overflow-y: auto;
+}
+button.pm-icon-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  --icon-size: 17px;
+}
+button.pm-icon-cell--glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+.pm-icon-cell:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+button.pm-icon-cell--selected {
+  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  box-shadow: 0 0 0 1px var(--interactive-accent);
+  color: var(--text-normal);
+}
+.pm-icon-grid-hint:not(:empty) {
+  margin-top: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+button.pm-icon-trigger {
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 7px;
+  border-color: var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.pm-settings-status-icon .pm-icon-trigger {
+  width: 100%;
+}
+.pm-icon-trigger .pm-glyph-icon {
+  --icon-size: 16px;
+}
+
 .pm-prop-label--with-icon {
   display: inline-flex;
   align-items: center;

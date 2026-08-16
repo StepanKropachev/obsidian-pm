@@ -1,0 +1,232 @@
+.pm-edit {
+  padding: 24px 28px 48px;
+  overflow: auto;
+}
+
+.pm-edit-header,
+.pm-edit-section,
+.pm-edit-danger {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.pm-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pm-edit-section {
+  margin-top: 28px;
+}
+
+.pm-edit-props {
+  margin-top: 4px;
+}
+.pm-edit-props .pm-prop-row {
+  grid-template-columns: 200px 1fr;
+}
+
+.pm-edit-block {
+  margin-top: 12px;
+}
+
+.pm-modal--create {
+  max-width: 560px;
+}
+
+.pm-create-block + .pm-create-block,
+.pm-create-grid {
+  margin-top: 16px;
+}
+.pm-create-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.pm-create-grid .pm-create-block + .pm-create-block {
+  margin-top: 0;
+}
+
+.pm-create-notice {
+  min-height: 16px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-error);
+}
+
+.pm-create .pm-modal-btn-row {
+  margin-top: 24px;
+}
+
+.pm-edit-desc {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.pm-modal-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pm-edit-danger {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  padding: 16px 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+.pm-edit-danger-text {
+  flex: 1;
+}
+.pm-edit-danger-title {
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+}
+
+.pm-color-custom {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+}
+
+.pm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 4px;
+}
+.pm-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.pm-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+.pm-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 26px;
+}
+
+.pm-cf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pm-cf-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px;
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border);
+  flex-wrap: wrap;
+}
+.pm-cf-name {
+  flex: 1;
+  min-width: 120px;
+}
+.pm-cf-type {
+  flex: 0 0 130px;
+}
+.pm-cf-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.pm-cf-opt-row {
+  display: flex;
+  gap: 6px;
+}
+.pm-cf-opt-input {
+  flex: 1;
+}
+
+.pm-settings-statuses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pm-settings-status-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pm-palette-row .setting-item-info {
+  display: none;
+}
+.pm-palette-row .setting-item-control {
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+.pm-palette-row .pm-settings-status-label {
+  min-width: 0;
+}
+.pm-settings-status-icon {
+  flex: 0 0 64px;
+  width: 64px;
+}
+.pm-settings-status-label {
+  flex: 1;
+}
+.pm-settings-drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: 14px;
+  flex: 0 0 16px;
+  text-align: center;
+}
+.pm-settings-row--dragging {
+  opacity: 0.4;
+}
+.pm-settings-complete-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.pm-settings-complete-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pm-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}

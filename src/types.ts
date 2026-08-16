@@ -257,14 +257,17 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
   }
 }
 
+export const DEFAULT_PROJECT_COLOR = '#8b72be'
+export const DEFAULT_PROJECT_ICON = '📋'
+
 export function makeProject(title: string, filePath: string): Project {
   const now = new Date().toISOString()
   return {
     id: makeId(),
     title,
     description: '',
-    color: '#8b72be',
-    icon: '📋',
+    color: DEFAULT_PROJECT_COLOR,
+    icon: DEFAULT_PROJECT_ICON,
     tasks: [],
     customFields: [],
     teamMembers: [],

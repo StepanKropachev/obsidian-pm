@@ -4,10 +4,11 @@ import type { Task, TaskStatus, FilterState, ResolvedProjectConfig } from '../ty
 import type { ProjectScope } from '../store'
 import { flattenTasks, totalLoggedHours } from '../store/TaskTreeOps'
 import { matchesFilter } from '../store/TaskFilter'
-import { dueUrgency, getPriorityConfig } from '../utils'
+import { dueUrgency, getPriorityConfig, safeAsync } from '../utils'
 import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
+import { renderProjectChip } from '../ui/composites/projectChip'
 import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
@@ -107,8 +108,14 @@ export class KanbanView implements SubView {
       priorityColor,
       descriptionPreview,
       parentTitle,
-      projectTitle: owner?.title,
-      projectColor: owner?.color,
+      renderSource: owner
+        ? (el) =>
+            renderProjectChip(el, {
+              title: owner.title,
+              color: owner.color,
+              onClick: safeAsync(() => this.plugin.router.openProjectOverview(owner.filePath))
+            })
+        : undefined,
       loggedHours: totalLoggedHours(task),
       overdue: dueUrgency(task, this.config.statuses) === 'overdue',
       showTagColors: this.plugin.settings.showTagColors

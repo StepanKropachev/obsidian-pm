@@ -37,7 +37,7 @@ export interface TaskSource {
   loadTaskBody(task: Task): Promise<void>
   loadProjectBody(project: Project): Promise<void>
 
-  createProject(title: string, folder: string): Promise<Project>
+  createProject(title: string, folder: string, patch?: ProjectPatch): Promise<Project>
   saveProject(project: Project): Promise<void>
   updateProject(project: Project, patch: ProjectPatch): Promise<void>
   deleteProject(project: Project): Promise<void>

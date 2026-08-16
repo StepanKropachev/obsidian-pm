@@ -238,7 +238,7 @@ export class PMSettingTab extends PluginSettingTab {
             name: status.label,
             render: (setting: Setting) => {
               setting.setClass('pm-palette-row')
-              renderPaletteFields(setting.controlEl, this.app, status, () => this.persist())
+              renderPaletteFields(setting.controlEl, status, () => this.persist())
               renderStatusDoneToggle(setting.controlEl, status, () => this.persist())
             }
           })),
@@ -279,7 +279,7 @@ export class PMSettingTab extends PluginSettingTab {
             name: priority.label,
             render: (setting: Setting) => {
               setting.setClass('pm-palette-row')
-              renderPaletteFields(setting.controlEl, this.app, priority, () => this.persist())
+              renderPaletteFields(setting.controlEl, priority, () => this.persist())
             }
           })),
           onReorder: (from, to) => this.reorder(priorities, from, to),

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian'
+import { ItemView, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import { renderProjectListToolbar, renderProjectListContent } from './ProjectListRenderer'
 import type { ProjectListContext } from './ProjectListRenderer'
@@ -73,7 +73,7 @@ export class DashboardView extends ItemView {
       plugin: this.plugin,
       toolbarEl: this.toolbarEl,
       contentEl: this.bodyEl,
-      openProjectFile: (file: TFile) => this.plugin.router.openProject(file)
+      openProject: (path: string) => this.plugin.router.openProjectOverview(path)
     }
   }
 }

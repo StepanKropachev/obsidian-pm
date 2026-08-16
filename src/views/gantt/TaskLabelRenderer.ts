@@ -5,6 +5,7 @@ import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { IconButton } from '../../ui/primitives/IconButton'
 import { openTaskModal } from '../../ui/ModalFactory'
+import { renderProjectChip } from '../../ui/composites/projectChip'
 import { renderStatusDot } from '../../ui/StatusBadge'
 import { safeAsync } from '../../utils'
 import { ROW_HEIGHT } from './TimelineConfig'
@@ -84,7 +85,11 @@ export function renderTaskLabel(
 
   // With one project the rows are all its own; with several, each says where it belongs.
   if (ctx.scope.isMulti) {
-    new Chip(el).setLabel(project.title).setVariant('plain').setSize('sm').setDot(true).setColor(project.color)
+    renderProjectChip(el, {
+      title: project.title,
+      color: project.color,
+      onClick: safeAsync(() => ctx.plugin.router.openProjectOverview(project.filePath))
+    })
   }
 
   // A predecessor outside this view draws no arrow, so the row says it is there.

@@ -5,6 +5,9 @@ import { DEFAULT_PRIORITIES, DEFAULT_STATUSES, makeTask } from '../../types'
 import { renderDueChip } from '../../ui/composites/dueChip'
 import { renderTagChip } from '../../ui/composites/tagChip'
 import { renderTimeChip } from '../../ui/composites/timeChip'
+import { renderMetricStrip } from '../../ui/composites/metricStrip'
+import { renderMilestoneTimeline } from '../../ui/composites/milestoneTimeline'
+import { renderProjectChip } from '../../ui/composites/projectChip'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
@@ -17,10 +20,10 @@ import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { TitleCell } from '../../ui/composites/cells/TitleCell'
 import { KanbanCard } from '../../ui/composites/KanbanCard'
-import { ProjectCard } from '../../ui/composites/ProjectCard'
+import { ProjectRow } from '../../ui/composites/ProjectRow'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
-import { renderAddProperty, renderInputControl } from '../../ui/composites/properties'
+import { renderAddProperty, renderIconControl, renderInputControl } from '../../ui/composites/properties'
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
@@ -86,7 +89,10 @@ export class StyleguideView extends ItemView {
     this.renderForm()
     this.group('Composites')
     this.renderDerivedChips()
+    this.renderProjectRows()
     this.renderCards()
+    this.renderMetricStrip()
+    this.renderMilestoneTimeline()
     this.renderTable()
     return Promise.resolve()
   }
@@ -278,6 +284,10 @@ export class StyleguideView extends ItemView {
     })
     renderInputControl({ container: inputRow, value: 'Acme Corp', onChange: noop })
     renderInputControl({ container: inputRow, value: '', placeholder: 'Set value', onChange: noop })
+    const iconRow = this.row(sec, 'renderIconControl: icon / emoji / empty')
+    renderIconControl({ container: iconRow, value: 'circle-play', color: DEFAULT_STATUSES[1].color, onChange: noop })
+    renderIconControl({ container: iconRow, value: '🚀', onChange: noop })
+    renderIconControl({ container: iconRow, value: '', onChange: noop })
     const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
     renderAddButton(addRow, 'Add member', noop)
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)
@@ -293,47 +303,81 @@ export class StyleguideView extends ItemView {
     renderDueChip(dueRow, 'Jul 20, 2026', 'normal')
     renderDueChip(dueRow, 'Jul 6, 2026', 'near')
     renderDueChip(dueRow, 'Jun 20, 2026', 'overdue')
+    const projectRow = this.row(sec, 'renderProjectChip: plain / clickable')
+    renderProjectChip(projectRow, { title: 'Platform', color: '#7a9ec4' })
+    renderProjectChip(projectRow, { title: 'Website relaunch', color: '#8b72be', onClick: noop })
+  }
+
+  private renderProjectRows(): void {
+    const sec = this.section('ProjectRow', 'project-row')
+    sec.createDiv({
+      cls: 'pm-sg-caption',
+      text: 'The project list: a parent with its rolled-up counts, an indented child, and an overdue one.'
+    })
+    const table = sec.createEl('table', { cls: 'pm-table pm-project-table' })
+    const head = table.createEl('thead').createEl('tr')
+    for (const column of ['', 'Project', 'Progress', 'Tasks', 'Members', 'Due', '']) {
+      head.createEl('th', { text: column })
+    }
+    const tbody = table.createEl('tbody')
+    new ProjectRow(tbody, {
+      title: 'Platform',
+      icon: '🚀',
+      color: '#7a9ec4',
+      depth: 0,
+      childCount: 2,
+      collapsed: false,
+      tasksDone: 12,
+      tasksTotal: 40,
+      overdue: 0,
+      members: PEOPLE,
+      dueLabel: 'Oct 30',
+      dueUrgency: 'normal',
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop,
+      onActions: noop
+    })
+    new ProjectRow(tbody, {
+      title: 'Website relaunch',
+      icon: '📋',
+      color: '#8b72be',
+      depth: 1,
+      childCount: 0,
+      collapsed: false,
+      tasksDone: 4,
+      tasksTotal: 10,
+      overdue: 3,
+      members: [PEOPLE[0]],
+      dueLabel: 'Jun 20',
+      dueUrgency: 'overdue',
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop,
+      onActions: noop
+    })
+    new ProjectRow(tbody, {
+      title: 'Internal tools',
+      icon: '🛠',
+      color: '#767491',
+      depth: 0,
+      childCount: 1,
+      collapsed: true,
+      tasksDone: 31,
+      tasksTotal: 38,
+      overdue: 0,
+      members: [],
+      dueLabel: '',
+      dueUrgency: 'normal',
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop,
+      onActions: noop
+    })
   }
 
   private renderCards(): void {
     const sec = this.section('Cards', 'cards')
-    const projectRow = this.row(sec, 'ProjectCard: plain / with sub-projects / collapsed')
-    new ProjectCard(projectRow, {
-      title: 'Website relaunch',
-      icon: '📋',
-      color: '#8b72be',
-      tasksDone: 4,
-      tasksTotal: 10,
-      childCount: 0,
-      collapsed: false,
-      onToggleCollapsed: noop,
-      onClick: noop,
-      onContextMenu: noop
-    })
-    new ProjectCard(projectRow, {
-      title: 'Platform',
-      icon: '🚀',
-      color: '#7a9ec4',
-      tasksDone: 12,
-      tasksTotal: 40,
-      childCount: 3,
-      collapsed: false,
-      onToggleCollapsed: noop,
-      onClick: noop,
-      onContextMenu: noop
-    })
-    new ProjectCard(projectRow, {
-      title: 'Platform',
-      icon: '🚀',
-      color: '#7a9ec4',
-      tasksDone: 12,
-      tasksTotal: 40,
-      childCount: 1,
-      collapsed: true,
-      onToggleCollapsed: noop,
-      onClick: noop,
-      onContextMenu: noop
-    })
     const kanbanRow = this.row(sec, 'KanbanCard: plain / overdue milestone with everything')
     new KanbanCard(kanbanRow, {
       task: makeTask({ title: 'Write the launch announcement' }),
@@ -357,8 +401,7 @@ export class StyleguideView extends ItemView {
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
-      projectTitle: 'Platform',
-      projectColor: '#7a9ec4',
+      renderSource: (el) => renderProjectChip(el, { title: 'Platform', color: '#7a9ec4', onClick: noop }),
       loggedHours: 11,
       overdue: true,
       showTagColors: true,
@@ -367,6 +410,47 @@ export class StyleguideView extends ItemView {
       onDragStart: noop,
       onDragEnd: noop
     })
+  }
+
+  private renderMetricStrip(): void {
+    const sec = this.section('MetricStrip', 'metric-strip')
+    const row = this.row(sec, 'four stats, one with a progress bar, one flagged')
+    renderMetricStrip(row, [
+      {
+        label: 'Progress',
+        value: '62%',
+        sub: 'of 48 tasks',
+        extra: (el) => {
+          new ProgressBar(el).setSize('sm').setValue(62)
+        }
+      },
+      { label: 'Tasks', value: '30 of 48', sub: 'done' },
+      { label: 'Overdue', value: '4', sub: 'tasks past due', alert: true },
+      {
+        label: 'Time',
+        value: '',
+        sub: 'logged / estimate',
+        extra: (el) => {
+          renderTimeChip(el, 96, 140)
+        }
+      }
+    ])
+  }
+
+  private renderMilestoneTimeline(): void {
+    const sec = this.section('MilestoneTimeline', 'milestone-timeline')
+    const row = this.row(sec, 'done / next / planned, with a crowded pair on the lower row')
+    renderMilestoneTimeline(
+      row,
+      [
+        { name: 'Feature freeze', dateLabel: "Jul 24, '26", pos: 4, state: 'done' },
+        { name: 'Internal beta', dateLabel: "Aug 7, '26", pos: 30, state: 'done' },
+        { name: 'Public beta', dateLabel: "Sep 12, '26", pos: 55, state: 'next' },
+        { name: 'Store submission', dateLabel: "Sep 20, '26", pos: 62, state: 'plan' },
+        { name: 'GA release', dateLabel: "Oct 30, '26", pos: 96, state: 'plan' }
+      ],
+      42
+    )
   }
 
   private renderTable(): void {

@@ -1,0 +1,326 @@
+.pm-overview {
+  padding: 24px 28px 48px;
+  overflow: auto;
+}
+
+.pm-overview-crumbs,
+.pm-overview-header,
+.pm-overview-grid {
+  max-width: 1160px;
+  margin-inline: auto;
+}
+
+.pm-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 0 32px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .pm-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pm-overview-side {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+.pm-overview-main {
+  min-width: 0;
+}
+
+.pm-overview-side {
+  border-left: 1px solid var(--background-modifier-border);
+  padding-left: 24px;
+}
+
+.pm-overview-crumbs {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.pm-overview-crumb {
+  cursor: pointer;
+}
+.pm-overview-crumb:hover {
+  color: var(--text-accent);
+}
+.pm-overview-crumb-sep {
+  color: var(--text-faint);
+}
+
+.pm-overview-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pm-overview-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border-radius: var(--radius-m);
+  background: color-mix(in srgb, var(--pm-overview-tint, var(--interactive-accent)) 14%, transparent);
+}
+
+.pm-overview-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.pm-overview-title {
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-overview-subline {
+  margin-top: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.pm-overview-section {
+  margin-top: 28px;
+}
+.pm-overview-side .pm-overview-section:first-child {
+  margin-top: 0;
+}
+
+.pm-overview-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pm-section-label,
+.pm-metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.pm-overview-note,
+.pm-overview-muted {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+.pm-overview-description {
+  font-size: var(--font-ui-small);
+  line-height: 1.6;
+}
+.pm-overview-description > :first-child {
+  margin-top: 0;
+}
+.pm-overview-description > :last-child {
+  margin-bottom: 0;
+}
+
+.pm-metric-strip {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: 14px 0;
+}
+
+.pm-metric {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 0 18px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+.pm-metric:first-child {
+  border-left: none;
+}
+
+.pm-metric-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+}
+.pm-metric-value--alert {
+  color: var(--color-red);
+}
+
+.pm-metric-sub {
+  margin-top: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+.pm-overview-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+}
+.pm-overview-child-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+.pm-overview-child-title {
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pm-overview-child:hover .pm-overview-child-title {
+  color: var(--text-accent);
+}
+.pm-overview-child .pm-progress {
+  width: 80px;
+  flex-shrink: 0;
+}
+.pm-overview-child-count {
+  width: 48px;
+  text-align: right;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.pm-overview-props .pm-prop-row {
+  grid-template-columns: 90px 1fr;
+  min-height: 30px;
+}
+
+.pm-overview-member {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-ui-smaller);
+}
+
+.pm-timeline-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.pm-timeline {
+  position: relative;
+  height: 88px;
+  margin-top: 12px;
+  min-width: var(--pm-timeline-min-width, 320px);
+}
+.pm-timeline--two-rows {
+  height: 142px;
+}
+
+.pm-timeline-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+}
+
+.pm-timeline-today {
+  position: absolute;
+  left: var(--pm-timeline-pos);
+  top: 0;
+  height: 29px;
+  border-left: 1px dashed var(--text-faint);
+}
+.pm-timeline-today-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.pm-timeline-item {
+  position: absolute;
+  left: var(--pm-timeline-pos);
+  top: 0;
+}
+
+.pm-timeline-dot {
+  position: absolute;
+  top: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  background: var(--background-primary);
+  border: 2px solid var(--text-faint);
+}
+.pm-timeline-item--done .pm-timeline-dot {
+  background: var(--color-green);
+  border-color: var(--color-green);
+}
+.pm-timeline-item--next .pm-timeline-dot {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 22%, transparent);
+}
+
+.pm-timeline-label {
+  position: absolute;
+  top: 34px;
+  width: 104px;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.pm-timeline-item--low .pm-timeline-label {
+  top: 88px;
+}
+.pm-timeline-item--low::before {
+  content: '';
+  position: absolute;
+  top: 26px;
+  height: 58px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+.pm-timeline-item--start .pm-timeline-label {
+  transform: none;
+  text-align: left;
+}
+.pm-timeline-item--end .pm-timeline-label {
+  transform: translateX(-100%);
+  text-align: right;
+}
+
+.pm-timeline-name {
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+  line-height: 1.25;
+}
+.pm-timeline-item--done .pm-timeline-name {
+  color: var(--text-muted);
+}
+.pm-timeline-date {
+  margin-top: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}

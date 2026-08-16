@@ -8,7 +8,7 @@ import { TableView } from './table/TableView'
 import type { TableViewState } from './table/TableView'
 import { GanttView } from './gantt/GanttView'
 import { KanbanView } from './KanbanView'
-import { openProjectModal, openTaskModal } from '../ui/ModalFactory'
+import { openTaskModal } from '../ui/ModalFactory'
 import { ChipButton } from '../ui/primitives/ChipButton'
 import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
 import { ProjectHeader } from '../ui/composites/ProjectHeader'
@@ -364,11 +364,12 @@ export class ProjectView extends ItemView {
       const iconEl = left.createSpan({
         text: primary.icon,
         cls: 'pm-toolbar-icon',
-        attr: { 'aria-label': 'Edit project', role: 'button', tabindex: '0' }
+        attr: { 'aria-label': 'Open project page', role: 'button', tabindex: '0' }
       })
-      iconEl.addEventListener('click', () => {
-        openProjectModal(this.plugin, { project: primary })
-      })
+      iconEl.addEventListener(
+        'click',
+        safeAsync(() => this.plugin.router.openProjectOverview(primary.filePath))
+      )
     }
 
     this.titleEl2 = left.createEl('h2', { text: scope.label(), cls: 'pm-toolbar-title' })
@@ -412,9 +413,7 @@ export class ProjectView extends ItemView {
       new ExtraButtonComponent(right)
         .setIcon('settings')
         .setTooltip('Project settings')
-        .onClick(() => {
-          openProjectModal(this.plugin, { project: primary })
-        })
+        .onClick(safeAsync(() => this.plugin.router.openProjectEdit(primary.filePath)))
     }
   }
 

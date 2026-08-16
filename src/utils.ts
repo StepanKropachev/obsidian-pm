@@ -47,13 +47,19 @@ export function statusSortOrder(status: string, statuses: StatusConfig[]): numbe
   return idx >= 0 ? idx : 999
 }
 
+/** A past date only reads as overdue when `overdue` says something is still open on it. */
+export function dateUrgency(due: string, overdue: boolean): DueUrgency {
+  const date = parsePlainDate(due)
+  if (!date) return 'normal'
+  const days = today().until(date, { largestUnit: 'day' }).days
+  if (days < 0) return overdue ? 'overdue' : 'normal'
+  return days < 3 ? 'near' : 'normal'
+}
+
 /** Terminal tasks are never urgent. */
 export function dueUrgency(task: Task, statuses: StatusConfig[]): DueUrgency {
-  const due = parsePlainDate(task.due)
-  if (!due || isTerminalStatus(task.status, statuses)) return 'normal'
-  const days = today().until(due, { largestUnit: 'day' }).days
-  if (days < 0) return 'overdue'
-  return days < 3 ? 'near' : 'normal'
+  if (isTerminalStatus(task.status, statuses)) return 'normal'
+  return dateUrgency(task.due, true)
 }
 
 /** Objects fall back to '' rather than rendering as [object Object]. */

@@ -2,7 +2,7 @@
 .pm-kanban-board::-webkit-scrollbar,
 .pm-kanban-cards::-webkit-scrollbar,
 .pm-task-modal::-webkit-scrollbar,
-.pm-project-modal::-webkit-scrollbar {
+.pm-edit::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
@@ -17,7 +17,7 @@
 .pm-kanban-board::-webkit-scrollbar-thumb,
 .pm-kanban-cards::-webkit-scrollbar-thumb,
 .pm-task-modal::-webkit-scrollbar-thumb,
-.pm-project-modal::-webkit-scrollbar-thumb {
+.pm-edit::-webkit-scrollbar-thumb {
   background: var(--background-modifier-border);
   border-radius: 99px;
 }

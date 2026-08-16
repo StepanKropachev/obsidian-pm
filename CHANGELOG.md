@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Opening a project from the project list shows its overview: progress, description, milestones, sub-projects, and properties
+- A row, card, or timeline label naming its project opens that project when clicked
 - Projects are listed wherever their files live in the vault
 - A project can sit under another one, chosen in the project settings
 - The project list nests sub-projects under their parent, whose card counts the tasks of the whole group
@@ -23,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The task menu moves a task and its subtasks to another project
 - A timeline row says when a task depends on something outside the view
 - Priorities can be added, renamed, recolored, and reordered in settings
-- Status and priority icons accept emoji or any icon available in Obsidian, including Lucide icons and icons added by other plugins, with suggestions while typing in settings
+- Status and priority icons are picked from a searchable grid of every icon Obsidian knows, or set to an emoji by pasting one into its search field
+- A project's icon is picked from that same grid, so it can be any icon Obsidian knows and not only an emoji
 - TaskNotes tasks can be imported with their dates, dependencies, subtasks, tags, and archive state ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))
 - Statuses and priorities can be imported from TaskNotes in settings ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))
 - Projects can define their own statuses and priorities in the project settings, replacing the global ones ([#57](https://github.com/StepanKropachev/obsidian-pm/issues/57))
@@ -39,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
+- The project list counts how many projects have tasks past due
+- Project settings open in a page of their own, keeping each change as it is made
+- Creating a project asks for its name, icon, color, parent, members, and description in one dialog
+- A project's color is chosen from the color picker, replacing the ten preset swatches
 - The projects folder setting decides where new projects are created, not which projects the plugin shows
 - Table rows have no line between them unless line borders are turned on
 - The plugin requires Obsidian 1.13
