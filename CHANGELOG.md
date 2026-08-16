@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
 - The project list counts how many projects have tasks past due
 - Project settings open in a page of their own, keeping each change as it is made
-- Creating a project asks for a name and opens its settings
+- Creating a project opens a page for its name, icon, color, parent, members, and description
 - The projects folder setting decides where new projects are created, not which projects the plugin shows
 - Table rows have no line between them unless line borders are turned on
 - The plugin requires Obsidian 1.13

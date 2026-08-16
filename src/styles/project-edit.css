@@ -32,6 +32,30 @@
   margin-top: 12px;
 }
 
+.pm-create-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.pm-create-notice {
+  min-height: 16px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-error);
+}
+
+.pm-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 720px;
+  margin: 28px auto 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
 .pm-edit-desc {
   min-height: 72px;
   resize: vertical;
