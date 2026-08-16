@@ -23,7 +23,7 @@ import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectRow } from '../../ui/composites/ProjectRow'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
-import { renderAddProperty, renderInputControl } from '../../ui/composites/properties'
+import { renderAddProperty, renderIconControl, renderInputControl } from '../../ui/composites/properties'
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
@@ -284,6 +284,10 @@ export class StyleguideView extends ItemView {
     })
     renderInputControl({ container: inputRow, value: 'Acme Corp', onChange: noop })
     renderInputControl({ container: inputRow, value: '', placeholder: 'Set value', onChange: noop })
+    const iconRow = this.row(sec, 'renderIconControl: icon / emoji / empty')
+    renderIconControl({ container: iconRow, value: 'circle-play', color: DEFAULT_STATUSES[1].color, onChange: noop })
+    renderIconControl({ container: iconRow, value: '🚀', onChange: noop })
+    renderIconControl({ container: iconRow, value: '', onChange: noop })
     const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
     renderAddButton(addRow, 'Add member', noop)
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)

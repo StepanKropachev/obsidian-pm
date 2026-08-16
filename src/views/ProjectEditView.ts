@@ -301,7 +301,6 @@ export class ProjectEditView extends ItemView {
       }),
       renderEditor: (container, statuses) =>
         renderStatusListEditor(container, {
-          app: this.app,
           statuses,
           onChanged: () => this.save({ config: project.config })
         })
@@ -320,7 +319,6 @@ export class ProjectEditView extends ItemView {
       makeEntry: () => ({ id: 'priority-' + makeId().slice(0, 6), label: 'New priority', color: '#8a94a0', icon: '' }),
       renderEditor: (container, priorities) =>
         renderPriorityListEditor(container, {
-          app: this.app,
           priorities,
           onChanged: () => this.save({ config: project.config })
         })

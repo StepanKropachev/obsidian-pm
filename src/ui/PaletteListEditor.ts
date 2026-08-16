@@ -1,33 +1,7 @@
-import { AbstractInputSuggest, App, Notice, getIconIds, setIcon } from 'obsidian'
+import { Notice } from 'obsidian'
 import type { PriorityConfig, StatusConfig } from '../types'
 import { IconButton } from './primitives/IconButton'
-
-/** Typed emoji are kept as-is; only Lucide ids are suggested. */
-class IconSuggest extends AbstractInputSuggest<string> {
-  protected getSuggestions(query: string): string[] {
-    const q = query.trim().toLowerCase()
-    if (!q) return []
-    return getIconIds()
-      .filter((id) => id.includes(q))
-      .slice(0, 24)
-  }
-
-  renderSuggestion(id: string, el: HTMLElement): void {
-    el.addClass('pm-icon-suggestion')
-    setIcon(el.createSpan({ cls: 'pm-icon-suggestion-glyph' }), id)
-    el.createSpan({ text: id })
-  }
-}
-
-/** Picking a suggestion saves through the input's own change handler. */
-export function attachIconSuggest(app: App, input: HTMLInputElement): void {
-  const suggest = new IconSuggest(app, input)
-  suggest.onSelect((id) => {
-    suggest.setValue(id)
-    input.dispatchEvent(new Event('change'))
-    suggest.close()
-  })
-}
+import { renderIconControl } from './composites/properties'
 
 /** On drop, moves the dragged item to this row's index. */
 export function wireRowDragReorder<T>(row: HTMLElement, index: number, items: T[], onChanged: () => void): void {
@@ -61,14 +35,16 @@ export interface PaletteEntry {
 }
 
 /** Appends the icon, label, and color inputs to `parent`, in that order. */
-export function renderPaletteFields(parent: HTMLElement, app: App, item: PaletteEntry, onChanged: () => void): void {
-  const icon = parent.createEl('input', { type: 'text', value: item.icon })
-  icon.addClass('pm-settings-status-icon')
-  icon.placeholder = 'Icon'
-  attachIconSuggest(app, icon)
-  icon.addEventListener('change', () => {
-    item.icon = icon.value
-    onChanged()
+export function renderPaletteFields(parent: HTMLElement, item: PaletteEntry, onChanged: () => void): void {
+  const iconCell = parent.createDiv('pm-settings-status-icon')
+  renderIconControl({
+    container: iconCell,
+    value: item.icon,
+    color: item.color,
+    onChange: (icon) => {
+      item.icon = icon
+      onChanged()
+    }
   })
 
   const label = parent.createEl('input', { type: 'text', value: item.label })
@@ -98,7 +74,6 @@ export function renderStatusDoneToggle(parent: HTMLElement, status: StatusConfig
 }
 
 interface PaletteListEditorOpts<T extends PaletteEntry> {
-  app: App
   items: T[]
   /** Called after every mutation, so the owner can persist. */
   onChanged: () => void
@@ -110,7 +85,7 @@ interface PaletteListEditorOpts<T extends PaletteEntry> {
   renderExtra?: (row: HTMLElement, item: T) => void
 }
 
-/** Drag handle, icon with suggestions, label, color, delete. */
+/** Drag handle, icon picker, label, color, delete. */
 function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement, opts: PaletteListEditorOpts<T>): void {
   const rerender = (): void => renderPaletteListEditor(container, opts)
   container.empty()
@@ -122,7 +97,7 @@ function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement,
       rerender()
     })
 
-    renderPaletteFields(row, opts.app, item, opts.onChanged)
+    renderPaletteFields(row, item, opts.onChanged)
 
     opts.renderExtra?.(row, item)
 
@@ -143,7 +118,6 @@ function renderPaletteListEditor<T extends PaletteEntry>(container: HTMLElement,
 }
 
 export interface StatusListEditorOpts {
-  app: App
   statuses: StatusConfig[]
   onChanged: () => void
   onDeleted?: (deleted: StatusConfig) => void
@@ -152,7 +126,6 @@ export interface StatusListEditorOpts {
 /** Palette rows plus the per-status Done toggle. */
 export function renderStatusListEditor(container: HTMLElement, opts: StatusListEditorOpts): void {
   renderPaletteListEditor<StatusConfig>(container, {
-    app: opts.app,
     items: opts.statuses,
     onChanged: opts.onChanged,
     onDeleted: opts.onDeleted,
@@ -162,7 +135,6 @@ export function renderStatusListEditor(container: HTMLElement, opts: StatusListE
 }
 
 export interface PriorityListEditorOpts {
-  app: App
   priorities: PriorityConfig[]
   onChanged: () => void
   onDeleted?: (deleted: PriorityConfig) => void
@@ -170,7 +142,6 @@ export interface PriorityListEditorOpts {
 
 export function renderPriorityListEditor(container: HTMLElement, opts: PriorityListEditorOpts): void {
   renderPaletteListEditor<PriorityConfig>(container, {
-    app: opts.app,
     items: opts.priorities,
     onChanged: opts.onChanged,
     onDeleted: opts.onDeleted,
