@@ -1,12 +1,12 @@
 import { App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
+import { DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON } from '../types'
 import { projectFilePath } from '../store'
 import { safeAsync } from '../utils'
 import { promptText } from '../ui/ModalFactory'
 import { renderAddButton } from '../ui/composites/addButton'
 import { renderChipList } from '../ui/FormField'
-import { renderSelectControl } from '../ui/composites/properties'
-import { PROJECT_COLORS, PROJECT_ICONS } from '../views/ProjectEditView'
+import { renderIconControl, renderSelectControl } from '../ui/composites/properties'
 
 interface Draft {
   title: string
@@ -24,13 +24,14 @@ interface Draft {
 export class ProjectCreateModal extends Modal {
   private draft: Draft = {
     title: '',
-    icon: PROJECT_ICONS[0],
-    color: PROJECT_COLORS[0],
+    icon: DEFAULT_PROJECT_ICON,
+    color: DEFAULT_PROJECT_COLOR,
     parentPath: '',
     teamMembers: [],
     description: ''
   }
   private notice!: HTMLElement
+  private iconHost!: HTMLElement
   private submit!: ButtonComponent
 
   constructor(
@@ -49,8 +50,8 @@ export class ProjectCreateModal extends Modal {
 
     this.renderName(contentEl)
     const grid = contentEl.createDiv('pm-create-grid')
-    this.renderIcons(grid)
-    this.renderColors(grid)
+    this.renderIcon(grid)
+    this.renderColor(grid)
     this.renderParent(contentEl)
     this.renderMembers(contentEl)
     this.renderDescription(contentEl)
@@ -87,42 +88,35 @@ export class ProjectCreateModal extends Modal {
     window.setTimeout(() => input.focus(), 10)
   }
 
-  private renderIcons(parent: HTMLElement): void {
+  private renderIcon(parent: HTMLElement): void {
     const block = parent.createDiv('pm-create-block')
     block.createEl('label', { text: 'Icon', cls: 'pm-label' })
-    const row = block.createDiv('pm-edit-icons')
-    const buttons: HTMLElement[] = []
-    for (const emoji of PROJECT_ICONS) {
-      const btn = row.createEl('button', { text: emoji, cls: 'pm-icon-option' })
-      btn.toggleClass('pm-icon-option--selected', emoji === this.draft.icon)
-      btn.addEventListener('click', () => {
-        this.draft.icon = emoji
-        for (const other of buttons) other.toggleClass('pm-icon-option--selected', other === btn)
-      })
-      buttons.push(btn)
-    }
+    this.iconHost = block.createDiv()
+    this.drawIcon()
   }
 
-  private renderColors(parent: HTMLElement): void {
+  /** Redrawn on a color change, so the preview keeps the tint the icon will have. */
+  private drawIcon(): void {
+    this.iconHost.empty()
+    renderIconControl({
+      container: this.iconHost,
+      value: this.draft.icon,
+      color: this.draft.color,
+      onChange: (icon) => {
+        this.draft.icon = icon
+      }
+    })
+  }
+
+  private renderColor(parent: HTMLElement): void {
     const block = parent.createDiv('pm-create-block')
     block.createEl('label', { text: 'Color', cls: 'pm-label' })
-    const row = block.createDiv('pm-color-palette')
-    const swatches: HTMLElement[] = []
-    const pick = (color: string, chosen: HTMLElement | null): void => {
-      this.draft.color = color
-      for (const swatch of swatches) swatch.toggleClass('pm-color-swatch--selected', swatch === chosen)
-    }
-    for (const color of PROJECT_COLORS) {
-      const swatch = row.createEl('button', { cls: 'pm-color-swatch' })
-      swatch.setCssStyles({ background: color })
-      swatch.toggleClass('pm-color-swatch--selected', color === this.draft.color)
-      swatch.addEventListener('click', () => pick(color, swatch))
-      swatches.push(swatch)
-    }
-    const custom = row.createEl('input', { type: 'color', cls: 'pm-color-custom' })
-    custom.value = this.draft.color
-    custom.title = 'Custom color'
-    custom.addEventListener('change', () => pick(custom.value, null))
+    const field = block.createEl('input', { type: 'color', cls: 'pm-color-custom' })
+    field.value = this.draft.color
+    field.addEventListener('change', () => {
+      this.draft.color = field.value
+      this.drawIcon()
+    })
   }
 
   private renderParent(parent: HTMLElement): void {

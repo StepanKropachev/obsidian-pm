@@ -339,11 +339,14 @@ button.pm-icon-cell--selected {
 /* Sits among bordered fields rather than in a property list, so it reads as one. */
 button.pm-icon-trigger {
   justify-content: space-between;
-  width: 100%;
+  gap: 8px;
   margin: 0;
   padding: 5px 7px;
   border-color: var(--background-modifier-border);
   background: var(--background-secondary);
+}
+.pm-settings-status-icon .pm-icon-trigger {
+  width: 100%;
 }
 .pm-icon-trigger .pm-glyph-icon {
   --icon-size: 16px;
