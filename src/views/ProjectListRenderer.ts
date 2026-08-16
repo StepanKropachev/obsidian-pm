@@ -4,6 +4,7 @@ import type { Project } from '../types'
 import type { ProjectRef } from '../store'
 import { formatDateShort, safeAsync } from '../utils'
 import { parsePlainDate, today } from '../dates'
+import { openProjectCreate } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectRow } from '../ui/composites/ProjectRow'
 import type { DueUrgency } from '../ui/composites/dueChip'
@@ -36,7 +37,7 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
   new ButtonComponent(ctx.toolbarEl)
     .setButtonText('+ new project')
     .setCta()
-    .onClick(safeAsync(() => ctx.plugin.router.openProjectCreate()))
+    .onClick(() => openProjectCreate(ctx.plugin))
 }
 
 function countLine(ctx: ProjectListContext): string {
@@ -64,10 +65,7 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
       .setIcon('📋')
       .setTitle('No projects yet')
       .setBody('Create your first project to get started.')
-      .setAction(
-        '+ new project',
-        safeAsync(() => ctx.plugin.router.openProjectCreate())
-      )
+      .setAction('+ new project', () => openProjectCreate(ctx.plugin))
     return
   }
 

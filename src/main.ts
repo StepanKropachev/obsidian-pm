@@ -7,12 +7,11 @@ import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
 import { ProjectOverviewView, PM_PROJECT_OVERVIEW_VIEW_TYPE } from './views/ProjectOverviewView'
 import { ProjectEditView, PM_PROJECT_EDIT_VIEW_TYPE } from './views/ProjectEditView'
-import { ProjectCreateView, PM_PROJECT_CREATE_VIEW_TYPE } from './views/ProjectCreateView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
 import { TaskView, PM_TASK_VIEW_TYPE } from './views/TaskView'
 import { registerStyleguide } from './views/styleguide/StyleguideView'
 import { PMViewRouter } from './views/PMViewRouter'
-import { openTaskModal, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
+import { openTaskModal, openProjectCreate, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
 import { migrateProjects } from './migration'
 import { safeAsync } from './utils'
@@ -67,7 +66,6 @@ export default class PMPlugin extends Plugin {
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
     this.registerView(PM_PROJECT_OVERVIEW_VIEW_TYPE, (leaf) => new ProjectOverviewView(leaf, this))
     this.registerView(PM_PROJECT_EDIT_VIEW_TYPE, (leaf) => new ProjectEditView(leaf, this))
-    this.registerView(PM_PROJECT_CREATE_VIEW_TYPE, (leaf) => new ProjectCreateView(leaf, this))
     this.registerView(PM_DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this))
     this.registerView(PM_TASK_VIEW_TYPE, (leaf) => new TaskView(leaf, this))
     this.registerTaskNoteSwap()
@@ -95,7 +93,9 @@ export default class PMPlugin extends Plugin {
     this.addCommand({
       id: 'new-project',
       name: 'Create new project',
-      callback: safeAsync(() => this.router.openProjectCreate())
+      callback: () => {
+        openProjectCreate(this)
+      }
     })
 
     this.addCommand({

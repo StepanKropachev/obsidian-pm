@@ -2,7 +2,6 @@ import { TFile, type WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import type { ScopeSpec } from '../store'
 import { PM_DASHBOARD_VIEW_TYPE } from './DashboardView'
-import { PM_PROJECT_CREATE_VIEW_TYPE } from './ProjectCreateView'
 import { PM_PROJECT_EDIT_VIEW_TYPE } from './ProjectEditView'
 import { PM_PROJECT_OVERVIEW_VIEW_TYPE } from './ProjectOverviewView'
 import { PM_PROJECT_VIEW_TYPE } from './ProjectView'
@@ -35,14 +34,6 @@ export class PMViewRouter {
     const ws = this.plugin.app.workspace
     const target = leaf ?? ws.getLeaf('tab')
     await target.setViewState({ type: PM_PROJECT_OVERVIEW_VIEW_TYPE, state: { filePath: path } })
-    await ws.revealLeaf(target)
-  }
-
-  /** The form for a project that does not exist yet; it writes nothing until submitted. */
-  async openProjectCreate(leaf?: WorkspaceLeaf): Promise<void> {
-    const ws = this.plugin.app.workspace
-    const target = leaf ?? ws.getLeaf('tab')
-    await target.setViewState({ type: PM_PROJECT_CREATE_VIEW_TYPE, state: {} })
     await ws.revealLeaf(target)
   }
 

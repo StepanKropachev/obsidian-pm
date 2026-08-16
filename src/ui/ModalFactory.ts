@@ -5,6 +5,7 @@ import type { ProjectRef } from '../store'
 import { TaskModal } from '../modals/TaskModal'
 import { ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
+import { ProjectCreateModal } from '../modals/ProjectCreateModal'
 
 /** Resolves true if confirmed, false if cancelled. */
 export function confirmDialog(app: App, message: string, confirmLabel = 'Delete'): Promise<boolean> {
@@ -243,6 +244,10 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
   } else {
     open()
   }
+}
+
+export function openProjectCreate(plugin: PMPlugin): void {
+  new ProjectCreateModal(plugin.app, plugin).open()
 }
 
 export function openProjectPicker(
