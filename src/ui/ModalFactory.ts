@@ -1,6 +1,7 @@
 import { type App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
+import type { ProjectRef } from '../store'
 import { TaskModal } from '../modals/TaskModal'
 import { ProjectModal } from '../modals/ProjectModal'
 import { ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
@@ -266,7 +267,11 @@ export function openProjectModal(plugin: PMPlugin, opts: OpenProjectModalOpts): 
   }
 }
 
-export function openProjectPicker(plugin: PMPlugin, projects: Project[], onChoose: (project: Project) => void): void {
+export function openProjectPicker(
+  plugin: PMPlugin,
+  projects: ProjectRef[],
+  onChoose: (project: ProjectRef) => void
+): void {
   new ProjectPickerModal(plugin.app, projects, onChoose).open()
 }
 

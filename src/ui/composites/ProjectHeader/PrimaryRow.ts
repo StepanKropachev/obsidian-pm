@@ -1,11 +1,11 @@
 import { ButtonComponent, Menu } from 'obsidian'
-import type { Project, FilterState, SavedView } from '../../../types'
+import type { FilterState, SavedView } from '../../../types'
 import { ChipButton } from '../../primitives/ChipButton'
 import { isFilterActive } from '../../../store/TaskFilter'
 import { safeAsync } from '../../../utils'
 
 export interface PrimaryRowProps {
-  project: Project
+  savedViews: SavedView[]
   filter: FilterState
   activeSavedViewId: string | null
   filterRowExpanded: boolean
@@ -72,7 +72,7 @@ export class PrimaryRow {
         this.props.onSavedViewSelect(null)
       })
 
-    for (const sv of this.props.project.savedViews) {
+    for (const sv of this.props.savedViews) {
       this.renderSavedViewPill(wrap, sv)
     }
   }

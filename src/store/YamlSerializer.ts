@@ -38,6 +38,7 @@ export function serializeProject(project: Project, statuses: StatusConfig[] = []
     color: project.color,
     icon: project.icon,
     taskIds,
+    ...(project.parentPath ? { parent: `[[${project.parentPath.replace(/\.md$/, '')}]]` } : {}),
     customFields: project.customFields,
     teamMembers: project.teamMembers,
     savedViews: project.savedViews.length ? project.savedViews : [],

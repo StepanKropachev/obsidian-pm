@@ -70,6 +70,8 @@ export interface Project {
   updatedAt: string
   filePath: string // resolved vault path
   savedViews: SavedView[]
+  /** The project this one sits under, resolved from its `parent` link. */
+  parentPath?: string
   /** Per-project overrides for the global settings. Absent fields inherit. */
   config?: ProjectConfig
   /** Not serialized. Rebuilt on load, maintained by the store's mutators. */
@@ -78,7 +80,10 @@ export interface Project {
 
 /** Tasks are excluded: they change through the task mutators, never a whole-project write. */
 export type ProjectPatch = Partial<
-  Pick<Project, 'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config'>
+  Pick<
+    Project,
+    'title' | 'description' | 'color' | 'icon' | 'customFields' | 'teamMembers' | 'savedViews' | 'config' | 'parentPath'
+  >
 >
 
 export interface FilterState {
@@ -150,7 +155,10 @@ export interface PriorityConfig {
 }
 
 export interface PMSettings {
+  /** Where new projects are created. Projects are discovered vault-wide, wherever they live. */
   projectsFolder: string
+  /** Folders discovery skips, for templates and archives holding pm-project notes. */
+  excludedFolders: string[]
   defaultView: ViewMode
   ganttGranularity: GanttGranularity
   ganttWeekLabel: GanttWeekLabel
@@ -168,9 +176,14 @@ export interface PMSettings {
   showTagColors: boolean
   saveTaskOnClose: boolean
   taskEditorSurface: 'modal' | 'tab'
+  /** Keyed by scope key, e.g. `project:Projects/Roadmap.md`. */
   projectFilters: Record<string, PerProjectFilter>
+  /** Saved views for a scope covering several projects, which has no file to keep them in. */
+  scopeViews: Record<string, SavedView[]>
   /** Collapsed task ids per project path. Lives here so a toggle doesn't rewrite task files. */
   collapsedTasks: Record<string, string[]>
+  /** Paths of projects whose sub-projects are collapsed in the project list. */
+  collapsedProjects: string[]
 }
 
 export const DEFAULT_STATUSES: StatusConfig[] = [
@@ -191,6 +204,7 @@ export const DEFAULT_PRIORITIES: PriorityConfig[] = [
 
 export const DEFAULT_SETTINGS: PMSettings = {
   projectsFolder: 'Projects',
+  excludedFolders: [],
   defaultView: 'table',
   ganttGranularity: 'week',
   ganttWeekLabel: 'weekNumber',
@@ -209,7 +223,9 @@ export const DEFAULT_SETTINGS: PMSettings = {
   saveTaskOnClose: true,
   taskEditorSurface: 'modal',
   projectFilters: {},
-  collapsedTasks: {}
+  scopeViews: {},
+  collapsedTasks: {},
+  collapsedProjects: []
 }
 
 export function makeId(): string {

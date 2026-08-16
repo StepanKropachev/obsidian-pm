@@ -1,7 +1,8 @@
 import { Notice } from 'obsidian'
 import { confirmDialog } from '../../ui/ModalFactory'
 import type PMPlugin from '../../main'
-import type { Project, FilterState } from '../../types'
+import type { FilterState, Project } from '../../types'
+import type { ProjectScope } from '../../store'
 import { safeAsync } from '../../utils'
 import type { SubView } from '../SubView'
 import { renderTable, refreshTableBody, handleTableKeyDown, ROW_HEIGHT_ESTIMATE } from './TableRenderer'
@@ -23,7 +24,7 @@ export class TableView implements SubView {
 
   constructor(
     private container: HTMLElement,
-    private project: Project,
+    private scope: ProjectScope,
     private plugin: PMPlugin,
     private onRefresh: () => Promise<void>,
     filter: FilterState,
@@ -110,64 +111,30 @@ export class TableView implements SubView {
     const ids = [...this.state.selectedTaskIds]
     if (!ids.length) return
 
+    // A selection can span projects, and every mutator takes one. Each project's share
+    // of the selection goes in its own call, so each still saves once.
+    const groups = this.scope.groupByProject(ids)
     try {
+      if (action.type === 'delete') {
+        if (!(await confirmDialog(this.plugin.app, `Delete ${taskCount(ids.length)}? This cannot be undone.`))) {
+          return
+        }
+      }
+      for (const { project, taskIds } of groups) {
+        await this.applyBulkAction(action, project, taskIds)
+      }
       switch (action.type) {
-        case 'set-status':
-          await this.plugin.store.updateTasks(this.project, ids, { status: action.status })
-          break
-        case 'set-priority':
-          await this.plugin.store.updateTasks(this.project, ids, { priority: action.priority })
-          break
-        case 'set-assignee':
-          if (action.assignee === '') {
-            await this.plugin.store.updateTasks(this.project, ids, { assignees: [] })
-          } else {
-            await this.bulkAddToArray(ids, 'assignees', action.assignee)
-          }
-          break
-        case 'set-tag':
-          if (action.tag === '') {
-            await this.plugin.store.updateTasks(this.project, ids, { tags: [] })
-          } else {
-            await this.bulkAddToArray(ids, 'tags', action.tag)
-          }
-          break
-        case 'set-due-date':
-          await this.plugin.store.updateTasks(this.project, ids, { due: action.due })
-          if (this.plugin.store.configFor(this.project).autoSchedule) {
-            for (const id of ids) {
-              await this.plugin.store.scheduleAfterChange(this.project, id)
-            }
-          }
-          break
-        case 'set-progress':
-          await this.plugin.store.updateTasks(this.project, ids, { progress: action.progress })
-          break
         case 'set-parent':
-          await this.plugin.store.moveTasks(this.project, ids, action.parentId)
           new Notice(`Moved ${taskCount(ids.length)} under new parent`)
           break
         case 'remove-parent':
-          await this.plugin.store.moveTasks(this.project, ids, null)
           new Notice(`Moved ${taskCount(ids.length)} to top level`)
           break
         case 'archive':
-          for (const id of ids) {
-            await this.plugin.store.archiveTask(this.project, id)
-          }
           new Notice(`Archived ${taskCount(ids.length)}`)
           break
         case 'unarchive':
-          for (const id of ids) {
-            await this.plugin.store.unarchiveTask(this.project, id)
-          }
           new Notice(`Unarchived ${taskCount(ids.length)}`)
-          break
-        case 'delete':
-          if (!(await confirmDialog(this.plugin.app, `Delete ${taskCount(ids.length)}? This cannot be undone.`))) {
-            return
-          }
-          await this.plugin.store.deleteTasks(this.project, ids)
           break
       }
       this.state.selectedTaskIds.clear()
@@ -179,8 +146,68 @@ export class TableView implements SubView {
     }
   }
 
-  private async bulkAddToArray(ids: string[], field: 'assignees' | 'tags', value: string): Promise<void> {
-    await this.plugin.store.updateTasks(this.project, ids, (task) =>
+  private async applyBulkAction(action: BulkAction, project: Project, ids: string[]): Promise<void> {
+    switch (action.type) {
+      case 'set-status':
+        await this.plugin.store.updateTasks(project, ids, { status: action.status })
+        break
+      case 'set-priority':
+        await this.plugin.store.updateTasks(project, ids, { priority: action.priority })
+        break
+      case 'set-assignee':
+        if (action.assignee === '') {
+          await this.plugin.store.updateTasks(project, ids, { assignees: [] })
+        } else {
+          await this.bulkAddToArray(project, ids, 'assignees', action.assignee)
+        }
+        break
+      case 'set-tag':
+        if (action.tag === '') {
+          await this.plugin.store.updateTasks(project, ids, { tags: [] })
+        } else {
+          await this.bulkAddToArray(project, ids, 'tags', action.tag)
+        }
+        break
+      case 'set-due-date':
+        await this.plugin.store.updateTasks(project, ids, { due: action.due })
+        if (this.plugin.store.configFor(project).autoSchedule) {
+          for (const id of ids) {
+            await this.plugin.store.scheduleAfterChange(project, id)
+          }
+        }
+        break
+      case 'set-progress':
+        await this.plugin.store.updateTasks(project, ids, { progress: action.progress })
+        break
+      case 'set-parent':
+        await this.plugin.store.moveTasks(project, ids, action.parentId)
+        break
+      case 'remove-parent':
+        await this.plugin.store.moveTasks(project, ids, null)
+        break
+      case 'archive':
+        for (const id of ids) {
+          await this.plugin.store.archiveTask(project, id)
+        }
+        break
+      case 'unarchive':
+        for (const id of ids) {
+          await this.plugin.store.unarchiveTask(project, id)
+        }
+        break
+      case 'delete':
+        await this.plugin.store.deleteTasks(project, ids)
+        break
+    }
+  }
+
+  private async bulkAddToArray(
+    project: Project,
+    ids: string[],
+    field: 'assignees' | 'tags',
+    value: string
+  ): Promise<void> {
+    await this.plugin.store.updateTasks(project, ids, (task) =>
       task[field].includes(value) ? null : { [field]: [...task[field], value] }
     )
   }
@@ -191,10 +218,10 @@ export class TableView implements SubView {
   }
 
   private makeTableContext() {
-    const config = this.plugin.store.configFor(this.project)
+    const config = this.scope.config
     return {
       container: this.container,
-      project: this.project,
+      scope: this.scope,
       plugin: this.plugin,
       statuses: config.statuses,
       priorities: config.priorities,

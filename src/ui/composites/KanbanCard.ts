@@ -12,6 +12,9 @@ export interface KanbanCardProps {
   priorityColor?: string
   descriptionPreview?: string
   parentTitle?: string
+  /** Set when the board covers more than one project, so a card says which it is from. */
+  projectTitle?: string
+  projectColor?: string
   loggedHours: number
   overdue: boolean
   showTagColors: boolean
@@ -87,6 +90,14 @@ export class KanbanCard {
     }
 
     const footer = body.createDiv('pm-kanban-card-footer')
+    if (props.projectTitle) {
+      new Chip(footer)
+        .setLabel(props.projectTitle)
+        .setVariant('outline')
+        .setSize('sm')
+        .setDot(true)
+        .setColor(props.projectColor ?? 'var(--text-muted)')
+    }
     new AvatarStack(footer).setNames(task.assignees).setMax(3).setSize('sm')
 
     if (task.due) {

@@ -22,20 +22,21 @@ export function addDays(date: string, n: number): string {
   return Temporal.PlainDate.from(date).add({ days: n }).toString()
 }
 
-/**
- * Would making `from` depend on `to` close a cycle? "from depends on to" is the edge
- * to -> from, so yes exactly when `from` can already reach `to`.
- */
-export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): boolean {
-  const flat = flattenTasks(tasks).map((ft) => ft.task)
+/** Predecessor id -> ids of the tasks waiting on it. */
+export function dependentsFromTasks(tasks: Task[]): Map<string, string[]> {
   const dependentsOf = new Map<string, string[]>()
-  for (const t of flat) {
-    for (const depId of t.dependencies) {
-      const list = dependentsOf.get(depId) ?? []
-      list.push(t.id)
-      dependentsOf.set(depId, list)
+  for (const ft of flattenTasks(tasks)) {
+    for (const depId of ft.task.dependencies) {
+      const list = dependentsOf.get(depId)
+      if (list) list.push(ft.task.id)
+      else dependentsOf.set(depId, [ft.task.id])
     }
   }
+  return dependentsOf
+}
+
+/** Can `fromId` reach `toId` by following dependents? */
+export function reaches(dependentsOf: Map<string, string[]>, fromId: string, toId: string): boolean {
   const visited = new Set<string>()
   const queue = [fromId]
   while (queue.length > 0) {
@@ -52,6 +53,14 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
 }
 
 /**
+ * Would making `from` depend on `to` close a cycle? "from depends on to" is the edge
+ * to -> from, so yes exactly when `from` can already reach `to`.
+ */
+export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): boolean {
+  return reaches(dependentsFromTasks(tasks), fromId, toId)
+}
+
+/**
  * Date patches derived from the dependency graph. `changedTaskId` scopes the pass to
  * that task's downstream dependents. Terminal-status tasks never move; their dates are
  * a record of what happened.
@@ -64,9 +73,12 @@ export function computeSchedule(
   tasks: Task[],
   changedTaskId?: string,
   statuses: StatusConfig[] = [],
-  pullForward = false
+  pullForward = false,
+  /** Predecessors in other projects. They constrain dates here but are never moved. */
+  externals: Task[] = []
 ): ScheduleResult {
-  const flat = flattenTasks(tasks).map((ft) => ft.task)
+  const externalIds = new Set(externals.map((t) => t.id))
+  const flat = [...flattenTasks(tasks).map((ft) => ft.task), ...externals]
   const taskById = new Map<string, Task>()
   const dependentsOf = new Map<string, string[]>()
   const predecessorsOf = new Map<string, string[]>()
@@ -156,6 +168,7 @@ export function computeSchedule(
     const task = taskById.get(id)
     if (!task) continue
 
+    if (externalIds.has(id)) continue
     if (isTerminalStatus(task.status, statuses)) continue
 
     const deps = predecessorsOf.get(id) ?? []

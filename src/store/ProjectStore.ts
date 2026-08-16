@@ -7,6 +7,7 @@ import { isTerminalStatus } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { resolveProjectConfig } from './ProjectConfig'
 import { computeSchedule } from './Scheduler'
+import type { VaultIndex } from './VaultIndex'
 import {
   findParentId,
   findTaskById,
@@ -32,7 +33,7 @@ import {
   taskFilePath,
   TASK_SLUG_MAX_LENGTH
 } from './YamlSerializer'
-import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
+import { ensureFolder, moveProjectTaskFolder, moveTaskAttachmentFolder, resolveProjectLink } from './vaultFs'
 import type { ImportNoteOptions, TaskSource } from './TaskSource'
 
 /** 'fm' writes via processFrontMatter; 'full' rewrites the body too, via vault.process. */
@@ -113,7 +114,9 @@ export class ProjectStore implements TaskSource {
 
   constructor(
     private app: App,
-    private getSettings: () => PMSettings = () => DEFAULT_SETTINGS
+    private getSettings: () => PMSettings = () => DEFAULT_SETTINGS,
+    /** Absent in tests and before the layout is ready; only cross-project lookups need it. */
+    private index?: VaultIndex
   ) {}
 
   configFor(project: Project): ResolvedProjectConfig {
@@ -189,6 +192,7 @@ export class ProjectStore implements TaskSource {
     plugin.registerEvent(this.app.vault.on('delete', onChange))
     plugin.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
+        if (file instanceof TFile) void this.followProjectRename(oldPath, file.path)
         this.syncPath(file.path)
         this.syncPath(oldPath)
       })
@@ -197,6 +201,15 @@ export class ProjectStore implements TaskSource {
       for (const timer of this.reloadTimers.values()) window.clearTimeout(timer)
       this.reloadTimers.clear()
     })
+  }
+
+  /** A renamed project note takes its task folder with it, so its tasks stay attached. */
+  private async followProjectRename(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await moveProjectTaskFolder(this.app, oldPath, newPath)
+    } catch (e) {
+      console.error(`[PM] Failed to move the task folder for "${newPath}":`, e)
+    }
   }
 
   /** An external write landed: reload the live project so every holder sees it. */
@@ -272,14 +285,11 @@ export class ProjectStore implements TaskSource {
     return project.filePath.replace(/\.md$/, '_tasks')
   }
 
-  async loadAllProjects(folder: string): Promise<Project[]> {
-    await this.ensureFolder(folder)
-    const folderObj = this.app.vault.getAbstractFileByPath(folder)
+  async loadProjects(paths: string[]): Promise<Project[]> {
     const files: TFile[] = []
-    if (folderObj instanceof TFolder) {
-      for (const child of folderObj.children) {
-        if (child instanceof TFile && child.extension === 'md') files.push(child)
-      }
+    for (const path of paths) {
+      const file = this.app.vault.getAbstractFileByPath(normalizePath(path))
+      if (file instanceof TFile) files.push(file)
     }
     const loaded = await Promise.all(files.map((f) => this.loadProject(f)))
     const projects = loaded.filter((p): p is Project => p !== null)
@@ -322,6 +332,7 @@ export class ProjectStore implements TaskSource {
       const hasEmbeddedTasks = Array.isArray(frontmatter.tasks) && frontmatter.tasks.length > 0
 
       const project = hydrateProjectFromFrontmatter(frontmatter, body, file.path, file.basename)
+      project.parentPath = resolveProjectLink(this.app, frontmatter.parent, file.path)
       if (bodyRead) this.hydratedBodies.add(project)
 
       if (hasEmbeddedTasks) {
@@ -822,6 +833,57 @@ export class ProjectStore implements TaskSource {
     }
   }
 
+  /**
+   * Hand a task and its subtasks to another project: the files move into that project's
+   * folder and the task ids stay put, so dependencies pointing at it keep resolving.
+   */
+  async moveTaskToProject(
+    from: Project,
+    to: Project,
+    taskId: string,
+    newParentId: string | null = null
+  ): Promise<void> {
+    if (from.filePath === to.filePath) return
+    const task = findTaskById(from, taskId)
+    if (!task) return
+
+    const oldParentId = findParentId(from, taskId)
+    deleteTaskFromTree(from.tasks, taskId)
+    indexRemoveSubtree(from, task)
+    if (oldParentId) this.markDirty(from, [oldParentId], 'full')
+
+    const targetFolder = this.projectTaskFolder(to)
+    await this.ensureFolder(targetFolder)
+    for (const moved of [task, ...flattenTasks(task.subtasks).map((ft) => ft.task)]) {
+      // The file lands in the target folder under the same name; dropping filePath here
+      // would lose the body of a task whose description was never read.
+      if (moved.filePath) {
+        const fileName = moved.filePath.slice(moved.filePath.lastIndexOf('/') + 1)
+        const dest = this.uniqueChildPath(
+          moved.archived ? normalizePath(targetFolder + '/Archive') : targetFolder,
+          fileName
+        )
+        const file = this.app.vault.getAbstractFileByPath(moved.filePath)
+        if (file instanceof TFile) {
+          if (moved.archived) await this.ensureFolder(normalizePath(targetFolder + '/Archive'))
+          this.markSelfWrite(moved.filePath)
+          this.markSelfWrite(dest)
+          await this.app.fileManager.renameFile(file, dest)
+          await moveTaskAttachmentFolder(this.app, moved.filePath, dest)
+          moved.filePath = dest
+        }
+      }
+    }
+
+    addTaskToTree(to.tasks, task, newParentId)
+    indexAddSubtree(to, task, newParentId)
+    this.markSubtreeDirty(to, task.id, 'full')
+    if (newParentId) this.markDirty(to, [newParentId], 'full')
+
+    await this.saveProject(from)
+    await this.saveProject(to)
+  }
+
   async moveTask(project: Project, taskId: string, newParentId: string | null): Promise<void> {
     const task = findTaskById(project, taskId)
     if (!task) return
@@ -1088,10 +1150,46 @@ export class ProjectStore implements TaskSource {
    * Apply dependency-based scheduling and save, returning the number of tasks
    * adjusted. A no-op when auto-scheduling is off, so callers needn't check.
    */
+  /**
+   * Predecessors this project's tasks depend on that live in other projects, as read-only
+   * stand-ins the scheduler can date against.
+   */
+  private externalPredecessors(project: Project): Task[] {
+    if (!this.index) return []
+    const externals: Task[] = []
+    const seen = new Set<string>()
+    for (const { task } of flattenTasks(project.tasks)) {
+      for (const depId of task.dependencies) {
+        if (project.taskIndex.has(depId) || seen.has(depId)) continue
+        seen.add(depId)
+        const ref = this.index.task(depId)
+        if (!ref) continue
+        externals.push(
+          makeTask({
+            id: ref.id,
+            title: ref.title,
+            status: ref.status,
+            start: ref.start,
+            due: ref.due,
+            completed: ref.completed,
+            archived: ref.archived
+          })
+        )
+      }
+    }
+    return externals
+  }
+
   async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
     const config = this.configFor(project)
     if (!config.autoSchedule) return 0
-    const { patches } = computeSchedule(project.tasks, changedTaskId, config.statuses, config.pullForwardOnEarlyFinish)
+    const { patches } = computeSchedule(
+      project.tasks,
+      changedTaskId,
+      config.statuses,
+      config.pullForwardOnEarlyFinish,
+      this.externalPredecessors(project)
+    )
     if (patches.length === 0) return 0
 
     for (const p of patches) {

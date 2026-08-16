@@ -1,17 +1,14 @@
-import { Notice } from 'obsidian'
+import { Notice, TFile } from 'obsidian'
 import type PMPlugin from './main'
 import { parseFrontmatter, isOldFormat } from './store/YamlParser'
 
 /** Rewrites projects whose tasks are embedded in frontmatter as one file per task. */
 export async function migrateProjects(plugin: PMPlugin): Promise<void> {
-  const folder = plugin.settings.projectsFolder
-  const files = plugin.app.vault
-    .getMarkdownFiles()
-    .filter((f) => f.path.startsWith(folder + '/') && f.path.split('/').length === 2)
-
   let migrated = 0
 
-  for (const file of files) {
+  for (const path of plugin.index.projectPaths()) {
+    const file = plugin.app.vault.getAbstractFileByPath(path)
+    if (!(file instanceof TFile)) continue
     try {
       const content = await plugin.app.vault.read(file)
       const { frontmatter } = parseFrontmatter(content)

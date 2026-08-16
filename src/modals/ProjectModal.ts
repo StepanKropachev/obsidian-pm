@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal } from 'obsidian'
+import { App, ButtonComponent, Modal, normalizePath } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ProjectConfig, type ProjectPatch, type CustomFieldDef, makeId, makeProject } from '../types'
 import { safeAsync } from '../utils'
@@ -28,6 +28,8 @@ interface ProjectDraft {
   description: string
   color: string
   icon: string
+  /** Empty means no parent; the select has no other way to say it. */
+  parentPath: string
   customFields: CustomFieldDef[]
   teamMembers: string[]
   config: ProjectConfig | undefined
@@ -35,7 +37,16 @@ interface ProjectDraft {
 
 function draftOf(project: Project): ProjectDraft {
   const { title, description, color, icon, customFields, teamMembers, config } = project
-  const draft = { title, description, color, icon, customFields, teamMembers, config }
+  const draft = {
+    title,
+    description,
+    color,
+    icon,
+    parentPath: project.parentPath ?? '',
+    customFields,
+    teamMembers,
+    config
+  }
   return JSON.parse(JSON.stringify(draft)) as ProjectDraft
 }
 
@@ -144,6 +155,8 @@ export class ProjectModal extends Modal {
       this.draft.color = customColor.value
       colorPalette.querySelectorAll('.pm-color-swatch').forEach((s) => s.removeClass('pm-color-swatch--selected'))
     })
+
+    this.renderParentPicker(el)
 
     const descSection = el.createDiv('pm-project-modal-section')
     descSection.createEl('label', { text: 'Description', cls: 'pm-label' })
@@ -319,7 +332,10 @@ export class ProjectModal extends Modal {
 
           const folder = this.plugin.settings.projectsFolder
           if (!this.existingProject) {
-            const project = makeProject(title, `${folder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`)
+            // An empty folder is the vault root, where the path would otherwise keep a
+            // leading slash that resolves to nothing.
+            const path = normalizePath(`${folder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`)
+            const project = makeProject(title, path)
             Object.assign(project, this.draft)
             await this.plugin.store.ensureFolder(folder)
             await this.plugin.store.saveProject(project)
@@ -331,6 +347,29 @@ export class ProjectModal extends Modal {
           this.close()
         })
       )
+  }
+
+  /** Own descendants are left out, so the picker can't build a cycle. */
+  private renderParentPicker(el: HTMLElement): void {
+    const section = el.createDiv('pm-project-modal-section')
+    section.createEl('label', { text: 'Parent project', cls: 'pm-label' })
+    section.createDiv({
+      text: 'Nest this project under another one. It keeps its own tasks either way.',
+      cls: 'pm-modal-hint'
+    })
+
+    const own = this.existingProject?.filePath
+    const excluded = new Set(own ? [own, ...this.plugin.index.descendantRefs(own).map((ref) => ref.path)] : [])
+    const select = section.createEl('select', { cls: 'pm-input' })
+    select.createEl('option', { text: 'None', value: '' })
+    for (const ref of this.plugin.index.projectRefs()) {
+      if (excluded.has(ref.path)) continue
+      select.createEl('option', { text: ref.title, value: ref.path })
+    }
+    select.value = this.draft.parentPath
+    select.addEventListener('change', () => {
+      this.draft.parentPath = select.value
+    })
   }
 
   /** Set or clear one override; the config object is dropped entirely when its last field clears. */

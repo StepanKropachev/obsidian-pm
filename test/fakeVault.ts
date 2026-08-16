@@ -131,6 +131,8 @@ export class FakeVault {
         this.files.set(np, e)
         parent.children.push(e.file)
       }
+      // Obsidian reports the renamed folder and nothing about the notes inside it.
+      this.emit('rename', file, from)
       return
     }
     const entry = this.files.get(from)
@@ -160,6 +162,15 @@ export class FakeVault {
     this.emit('delete', entry.file)
   }
 
+  getMarkdownFiles(): TFile[] {
+    return [...this.files.values()].map((e) => e.file).filter((f) => f.extension === 'md')
+  }
+
+  /** Obsidian's metadata cache is read synchronously; the fake one needs the same. */
+  contentAt(path: string): string | null {
+    return this.files.get(normalizePath(path))?.content ?? null
+  }
+
   resetCounts(): void {
     this.modifyCount.clear()
     this.createCount.clear()
@@ -181,7 +192,61 @@ export class FakeVault {
   }
 }
 
-export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
+type MetadataHandler = (file: TFile, oldPath?: string) => void
+
+/**
+ * Parses frontmatter straight from the vault's current content, and reports changes the
+ * way Obsidian does: 'changed' on create, edit and rename, 'deleted' on trash.
+ */
+export class FakeMetadataCache {
+  private handlers = new Map<string, Set<MetadataHandler>>()
+
+  constructor(private vault: FakeVault) {
+    vault.on('create', (file) => {
+      if (file instanceof TFile) this.emit('changed', file)
+    })
+    vault.on('modify', (file) => {
+      if (file instanceof TFile) this.emit('changed', file)
+    })
+    vault.on('rename', (file, oldPath) => {
+      if (file instanceof TFile) this.emit('changed', file, oldPath)
+    })
+    vault.on('delete', (file) => {
+      if (file instanceof TFile) this.emit('deleted', file)
+    })
+  }
+
+  getFileCache(file: TFile): { frontmatter?: Record<string, unknown> } | null {
+    const content = this.vault.contentAt(file.path)
+    if (content === null) return null
+    const { frontmatter } = splitFrontmatter(content)
+    return frontmatter ? { frontmatter } : {}
+  }
+
+  getFirstLinkpathDest(linkpath: string, _sourcePath: string): TFile | null {
+    const direct = this.vault.getAbstractFileByPath(
+      linkpath.endsWith('.md') ? linkpath : `${linkpath}.md`
+    )
+    if (direct instanceof TFile) return direct
+    return this.vault.getMarkdownFiles().find((f) => f.basename === linkpath) ?? null
+  }
+
+  on(name: string, handler: MetadataHandler): MetadataHandler {
+    let set = this.handlers.get(name)
+    if (!set) {
+      set = new Set()
+      this.handlers.set(name, set)
+    }
+    set.add(handler)
+    return handler
+  }
+
+  private emit(name: string, file: TFile, oldPath?: string): void {
+    for (const handler of this.handlers.get(name) ?? []) handler(file, oldPath)
+  }
+}
+
+export function makeFakeApp(opts: { liveMetadataCache?: boolean } = {}): { app: FakeAppLike; vault: FakeVault } {
   const vault = new FakeVault()
   const app: FakeAppLike = {
     vault,
@@ -201,10 +266,15 @@ export function makeFakeApp(): { app: FakeAppLike; vault: FakeVault } {
       }
     },
     // Minimal metadataCache: always misses, forcing the store's fallback read+parse path.
-    // Tests that want to exercise the cache hit can override this per-test.
-    metadataCache: {
-      getFileCache: () => null
-    }
+    // Tests that want to exercise the cache hit pass liveMetadataCache, or override
+    // getFileCache per-test.
+    metadataCache: opts.liveMetadataCache
+      ? new FakeMetadataCache(vault)
+      : {
+          getFileCache: () => null,
+          getFirstLinkpathDest: () => null,
+          on: () => undefined
+        }
   }
   return { app, vault }
 }
@@ -229,7 +299,11 @@ export interface FakeAppLike {
     renameFile: (file: TAbstractFile, newPath: string) => Promise<void>
     processFrontMatter: (file: TFile, fn: (fm: Record<string, unknown>) => void) => Promise<void>
   }
-  metadataCache: { getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null }
+  metadataCache: {
+    getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null
+    getFirstLinkpathDest: (linkpath: string, sourcePath: string) => TFile | null
+    on: (name: string, handler: MetadataHandler) => unknown
+  }
 }
 
 function makeFile(path: string, parent: TFolder): TFile {

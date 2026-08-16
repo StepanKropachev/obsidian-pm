@@ -1,7 +1,7 @@
 import { ItemView, TFile, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task } from '../types'
-import { flattenTasks, projectPathForTaskPath } from '../store'
+import { flattenTasks } from '../store'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { truncateTitle } from '../utils'
 import { TaskEditor } from '../modals/TaskEditor'
@@ -68,7 +68,7 @@ export class TaskView extends ItemView {
     this.contentEl.empty()
 
     const { filePath, projectPath, parentId, defaults } = this.state
-    const resolvedProjectPath = projectPath ?? (filePath ? projectPathForTaskPath(filePath) : null)
+    const resolvedProjectPath = projectPath ?? (filePath ? this.plugin.index.projectPathForTask(filePath) : null)
     const projectFile = resolvedProjectPath ? this.app.vault.getAbstractFileByPath(resolvedProjectPath) : null
     if (!(projectFile instanceof TFile)) {
       this.showMissing('This note does not belong to a project.')

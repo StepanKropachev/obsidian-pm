@@ -1,4 +1,6 @@
 import { ProgressBar } from '../primitives/ProgressBar'
+import { CollapseToggle } from '../primitives/CollapseToggle'
+import { Chip } from '../primitives/Chip'
 
 export interface ProjectCardProps {
   title: string
@@ -6,6 +8,10 @@ export interface ProjectCardProps {
   color: string
   tasksDone: number
   tasksTotal: number
+  /** Sub-projects below this one. Above zero, the counts above cover the whole subtree. */
+  childCount: number
+  collapsed: boolean
+  onToggleCollapsed: () => void
   onClick: () => void
   onContextMenu: (e: MouseEvent) => void
 }
@@ -21,7 +27,17 @@ export class ProjectCard {
     colorBar.setCssStyles({ background: props.color })
 
     const body = card.createDiv('pm-project-card-body')
-    body.createDiv({ text: props.icon, cls: 'pm-project-card-icon' })
+    const head = body.createDiv('pm-project-card-head')
+    if (props.childCount > 0) {
+      const toggle = new CollapseToggle(head, {
+        collapsed: props.collapsed,
+        onToggle: () => props.onToggleCollapsed(),
+        subject: 'sub-projects'
+      })
+      toggle.el.addEventListener('click', (e) => e.stopPropagation())
+    }
+    head.createDiv({ text: props.icon, cls: 'pm-project-card-icon' })
+
     body.createEl('h3', { text: props.title, cls: 'pm-project-card-title' })
 
     const meta = body.createDiv('pm-project-card-meta')
@@ -29,6 +45,12 @@ export class ProjectCard {
       text: `${props.tasksDone}/${props.tasksTotal} tasks`,
       cls: 'pm-project-card-tasks'
     })
+    if (props.childCount > 0) {
+      new Chip(meta)
+        .setLabel(`${props.childCount} sub-project${props.childCount === 1 ? '' : 's'}`)
+        .setVariant('plain')
+        .setSize('sm')
+    }
 
     const percent = props.tasksTotal ? (props.tasksDone / props.tasksTotal) * 100 : 0
     new ProgressBar(body).setSize('sm').setValue(percent).setColor(props.color)

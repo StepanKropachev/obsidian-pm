@@ -9,7 +9,6 @@ export class DashboardView extends ItemView {
   private plugin: PMPlugin
   private toolbarEl!: HTMLElement
   private bodyEl!: HTMLElement
-  private renderToken = 0
   private reloadDebounceTimer: number | null = null
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
@@ -49,29 +48,16 @@ export class DashboardView extends ItemView {
   }
 
   private registerVaultListeners(): void {
-    const isRelevant = (path: string) => {
-      const folder = this.plugin.settings.projectsFolder
-      return path === folder || path.startsWith(`${folder}/`)
-    }
-    const scheduleRender = (path: string) => {
-      if (!isRelevant(path)) return
+    const scheduleRender = () => {
       if (this.reloadDebounceTimer !== null) window.clearTimeout(this.reloadDebounceTimer)
       this.reloadDebounceTimer = window.setTimeout(() => {
         this.reloadDebounceTimer = null
         this.render()
       }, 300)
     }
-    // The store reports changes within a project; only the vault reports projects
-    // appearing and disappearing, which is what changes this list.
-    this.register(this.plugin.store.onProjectChanged(scheduleRender))
-    this.registerEvent(this.app.vault.on('create', (file) => scheduleRender(file.path)))
-    this.registerEvent(this.app.vault.on('delete', (file) => scheduleRender(file.path)))
-    this.registerEvent(
-      this.app.vault.on('rename', (file, oldPath) => {
-        scheduleRender(file.path)
-        scheduleRender(oldPath)
-      })
-    )
+    // The index reports projects appearing, disappearing and changing their counts,
+    // wherever in the vault they live.
+    this.register(this.plugin.index.onChange(scheduleRender))
   }
 
   render(): void {
@@ -79,16 +65,14 @@ export class DashboardView extends ItemView {
     renderProjectListToolbar(ctx)
     this.bodyEl.empty()
     this.bodyEl.addClass('pm-project-list-container')
-    void renderProjectListContent(ctx)
+    renderProjectListContent(ctx)
   }
 
   private makeCtx(): ProjectListContext {
-    const token = ++this.renderToken
     return {
       plugin: this.plugin,
       toolbarEl: this.toolbarEl,
       contentEl: this.bodyEl,
-      isStale: () => token !== this.renderToken,
       openProjectFile: (file: TFile) => this.plugin.router.openProject(file)
     }
   }

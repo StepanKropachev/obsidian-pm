@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian'
+import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian'
 import type { SettingDefinitionItem, SettingDefinitionPage } from 'obsidian'
 import type PMPlugin from './main'
 import { type PMSettings, DEFAULT_SETTINGS, makeId } from './types'
@@ -20,11 +20,14 @@ function plural(count: number, singular: string, plural: string): string {
 
 export class PMSettingTab extends PluginSettingTab {
   plugin: PMPlugin
+  /** A folder name is typed one character at a time; each sweep costs the whole vault. */
+  private readonly rebuildIndex: () => void
 
   constructor(app: App, plugin: PMPlugin) {
     super(app, plugin)
     this.plugin = plugin
     this.icon = 'chart-gantt'
+    this.rebuildIndex = debounce(() => this.plugin.index.build(), 500)
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
@@ -34,16 +37,17 @@ export class PMSettingTab extends PluginSettingTab {
         heading: 'General',
         items: [
           {
-            name: 'Projects folder',
-            desc: 'Vault folder where project files are stored.',
+            name: 'New project folder',
+            desc: 'Leave it empty to create them in the vault root.',
+            aliases: ['projects folder', 'location'],
             control: {
               type: 'folder',
               key: 'projectsFolder',
               defaultValue: 'Projects',
-              placeholder: 'Projects',
-              validate: (value) => (value.trim() ? undefined : 'Enter a folder name.')
+              placeholder: 'Vault root'
             }
           },
+          this.excludedFoldersPage(),
           {
             name: 'Default view',
             desc: 'View that opens when a project is opened.',
@@ -340,6 +344,53 @@ export class PMSettingTab extends PluginSettingTab {
     return total === 0 ? 'Up to date' : plural(total, 'change', 'changes')
   }
 
+  private excludedFoldersPage(): SettingDefinitionPage {
+    const folders = this.plugin.settings.excludedFolders
+    return {
+      type: 'page',
+      name: 'Excluded folders',
+      desc: 'Folders to skip when looking for projects and tasks, such as templates.',
+      displayValue: () => plural(this.plugin.settings.excludedFolders.length, 'folder', 'folders'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Excluded folders',
+          emptyState: 'No folders excluded.',
+          items: folders.map((folder, index) => ({
+            name: folder || 'Unnamed folder',
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              setting.addText((text) =>
+                text
+                  .setPlaceholder('Templates')
+                  .setValue(folder)
+                  .onChange((value) => {
+                    this.plugin.settings.excludedFolders[index] = value
+                    this.persist()
+                    this.rebuildIndex()
+                  })
+              )
+            }
+          })),
+          onDelete: (index) => {
+            folders.splice(index, 1)
+            this.persist()
+            this.plugin.index.build()
+            this.update()
+          },
+          addItem: {
+            name: 'Add folder',
+            action: () => {
+              folders.push('')
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
+    }
+  }
+
   private teamMembersPage(): SettingDefinitionPage {
     const members = this.plugin.settings.globalTeamMembers
     return {
@@ -430,8 +481,12 @@ export class PMSettingTab extends PluginSettingTab {
     const configs = field === 'status' ? this.plugin.settings.statuses : this.plugin.settings.priorities
     if (configs.length === 0) return
     const fallback = configs[0]
-    const folder = this.plugin.settings.projectsFolder
-    const projects = await this.plugin.store.loadAllProjects(folder)
+    // Only projects the index says still use the deleted value are worth loading.
+    const affected = this.plugin.index
+      .projectRefs()
+      .filter((ref) => this.plugin.index.taskRefs(ref.path).some((task) => task[field] === deletedId))
+      .map((ref) => ref.path)
+    const projects = await this.plugin.store.loadProjects(affected)
     let remapped = 0
     for (const project of projects) {
       // A project defining this status or priority itself is unaffected by a global delete.

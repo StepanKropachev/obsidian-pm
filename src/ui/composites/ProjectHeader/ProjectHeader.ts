@@ -1,10 +1,12 @@
-import type { Project, FilterState, StatusConfig, PriorityConfig } from '../../../types'
+import type { Task, FilterState, SavedView, StatusConfig, PriorityConfig } from '../../../types'
 import { isFilterActive } from '../../../store/TaskFilter'
 import { PrimaryRow } from './PrimaryRow'
 import { FilterRow } from './FilterRow'
 
 export interface ProjectHeaderProps {
-  project: Project
+  /** Every task in scope, for the assignee and tag options. */
+  tasks: Task[]
+  savedViews: SavedView[]
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   filter: FilterState
@@ -51,7 +53,7 @@ export class ProjectHeader {
   private render(): void {
     this.el.empty()
     this.primaryRow = new PrimaryRow(this.el, {
-      project: this.props.project,
+      savedViews: this.props.savedViews,
       filter: this.props.filter,
       activeSavedViewId: this.props.activeSavedViewId,
       filterRowExpanded: this.filterRowExpanded,
@@ -84,7 +86,7 @@ export class ProjectHeader {
 
   private mountFilterRow(): void {
     this.filterRow = new FilterRow(this.el, {
-      project: this.props.project,
+      tasks: this.props.tasks,
       statuses: this.props.statuses,
       priorities: this.props.priorities,
       filter: this.props.filter,

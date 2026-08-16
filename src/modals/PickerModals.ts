@@ -1,28 +1,30 @@
 import { SuggestModal, App } from 'obsidian'
-import type { Project, Task } from '../types'
+import type { Task } from '../types'
+import type { ProjectRef } from '../store'
 
 const NEW_TAG_PREFIX = '__new__:'
 
-export class ProjectPickerModal extends SuggestModal<Project> {
+/** Lists projects from the index, so picking one doesn't load every project in the vault. */
+export class ProjectPickerModal extends SuggestModal<ProjectRef> {
   constructor(
     app: App,
-    private projects: Project[],
-    private onChoose: (project: Project) => void
+    private projects: ProjectRef[],
+    private onChoose: (project: ProjectRef) => void
   ) {
     super(app)
     this.setPlaceholder('Pick a project…')
   }
 
-  getSuggestions(query: string): Project[] {
+  getSuggestions(query: string): ProjectRef[] {
     const q = query.toLowerCase()
     return this.projects.filter((p) => p.title.toLowerCase().includes(q))
   }
 
-  renderSuggestion(project: Project, el: HTMLElement): void {
+  renderSuggestion(project: ProjectRef, el: HTMLElement): void {
     el.createSpan({ text: `${project.icon} ${project.title}` })
   }
 
-  onChooseSuggestion(project: Project): void {
+  onChooseSuggestion(project: ProjectRef): void {
     this.onChoose(project)
   }
 }

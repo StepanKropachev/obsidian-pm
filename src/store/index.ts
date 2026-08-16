@@ -34,6 +34,10 @@ export {
   updateTaskInTree
 } from './TaskTreeOps'
 export type { FlatTask } from './TaskTreeOps'
+export { ProjectScope, resolveScopePaths, scopeKey } from './ProjectScope'
+export type { ScopeSpec } from './ProjectScope'
+export { VaultIndex } from './VaultIndex'
+export type { ProjectRef, TaskRef } from './VaultIndex'
 export { projectPathForTaskPath } from './vaultFs'
 export { hydrateTasks } from './YamlHydrator'
 export { appendYaml, isOldFormat, parseFrontmatter } from './YamlParser'
