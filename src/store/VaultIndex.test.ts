@@ -13,8 +13,9 @@ function projectNote(id: string, title: string, extra = ''): string {
   return `---\npm-project: true\nid: ${id}\ntitle: ${title}\n${extra}---\n\n# ${title}\n`
 }
 
-function taskNote(id: string, title: string, projectId: string, status = 'todo'): string {
-  return `---\npm-task: true\nid: ${id}\nprojectId: ${projectId}\ntitle: ${title}\nstatus: ${status}\n---\n\n`
+function taskNote(id: string, title: string, projectId: string, status = 'todo', due = ''): string {
+  const dueLine = due ? `due: ${due}\n` : ''
+  return `---\npm-task: true\nid: ${id}\nprojectId: ${projectId}\ntitle: ${title}\nstatus: ${status}\n${dueLine}---\n\n`
 }
 
 /** Collects the registrations a Plugin would clean up, so events can be driven in tests. */
@@ -179,6 +180,19 @@ describe('VaultIndex', () => {
       const root = expectDefined(index.projectRef('A.md'))
       expect(index.counts(root)).toEqual({ total: 1, done: 1 })
       expect(index.rollupCounts(root)).toEqual({ total: 3, done: 2 })
+    })
+
+    it('rolls overdue tasks and the last due date up through the subtree', async () => {
+      await vault.create('A.md', projectNote('p1', 'A'))
+      await vault.create('A_tasks/a.md', taskNote('t1', 'A1', 'p1', 'todo', '2020-01-05'))
+      await vault.create('B.md', projectNote('p2', 'B', 'parent: "[[A]]"\n'))
+      await vault.create('B_tasks/b.md', taskNote('t2', 'B1', 'p2', 'todo', '2020-02-01'))
+      await vault.create('B_tasks/c.md', taskNote('t3', 'B2', 'p2', 'done', '2020-03-01'))
+      index.build()
+
+      const root = expectDefined(index.projectRef('A.md'))
+      expect(index.dueSummary(root)).toEqual({ overdue: 1, latestDue: '2020-01-05' })
+      expect(index.rollupDueSummary(root)).toEqual({ overdue: 2, latestDue: '2020-03-01' })
     })
 
     it('follows a parent link added after the build', async () => {

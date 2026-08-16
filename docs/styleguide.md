@@ -2,7 +2,7 @@
 
 Read this before building or changing any UI. It's the component API catalog: what exists and what to reach for. The design language (color, typography, spacing, radii, shadows, voice) lives in `docs/design-system.md`. The layer rules (primitives / composites / orchestrators and what each may import) live in CLAUDE.md under "UI layers".
 
-The static HTML previews under `docs/design-system/project/preview/` are design references only; they misrender CSS because Obsidian's core `app.css` is absent. For visual verification use the live gallery (see "Live gallery" below).
+Verify appearance in the live gallery (see "Live gallery" below), never in an offline HTML page: without Obsidian's core `app.css` the controls misrender.
 
 ## Decision tree
 
@@ -126,7 +126,7 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 
 - **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, renderSource, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip. It knows nothing about projects: `renderSource` is a slot the board fills, with `renderProjectChip`, when a card has to say where it is from.
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
-- **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, childCount, collapsed, onToggleCollapsed, onClick, onContextMenu. Composes ProgressBar, plus CollapseToggle and a plain Chip when `childCount` is above zero. With sub-projects the counts are the caller's rollup over the subtree; the project list nests the children in a `.pm-project-children` grid on the row below.
+- **ProjectRow** - `ProjectRow.ts`. Props: title, icon, color, depth, childCount, collapsed, tasksDone, tasksTotal, overdue, members, dueLabel, dueUrgency + onToggleCollapsed/onClick/onContextMenu/onActions. One `<tr>` of the project list, built on the same `pm-table` chrome as the task table: CollapseToggle when it has sub-projects, ProgressBar, a red overdue Chip, AvatarStack, renderDueChip, and a hover-revealed IconButton. Indents from `--depth`; with sub-projects the counts are the caller's rollup over the subtree.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
 - **addButton** - `addButton.ts`. `renderAddButton(parent, label, onClick)` -> ghost "+ label" button (`pm-prop-add`). The only way to render an add button.
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
@@ -177,7 +177,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
 
 ## Maintenance
 

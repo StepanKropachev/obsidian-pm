@@ -20,7 +20,7 @@ import { StatusCell } from '../../ui/composites/cells/StatusCell'
 import { TimeCell } from '../../ui/composites/cells/TimeCell'
 import { TitleCell } from '../../ui/composites/cells/TitleCell'
 import { KanbanCard } from '../../ui/composites/KanbanCard'
-import { ProjectCard } from '../../ui/composites/ProjectCard'
+import { ProjectRow } from '../../ui/composites/ProjectRow'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
 import { renderAddProperty, renderInputControl } from '../../ui/composites/properties'
@@ -89,6 +89,7 @@ export class StyleguideView extends ItemView {
     this.renderForm()
     this.group('Composites')
     this.renderDerivedChips()
+    this.renderProjectRows()
     this.renderCards()
     this.renderMetricStrip()
     this.renderMilestoneTimeline()
@@ -303,45 +304,76 @@ export class StyleguideView extends ItemView {
     renderProjectChip(projectRow, { title: 'Website relaunch', color: '#8b72be', onClick: noop })
   }
 
-  private renderCards(): void {
-    const sec = this.section('Cards', 'cards')
-    const projectRow = this.row(sec, 'ProjectCard: plain / with sub-projects / collapsed')
-    new ProjectCard(projectRow, {
+  private renderProjectRows(): void {
+    const sec = this.section('ProjectRow', 'project-row')
+    sec.createDiv({
+      cls: 'pm-sg-caption',
+      text: 'The project list: a parent with its rolled-up counts, an indented child, and an overdue one.'
+    })
+    const table = sec.createEl('table', { cls: 'pm-table pm-project-table' })
+    const head = table.createEl('thead').createEl('tr')
+    for (const column of ['', 'Project', 'Progress', 'Tasks', 'Members', 'Due', '']) {
+      head.createEl('th', { text: column })
+    }
+    const tbody = table.createEl('tbody')
+    new ProjectRow(tbody, {
+      title: 'Platform',
+      icon: '🚀',
+      color: '#7a9ec4',
+      depth: 0,
+      childCount: 2,
+      collapsed: false,
+      tasksDone: 12,
+      tasksTotal: 40,
+      overdue: 0,
+      members: PEOPLE,
+      dueLabel: 'Oct 30',
+      dueUrgency: 'normal',
+      onToggleCollapsed: noop,
+      onClick: noop,
+      onContextMenu: noop,
+      onActions: noop
+    })
+    new ProjectRow(tbody, {
       title: 'Website relaunch',
       icon: '📋',
       color: '#8b72be',
-      tasksDone: 4,
-      tasksTotal: 10,
+      depth: 1,
       childCount: 0,
       collapsed: false,
+      tasksDone: 4,
+      tasksTotal: 10,
+      overdue: 3,
+      members: [PEOPLE[0]],
+      dueLabel: 'Jun 20',
+      dueUrgency: 'overdue',
       onToggleCollapsed: noop,
       onClick: noop,
-      onContextMenu: noop
+      onContextMenu: noop,
+      onActions: noop
     })
-    new ProjectCard(projectRow, {
-      title: 'Platform',
-      icon: '🚀',
-      color: '#7a9ec4',
-      tasksDone: 12,
-      tasksTotal: 40,
-      childCount: 3,
-      collapsed: false,
-      onToggleCollapsed: noop,
-      onClick: noop,
-      onContextMenu: noop
-    })
-    new ProjectCard(projectRow, {
-      title: 'Platform',
-      icon: '🚀',
-      color: '#7a9ec4',
-      tasksDone: 12,
-      tasksTotal: 40,
+    new ProjectRow(tbody, {
+      title: 'Internal tools',
+      icon: '🛠',
+      color: '#767491',
+      depth: 0,
       childCount: 1,
       collapsed: true,
+      tasksDone: 31,
+      tasksTotal: 38,
+      overdue: 0,
+      members: [],
+      dueLabel: '',
+      dueUrgency: 'normal',
       onToggleCollapsed: noop,
       onClick: noop,
-      onContextMenu: noop
+      onContextMenu: noop,
+      onActions: noop
     })
+  }
+
+  private renderCards(): void {
+    const sec = this.section('Cards', 'cards')
     const kanbanRow = this.row(sec, 'KanbanCard: plain / overdue milestone with everything')
     new KanbanCard(kanbanRow, {
       task: makeTask({ title: 'Write the launch announcement' }),

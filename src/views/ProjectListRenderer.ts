@@ -2,21 +2,37 @@ import { TFile, Menu, ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project } from '../types'
 import type { ProjectRef } from '../store'
-import { safeAsync } from '../utils'
+import { formatDateShort, safeAsync } from '../utils'
+import { parsePlainDate, today } from '../dates'
 import { createProject } from './createProject'
 import { EmptyState } from '../ui/primitives/EmptyState'
-import { ProjectCard } from '../ui/composites/ProjectCard'
+import { ProjectRow } from '../ui/composites/ProjectRow'
+import type { DueUrgency } from '../ui/composites/dueChip'
+
+/** The title column absorbs the leftover width so the rest hug their content. */
+const COLUMNS: { label: string; cls?: string }[] = [
+  { label: '' },
+  { label: 'Project', cls: 'pm-project-th-title' },
+  { label: 'Progress' },
+  { label: 'Tasks' },
+  { label: 'Members' },
+  { label: 'Due' },
+  { label: '' }
+]
 
 export interface ProjectListContext {
   plugin: PMPlugin
   toolbarEl: HTMLElement
   contentEl: HTMLElement
-  openProjectFile: (file: TFile) => Promise<void>
+  openProject: (path: string) => Promise<void>
 }
 
 export function renderProjectListToolbar(ctx: ProjectListContext): void {
   ctx.toolbarEl.empty()
-  ctx.toolbarEl.createEl('h2', { text: 'Project manager', cls: 'pm-toolbar-title' })
+  const left = ctx.toolbarEl.createDiv('pm-toolbar-left')
+  left.createEl('h2', { text: 'Projects', cls: 'pm-toolbar-title' })
+  const line = countLine(ctx)
+  if (line) left.createSpan({ cls: 'pm-project-list-count', text: line })
 
   new ButtonComponent(ctx.toolbarEl)
     .setButtonText('+ new project')
@@ -28,7 +44,16 @@ export function renderProjectListToolbar(ctx: ProjectListContext): void {
     )
 }
 
-/** Draws from the index alone: a card needs a title, an icon and two counts, not a load. */
+function countLine(ctx: ProjectListContext): string {
+  const refs = ctx.plugin.index.projectRefs()
+  if (refs.length === 0) return ''
+  const behind = refs.filter((ref) => ctx.plugin.index.dueSummary(ref).overdue > 0).length
+  const bits = [refs.length === 1 ? '1 project' : `${refs.length} projects`]
+  if (behind) bits.push(`${behind} with tasks past due`)
+  return bits.join(' · ')
+}
+
+/** Draws from the index alone: a row needs a title, an icon and a few counts, not a load. */
 export function renderProjectListContent(ctx: ProjectListContext): void {
   const roots = ctx.plugin.index.rootRefs()
   ctx.contentEl.empty()
@@ -53,45 +78,55 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
     return
   }
 
-  renderProjectCards(ctx, ctx.contentEl.createDiv('pm-project-grid'), roots)
+  const wrapper = ctx.contentEl.createDiv('pm-table-wrapper')
+  const table = wrapper.createEl('table', { cls: 'pm-table pm-project-table' })
+  const headRow = table.createEl('thead').createEl('tr')
+  for (const column of COLUMNS) headRow.createEl('th', { text: column.label, cls: column.cls })
+  renderRows(ctx, table.createEl('tbody'), roots, 0)
 }
 
-/**
- * A project with sub-projects takes a row of its own, with the children indented directly
- * beneath it. Otherwise a parent at the end of a row and its children at the start of the
- * next one read as unrelated.
- */
-function renderProjectCards(ctx: ProjectListContext, grid: HTMLElement, refs: ProjectRef[]): void {
+/** Sub-projects follow their parent, indented, unless the parent is collapsed. */
+function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRef[], depth: number): void {
   const index = ctx.plugin.index
   for (const ref of refs) {
     const children = index.childRefs(ref.path)
     const collapsed = ctx.plugin.isProjectCollapsed(ref.path)
-    const host = children.length ? grid.createDiv('pm-project-branch') : grid
-    // A parent's own count says little about the program under it.
+    // A parent's own numbers say little about the program under it.
     const { total, done } = children.length ? index.rollupCounts(ref) : index.counts(ref)
-    new ProjectCard(host, {
+    const { overdue, latestDue } = children.length ? index.rollupDueSummary(ref) : index.dueSummary(ref)
+
+    new ProjectRow(tbody, {
       title: ref.title,
       icon: ref.icon,
       color: ref.color,
-      tasksDone: done,
-      tasksTotal: total,
+      depth,
       childCount: children.length,
       collapsed,
+      tasksDone: done,
+      tasksTotal: total,
+      overdue,
+      members: ref.teamMembers,
+      dueLabel: formatDateShort(latestDue),
+      dueUrgency: urgencyOf(latestDue, overdue > 0),
       onToggleCollapsed: safeAsync(async () => {
         await ctx.plugin.toggleProjectCollapsed(ref.path)
         renderProjectListContent(ctx)
       }),
-      onClick: safeAsync(async () => {
-        const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
-        if (file instanceof TFile) await ctx.openProjectFile(file)
-      }),
-      onContextMenu: (e) => openProjectContextMenu(ctx, ref, e)
+      onClick: safeAsync(() => ctx.openProject(ref.path)),
+      onContextMenu: (e) => openProjectContextMenu(ctx, ref, e),
+      onActions: (e) => openProjectContextMenu(ctx, ref, e)
     })
-    if (children.length && !collapsed) {
-      const nested = host.createDiv('pm-project-children')
-      renderProjectCards(ctx, nested.createDiv('pm-project-grid'), children)
-    }
+
+    if (children.length && !collapsed) renderRows(ctx, tbody, children, depth + 1)
   }
+}
+
+function urgencyOf(due: string, hasOverdue: boolean): DueUrgency {
+  const date = parsePlainDate(due)
+  if (!date) return 'normal'
+  const days = today().until(date, { largestUnit: 'day' }).days
+  if (days < 0) return hasOverdue ? 'overdue' : 'normal'
+  return days < 3 ? 'near' : 'normal'
 }
 
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {

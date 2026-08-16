@@ -1,6 +1,7 @@
 import type { App, Plugin, TAbstractFile } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
 import type { PMSettings, StatusConfig } from '../types'
+import { today } from '../dates'
 import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
 import { projectPathForTaskPath, resolveProjectLink } from './vaultFs'
@@ -11,6 +12,7 @@ export interface ProjectRef {
   title: string
   icon: string
   color: string
+  teamMembers: string[]
   /** Where its `parent` link points, before cycles are taken out. Use `parentOf`. */
   parentPath: string | undefined
   /** Status ids the project's own palette defines. Null inherits the global palette. */
@@ -184,6 +186,34 @@ export class VaultIndex {
     return out
   }
 
+  /**
+   * Tasks past due and the last date anything is due, for a project row. Archived tasks
+   * are left out: they are done with, whatever their date says.
+   */
+  dueSummary(ref: ProjectRef): { overdue: number; latestDue: string } {
+    const complete = this.completeStatuses(ref)
+    const now = today().toString()
+    let overdue = 0
+    let latestDue = ''
+    for (const task of this.taskRefs(ref.path)) {
+      if (!task.due || task.archived) continue
+      if (task.due > latestDue) latestDue = task.due
+      if (task.due < now && !complete.has(task.status)) overdue++
+    }
+    return { overdue, latestDue }
+  }
+
+  /** The same across a project and everything under it. */
+  rollupDueSummary(ref: ProjectRef): { overdue: number; latestDue: string } {
+    const totals = this.dueSummary(ref)
+    for (const descendant of this.descendantRefs(ref.path)) {
+      const summary = this.dueSummary(descendant)
+      totals.overdue += summary.overdue
+      if (summary.latestDue > totals.latestDue) totals.latestDue = summary.latestDue
+    }
+    return totals
+  }
+
   /** Counts for a project and everything under it, for a program or portfolio card. */
   rollupCounts(ref: ProjectRef): { total: number; done: number } {
     const totals = this.counts(ref)
@@ -305,6 +335,7 @@ export class VaultIndex {
       title: str(frontmatter.title, file.basename),
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
+      teamMembers: Array.isArray(frontmatter.teamMembers) ? (frontmatter.teamMembers as string[]) : [],
       parentPath: resolveProjectLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
       completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
