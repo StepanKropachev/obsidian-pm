@@ -124,6 +124,28 @@ describe('VaultIndex', () => {
     expect(index.counts(expectDefined(index.projectRef('Projects/Roadmap.md')))).toEqual({ total: 2, done: 1 })
   })
 
+  it('leaves archived tasks out of a project row', async () => {
+    await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))
+    await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1', 'todo', '2020-01-01'))
+    await vault.create('Projects/Roadmap_tasks/Archive/b.md', taskNote('t2', 'B', 'p1', 'todo', '2020-06-01'))
+    index.build()
+
+    const ref = expectDefined(index.projectRef('Projects/Roadmap.md'))
+    expect(index.counts(ref)).toEqual({ total: 1, done: 0 })
+    expect(index.dueSummary(ref)).toEqual({ overdue: 1, latestDue: '2020-01-01' })
+  })
+
+  it('counts a task once when a sync conflict leaves two notes with its id', async () => {
+    await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))
+    await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1', 'todo', '2020-01-01'))
+    await vault.create('Projects/Roadmap_tasks/a (conflict).md', taskNote('t1', 'A', 'p1', 'todo', '2020-01-01'))
+    index.build()
+
+    const ref = expectDefined(index.projectRef('Projects/Roadmap.md'))
+    expect(index.counts(ref)).toEqual({ total: 1, done: 0 })
+    expect(index.dueSummary(ref).overdue).toBe(1)
+  })
+
   describe('nesting', () => {
     it('reads the parent from a wikilink and reports roots and children', async () => {
       await vault.create('Platform.md', projectNote('p1', 'Platform'))

@@ -186,17 +186,14 @@ export class VaultIndex {
     return out
   }
 
-  /**
-   * Tasks past due and the last date anything is due, for a project row. Archived tasks
-   * are left out: they are done with, whatever their date says.
-   */
+  /** Tasks past due and the last date anything is due, for a project row. */
   dueSummary(ref: ProjectRef): { overdue: number; latestDue: string } {
     const complete = this.completeStatuses(ref)
     const now = today().toString()
     let overdue = 0
     let latestDue = ''
-    for (const task of this.taskRefs(ref.path)) {
-      if (!task.due || task.archived) continue
+    for (const task of this.countableTasks(ref)) {
+      if (!task.due) continue
       if (task.due > latestDue) latestDue = task.due
       if (task.due < now && !complete.has(task.status)) overdue++
     }
@@ -258,12 +255,28 @@ export class VaultIndex {
     return new Set([...ref.completeStatusIds, ...global.filter((id) => !own.has(id))])
   }
 
-  /** Task totals for a project card, without loading the project. */
+  /**
+   * The tasks a project's numbers are drawn from: one per id, archived ones left out,
+   * so a row matches what the project's own views show. Two notes can carry the same id
+   * after a sync conflict, and loading the project keeps only one of them.
+   */
+  private countableTasks(ref: ProjectRef): TaskRef[] {
+    const seen = new Set<string>()
+    const tasks: TaskRef[] = []
+    for (const task of this.taskRefs(ref.path)) {
+      if (task.archived || seen.has(task.id)) continue
+      seen.add(task.id)
+      tasks.push(task)
+    }
+    return tasks
+  }
+
+  /** Task totals for a project row, without loading the project. */
   counts(ref: ProjectRef): { total: number; done: number } {
     const complete = this.completeStatuses(ref)
     let total = 0
     let done = 0
-    for (const task of this.taskRefs(ref.path)) {
+    for (const task of this.countableTasks(ref)) {
       total++
       if (complete.has(task.status)) done++
     }
