@@ -99,8 +99,19 @@ describe('VaultIndex', () => {
     index.build()
 
     const ref = expectDefined(index.projectRef('Projects/Roadmap.md'))
-    // 'done' is complete globally, but this project's own palette replaces that list.
-    expect(index.counts(ref)).toEqual({ total: 3, done: 1 })
+    // 'shipped' comes from this project's palette; 'done' keeps its global complete flag
+    // because the project's palette does not redefine it.
+    expect(index.counts(ref)).toEqual({ total: 3, done: 2 })
+  })
+
+  it('counts a status the project palette redefines as open against its own flag', async () => {
+    const config = 'config:\n  statuses:\n    - id: done\n      complete: false\n'
+    await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap', config))
+    await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1'))
+    await vault.create('Projects/Roadmap_tasks/b.md', taskNote('t2', 'B', 'p1', 'done'))
+    index.build()
+
+    expect(index.counts(expectDefined(index.projectRef('Projects/Roadmap.md')))).toEqual({ total: 2, done: 0 })
   })
 
   it('counts against the global palette when the project defines none', async () => {
@@ -248,6 +259,32 @@ describe('VaultIndex', () => {
     it('follows a renamed project file', async () => {
       await vault.rename(expectDefined(vault.getAbstractFileByPath('Projects/Roadmap.md')), 'Projects/Plan.md')
       expect(index.projectPaths()).toEqual(['Projects/Plan.md'])
+    })
+
+    it('keeps the tasks of a project whose file is renamed', async () => {
+      await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1'))
+      await vault.rename(expectDefined(vault.getAbstractFileByPath('Projects/Roadmap.md')), 'Projects/Plan.md')
+
+      expect(index.taskRefs('Projects/Plan.md').map((r) => r.id)).toEqual(['t1'])
+      expect(index.counts(expectDefined(index.projectRef('Projects/Plan.md')))).toEqual({ total: 1, done: 0 })
+    })
+
+    it('follows the tasks of a renamed task folder', async () => {
+      await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1'))
+      await vault.rename(expectDefined(vault.getAbstractFileByPath('Projects/Roadmap.md')), 'Projects/Plan.md')
+      await vault.rename(expectDefined(vault.getAbstractFileByPath('Projects/Roadmap_tasks')), 'Projects/Plan_tasks')
+
+      expect(expectDefined(index.task('t1')).path).toBe('Projects/Plan_tasks/a.md')
+      expect(index.taskRefs('Projects/Plan.md').map((r) => r.id)).toEqual(['t1'])
+      expect(index.projectPathForTask('Projects/Plan_tasks/a.md')).toBe('Projects/Plan.md')
+    })
+
+    it('follows a project moved with its folder', async () => {
+      await vault.create('Later/Side quest.md', projectNote('p2', 'Side quest'))
+      await vault.rename(expectDefined(vault.getAbstractFileByPath('Later')), 'Archive box')
+
+      expect(index.projectPaths()).toContain('Archive box/Side quest.md')
+      expect(index.projectPaths()).not.toContain('Later/Side quest.md')
     })
 
     it('reports changes to subscribers', async () => {

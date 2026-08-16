@@ -47,6 +47,12 @@ export class ProjectView extends ItemView {
   private initialized = false
   /** Set once the default view mode is applied, so reloads don't undo a mode switch. */
   private defaultViewAppliedFor: string | null = null
+  /**
+   * The paths the current load covers, claimed before it starts. Loading a project can
+   * write to it, and that write comes back as an index change, so comparing against the
+   * projects already in hand would reload on top of a load that has not finished.
+   */
+  private loadedPaths: string[] = []
 
   constructor(leaf: WorkspaceLeaf, plugin: PMPlugin) {
     super(leaf)
@@ -127,12 +133,13 @@ export class ProjectView extends ItemView {
         if (this.projectScope?.projects.some((project) => project.filePath === path)) this.redraw()
       })
     )
-    // A scope covering several projects also changes when one joins or leaves it.
+    // A scope changes when a project joins or leaves it, which for a single-project scope
+    // includes the project appearing once the index has caught up with the vault.
     this.register(
       this.plugin.index.onChange(() => {
-        if (!this.spec || this.spec.kind === 'project') return
+        if (!this.spec) return
         const paths = resolveScopePaths(this.spec, this.plugin.index)
-        const current = this.projectScope?.projects.map((project) => project.filePath) ?? []
+        const current = this.loadedPaths
         if (paths.length !== current.length || paths.some((path, i) => path !== current[i])) {
           void this.loadScope()
         }
@@ -166,6 +173,7 @@ export class ProjectView extends ItemView {
     this.ensureInitialized()
     if (!this.spec) return
     const paths = resolveScopePaths(this.spec, this.plugin.index)
+    this.loadedPaths = paths
     const projects = await this.plugin.store.loadProjects(paths)
     this.projectScope = new ProjectScope(this.spec, projects, this.plugin.store)
     if (!this.projectScope.primary) {

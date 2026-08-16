@@ -51,7 +51,11 @@ export default class PMPlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings()
     this.index = new VaultIndex(this.app, () => this.settings)
-    this.index.register(this)
+    // The first sweep can run against a half-filled metadata cache, so it runs again once
+    // the index has caught up. Everything in it is safe to repeat.
+    this.index.register(this, () => {
+      void this.startupSweep()
+    })
     this.store = new ProjectStore(this.app, () => this.settings, this.index)
     this.store.registerVaultSync(this)
     this.notifier = new Notifier(this)
@@ -66,9 +70,7 @@ export default class PMPlugin extends Plugin {
     this.app.workspace.onLayoutReady(
       safeAsync(async () => {
         this.index.build()
-        await migrateProjects(this)
-        await this.cleanupStaleProjectFilters()
-        this.notifier.check()
+        await this.startupSweep()
       })
     )
 
@@ -233,9 +235,11 @@ export default class PMPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const saved = (await this.loadData()) as Partial<PMSettings> | null
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {})
-    if (!saved?.statuses?.length) this.settings.statuses = DEFAULT_SETTINGS.statuses
-    if (!saved?.priorities?.length) this.settings.priorities = DEFAULT_SETTINGS.priorities
+    // Cloned: a shallow merge would hand the live settings the very arrays and objects
+    // DEFAULT_SETTINGS holds, and the first edit would write into the defaults.
+    this.settings = Object.assign(structuredClone(DEFAULT_SETTINGS), saved ?? {})
+    if (!saved?.statuses?.length) this.settings.statuses = structuredClone(DEFAULT_SETTINGS.statuses)
+    if (!saved?.priorities?.length) this.settings.priorities = structuredClone(DEFAULT_SETTINGS.priorities)
     if (!this.settings.projectFilters) this.settings.projectFilters = {}
     if (!this.settings.scopeViews) this.settings.scopeViews = {}
     if (!this.settings.collapsedTasks) this.settings.collapsedTasks = {}
@@ -282,6 +286,13 @@ export default class PMPlugin extends Plugin {
     if (separator === -1) return true
     const path = key.slice(separator + 1)
     return path === '' || this.app.vault.getAbstractFileByPath(path) !== null
+  }
+
+  /** The startup work that reads the index: migration, pruning, and the first due sweep. */
+  private async startupSweep(): Promise<void> {
+    await migrateProjects(this)
+    await this.cleanupStaleProjectFilters()
+    this.notifier.check()
   }
 
   async cleanupStaleProjectFilters(): Promise<void> {
@@ -396,7 +407,11 @@ export default class PMPlugin extends Plugin {
   private pickProject(onChoose: (project: Project) => void, autoSelectSingle: boolean): void {
     const refs = this.index.projectRefs()
     if (!refs.length) {
-      this.showNotice('No projects yet. Create a project first.')
+      this.showNotice(
+        this.index.ready
+          ? 'No projects yet. Create a project first.'
+          : 'Still looking for projects. Try again in a moment.'
+      )
       return
     }
     const choose = (ref: ProjectRef): void => {

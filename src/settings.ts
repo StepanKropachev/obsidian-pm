@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian'
+import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian'
 import type { SettingDefinitionItem, SettingDefinitionPage } from 'obsidian'
 import type PMPlugin from './main'
 import { type PMSettings, DEFAULT_SETTINGS, makeId } from './types'
@@ -20,11 +20,14 @@ function plural(count: number, singular: string, plural: string): string {
 
 export class PMSettingTab extends PluginSettingTab {
   plugin: PMPlugin
+  /** A folder name is typed one character at a time; each sweep costs the whole vault. */
+  private readonly rebuildIndex: () => void
 
   constructor(app: App, plugin: PMPlugin) {
     super(app, plugin)
     this.plugin = plugin
     this.icon = 'chart-gantt'
+    this.rebuildIndex = debounce(() => this.plugin.index.build(), 500)
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
@@ -365,7 +368,7 @@ export class PMSettingTab extends PluginSettingTab {
                   .onChange((value) => {
                     this.plugin.settings.excludedFolders[index] = value
                     this.persist()
-                    this.plugin.index.build()
+                    this.rebuildIndex()
                   })
               )
             }

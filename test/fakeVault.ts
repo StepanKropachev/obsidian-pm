@@ -131,6 +131,8 @@ export class FakeVault {
         this.files.set(np, e)
         parent.children.push(e.file)
       }
+      // Obsidian reports the renamed folder and nothing about the notes inside it.
+      this.emit('rename', file, from)
       return
     }
     const entry = this.files.get(from)

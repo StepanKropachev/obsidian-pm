@@ -21,6 +21,25 @@ export async function moveTaskAttachmentFolder(
 }
 
 /**
+ * Keeps a project's `_tasks/` folder with its note across a rename, since the folder name
+ * is what attaches the tasks to the project. Reports whether anything moved.
+ */
+export async function moveProjectTaskFolder(
+  app: App,
+  oldProjectPath: string,
+  newProjectPath: string
+): Promise<boolean> {
+  const from = normalizePath(oldProjectPath.replace(/\.md$/, '') + '_tasks')
+  const to = normalizePath(newProjectPath.replace(/\.md$/, '') + '_tasks')
+  if (from === to) return false
+  const folder = app.vault.getAbstractFileByPath(from)
+  if (!(folder instanceof TFolder)) return false
+  if (app.vault.getAbstractFileByPath(to)) return false
+  await app.vault.rename(folder, to)
+  return true
+}
+
+/**
  * The project a task note belongs to, from its path alone: tasks live in
  * `<project>_tasks/`, archived ones a level deeper in `Archive/`. Null for any path
  * outside that layout.

@@ -13,7 +13,9 @@ export interface ProjectRef {
   color: string
   /** Where its `parent` link points, before cycles are taken out. Use `parentOf`. */
   parentPath: string | undefined
-  /** Status ids the project's own palette marks complete. Null inherits the global palette. */
+  /** Status ids the project's own palette defines. Null inherits the global palette. */
+  ownStatusIds: string[] | null
+  /** Which of those its own palette marks complete. Null inherits the global palette. */
   completeStatusIds: string[] | null
 }
 
@@ -43,14 +45,12 @@ function insideTaskFolder(path: string): boolean {
   return parts.some((segment) => segment.endsWith('_tasks'))
 }
 
-function completeIdsOf(frontmatter: Record<string, unknown>): string[] | null {
+function ownStatusesOf(frontmatter: Record<string, unknown>): Partial<StatusConfig>[] | null {
   const config = frontmatter.config
   if (!config || typeof config !== 'object') return null
   const statuses = (config as Record<string, unknown>).statuses
   if (!Array.isArray(statuses) || statuses.length === 0) return null
-  return (statuses as Partial<StatusConfig>[])
-    .filter((entry) => entry?.complete === true && typeof entry.id === 'string')
-    .map((entry) => entry.id as string)
+  return (statuses as Partial<StatusConfig>[]).filter((entry) => typeof entry?.id === 'string')
 }
 
 /**
@@ -66,6 +66,7 @@ export class VaultIndex {
   private projects = new Map<string, ProjectRef>()
   private projectPathById = new Map<string, string>()
   private tasks = new Map<string, TaskRef>()
+  private taskById = new Map<string, TaskRef>()
   private tasksByProject = new Map<string, Set<string>>()
   private changeHandlers = new Set<() => void>()
   private cachedTree: { parents: Map<string, string | null>; children: Map<string, string[]> } = {
@@ -86,6 +87,7 @@ export class VaultIndex {
     this.projects.clear()
     this.projectPathById.clear()
     this.tasks.clear()
+    this.taskById.clear()
     this.tasksByProject.clear()
     this.treeDirty = true
     for (const file of this.app.vault.getMarkdownFiles()) this.read(file)
@@ -94,13 +96,14 @@ export class VaultIndex {
     this.emitChange()
   }
 
-  register(plugin: Plugin): void {
+  register(plugin: Plugin, onFirstResolve?: () => void): void {
     // On a cold start the metadata cache is still filling when the layout is ready, so
     // the first build can see an empty vault. 'resolved' is Obsidian saying it caught up;
     // after that, 'changed' keeps the index current on its own.
     const onResolved = this.app.metadataCache.on('resolved', () => {
       this.build()
       this.app.metadataCache.offref(onResolved)
+      onFirstResolve?.()
     })
     plugin.registerEvent(onResolved)
 
@@ -118,10 +121,21 @@ export class VaultIndex {
     )
     plugin.registerEvent(
       this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
-        const had = this.forget(oldPath)
-        if (file instanceof TFile) this.read(file)
+        // The metadata cache is not keyed by the new path yet when this fires, and a
+        // renamed folder reports nothing about the notes inside it, so whatever is already
+        // indexed moves by path here rather than being read back from the cache.
+        if (!(file instanceof TFile)) {
+          if (this.rekeyFolder(oldPath, file.path)) this.emitChange()
+          return
+        }
+        if (this.rekeyFile(oldPath, file.path)) {
+          this.resolveUnowned()
+          this.emitChange()
+          return
+        }
+        this.read(file)
         this.resolveUnowned()
-        if (had || this.tasks.has(file.path) || this.projects.has(file.path)) this.emitChange()
+        if (this.tasks.has(file.path) || this.projects.has(file.path)) this.emitChange()
       })
     )
   }
@@ -200,14 +214,18 @@ export class VaultIndex {
     return refs
   }
 
-  /** Status ids that count as finished for a project, its own palette taking precedence. */
+  /**
+   * Status ids that count as finished for a project. A project palette overrides the
+   * global one entry by entry rather than wholesale, so a status it does not redefine
+   * keeps the global palette's complete flag, matching what the project's views resolve.
+   */
   completeStatuses(ref: ProjectRef): Set<string> {
-    return new Set(
-      ref.completeStatusIds ??
-        this.getSettings()
-          .statuses.filter((s) => s.complete)
-          .map((s) => s.id)
-    )
+    const global = this.getSettings()
+      .statuses.filter((s) => s.complete)
+      .map((s) => s.id)
+    if (!ref.completeStatusIds) return new Set(global)
+    const own = new Set(ref.ownStatusIds)
+    return new Set([...ref.completeStatusIds, ...global.filter((id) => !own.has(id))])
   }
 
   /** Task totals for a project card, without loading the project. */
@@ -227,10 +245,7 @@ export class VaultIndex {
    * project: ids are resolved here rather than inside one project's tree.
    */
   task(taskId: string): TaskRef | null {
-    for (const ref of this.tasks.values()) {
-      if (ref.id === taskId) return ref
-    }
-    return null
+    return this.taskById.get(taskId) ?? null
   }
 
   allTaskRefs(): TaskRef[] {
@@ -270,15 +285,20 @@ export class VaultIndex {
 
   private read(file: TFile): void {
     const path = normalizePath(file.path)
+    const cache = this.app.metadataCache.getFileCache(file)
+    // No cache entry at all means Obsidian has not caught up with this path yet, which is
+    // where a rename leaves it. Keep what is indexed rather than dropping the note.
+    if (!cache) return
     this.forget(path)
     if (this.isExcluded(path)) return
-    const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter
+    const frontmatter = cache.frontmatter
     if (!frontmatter) return
     if (frontmatter[FRONTMATTER_KEY] === true && !insideTaskFolder(path)) this.addProject(path, file, frontmatter)
     else if (frontmatter[TASK_FRONTMATTER_KEY] === true) this.addTask(path, frontmatter)
   }
 
   private addProject(path: string, file: TFile, frontmatter: Record<string, unknown>): void {
+    const own = ownStatusesOf(frontmatter)
     const ref: ProjectRef = {
       path,
       id: str(frontmatter.id, file.basename),
@@ -286,7 +306,8 @@ export class VaultIndex {
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
       parentPath: resolveProjectLink(this.app, frontmatter.parent, path),
-      completeStatusIds: completeIdsOf(frontmatter)
+      ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
+      completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
     }
     this.projects.set(path, ref)
     this.projectPathById.set(ref.id, path)
@@ -310,6 +331,7 @@ export class VaultIndex {
       archived: path.split('/').at(-2) === 'Archive'
     }
     this.tasks.set(path, ref)
+    this.taskById.set(ref.id, ref)
     this.own(ref)
   }
 
@@ -342,12 +364,86 @@ export class VaultIndex {
     bucket.add(ref.path)
   }
 
+  /** Moves an indexed note to its new path. False when the path held nothing indexed. */
+  private rekeyFile(oldPath: string, newPath: string): boolean {
+    const from = normalizePath(oldPath)
+    const to = normalizePath(newPath)
+    const project = this.projects.get(from)
+    const task = this.tasks.get(from)
+    if (!project && !task) return false
+    this.forget(from)
+    if (this.isExcluded(to)) return true
+    if (project) {
+      project.path = to
+      this.projects.set(to, project)
+      this.projectPathById.set(project.id, to)
+      this.treeDirty = true
+      this.reownTasks(from, to)
+      return true
+    }
+    if (task) {
+      task.path = to
+      task.projectPath = this.resolveOwner(to, task.projectId)
+      task.archived = to.split('/').at(-2) === 'Archive'
+      this.tasks.set(to, task)
+      this.taskById.set(task.id, task)
+      this.own(task)
+    }
+    return true
+  }
+
+  /** Moves everything indexed under a renamed folder to its new path. */
+  private rekeyFolder(oldPath: string, newPath: string): boolean {
+    const from = normalizePath(oldPath) + '/'
+    const to = normalizePath(newPath) + '/'
+    const projects = [...this.projects.values()].filter((ref) => ref.path.startsWith(from))
+    const tasks = [...this.tasks.values()].filter((ref) => ref.path.startsWith(from))
+    if (!projects.length && !tasks.length) return false
+    // Projects first: a task's owner is resolved from the folder it now sits in.
+    for (const ref of projects) {
+      this.forget(ref.path)
+      ref.path = to + ref.path.slice(from.length)
+      this.projects.set(ref.path, ref)
+      this.projectPathById.set(ref.id, ref.path)
+      this.treeDirty = true
+    }
+    for (const ref of tasks) {
+      this.forget(ref.path)
+      ref.path = to + ref.path.slice(from.length)
+      ref.projectPath = this.resolveOwner(ref.path, ref.projectId)
+      ref.archived = ref.path.split('/').at(-2) === 'Archive'
+      this.tasks.set(ref.path, ref)
+      this.taskById.set(ref.id, ref)
+      this.own(ref)
+    }
+    return true
+  }
+
+  /**
+   * Task notes keep their own paths when their project note is renamed, so ownership has
+   * to follow the project rather than wait for each of them to be read again.
+   */
+  private reownTasks(oldProjectPath: string, newProjectPath: string): boolean {
+    const from = normalizePath(oldProjectPath)
+    const to = normalizePath(newProjectPath)
+    const bucket = this.tasksByProject.get(from)
+    if (!bucket || !this.projects.has(to)) return false
+    this.tasksByProject.delete(from)
+    for (const taskPath of bucket) {
+      const ref = this.tasks.get(taskPath)
+      if (ref) ref.projectPath = to
+    }
+    this.tasksByProject.set(to, bucket)
+    return true
+  }
+
   /** Drops whatever was indexed at a path. Reports whether anything was. */
   private forget(path: string): boolean {
     const normalized = normalizePath(path)
     const task = this.tasks.get(normalized)
     if (task) {
       this.tasks.delete(normalized)
+      if (this.taskById.get(task.id) === task) this.taskById.delete(task.id)
       if (task.projectPath) this.tasksByProject.get(task.projectPath)?.delete(normalized)
       return true
     }

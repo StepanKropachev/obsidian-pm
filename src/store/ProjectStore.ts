@@ -33,7 +33,7 @@ import {
   taskFilePath,
   TASK_SLUG_MAX_LENGTH
 } from './YamlSerializer'
-import { ensureFolder, moveTaskAttachmentFolder, resolveProjectLink } from './vaultFs'
+import { ensureFolder, moveProjectTaskFolder, moveTaskAttachmentFolder, resolveProjectLink } from './vaultFs'
 import type { ImportNoteOptions, TaskSource } from './TaskSource'
 
 /** 'fm' writes via processFrontMatter; 'full' rewrites the body too, via vault.process. */
@@ -192,6 +192,7 @@ export class ProjectStore implements TaskSource {
     plugin.registerEvent(this.app.vault.on('delete', onChange))
     plugin.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
+        if (file instanceof TFile) void this.followProjectRename(oldPath, file.path)
         this.syncPath(file.path)
         this.syncPath(oldPath)
       })
@@ -200,6 +201,15 @@ export class ProjectStore implements TaskSource {
       for (const timer of this.reloadTimers.values()) window.clearTimeout(timer)
       this.reloadTimers.clear()
     })
+  }
+
+  /** A renamed project note takes its task folder with it, so its tasks stay attached. */
+  private async followProjectRename(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await moveProjectTaskFolder(this.app, oldPath, newPath)
+    } catch (e) {
+      console.error(`[PM] Failed to move the task folder for "${newPath}":`, e)
+    }
   }
 
   /** An external write landed: reload the live project so every holder sees it. */
