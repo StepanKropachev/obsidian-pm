@@ -7,7 +7,6 @@ export interface MilestonePoint {
 }
 
 const LABEL_WIDTH = 104
-/** Track width per milestone, so a dense plan scrolls instead of stacking labels. */
 const SLOT_WIDTH = 112
 const MIN_WIDTH = 320
 

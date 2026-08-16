@@ -17,10 +17,7 @@ interface Draft {
   description: string
 }
 
-/**
- * Everything a project needs to exist, asked once. Nothing is written until Create, and the
- * settings page takes over for everything this form leaves out.
- */
+/** Everything a project needs to exist, asked once. Nothing is written until Create. */
 export class ProjectCreateModal extends Modal {
   private draft: Draft = {
     title: '',
@@ -95,7 +92,6 @@ export class ProjectCreateModal extends Modal {
     this.drawIcon()
   }
 
-  /** Redrawn on a color change, so the preview keeps the tint the icon will have. */
   private drawIcon(): void {
     this.iconHost.empty()
     renderIconControl({
@@ -181,7 +177,6 @@ export class ProjectCreateModal extends Modal {
     })
   }
 
-  /** The name decides the file name, so a note already sitting there blocks the create. */
   private refreshValidity(): void {
     const title = this.draft.title.trim()
     const taken = !!title && !!this.app.vault.getAbstractFileByPath(this.targetPath(title))

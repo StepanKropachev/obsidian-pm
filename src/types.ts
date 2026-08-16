@@ -257,7 +257,6 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
   }
 }
 
-/** What a project looks like before anyone picks for it; the create form starts here too. */
 export const DEFAULT_PROJECT_COLOR = '#8b72be'
 export const DEFAULT_PROJECT_ICON = '📋'
 

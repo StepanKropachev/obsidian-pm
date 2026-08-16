@@ -36,10 +36,6 @@ const FIELD_TYPES: { id: CustomFieldDef['type']; label: string }[] = [
   { id: 'url', label: 'URL' }
 ]
 
-/**
- * A project's settings, as a page of its own. Every control writes as it changes: there
- * is no draft to save, and nothing here can overwrite a field it never showed.
- */
 export class ProjectEditView extends ItemView {
   plugin: PMPlugin
   private state: ProjectEditState = {}
@@ -98,7 +94,6 @@ export class ProjectEditView extends ItemView {
         .setBody('It may have been deleted or renamed.')
       return
     }
-    // The description lives in the note body, which is only read when something asks.
     await this.plugin.store.loadProjectBody(this.project)
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     this.render()
@@ -197,7 +192,6 @@ export class ProjectEditView extends ItemView {
 
     renderPropRow(props, 'Parent', () => {
       const cell = createDiv('pm-prop-value')
-      // Own descendants are left out, so the picker cannot build a cycle.
       const excluded = new Set([
         project.filePath,
         ...this.plugin.index.descendantRefs(project.filePath).map((ref) => ref.path)
@@ -333,7 +327,6 @@ export class ProjectEditView extends ItemView {
       })
     }
     checkbox.addEventListener('change', () => {
-      // Starting from a copy of the global list keeps existing task values valid.
       opts.set(checkbox.checked ? opts.copyGlobal() : undefined)
       drawEditor()
     })

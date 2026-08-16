@@ -3,13 +3,13 @@ import type PMPlugin from '../main'
 import type { Project, ResolvedProjectConfig, Task } from '../types'
 import { collectAllTags, flattenTasks, totalLoggedHours, type ProjectRef } from '../store'
 import { Temporal, parsePlainDate, today } from '../dates'
-import { formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
+import { dateUrgency, formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
 import { Avatar, displayName } from '../ui/primitives/Avatar'
 import { Chip } from '../ui/primitives/Chip'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProgressBar } from '../ui/primitives/ProgressBar'
 import { renderPropRow } from '../ui/FormField'
-import { renderDueChip, type DueUrgency } from '../ui/composites/dueChip'
+import { renderDueChip } from '../ui/composites/dueChip'
 import { renderMetricStrip, type MetricStat } from '../ui/composites/metricStrip'
 import { renderMilestoneTimeline, type MilestonePoint } from '../ui/composites/milestoneTimeline'
 import { renderTagChip } from '../ui/composites/tagChip'
@@ -33,10 +33,6 @@ interface Rollup {
   latestDue: string
 }
 
-/**
- * One project's own page: where it stands, what it says, what sits under it. Read-only,
- * and always a single project - the task views are what cover several at once.
- */
 export class ProjectOverviewView extends ItemView {
   plugin: PMPlugin
   private state: ProjectOverviewState = {}
@@ -234,7 +230,6 @@ export class ProjectOverviewView extends ItemView {
     void this.hydrateDescription(project, body)
   }
 
-  /** The project's own note body, which is only read from disk when something asks for it. */
   private async hydrateDescription(project: Project, host: HTMLElement): Promise<void> {
     await this.plugin.store.loadProjectBody(project)
     if (!host.isConnected) return
@@ -317,78 +312,54 @@ export class ProjectOverviewView extends ItemView {
   private renderProperties(parent: HTMLElement, project: Project, tasks: Task[], rollup: Rollup): void {
     const section = this.section(parent, 'Properties')
     const list = section.createDiv('pm-overview-props')
-
-    renderPropRow(list, 'Members', () => {
-      const value = createDiv('pm-prop-value')
-      if (project.teamMembers.length === 0) {
-        value.createSpan({ cls: 'pm-overview-muted', text: 'No members' })
+    const prop = (label: string, empty: boolean, emptyText: string, fill: (value: HTMLElement) => void): void => {
+      renderPropRow(list, label, () => {
+        const value = createDiv('pm-prop-value')
+        if (empty) value.createSpan({ cls: 'pm-overview-muted', text: emptyText })
+        else fill(value)
         return value
-      }
+      })
+    }
+
+    prop('Members', project.teamMembers.length === 0, 'No members', (value) => {
       for (const member of project.teamMembers) {
         const holder = value.createSpan({ cls: 'pm-overview-member' })
         new Avatar(holder).setName(member).setSize('sm')
         holder.createSpan({ text: displayName(member) })
       }
-      return value
     })
 
     const tags = collectAllTags(project.tasks)
-    renderPropRow(list, 'Tags', () => {
-      const value = createDiv('pm-prop-value')
-      if (tags.length === 0) {
-        value.createSpan({ cls: 'pm-overview-muted', text: 'No tags' })
-        return value
-      }
+    prop('Tags', tags.length === 0, 'No tags', (value) => {
       for (const tag of tags.slice(0, MAX_TAGS)) renderTagChip(value, tag, this.plugin.settings.showTagColors)
       if (tags.length > MAX_TAGS) {
         value.createSpan({ cls: 'pm-overview-muted', text: `+${tags.length - MAX_TAGS}` })
       }
-      return value
     })
 
-    renderPropRow(list, 'Latest due', () => {
-      const value = createDiv('pm-prop-value')
-      if (!rollup.latestDue) {
-        value.createSpan({ cls: 'pm-overview-muted', text: 'No dates' })
-        return value
-      }
-      renderDueChip(value, formatDateLong(rollup.latestDue), urgencyOf(rollup.latestDue, rollup.overdue > 0))
-      return value
+    prop('Latest due', !rollup.latestDue, 'No dates', (value) => {
+      renderDueChip(value, formatDateLong(rollup.latestDue), dateUrgency(rollup.latestDue, rollup.overdue > 0))
     })
 
-    renderPropRow(list, 'Time', () => {
-      const value = createDiv('pm-prop-value')
-      const chip = renderTimeChip(value, rollup.logged, rollup.estimate)
-      if (!chip) value.createSpan({ cls: 'pm-overview-muted', text: 'No estimate' })
-      return value
+    prop('Time', !rollup.logged && !rollup.estimate, 'No estimate', (value) => {
+      renderTimeChip(value, rollup.logged, rollup.estimate)
     })
 
     const parentRef = this.plugin.index.parentOf(project.filePath)
-    renderPropRow(list, 'Parent', () => {
-      const value = createDiv('pm-prop-value')
-      if (!parentRef) {
-        value.createSpan({ cls: 'pm-overview-muted', text: 'No parent' })
-        return value
-      }
+    prop('Parent', !parentRef, 'No parent', (value) => {
+      if (!parentRef) return
       const link = value.createSpan({ cls: 'pm-overview-crumb', text: parentRef.title })
       link.addEventListener(
         'click',
         safeAsync(() => this.plugin.router.openProjectOverview(parentRef.path))
       )
-      return value
     })
 
-    renderPropRow(list, 'Assignees', () => {
-      const value = createDiv('pm-prop-value')
-      const names = new Set(tasks.flatMap((task) => task.assignees).filter(Boolean))
-      if (names.size === 0) {
-        value.createSpan({ cls: 'pm-overview-muted', text: 'Nobody assigned' })
-        return value
-      }
-      for (const name of names) {
+    const assignees = new Set(tasks.flatMap((task) => task.assignees).filter(Boolean))
+    prop('Assignees', assignees.size === 0, 'Nobody assigned', (value) => {
+      for (const name of assignees) {
         new Chip(value).setLabel(displayName(name)).setVariant('outline').setShape('pill').setSize('sm')
       }
-      return value
     })
 
     if (project.customFields.length === 0) return
@@ -421,12 +392,4 @@ function summarize(tasks: Task[], config: ResolvedProjectConfig): Rollup {
   rollup.logged = Math.round(rollup.logged * 10) / 10
   rollup.estimate = Math.round(rollup.estimate * 10) / 10
   return rollup
-}
-
-function urgencyOf(due: string, hasOverdue: boolean): DueUrgency {
-  const date = parsePlainDate(due)
-  if (!date) return 'normal'
-  const days = today().until(date, { largestUnit: 'day' }).days
-  if (days < 0) return hasOverdue ? 'overdue' : 'normal'
-  return days < 3 ? 'near' : 'normal'
 }

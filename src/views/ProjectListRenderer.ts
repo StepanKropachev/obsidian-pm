@@ -2,14 +2,11 @@ import { TFile, Menu, ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project } from '../types'
 import type { ProjectRef } from '../store'
-import { formatDateShort, safeAsync } from '../utils'
-import { parsePlainDate, today } from '../dates'
+import { dateUrgency, formatDateShort, safeAsync } from '../utils'
 import { openProjectCreate } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectRow } from '../ui/composites/ProjectRow'
-import type { DueUrgency } from '../ui/composites/dueChip'
 
-/** The title column absorbs the leftover width so the rest hug their content. */
 const COLUMNS: { label: string; cls?: string }[] = [
   { label: '' },
   { label: 'Project', cls: 'pm-project-th-title' },
@@ -49,14 +46,11 @@ function countLine(ctx: ProjectListContext): string {
   return bits.join(' · ')
 }
 
-/** Draws from the index alone: a row needs a title, an icon and a few counts, not a load. */
 export function renderProjectListContent(ctx: ProjectListContext): void {
   const roots = ctx.plugin.index.rootRefs()
   ctx.contentEl.empty()
 
   if (roots.length === 0) {
-    // On a cold start the vault has not been read yet, and offering to create a first
-    // project would be wrong in a vault that already has twenty.
     if (!ctx.plugin.index.ready) {
       new EmptyState(ctx.contentEl).setIcon('📋').setTitle('Looking for projects')
       return
@@ -82,7 +76,6 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
   for (const ref of refs) {
     const children = index.childRefs(ref.path)
     const collapsed = ctx.plugin.isProjectCollapsed(ref.path)
-    // A parent's own numbers say little about the program under it.
     const { total, done } = children.length ? index.rollupCounts(ref) : index.counts(ref)
     const { overdue, latestDue } = children.length ? index.rollupDueSummary(ref) : index.dueSummary(ref)
 
@@ -98,7 +91,7 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
       overdue,
       members: ref.teamMembers,
       dueLabel: formatDateShort(latestDue),
-      dueUrgency: urgencyOf(latestDue, overdue > 0),
+      dueUrgency: dateUrgency(latestDue, overdue > 0),
       onToggleCollapsed: safeAsync(async () => {
         await ctx.plugin.toggleProjectCollapsed(ref.path)
         renderProjectListContent(ctx)
@@ -110,14 +103,6 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
 
     if (children.length && !collapsed) renderRows(ctx, tbody, children, depth + 1)
   }
-}
-
-function urgencyOf(due: string, hasOverdue: boolean): DueUrgency {
-  const date = parsePlainDate(due)
-  if (!date) return 'normal'
-  const days = today().until(date, { largestUnit: 'day' }).days
-  if (days < 0) return hasOverdue ? 'overdue' : 'normal'
-  return days < 3 ? 'near' : 'normal'
 }
 
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {

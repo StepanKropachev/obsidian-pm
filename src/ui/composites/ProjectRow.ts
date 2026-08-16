@@ -28,7 +28,6 @@ export interface ProjectRowProps {
 
 const ROW_IGNORE_SELECTOR = 'button, .pm-chip--interactive, .pm-icon-btn, .pm-collapse-toggle'
 
-/** One project in the project list: a `<tr>` whose cells are built here. */
 export class ProjectRow {
   el: HTMLTableRowElement
 

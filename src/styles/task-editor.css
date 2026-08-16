@@ -336,7 +336,6 @@ button.pm-icon-cell--selected {
   color: var(--text-faint);
 }
 
-/* Sits among bordered fields rather than in a property list, so it reads as one. */
 button.pm-icon-trigger {
   justify-content: space-between;
   gap: 8px;

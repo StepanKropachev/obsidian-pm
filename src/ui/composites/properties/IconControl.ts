@@ -6,11 +6,10 @@ export interface IconControlOpts {
   container: HTMLElement
   value: string
   onChange: (icon: string) => void
-  /** Tints the preview, so the trigger reads the way the icon will in the app. */
+  /** Tints the preview. */
   color?: string
 }
 
-/** Enough of the set to browse; the search field is how you reach the rest. */
 const GRID_LIMIT = 96
 
 /** Anything that isn't a plain icon name is taken literally, which is how emoji get in. */
@@ -18,7 +17,7 @@ function isGlyphQuery(query: string): boolean {
   return query.length > 0 && !/^[a-z0-9 -]+$/i.test(query)
 }
 
-/** Backs the status and priority icon fields: a preview that opens a searchable icon grid. */
+/** An icon preview that opens a searchable grid of every icon Obsidian knows. */
 export function renderIconControl(opts: IconControlOpts): void {
   let value = opts.value
   const trigger = opts.container.createEl('button', { cls: 'pm-prop-inline pm-icon-trigger' })

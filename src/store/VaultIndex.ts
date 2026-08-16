@@ -186,7 +186,7 @@ export class VaultIndex {
     return out
   }
 
-  /** Tasks past due and the last date anything is due, for a project row. */
+  /** Tasks past due and the last date anything is due, without loading the project. */
   dueSummary(ref: ProjectRef): { overdue: number; latestDue: string } {
     const complete = this.completeStatuses(ref)
     const now = today().toString()
@@ -255,11 +255,7 @@ export class VaultIndex {
     return new Set([...ref.completeStatusIds, ...global.filter((id) => !own.has(id))])
   }
 
-  /**
-   * The tasks a project's numbers are drawn from: one per id, archived ones left out,
-   * so a row matches what the project's own views show. Two notes can carry the same id
-   * after a sync conflict, and loading the project keeps only one of them.
-   */
+  /** One task per id, archived ones left out, so counts match what the project's views show. */
   private countableTasks(ref: ProjectRef): TaskRef[] {
     const seen = new Set<string>()
     const tasks: TaskRef[] = []
