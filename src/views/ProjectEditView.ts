@@ -3,11 +3,13 @@ import type PMPlugin from '../main'
 import {
   type CustomFieldDef,
   type PriorityConfig,
+  type PriorityIconSet,
   type Project,
   type ProjectConfig,
   type ProjectPatch,
   type StatusConfig,
-  makeId
+  makeId,
+  PRIORITY_ICON_SET_LABELS
 } from '../types'
 import { safeAsync, truncateTitle } from '../utils'
 import { confirmDialog, promptText } from '../ui/ModalFactory'
@@ -365,6 +367,11 @@ export class ProjectEditView extends ItemView {
       { value: 'gantt', label: 'Gantt' },
       { value: 'kanban', label: 'Board' }
     ])
+    row(
+      'Priority icons',
+      'priorityIcons',
+      Object.entries(PRIORITY_ICON_SET_LABELS).map(([value, label]) => ({ value: value as PriorityIconSet, label }))
+    )
     row('Auto-schedule', 'autoSchedule', [
       { value: true, label: 'On' },
       { value: false, label: 'Off' }

@@ -9,6 +9,7 @@ function serializeProjectConfig(config: ProjectConfig | undefined): Record<strin
   const out: Record<string, unknown> = {}
   if (config.statuses?.length) out.statuses = config.statuses
   if (config.priorities?.length) out.priorities = config.priorities
+  if (config.priorityIcons) out.priorityIcons = config.priorityIcons
   if (config.defaultView) out.defaultView = config.defaultView
   if (config.autoSchedule !== undefined) out.autoSchedule = config.autoSchedule
   if (config.pullForwardOnEarlyFinish !== undefined) out.pullForwardOnEarlyFinish = config.pullForwardOnEarlyFinish

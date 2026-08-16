@@ -225,6 +225,7 @@ export class TableView implements SubView {
       plugin: this.plugin,
       statuses: config.statuses,
       priorities: config.priorities,
+      priorityIcons: config.priorityIcons,
       showSubtreeConnections: config.showSubtreeConnections,
       lineBorders: config.lineBorders,
       state: this.state,

@@ -1,5 +1,6 @@
 import { Notice, setIcon } from 'obsidian'
-import type { Task, StatusConfig, PriorityConfig, TaskPriority } from './types'
+import type { Task, StatusConfig, PriorityConfig, TaskPriority, PriorityIconSet } from './types'
+import { PRIORITY_ICON_SETS } from './types'
 import type { DueUrgency } from './ui/composites/dueChip'
 import { today, parsePlainDate } from './dates'
 
@@ -86,6 +87,17 @@ export function getStatusConfig(statuses: StatusConfig[], id: string): StatusCon
 
 export function getPriorityConfig(priorities: PriorityConfig[], id: TaskPriority): PriorityConfig | undefined {
   return priorities.find((p) => p.id === id)
+}
+
+/**
+ * A priority's own icon wins; otherwise the icon set supplies one for its rank in the
+ * list. A scale longer than the set leaves its lowest ranks without an icon.
+ */
+export function priorityIcon(priorities: PriorityConfig[], id: TaskPriority, iconSet: PriorityIconSet): string {
+  const own = getPriorityConfig(priorities, id)?.icon
+  if (own) return own
+  const rank = priorities.findIndex((p) => p.id === id)
+  return PRIORITY_ICON_SETS[iconSet][rank] ?? ''
 }
 
 const iconNameCache = new Map<string, boolean>()

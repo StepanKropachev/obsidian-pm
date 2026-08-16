@@ -33,6 +33,7 @@ describe('resolveProjectConfig', () => {
     expect(resolved.statuses).toEqual(DEFAULT_STATUSES)
     expect(resolved.priorities).toEqual(DEFAULT_PRIORITIES)
     expect(resolved.defaultView).toBe(DEFAULT_SETTINGS.defaultView)
+    expect(resolved.priorityIcons).toBe(DEFAULT_SETTINGS.priorityIcons)
     expect(resolved.autoSchedule).toBe(DEFAULT_SETTINGS.autoSchedule)
     expect(resolved.pullForwardOnEarlyFinish).toBe(DEFAULT_SETTINGS.pullForwardOnEarlyFinish)
     expect(resolved.showSubtreeConnections).toBe(DEFAULT_SETTINGS.showSubtreeConnections)
@@ -61,6 +62,7 @@ describe('resolveProjectConfig', () => {
     const resolved = resolveProjectConfig(
       makeOverrideProject({
         defaultView: 'kanban',
+        priorityIcons: 'signal',
         autoSchedule: false,
         pullForwardOnEarlyFinish: true,
         showSubtreeConnections: false,
@@ -70,6 +72,7 @@ describe('resolveProjectConfig', () => {
       DEFAULT_SETTINGS
     )
     expect(resolved.defaultView).toBe('kanban')
+    expect(resolved.priorityIcons).toBe('signal')
     expect(resolved.autoSchedule).toBe(false)
     expect(resolved.pullForwardOnEarlyFinish).toBe(true)
     expect(resolved.showSubtreeConnections).toBe(false)
