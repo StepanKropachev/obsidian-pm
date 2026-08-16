@@ -72,30 +72,6 @@
   color: var(--text-muted);
 }
 
-.pm-edit-icons {
-  flex-wrap: wrap;
-  gap: 2px;
-}
-button.pm-icon-option {
-  font-size: 18px;
-  padding: 4px;
-  border: none;
-  box-shadow: none;
-  background: transparent;
-  border-radius: var(--radius-s);
-  cursor: pointer;
-  transition: background 0.1s;
-  line-height: 1;
-  height: auto;
-}
-button.pm-icon-option:hover {
-  background: var(--background-modifier-hover);
-}
-button.pm-icon-option--selected {
-  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
-  box-shadow: 0 0 0 1px var(--interactive-accent);
-}
-
 .pm-edit-danger {
   display: flex;
   align-items: center;
@@ -113,29 +89,6 @@ button.pm-icon-option--selected {
   font-weight: 500;
 }
 
-.pm-color-palette {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.pm-color-swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
-}
-.pm-color-swatch:hover {
-  transform: scale(1.15);
-}
-.pm-color-swatch--selected {
-  border-color: var(--text-normal);
-  box-shadow: 0 0 0 2px var(--background-primary);
-}
 .pm-color-custom {
   width: 26px;
   height: 26px;

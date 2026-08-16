@@ -13,7 +13,7 @@ import { safeAsync, truncateTitle } from '../utils'
 import { confirmDialog, promptText } from '../ui/ModalFactory'
 import { renderAddButton } from '../ui/composites/addButton'
 import { renderChipList, renderPropRow } from '../ui/FormField'
-import { renderInputControl, renderSelectControl } from '../ui/composites/properties'
+import { renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { IconButton } from '../ui/primitives/IconButton'
@@ -24,22 +24,6 @@ export interface ProjectEditState {
   filePath?: string
   [key: string]: unknown
 }
-
-/** Persisted picker data, so these stay concrete hex rather than theme variables. */
-export const PROJECT_COLORS = [
-  '#8b72be',
-  '#7c6b9a',
-  '#b07d9e',
-  '#c47070',
-  '#b8a06b',
-  '#79b58d',
-  '#6ba8a0',
-  '#7a9ec4',
-  '#767491',
-  '#8aab6b'
-]
-
-export const PROJECT_ICONS = ['📋', '🚀', '💡', '🎯', '🔬', '🏗', '📊', '🎨', '📱', '🛠', '📝', '⚡']
 
 const FIELD_TYPES: { id: CustomFieldDef['type']; label: string }[] = [
   { id: 'text', label: 'Text' },
@@ -186,34 +170,26 @@ export class ProjectEditView extends ItemView {
     })
 
     renderPropRow(props, 'Icon', () => {
-      const cell = createDiv('pm-prop-value pm-edit-icons')
-      for (const emoji of PROJECT_ICONS) {
-        const btn = cell.createEl('button', { text: emoji, cls: 'pm-icon-option' })
-        btn.toggleClass('pm-icon-option--selected', emoji === project.icon)
-        btn.addEventListener('click', () => {
-          this.save({ icon: emoji })
+      const cell = createDiv('pm-prop-value')
+      renderIconControl({
+        container: cell,
+        value: project.icon,
+        color: project.color,
+        onChange: (icon) => {
+          this.save({ icon })
           this.render()
-        })
-      }
+        }
+      })
       return cell
     })
 
     renderPropRow(props, 'Color', () => {
-      const cell = createDiv('pm-prop-value pm-color-palette')
-      for (const color of PROJECT_COLORS) {
-        const swatch = cell.createEl('button', { cls: 'pm-color-swatch' })
-        swatch.setCssStyles({ background: color })
-        swatch.toggleClass('pm-color-swatch--selected', color === project.color)
-        swatch.addEventListener('click', () => {
-          this.save({ color })
-          this.render()
-        })
-      }
-      const custom = cell.createEl('input', { type: 'color', cls: 'pm-color-custom' })
-      custom.value = project.color
-      custom.title = 'Custom color'
-      custom.addEventListener('change', () => {
-        this.save({ color: custom.value })
+      const cell = createDiv('pm-prop-value')
+      const picker = cell.createEl('input', { type: 'color', cls: 'pm-color-custom' })
+      picker.value = project.color
+      picker.title = 'Project color'
+      picker.addEventListener('change', () => {
+        this.save({ color: picker.value })
         this.render()
       })
       return cell
