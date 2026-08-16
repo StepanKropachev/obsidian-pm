@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Opening a project from the project list shows its overview: progress, description, milestones, sub-projects, and properties
+- A row, card, or timeline label naming its project opens that project when clicked
 - Projects are listed wherever their files live in the vault
 - A project can sit under another one, chosen in the project settings
 - The project list nests sub-projects under their parent, whose card counts the tasks of the whole group

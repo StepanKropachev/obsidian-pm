@@ -3,6 +3,7 @@
 @import './table.css';
 @import './gantt.css';
 @import './kanban.css';
+@import './overview.css';
 @import './task-modal.css';
 @import './project-modal.css';
 @import './widgets.css';

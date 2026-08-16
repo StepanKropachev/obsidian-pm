@@ -25,6 +25,8 @@ Before writing any new UI element, find your case here:
 - Need an empty placeholder -> `EmptyState`
 - Need a label + value form row -> `renderPropRow`
 - Need a removable-token list -> `renderChipList`
+- Need a row of headline numbers -> `renderMetricStrip`
+- Need dated points on one track -> `renderMilestoneTimeline`
 
 Nothing fits? Extend an existing primitive with a new setter or variant instead of adding a new class or one-off element. Adding a brand-new primitive requires updating this file and `src/views/styleguide/StyleguideView.ts` in the same change.
 
@@ -121,7 +123,7 @@ Floating panel anchored to a trigger, for content Obsidian's `Menu` can't host (
 
 Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh`. If a composite needs `plugin`, it's the wrong shape; push the store access up to the orchestrator view.
 
-- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, projectTitle, projectColor, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges, plus a dot-led project Chip in the footer when `projectTitle` is set), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip.
+- **KanbanCard** - `KanbanCard.ts`. Props: task, priorityColor, descriptionPreview, parentTitle, projectTitle, projectColor, loggedHours, overdue, showTagColors + onClick/onContextMenu/onDragStart/onDragEnd. Composes Chip (milestone/subtask/recurring badges, plus a dot-led project Chip in the footer when `projectTitle` is set, clickable through `onProjectClick`), renderTimeChip, renderDueChip, AvatarStack, ProgressBar (task progress), renderTagChip.
 - **KanbanColumn** - `KanbanColumn.ts`. Props: status, cards + drag/drop and card callbacks. Composes KanbanCard.
 - **ProjectCard** - `ProjectCard.ts`. Props: title, icon, color, tasksDone, tasksTotal, childCount, collapsed, onToggleCollapsed, onClick, onContextMenu. Composes ProgressBar, plus CollapseToggle and a plain Chip when `childCount` is above zero. With sub-projects the counts are the caller's rollup over the subtree; the project list nests the children in a `.pm-project-children` grid on the row below.
 - **TaskRow** - `TaskRow.ts`. Props: taskId, depth, isDone, isArchived, isSelected, onRowClick. Bare `<tr>` with row-click routing that ignores interactive descendants; cells render into it.
@@ -129,8 +131,10 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
 - **tagChip** - `tagChip.ts`. `renderTagChip(parent, tag, colored)` -> outline tag Chip with optional color dot. The only way to render a tag.
 - **timeChip** - `timeChip.ts`. `renderTimeChip(parent, logged, estimate, size?)` -> `logged/estimateh` Chip, red solid when logged exceeds the estimate; renders nothing when both are 0. The only way to render logged/estimate hours.
 - **dueChip** - `dueChip.ts`. `renderDueChip(parent, label, urgency, size?)` -> due-date Chip, orange when `urgency` is `'near'`, red solid when `'overdue'`. Caller formats the label (`formatDateLong` / `formatDateShort`). The only way to render a due date.
+- **metricStrip** - `metricStrip.ts`. `renderMetricStrip(parent, stats)` -> bordered row of `{ label, value, sub?, extra?, alert? }` cells; `extra` composes a bar or chip beside the value, `alert` colors it red. The project overview's stats row.
+- **milestoneTimeline** - `milestoneTimeline.ts`. `renderMilestoneTimeline(parent, points, todayPos)` -> one track with date-proportional dots (`done` / `next` / `plan`) and a dashed today marker. The caller converts dates to 0-100 positions; labels closer than one label-width drop to a second row, and the track scrolls horizontally once it holds more milestones than fit.
 - **ProjectHeader** - `ProjectHeader/`. Props: tasks (every task in scope, for the assignee and tag options), savedViews, statuses, priorities, filter, activeSavedViewId + callbacks; methods `refresh`, `notifyMutation`, `setActiveSavedViewId`. Composes PrimaryRow (saved-view ChipButtons, save button) and FilterRow (filter dropdowns, due/archived ChipButtons).
-- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, ProjectCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. ProjectCell (a dot-led outline Chip) is rendered only when the view covers several projects. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date/number editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
+- **Cells** - `cells/`. One `<td>` builder per column: StatusCell, PriorityCell, ProjectCell, TitleCell, DueDateCell, TimeCell, ProgressCell, AssigneesCell, ExpandCell, ActionsCell, SelectCell, CustomFieldCell. ProjectCell (a dot-led outline Chip) is rendered only when the view covers several projects, and takes an `onClick` that opens that project's page. `inlineEdit.ts` (`makeInlineEdit`) is the shared inline text/date/number editor. Adding a table column means adding a cell here, not inline DOM in the renderer.
   - **TitleCell** indents from `--depth` on the parent `TaskRow` (CSS, not an inline style) and draws subtask tree connectors from `treeGuides` + `isLastChild`: one `.pm-tree-guide` span per indent column, the deepest carrying `--elbow`. Pass `treeGuides: null` to indent without lines. The caller reads `config.showSubtreeConnections` to decide.
   - The grid is off by default. `TableRenderer` stamps `config.lineBorders` onto the wrapper as `data-borders`, re-applied on every body fill so a settings change lands without rebuilding the table; cells carry no rules of their own.
 - **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, assignees, dependencies), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`.
@@ -171,7 +175,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
 
 ## Maintenance
 

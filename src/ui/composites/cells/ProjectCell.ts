@@ -4,8 +4,20 @@ import { Chip } from '../../primitives/Chip'
 export class ProjectCell {
   el: HTMLTableCellElement
 
-  constructor(parentRow: HTMLElement, props: { title: string; color: string }) {
+  constructor(parentRow: HTMLElement, props: { title: string; color: string; onClick?: () => void }) {
     this.el = parentRow.createEl('td', { cls: 'pm-table-cell' })
-    new Chip(this.el).setLabel(props.title).setVariant('outline').setSize('sm').setDot(true).setColor(props.color)
+    const chip = new Chip(this.el)
+      .setLabel(props.title)
+      .setVariant('outline')
+      .setSize('sm')
+      .setDot(true)
+      .setColor(props.color)
+    const onClick = props.onClick
+    if (onClick) {
+      chip.setTooltip(`Open ${props.title}`).onClick((e) => {
+        e.stopPropagation()
+        onClick()
+      })
+    }
   }
 }

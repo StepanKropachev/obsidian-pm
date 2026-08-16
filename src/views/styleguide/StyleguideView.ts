@@ -5,6 +5,8 @@ import { DEFAULT_PRIORITIES, DEFAULT_STATUSES, makeTask } from '../../types'
 import { renderDueChip } from '../../ui/composites/dueChip'
 import { renderTagChip } from '../../ui/composites/tagChip'
 import { renderTimeChip } from '../../ui/composites/timeChip'
+import { renderMetricStrip } from '../../ui/composites/metricStrip'
+import { renderMilestoneTimeline } from '../../ui/composites/milestoneTimeline'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
@@ -87,6 +89,8 @@ export class StyleguideView extends ItemView {
     this.group('Composites')
     this.renderDerivedChips()
     this.renderCards()
+    this.renderMetricStrip()
+    this.renderMilestoneTimeline()
     this.renderTable()
     return Promise.resolve()
   }
@@ -367,6 +371,47 @@ export class StyleguideView extends ItemView {
       onDragStart: noop,
       onDragEnd: noop
     })
+  }
+
+  private renderMetricStrip(): void {
+    const sec = this.section('MetricStrip', 'metric-strip')
+    const row = this.row(sec, 'four stats, one with a progress bar, one flagged')
+    renderMetricStrip(row, [
+      {
+        label: 'Progress',
+        value: '62%',
+        sub: 'of 48 tasks',
+        extra: (el) => {
+          new ProgressBar(el).setSize('sm').setValue(62)
+        }
+      },
+      { label: 'Tasks', value: '30 of 48', sub: 'done' },
+      { label: 'Overdue', value: '4', sub: 'tasks past due', alert: true },
+      {
+        label: 'Time',
+        value: '',
+        sub: 'logged / estimate',
+        extra: (el) => {
+          renderTimeChip(el, 96, 140)
+        }
+      }
+    ])
+  }
+
+  private renderMilestoneTimeline(): void {
+    const sec = this.section('MilestoneTimeline', 'milestone-timeline')
+    const row = this.row(sec, 'done / next / planned, with a crowded pair on the lower row')
+    renderMilestoneTimeline(
+      row,
+      [
+        { name: 'Feature freeze', dateLabel: "Jul 24, '26", pos: 4, state: 'done' },
+        { name: 'Internal beta', dateLabel: "Aug 7, '26", pos: 30, state: 'done' },
+        { name: 'Public beta', dateLabel: "Sep 12, '26", pos: 55, state: 'next' },
+        { name: 'Store submission', dateLabel: "Sep 20, '26", pos: 62, state: 'plan' },
+        { name: 'GA release', dateLabel: "Oct 30, '26", pos: 96, state: 'plan' }
+      ],
+      42
+    )
   }
 
   private renderTable(): void {

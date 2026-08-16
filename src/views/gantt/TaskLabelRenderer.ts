@@ -84,7 +84,19 @@ export function renderTaskLabel(
 
   // With one project the rows are all its own; with several, each says where it belongs.
   if (ctx.scope.isMulti) {
-    new Chip(el).setLabel(project.title).setVariant('plain').setSize('sm').setDot(true).setColor(project.color)
+    new Chip(el)
+      .setLabel(project.title)
+      .setVariant('plain')
+      .setSize('sm')
+      .setDot(true)
+      .setColor(project.color)
+      .setTooltip(`Open ${project.title}`)
+      .onClick(
+        safeAsync(async (e: MouseEvent) => {
+          e.stopPropagation()
+          await ctx.plugin.router.openProjectOverview(project.filePath)
+        })
+      )
   }
 
   // A predecessor outside this view draws no arrow, so the row says it is there.

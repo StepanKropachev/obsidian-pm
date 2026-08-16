@@ -5,6 +5,7 @@ import { ProjectStore, VaultIndex } from './store'
 import type { ProjectRef, TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
+import { ProjectOverviewView, PM_PROJECT_OVERVIEW_VIEW_TYPE } from './views/ProjectOverviewView'
 import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
 import { TaskView, PM_TASK_VIEW_TYPE } from './views/TaskView'
 import { registerStyleguide } from './views/styleguide/StyleguideView'
@@ -62,6 +63,7 @@ export default class PMPlugin extends Plugin {
     this.router = new PMViewRouter(this)
 
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
+    this.registerView(PM_PROJECT_OVERVIEW_VIEW_TYPE, (leaf) => new ProjectOverviewView(leaf, this))
     this.registerView(PM_DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this))
     this.registerView(PM_TASK_VIEW_TYPE, (leaf) => new TaskView(leaf, this))
     this.registerTaskNoteSwap()
@@ -190,7 +192,7 @@ export default class PMPlugin extends Plugin {
         const cache = this.app.metadataCache.getFileCache(file)
         if (cache?.frontmatter?.['pm-project'] !== true) return false
         if (checking) return true
-        void md.leaf.setViewState({ type: PM_PROJECT_VIEW_TYPE, state: { filePath: file.path } })
+        void this.router.openProjectOverview(file.path, md.leaf)
         return true
       }
     })

@@ -103,7 +103,11 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
   })
 
   if (ctx.scope.isMulti) {
-    new ProjectCell(row, { title: project.title, color: project.color })
+    new ProjectCell(row, {
+      title: project.title,
+      color: project.color,
+      onClick: safeAsync(() => ctx.plugin.router.openProjectOverview(project.filePath))
+    })
   }
 
   new StatusCell(row, {

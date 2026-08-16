@@ -96,6 +96,12 @@ function openCreateProjectModal(ctx: ProjectListContext): void {
 
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {
   const menu = new Menu()
+  menu.addItem((item) =>
+    item
+      .setTitle('Open tasks')
+      .setIcon('table')
+      .onClick(safeAsync(() => ctx.plugin.router.openScope({ kind: 'project', path: ref.path })))
+  )
   if (ctx.plugin.index.childRefs(ref.path).length) {
     menu.addItem((item) =>
       item

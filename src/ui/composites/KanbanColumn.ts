@@ -17,6 +17,7 @@ export interface KanbanCardData {
   parentTitle?: string
   projectTitle?: string
   projectColor?: string
+  onProjectClick?: () => void
   loggedHours: number
   overdue: boolean
   showTagColors: boolean
@@ -73,6 +74,7 @@ export class KanbanColumn {
         parentTitle: card.parentTitle,
         projectTitle: card.projectTitle,
         projectColor: card.projectColor,
+        onProjectClick: card.onProjectClick,
         loggedHours: card.loggedHours,
         overdue: card.overdue,
         showTagColors: card.showTagColors,

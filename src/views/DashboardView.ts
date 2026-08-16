@@ -73,7 +73,7 @@ export class DashboardView extends ItemView {
       plugin: this.plugin,
       toolbarEl: this.toolbarEl,
       contentEl: this.bodyEl,
-      openProjectFile: (file: TFile) => this.plugin.router.openProject(file)
+      openProjectFile: (file: TFile) => this.plugin.router.openProjectOverview(file.path)
     }
   }
 }
