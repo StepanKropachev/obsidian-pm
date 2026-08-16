@@ -38,14 +38,13 @@ export class PMSettingTab extends PluginSettingTab {
         items: [
           {
             name: 'New project folder',
-            desc: 'Where new projects are created. Existing projects are found wherever they live in the vault.',
+            desc: 'Leave it empty to create them in the vault root.',
             aliases: ['projects folder', 'location'],
             control: {
               type: 'folder',
               key: 'projectsFolder',
               defaultValue: 'Projects',
-              placeholder: 'Projects',
-              validate: (value) => (value.trim() ? undefined : 'Enter a folder name.')
+              placeholder: 'Vault root'
             }
           },
           this.excludedFoldersPage(),

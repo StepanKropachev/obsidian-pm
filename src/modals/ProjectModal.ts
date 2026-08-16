@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal } from 'obsidian'
+import { App, ButtonComponent, Modal, normalizePath } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ProjectConfig, type ProjectPatch, type CustomFieldDef, makeId, makeProject } from '../types'
 import { safeAsync } from '../utils'
@@ -332,7 +332,10 @@ export class ProjectModal extends Modal {
 
           const folder = this.plugin.settings.projectsFolder
           if (!this.existingProject) {
-            const project = makeProject(title, `${folder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`)
+            // An empty folder is the vault root, where the path would otherwise keep a
+            // leading slash that resolves to nothing.
+            const path = normalizePath(`${folder}/${title.replace(/[\\/:*?"<>|]/g, '-')}.md`)
+            const project = makeProject(title, path)
             Object.assign(project, this.draft)
             await this.plugin.store.ensureFolder(folder)
             await this.plugin.store.saveProject(project)
