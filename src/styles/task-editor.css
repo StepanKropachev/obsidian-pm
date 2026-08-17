@@ -410,26 +410,26 @@ button.pm-icon-trigger {
   outline: none;
 }
 
-.pm-task-modal {
-  padding: 0;
-}
-
 /* Dropping .modal's 16px inset lets the header and footer bleed to both edges; the
    overflow:hidden re-clips those bands to the modal's rounded corners. */
-.pm-modal--task {
+.pm-modal--task,
+.pm-modal--create {
   padding: 0;
   overflow: hidden;
 }
 
 /* The editor draws its own close button, so the native corner one would be a second X. */
 .pm-modal--task .modal-close-button,
-.pm-modal--task .modal-header-button {
+.pm-modal--task .modal-header-button,
+.pm-modal--create .modal-close-button,
+.pm-modal--create .modal-header-button {
   display: none;
 }
 
 /* The empty native .modal-header still carries a margin-bottom, which pushes our own
    header and its accent strip off the top edge. */
-.pm-modal--task .modal-header {
+.pm-modal--task .modal-header,
+.pm-modal--create .modal-header {
   display: none;
 }
 

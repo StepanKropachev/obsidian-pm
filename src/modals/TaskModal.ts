@@ -31,7 +31,7 @@ export class TaskModal extends Modal {
   onOpen(): void {
     const { contentEl } = this
     contentEl.empty()
-    contentEl.addClass('pm-task-modal', 'pm-te-surface')
+    contentEl.addClass('pm-te-modal', 'pm-te-surface')
     this.modalEl.addClass('pm-modal', 'pm-modal--task')
     this.editor.mount(contentEl)
   }
