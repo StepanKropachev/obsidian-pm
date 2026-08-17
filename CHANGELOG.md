@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The task menu moves a task and its subtasks to another project
 - A timeline row says when a task depends on something outside the view
 - Priorities can be added, renamed, recolored, and reordered in settings
+- Priority icons can be switched between chevrons, signal bars, arrows, alerts, or none, globally or per project
 - Status and priority icons are picked from a searchable grid of every icon Obsidian knows, or set to an emoji by pasting one into its search field
 - A project's icon is picked from that same grid, so it can be any icon Obsidian knows and not only an emoji
 - TaskNotes tasks can be imported with their dates, dependencies, subtasks, tags, and archive state ([#16](https://github.com/StepanKropachev/obsidian-pm/issues/16))

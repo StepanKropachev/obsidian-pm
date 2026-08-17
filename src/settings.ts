@@ -1,7 +1,7 @@
 import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian'
 import type { SettingDefinitionItem, SettingDefinitionPage } from 'obsidian'
 import type PMPlugin from './main'
-import { type PMSettings, DEFAULT_SETTINGS, makeId } from './types'
+import { type PMSettings, DEFAULT_SETTINGS, PRIORITY_ICON_SET_LABELS, makeId } from './types'
 import { flattenTasks } from './store/TaskTreeOps'
 import {
   countTaskNotesPaletteChanges,
@@ -82,6 +82,16 @@ export class PMSettingTab extends PluginSettingTab {
             desc: 'Give each tag a colored dot derived from its name.',
             aliases: ['appearance'],
             control: { type: 'toggle', key: 'showTagColors' }
+          },
+          {
+            name: 'Priority icons',
+            desc: 'Icon set for priorities that have no icon of their own.',
+            aliases: ['appearance', 'chevrons', 'signal'],
+            control: {
+              type: 'dropdown',
+              key: 'priorityIcons',
+              options: PRIORITY_ICON_SET_LABELS
+            }
           }
         ]
       },

@@ -122,6 +122,7 @@ export interface StatusConfig {
 export interface ProjectConfig {
   statuses?: StatusConfig[]
   priorities?: PriorityConfig[]
+  priorityIcons?: PriorityIconSet
   defaultView?: ViewMode
   autoSchedule?: boolean
   pullForwardOnEarlyFinish?: boolean
@@ -138,6 +139,7 @@ export interface ProjectConfig {
 export interface ResolvedProjectConfig {
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  priorityIcons: PriorityIconSet
   defaultView: ViewMode
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
@@ -154,6 +156,25 @@ export interface PriorityConfig {
   icon: string
 }
 
+export type PriorityIconSet = 'chevrons' | 'signal' | 'arrows' | 'alerts' | 'none'
+
+/** One icon per rank, highest priority first. Ranks past the fifth carry no icon. */
+export const PRIORITY_ICON_SETS: Record<PriorityIconSet, string[]> = {
+  chevrons: ['chevrons-up', 'chevron-up', 'equal', 'chevron-down', 'chevrons-down'],
+  signal: ['signal', 'signal-high', 'signal-medium', 'signal-low', 'signal-zero'],
+  arrows: ['arrow-up', 'arrow-up-right', 'arrow-right', 'arrow-down-right', 'arrow-down'],
+  alerts: ['octagon-alert', 'triangle-alert', 'circle-alert', 'info', 'circle-small'],
+  none: []
+}
+
+export const PRIORITY_ICON_SET_LABELS: Record<PriorityIconSet, string> = {
+  chevrons: 'Chevrons',
+  signal: 'Signal bars',
+  arrows: 'Arrows',
+  alerts: 'Alerts',
+  none: 'None'
+}
+
 export interface PMSettings {
   /** Where new projects are created. Projects are discovered vault-wide, wherever they live. */
   projectsFolder: string
@@ -164,6 +185,8 @@ export interface PMSettings {
   ganttWeekLabel: GanttWeekLabel
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  /** Icons for priorities that don't carry their own. */
+  priorityIcons: PriorityIconSet
   globalTeamMembers: string[]
   notificationsEnabled: boolean
   notificationLeadDays: number
@@ -210,6 +233,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   ganttWeekLabel: 'weekNumber',
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
+  priorityIcons: 'chevrons',
   globalTeamMembers: [],
   showSubtreeConnections: true,
   lineBorders: 'none',

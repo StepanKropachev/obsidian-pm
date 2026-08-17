@@ -122,6 +122,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
   new PriorityCell(row, {
     task,
     priorities: ctx.priorities,
+    priorityIcons: ctx.priorityIcons,
     onChange: safeAsync(async (priority) => {
       await ctx.plugin.store.updateTask(project, task.id, { priority })
       await ctx.onRefresh()

@@ -1137,6 +1137,7 @@ describe('per-project config', () => {
         { id: 'urgent', label: 'Urgent', color: '#ff0000', icon: '' },
         { id: 'later', label: 'Later', color: '#888888', icon: '' }
       ],
+      priorityIcons: 'signal',
       defaultView: 'kanban',
       autoSchedule: false
     }

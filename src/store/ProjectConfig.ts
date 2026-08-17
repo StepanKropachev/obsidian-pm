@@ -26,6 +26,7 @@ export function resolveProjectConfig(project: Project, settings: PMSettings): Re
       (task) => task.priority,
       (id) => ({ id, label: id, color: FALLBACK_COLOR, icon: '' })
     ),
+    priorityIcons: config?.priorityIcons ?? settings.priorityIcons,
     defaultView: config?.defaultView ?? settings.defaultView,
     autoSchedule: config?.autoSchedule ?? settings.autoSchedule,
     pullForwardOnEarlyFinish: config?.pullForwardOnEarlyFinish ?? settings.pullForwardOnEarlyFinish,

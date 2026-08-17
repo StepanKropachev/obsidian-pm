@@ -1,7 +1,15 @@
 import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../../main'
-import type { Task } from '../../types'
-import { DEFAULT_PRIORITIES, DEFAULT_STATUSES, makeTask } from '../../types'
+import {
+  type PriorityConfig,
+  type PriorityIconSet,
+  type Task,
+  DEFAULT_PRIORITIES,
+  DEFAULT_STATUSES,
+  PRIORITY_ICON_SETS,
+  PRIORITY_ICON_SET_LABELS,
+  makeTask
+} from '../../types'
 import { renderDueChip } from '../../ui/composites/dueChip'
 import { renderTagChip } from '../../ui/composites/tagChip'
 import { renderTimeChip } from '../../ui/composites/timeChip'
@@ -45,6 +53,11 @@ export const PM_STYLEGUIDE_VIEW_TYPE = 'pm-styleguide'
 const noop = (): void => undefined
 const noopAsync = (): Promise<void> => Promise.resolve()
 const PEOPLE = ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Margaret Hamilton', 'Edsger Dijkstra']
+/** Five ranks, so every icon of a set shows. */
+const FIVE_PRIORITIES: PriorityConfig[] = [
+  ...DEFAULT_PRIORITIES,
+  { id: 'trivial', label: 'Trivial', color: '#6ba8a0', icon: '' }
+]
 const WIKILINK_PERSON = '[[People/Alan Turing|Alan]]'
 
 /**
@@ -244,9 +257,11 @@ export class StyleguideView extends ItemView {
     for (const status of DEFAULT_STATUSES) {
       renderStatusBadge(statusRow, makeTask({ status: status.id }), DEFAULT_STATUSES, noop)
     }
-    const prioRow = this.row(sec, 'renderPriorityBadge')
-    for (const priority of DEFAULT_PRIORITIES) {
-      renderPriorityBadge(prioRow, makeTask({ priority: priority.id }), DEFAULT_PRIORITIES, noop)
+    for (const iconSet of Object.keys(PRIORITY_ICON_SETS) as PriorityIconSet[]) {
+      const prioRow = this.row(sec, `renderPriorityBadge (${PRIORITY_ICON_SET_LABELS[iconSet]})`)
+      for (const priority of FIVE_PRIORITIES) {
+        renderPriorityBadge(prioRow, makeTask({ priority: priority.id }), FIVE_PRIORITIES, iconSet, noop)
+      }
     }
     const dotRow = this.row(sec, 'renderStatusDot')
     for (const status of DEFAULT_STATUSES) {
@@ -534,7 +549,7 @@ export class StyleguideView extends ItemView {
       })
       new ProjectCell(tr.el, { title: 'Platform', color: '#7a9ec4' })
       new StatusCell(tr.el, { task, statuses: DEFAULT_STATUSES, onChange: noop })
-      new PriorityCell(tr.el, { task, priorities: DEFAULT_PRIORITIES, onChange: noop })
+      new PriorityCell(tr.el, { task, priorities: DEFAULT_PRIORITIES, priorityIcons: 'chevrons', onChange: noop })
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })
       new TimeCell(tr.el, time)
       new ProgressCell(tr.el, { value: task.progress, color: 'var(--interactive-accent)', onSave: noopAsync })

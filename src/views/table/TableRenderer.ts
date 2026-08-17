@@ -1,5 +1,5 @@
 import type PMPlugin from '../../main'
-import type { FilterState, LineBorders, PriorityConfig, StatusConfig } from '../../types'
+import type { FilterState, LineBorders, PriorityConfig, PriorityIconSet, StatusConfig } from '../../types'
 import type { ProjectScope } from '../../store'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
@@ -50,6 +50,7 @@ export interface TableContext {
   /** Resolved once per render pass. */
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  priorityIcons: PriorityIconSet
   showSubtreeConnections: boolean
   lineBorders: LineBorders
   state: TableState

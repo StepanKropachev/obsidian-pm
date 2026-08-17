@@ -1,6 +1,6 @@
 import { Menu } from 'obsidian'
-import type { Task, TaskStatus, TaskPriority, StatusConfig, PriorityConfig } from '../types'
-import { getStatusConfig, getPriorityConfig, formatBadgeText, isIconName } from '../utils'
+import type { Task, TaskStatus, TaskPriority, StatusConfig, PriorityConfig, PriorityIconSet } from '../types'
+import { getStatusConfig, getPriorityConfig, formatBadgeText, isIconName, priorityIcon } from '../utils'
 import { Chip } from './primitives/Chip'
 
 /** Named icons only. Emoji and text render inline through formatBadgeText instead. */
@@ -39,17 +39,11 @@ export function renderStatusBadge(
   return badge.el
 }
 
-export const PRIORITY_CHEVRONS: Record<string, string> = {
-  critical: 'chevrons-up',
-  high: 'chevron-up',
-  medium: 'equal',
-  low: 'chevron-down'
-}
-
 export function renderPriorityBadge(
   container: HTMLElement,
   task: Task,
   priorities: PriorityConfig[],
+  iconSet: PriorityIconSet,
   onChange: (priority: TaskPriority) => void
 ): HTMLElement {
   const config = getPriorityConfig(priorities, task.priority)
@@ -57,12 +51,8 @@ export function renderPriorityBadge(
     .setLabel(formatBadgeText(config?.icon, config?.label ?? task.priority))
     .setColor(config?.color ?? 'var(--text-muted)')
     .setVariant('plain')
-  const icon = namedIcon(config)
-  if (icon) {
-    badge.setLeadingIcon(icon)
-  } else if (!config?.icon) {
-    badge.setLeadingIcon(PRIORITY_CHEVRONS[task.priority] ?? 'equal')
-  }
+  const icon = priorityIcon(priorities, task.priority, iconSet)
+  if (isIconName(icon)) badge.setLeadingIcon(icon)
   badge.onClick((e) => {
     const menu = new Menu()
     for (const p of priorities) {
@@ -71,8 +61,8 @@ export function renderPriorityBadge(
           .setTitle(formatBadgeText(p.icon, p.label))
           .setChecked(p.id === task.priority)
           .onClick(() => onChange(p.id))
-        const itemIcon = namedIcon(p)
-        if (itemIcon) item.setIcon(itemIcon)
+        const itemIcon = priorityIcon(priorities, p.id, iconSet)
+        if (isIconName(itemIcon)) item.setIcon(itemIcon)
       })
     }
     menu.showAtMouseEvent(e)

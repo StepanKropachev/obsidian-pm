@@ -4,8 +4,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { Chip } from '../ui/primitives/Chip'
-import { PRIORITY_CHEVRONS } from '../ui/StatusBadge'
-import { isTerminalStatus, stringToColor } from '../utils'
+import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
@@ -49,7 +48,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
   const { task, project, plugin, rerender, shownExtras } = ctx
-  const { statuses, priorities } = plugin.store.configFor(project)
+  const { statuses, priorities, priorityIcons } = plugin.store.configFor(project)
   const grid = container.createDiv('pm-prop-grid')
 
   renderPropRow(
@@ -139,7 +138,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           id: p.id,
           label: p.label,
           color: p.color,
-          icon: p.icon || PRIORITY_CHEVRONS[p.id]
+          icon: priorityIcon(priorities, p.id, priorityIcons)
         })),
         onChange: (id) => {
           task.priority = id
