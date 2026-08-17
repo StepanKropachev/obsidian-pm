@@ -36,31 +36,6 @@
   max-width: 560px;
 }
 
-.pm-create-block + .pm-create-block,
-.pm-create-grid {
-  margin-top: 16px;
-}
-.pm-create-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-.pm-create-grid .pm-create-block + .pm-create-block {
-  margin-top: 0;
-}
-
-.pm-create-notice {
-  min-height: 16px;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-error);
-}
-
-.pm-create .pm-modal-btn-row {
-  margin-top: 24px;
-}
-
 .pm-edit-desc {
   min-height: 72px;
   resize: vertical;
@@ -87,6 +62,12 @@
 .pm-edit-danger-title {
   font-size: var(--font-ui-small);
   font-weight: 500;
+}
+
+/* The swatch is shorter than the pickers beside it, so the cell keeps the control height
+   and centers it against them. */
+.pm-prop-color {
+  min-height: 30px;
 }
 
 .pm-color-custom {

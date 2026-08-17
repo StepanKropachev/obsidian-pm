@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The project list counts how many projects have tasks past due
 - Project settings open in a page of their own, keeping each change as it is made
 - Creating a project asks for its name, icon, color, parent, members, and description in one dialog
+- The new project dialog is laid out like the task editor, with a large name field and a properties grid
 - A project's color is chosen from the color picker, replacing the ten preset swatches
 - The projects folder setting decides where new projects are created, not which projects the plugin shows
 - Table rows have no line between them unless line borders are turned on
