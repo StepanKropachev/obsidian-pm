@@ -64,26 +64,34 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
   }
 
   const wrapper = ctx.contentEl.createDiv('pm-table-wrapper')
+  wrapper.setAttr('data-borders', ctx.plugin.settings.lineBorders)
   const table = wrapper.createEl('table', { cls: 'pm-table pm-project-table' })
   const headRow = table.createEl('thead').createEl('tr')
   for (const column of COLUMNS) headRow.createEl('th', { text: column.label, cls: column.cls })
-  renderRows(ctx, table.createEl('tbody'), roots, 0)
+  renderRows(ctx, table.createEl('tbody'), roots, [])
 }
 
-/** Sub-projects follow their parent, indented, unless the parent is collapsed. */
-function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRef[], depth: number): void {
+/**
+ * Sub-projects follow their parent, indented, unless the parent is collapsed. `trail` says,
+ * per ancestor column, whether that ancestor still has rows below it, so the connectors
+ * carry down through the rows in between.
+ */
+function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRef[], trail: boolean[]): void {
   const index = ctx.plugin.index
-  for (const ref of refs) {
+  refs.forEach((ref, i) => {
     const children = index.childRefs(ref.path)
     const collapsed = ctx.plugin.isProjectCollapsed(ref.path)
     const { total, done } = children.length ? index.rollupCounts(ref) : index.counts(ref)
     const { overdue, latestDue } = children.length ? index.rollupDueSummary(ref) : index.dueSummary(ref)
+    const isLastChild = i === refs.length - 1
 
     new ProjectRow(tbody, {
       title: ref.title,
       icon: ref.icon,
       color: ref.color,
-      depth,
+      depth: trail.length,
+      treeGuides: ctx.plugin.settings.showSubtreeConnections ? trail : null,
+      isLastChild,
       childCount: children.length,
       collapsed,
       tasksDone: done,
@@ -101,8 +109,8 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
       onActions: (e) => openProjectContextMenu(ctx, ref, e)
     })
 
-    if (children.length && !collapsed) renderRows(ctx, tbody, children, depth + 1)
-  }
+    if (children.length && !collapsed) renderRows(ctx, tbody, children, [...trail, !isLastChild])
+  })
 }
 
 function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: MouseEvent): void {

@@ -4,12 +4,16 @@ import { CollapseToggle } from '../primitives/CollapseToggle'
 import { IconButton } from '../primitives/IconButton'
 import { ProgressBar } from '../primitives/ProgressBar'
 import { renderDueChip, type DueUrgency } from './dueChip'
+import { renderTreeGuides } from './treeGuides'
 
 export interface ProjectRowProps {
   title: string
   icon: string
   color: string
   depth: number
+  /** One entry per indent column: does an ancestor at that column still have rows below it. Null draws no connectors. */
+  treeGuides: boolean[] | null
+  isLastChild: boolean
   /** Sub-projects below this one. Above zero, the counts are the caller's subtree rollup. */
   childCount: number
   collapsed: boolean
@@ -35,7 +39,7 @@ export class ProjectRow {
     this.el = tbody.createEl('tr', { cls: 'pm-table-row pm-project-row' })
     this.el.style.setProperty('--depth', String(props.depth))
 
-    const expand = this.el.createEl('td', { cls: 'pm-table-cell pm-project-row-expand' })
+    const expand = this.el.createEl('td', { cls: 'pm-table-cell-expand' })
     if (props.childCount > 0) {
       new CollapseToggle(expand, {
         collapsed: props.collapsed,
@@ -44,17 +48,13 @@ export class ProjectRow {
       })
     }
 
-    const title = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-title' })
-    title.createSpan({ text: props.icon, cls: 'pm-project-row-icon' })
-    title.createSpan({ text: props.title, cls: 'pm-project-row-title' })
-    if (props.childCount > 0) {
-      title.createSpan({
-        cls: 'pm-project-row-children',
-        text: props.childCount === 1 ? '1 sub-project' : `${props.childCount} sub-projects`
-      })
-    }
+    const title = this.el.createEl('td', { cls: 'pm-table-cell-title' })
+    renderTreeGuides(title, props.treeGuides, props.isLastChild)
+    const inner = title.createDiv('pm-table-title-inner')
+    inner.createSpan({ text: props.icon, cls: 'pm-project-row-icon' })
+    inner.createSpan({ text: props.title, cls: 'pm-task-title-text' })
 
-    const progress = this.el.createEl('td', { cls: 'pm-table-cell pm-project-row-progress' })
+    const progress = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-progress' })
     new ProgressBar(progress)
       .setSize('sm')
       .setValue(props.tasksTotal ? (props.tasksDone / props.tasksTotal) * 100 : 0)
@@ -72,14 +72,14 @@ export class ProjectRow {
         .setStrong()
     }
 
-    const members = this.el.createEl('td', { cls: 'pm-table-cell' })
+    const members = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-assignees' })
     new AvatarStack(members).setNames(props.members).setMax(3).setSize('sm')
 
     const due = this.el.createEl('td', { cls: 'pm-table-cell' })
     if (props.dueLabel) renderDueChip(due, props.dueLabel, props.dueUrgency, 'sm')
     else due.createSpan({ cls: 'pm-project-row-empty', text: '—' })
 
-    const actions = this.el.createEl('td', { cls: 'pm-table-cell pm-project-row-actions' })
+    const actions = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-actions' })
     new IconButton(actions)
       .setIcon('more-horizontal')
       .setTooltip('Project actions')
