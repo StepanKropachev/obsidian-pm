@@ -327,7 +327,7 @@ export class StyleguideView extends ItemView {
     const sec = this.section('ProjectRow', 'project-row')
     sec.createDiv({
       cls: 'pm-sg-caption',
-      text: 'The project list: a parent with its rolled-up counts, an indented child, and an overdue one.'
+      text: 'The project list: a parent with its rolled-up counts, a child on a tree connector, and a collapsed one.'
     })
     const table = sec.createEl('table', { cls: 'pm-table pm-project-table' })
     const head = table.createEl('thead').createEl('tr')
@@ -340,6 +340,8 @@ export class StyleguideView extends ItemView {
       icon: '🚀',
       color: '#7a9ec4',
       depth: 0,
+      treeGuides: [],
+      isLastChild: false,
       childCount: 2,
       collapsed: false,
       tasksDone: 12,
@@ -358,6 +360,8 @@ export class StyleguideView extends ItemView {
       icon: '📋',
       color: '#8b72be',
       depth: 1,
+      treeGuides: [true],
+      isLastChild: true,
       childCount: 0,
       collapsed: false,
       tasksDone: 4,
@@ -376,6 +380,8 @@ export class StyleguideView extends ItemView {
       icon: '🛠',
       color: '#767491',
       depth: 0,
+      treeGuides: [],
+      isLastChild: true,
       childCount: 1,
       collapsed: true,
       tasksDone: 31,

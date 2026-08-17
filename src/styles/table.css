@@ -152,11 +152,15 @@ button.pm-chip-btn--active:hover {
   position: relative;
   padding: 8px 10px 8px calc(var(--depth, 0) * var(--pm-tree-indent) + 8px);
   vertical-align: middle;
+  min-width: 180px;
+}
+/* The cell stays a real table cell, so a row made taller by another column still centers
+   the title; the title, its badges and its tags are this flex row inside it. */
+.pm-table-title-inner {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  min-width: 180px;
 }
 
 /* One span per indent column; the deepest is the elbow into this row's title. */

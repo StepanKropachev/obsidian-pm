@@ -2,6 +2,7 @@ import type { Task } from '../../../types'
 import { Chip } from '../../primitives/Chip'
 import { IconButton } from '../../primitives/IconButton'
 import { renderTagChip } from '../tagChip'
+import { renderTreeGuides } from '../treeGuides'
 import { makeInlineEdit } from './inlineEdit'
 
 export interface TitleCellProps {
@@ -22,13 +23,14 @@ export class TitleCell {
     const { task } = props
     this.el = parentRow.createEl('td', { cls: 'pm-table-cell-title' })
     renderTreeGuides(this.el, props.treeGuides, props.isLastChild)
+    const inner = this.el.createDiv('pm-table-title-inner')
 
-    const titleSpan = this.el.createSpan({ text: task.title, cls: 'pm-task-title-text' })
+    const titleSpan = inner.createSpan({ text: task.title, cls: 'pm-task-title-text' })
     titleSpan.addEventListener('click', () => props.onTitleClick())
     titleSpan.addEventListener('dblclick', (e) => {
       e.stopPropagation()
       makeInlineEdit({
-        container: this.el,
+        container: inner,
         display: titleSpan,
         inputType: 'text',
         value: task.title,
@@ -36,7 +38,7 @@ export class TitleCell {
       })
     })
 
-    new IconButton(this.el)
+    new IconButton(inner)
       .setIcon('plus')
       .setTooltip('Add subtask')
       .setRevealOnHover(true)
@@ -46,7 +48,7 @@ export class TitleCell {
       })
 
     if (task.type === 'milestone') {
-      new Chip(this.el)
+      new Chip(inner)
         .setLabel('M')
         .setVariant('solid')
         .setSize('sm')
@@ -54,7 +56,7 @@ export class TitleCell {
         .setTooltip('Milestone')
     }
     if (task.type === 'subtask') {
-      new Chip(this.el)
+      new Chip(inner)
         .setLabel('Sub')
         .setVariant('solid')
         .setSize('sm')
@@ -62,7 +64,7 @@ export class TitleCell {
         .setTooltip('Subtask')
     }
     if (task.recurrence) {
-      new Chip(this.el)
+      new Chip(inner)
         .setLabel('R')
         .setVariant('solid')
         .setSize('sm')
@@ -70,7 +72,7 @@ export class TitleCell {
         .setTooltip('Recurring')
     }
     if (task.archived) {
-      new Chip(this.el)
+      new Chip(inner)
         .setLabel('Archived')
         .setVariant('solid')
         .setSize('sm')
@@ -79,22 +81,10 @@ export class TitleCell {
     }
 
     if (task.tags.length) {
-      const tagRow = this.el.createDiv('pm-table-tags')
+      const tagRow = inner.createDiv('pm-table-tags')
       for (const tag of task.tags) {
         renderTagChip(tagRow, tag, props.showTagColors)
       }
     }
-  }
-}
-
-function renderTreeGuides(cell: HTMLElement, guides: boolean[] | null, isLastChild: boolean): void {
-  if (!guides?.length) return
-  const elbow = guides.length - 1
-  for (let level = 0; level < guides.length; level++) {
-    if (level !== elbow && !guides[level]) continue
-    const cls = level === elbow ? 'pm-tree-guide pm-tree-guide--elbow' : 'pm-tree-guide'
-    const guide = cell.createSpan({ cls })
-    if (level === elbow && isLastChild) guide.addClass('pm-tree-guide--last')
-    guide.style.setProperty('--level', String(level))
   }
 }

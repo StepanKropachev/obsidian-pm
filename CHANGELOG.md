@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
 - The project list counts how many projects have tasks past due
+- Sub-projects in the project list are joined to their parent by tree lines, which can be turned off with the show subtree connections setting
+- The project list draws lines between rows, between columns, or both, following the line borders setting
 - Project settings open in a page of their own, keeping each change as it is made
 - Creating a project asks for its name, icon, color, parent, members, and description in one dialog
 - The new project dialog is laid out like the task editor, with a large name field and a properties grid
@@ -72,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A task title sat above the middle of its row when another column made the row taller
 - A change made in one view of a project was undone by the next click in another view of the same project ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A project open in two views showed the older state in one of them ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A task edited in the task editor lost changes made to it elsewhere while the editor was open

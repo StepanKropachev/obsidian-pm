@@ -186,40 +186,19 @@
   cursor: pointer;
 }
 
-.pm-project-row-expand {
-  width: 28px;
-  padding-right: 0;
-}
-
 .pm-project-row-icon {
   font-size: 15px;
   line-height: 1;
 }
-.pm-project-row-title {
-  font-weight: 500;
+.pm-project-row:hover .pm-task-title-text {
+  color: var(--interactive-accent);
 }
-.pm-project-row:hover .pm-project-row-title {
-  color: var(--text-accent);
-}
-.pm-project-row-children,
 .pm-project-row-empty {
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
 }
 
-.pm-project-row-progress {
-  width: 140px;
-}
-.pm-project-row-progress .pm-progress {
-  width: 120px;
-}
-
 .pm-project-row-tasks {
   color: var(--text-muted);
   margin-right: 6px;
-}
-
-.pm-project-row-actions {
-  width: 40px;
-  text-align: right;
 }
