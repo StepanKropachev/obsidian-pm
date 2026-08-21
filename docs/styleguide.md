@@ -59,7 +59,7 @@ The button sibling of `Chip`: a compact native button with an optional persisten
 Initials disc for a person; the stack renders several with a `+N` overflow badge.
 
 - API: `new Avatar(parent).setName(raw).setSize('md'|'sm')`; `new AvatarStack(parent).setNames(string[]).setMax(n).setSize('md'|'sm')`
-- `displayName(raw)` (exported from `Avatar.ts`) resolves `[[wikilink|alias]]` names; `setName` applies it automatically
+- `displayName(raw)` (exported from `utils.ts`) resolves `[[wikilink|alias]]` names; `setName` applies it automatically
 - CSS: `pm-avatar`, `--sm`, `--more`; `pm-avatar-stack`; background from `stringToColor`
 - Use when: any assignee/member display
 - Not when: you need the raw name as text (use `displayName` yourself)

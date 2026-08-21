@@ -11,7 +11,7 @@ import {
   makeId,
   PRIORITY_ICON_SET_LABELS
 } from '../types'
-import { safeAsync, truncateTitle } from '../utils'
+import { displayName, safeAsync, truncateTitle } from '../utils'
 import { confirmDialog, promptText } from '../ui/ModalFactory'
 import { renderAddButton } from '../ui/composites/addButton'
 import { renderChipList, renderPropRow } from '../ui/FormField'
@@ -234,6 +234,7 @@ export class ProjectEditView extends ItemView {
     const draw = (): void => {
       renderChipList(list, project.teamMembers, {
         variant: 'accent',
+        labelFn: displayName,
         onRemove: (member) => {
           this.save({ teamMembers: project.teamMembers.filter((name) => name !== member) })
           draw()

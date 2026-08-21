@@ -4,7 +4,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { Chip } from '../ui/primitives/Chip'
-import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
+import { dedupeByDisplayName, displayName, isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
@@ -200,7 +200,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'Assignees',
     () => {
       const cell = createDiv('pm-prop-value')
-      const allMembers = () => [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
+      const allMembers = () => dedupeByDisplayName([...project.teamMembers, ...plugin.settings.globalTeamMembers])
       renderMultiSelect({
         container: cell,
         avatarStack: true,
@@ -208,7 +208,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         addLabel: 'Assign',
         placeholder: 'Search people…',
         selected: () => task.assignees,
-        options: () => allMembers().map((m) => ({ id: m, label: m })),
+        options: () => allMembers().map((m) => ({ id: m, label: displayName(m) })),
         add: (id) => {
           if (!task.assignees.includes(id)) task.assignees.push(id)
         },

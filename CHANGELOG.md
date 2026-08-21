@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Assignee lists sort by the name shown rather than by the link behind it
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
 - The project list counts how many projects have tasks past due
 - Sub-projects in the project list are joined to their parent by tree lines, which can be turned off with the show subtree connections setting
@@ -74,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An assignee whose name is a link showed as raw link text in the assignee filter, the bulk assign menu, the timeline tooltip, and the task editor
+- The assignee filter skipped tasks that wrote the same person's name a different way
 - A task title sat above the middle of its row when another column made the row taller
 - A change made in one view of a project was undone by the next click in another view of the same project ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A project open in two views showed the older state in one of them ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))

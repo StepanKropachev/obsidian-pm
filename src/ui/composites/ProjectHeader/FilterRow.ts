@@ -4,7 +4,7 @@ import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
 import { ChipButton } from '../../primitives/ChipButton'
-import { formatBadgeText } from '../../../utils'
+import { displayName, formatBadgeText } from '../../../utils'
 
 export interface FilterRowProps {
   tasks: Task[]
@@ -72,7 +72,7 @@ export class FilterRow {
         this.el,
         'Assignee',
         filter.assignees,
-        allAssignees.map((a) => ({ id: a, label: a })),
+        allAssignees.map((a) => ({ id: a, label: displayName(a) })),
         (selected) => {
           filter.assignees = selected
           notify()

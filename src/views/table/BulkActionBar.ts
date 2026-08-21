@@ -1,7 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
-import { formatBadgeText } from '../../utils'
+import { displayName, formatBadgeText } from '../../utils'
 import { today } from '../../dates'
 import { promptText } from '../../ui/ModalFactory'
 import { TaskPickerModal } from '../../modals/PickerModals'
@@ -82,7 +82,9 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
       ...ctx.plugin.settings.globalTeamMembers
     ])
     for (const m of allMembers) {
-      menu.addItem((item) => item.setTitle(m).onClick(() => onAction({ type: 'set-assignee', assignee: m })))
+      menu.addItem((item) =>
+        item.setTitle(displayName(m)).onClick(() => onAction({ type: 'set-assignee', assignee: m }))
+      )
     }
     menu.addSeparator()
     menu.addItem((item) =>
