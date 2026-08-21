@@ -1,6 +1,6 @@
 import type { Task, TaskPriority, StatusConfig, PriorityConfig } from '../../types'
 import type { TableState } from './TableRenderer'
-import { statusSortOrder } from '../../utils'
+import { displayName, statusSortOrder } from '../../utils'
 
 export function compareTask(
   a: Task,
@@ -20,7 +20,7 @@ export function compareTask(
     case 'due':
       return dir * (a.due || 'zzz').localeCompare(b.due || 'zzz')
     case 'assignees':
-      return dir * (a.assignees[0] ?? '').localeCompare(b.assignees[0] ?? '')
+      return dir * displayName(a.assignees[0] ?? '').localeCompare(displayName(b.assignees[0] ?? ''))
     case 'progress':
       return dir * (a.progress - b.progress)
     default:

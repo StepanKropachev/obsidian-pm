@@ -1,6 +1,6 @@
 import { parsePlainDate, Temporal, today } from '../dates'
 import type { DueDateFilter, FilterState, StatusConfig, Task } from '../types'
-import { isTerminalStatus } from '../utils'
+import { displayName, isTerminalStatus } from '../utils'
 import type { FlatTask } from './TaskTreeOps'
 
 export function isFilterActive(filter: FilterState): boolean {
@@ -45,7 +45,12 @@ export function matchesFilter(task: Task, filter: FilterState, statuses: StatusC
   }
   if (filter.statuses.length && !filter.statuses.includes(task.status)) return false
   if (filter.priorities.length && !filter.priorities.includes(task.priority)) return false
-  if (filter.assignees.length && !task.assignees.some((a) => filter.assignees.includes(a))) return false
+  if (
+    filter.assignees.length &&
+    !task.assignees.some((a) => filter.assignees.some((f) => displayName(f) === displayName(a)))
+  ) {
+    return false
+  }
   if (filter.tags.length && !task.tags.some((t) => filter.tags.includes(t))) return false
   if (filter.dueDateFilter !== 'any' && !matchDueDateFilter(task, filter.dueDateFilter, statuses)) return false
   return true

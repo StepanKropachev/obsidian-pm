@@ -216,3 +216,25 @@ describe('applyTaskFilterFlat', () => {
     ])
   })
 })
+
+describe('assignee matching across spellings', () => {
+  it('matches a wikilink assignee against a plain-name filter', () => {
+    const t = task({ id: 'a', assignees: ['[[People/John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['John Doe'] }))).toBe(true)
+  })
+
+  it('matches a plain-name assignee against a wikilink filter', () => {
+    const t = task({ id: 'a', assignees: ['John Doe'] })
+    expect(matchesFilter(t, filter({ assignees: ['[[John Doe]]'] }))).toBe(true)
+  })
+
+  it('matches through an alias', () => {
+    const t = task({ id: 'a', assignees: ['[[People/jdoe|John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['John Doe'] }))).toBe(true)
+  })
+
+  it('still rejects a different person', () => {
+    const t = task({ id: 'a', assignees: ['[[People/John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['Anna Reid'] }))).toBe(false)
+  })
+})
