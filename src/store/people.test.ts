@@ -5,6 +5,8 @@ import {
   createPersonLink,
   createPersonNote,
   personCandidates,
+  personKey,
+  personKeyer,
   personLink,
   personNotes,
   resolvePerson
@@ -126,5 +128,42 @@ describe('createPersonLink', () => {
     const link = await createPersonLink(app, 'People', 'Jane Doe', 'Projects/P.md')
     expect(link).toBe('[[Jane Doe]]')
     expect(resolvePerson(app, link, 'Projects/P.md').path).toBe('People/Jane Doe.md')
+  })
+})
+
+describe('personKey', () => {
+  it('keys a link by the note it points at', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(personKey(app, '[[Jane Doe]]')).toBe('People/Jane Doe.md')
+  })
+
+  it('keys an alias and a full path to the same note alike', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(personKey(app, '[[People/Jane Doe|JD]]')).toBe(personKey(app, '[[Jane Doe]]'))
+  })
+
+  it('tells two people with the same name apart by their notes', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md', 'Contacts/Jane Doe.md'])
+    expect(personKey(app, '[[People/Jane Doe]]')).not.toBe(personKey(app, '[[Contacts/Jane Doe]]'))
+  })
+
+  it('groups a typed name with the link to that same note', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(personKey(app, 'Jane Doe')).toBe(personKey(app, '[[Jane Doe]]'))
+  })
+
+  it('falls back to the name when nothing in the vault matches', async () => {
+    const app = await appWithPeople([])
+    expect(personKey(app, 'Jane Doe')).toBe('Jane Doe')
+    expect(personKey(app, '[[Jane Doe]]')).toBe('Jane Doe')
+  })
+})
+
+describe('personKeyer', () => {
+  it('gives the same answer as personKey', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    const keyer = personKeyer(app)
+    expect(keyer('[[Jane Doe]]')).toBe(personKey(app, '[[Jane Doe]]'))
+    expect(keyer('[[Jane Doe]]')).toBe('People/Jane Doe.md')
   })
 })

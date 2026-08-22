@@ -11,6 +11,7 @@ export interface FilterRowProps {
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   filter: FilterState
+  personKeyOf: (raw: string) => string
   onFilterChange: () => void
   onClear: () => void
 }
@@ -66,7 +67,7 @@ export class FilterRow {
       }
     )
 
-    const allAssignees = collectAllAssignees(tasks)
+    const allAssignees = collectAllAssignees(tasks, undefined, this.props.personKeyOf)
     if (allAssignees.length) {
       renderFilterDropdown(
         this.el,

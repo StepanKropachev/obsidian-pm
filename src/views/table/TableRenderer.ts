@@ -1,6 +1,6 @@
 import type PMPlugin from '../../main'
 import type { FilterState, LineBorders, PriorityConfig, PriorityIconSet, StatusConfig } from '../../types'
-import type { ProjectScope } from '../../store'
+import { personKeyer, type ProjectScope } from '../../store'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
@@ -184,7 +184,7 @@ function fillTableBody(ctx: TableContext): void {
 
   let flat = flattenTasks(ctx.scope.tasks())
   const hasActiveFilter = isFilterActive(ctx.state.filter)
-  flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.statuses)
+  flat = applyTaskFilterFlat(flat, ctx.state.filter, ctx.statuses, personKeyer(ctx.plugin.app))
 
   const filteredIds = new Set(flat.map((f) => f.task.id))
 

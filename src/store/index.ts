@@ -42,6 +42,8 @@ export {
   createPersonLink,
   createPersonNote,
   personCandidates,
+  personKey,
+  personKeyer,
   personLink,
   personNotes,
   resolvePeople,

@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An assignee whose name is a link showed as raw link text in the assignee filter, the bulk assign menu, the timeline tooltip, and the task editor
 - The assignee filter skipped tasks that wrote the same person's name a different way
+- Two people with the same name were treated as one by the assignee filter, when each had their own note
 - A task title sat above the middle of its row when another column made the row taller
 - A change made in one view of a project was undone by the next click in another view of the same project ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A project open in two views showed the older state in one of them ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))

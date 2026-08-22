@@ -1,8 +1,8 @@
 import { type App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
-import { createPersonLink, personCandidates, type ProjectRef } from '../store'
-import { dedupeByDisplayName, displayName, safeAsync } from '../utils'
+import { createPersonLink, personCandidates, personKeyer, type ProjectRef } from '../store'
+import { dedupePeople, displayName, safeAsync } from '../utils'
 import { TaskModal } from '../modals/TaskModal'
 import { PersonPickerModal, ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
@@ -276,7 +276,7 @@ export function openPersonPicker(
   const folder = plugin.settings.peopleFolder
   new PersonPickerModal(
     plugin.app,
-    dedupeByDisplayName(known).map((value) => ({ value, name: displayName(value) })),
+    dedupePeople(known, personKeyer(plugin.app)).map((value) => ({ value, name: displayName(value) })),
     (query) => personCandidates(plugin.app, folder, query, sourcePath).map((c) => ({ value: c.link, name: c.name })),
     safeAsync(async (choice, create) => {
       const value = create ? await createPersonLink(plugin.app, folder, choice.name, sourcePath) : choice.value

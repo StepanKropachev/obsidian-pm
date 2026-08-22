@@ -2,7 +2,8 @@ import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
 import { renderChipList } from '../ui/FormField'
-import { dedupeByDisplayName, displayName, stringifyCustomValue } from '../utils'
+import { dedupePeople, displayName, stringifyCustomValue } from '../utils'
+import { personKeyer } from '../store'
 
 export function renderCustomFieldInput(
   cf: CustomFieldDef,
@@ -94,7 +95,7 @@ export function renderCustomFieldInput(
       const input = wrap.createEl('input', { type: 'text', cls: 'pm-prop-text' })
       input.value = stringifyCustomValue(currentVal)
       input.placeholder = 'Person name'
-      const all = dedupeByDisplayName([...project.teamMembers, ...plugin.settings.globalTeamMembers])
+      const all = dedupePeople([...project.teamMembers, ...plugin.settings.globalTeamMembers], personKeyer(plugin.app))
       input.setAttribute('list', `pm-persons-${cf.id}`)
       const dl = wrap.createEl('datalist', { attr: { id: `pm-persons-${cf.id}` } })
       for (const m of all) dl.createEl('option', { value: displayName(m) })

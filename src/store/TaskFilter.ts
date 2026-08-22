@@ -26,7 +26,12 @@ export function countActiveFilters(filter: FilterState): number {
   return count
 }
 
-export function matchesFilter(task: Task, filter: FilterState, statuses: StatusConfig[] = []): boolean {
+export function matchesFilter(
+  task: Task,
+  filter: FilterState,
+  statuses: StatusConfig[] = [],
+  keyOf: (raw: string) => string = displayName
+): boolean {
   if (task.archived && !filter.showArchived) return false
   const q = filter.text.trim().toLowerCase()
   if (q) {
@@ -47,7 +52,7 @@ export function matchesFilter(task: Task, filter: FilterState, statuses: StatusC
   if (filter.priorities.length && !filter.priorities.includes(task.priority)) return false
   if (
     filter.assignees.length &&
-    !task.assignees.some((a) => filter.assignees.some((f) => displayName(f) === displayName(a)))
+    !task.assignees.some((a) => filter.assignees.some((f) => keyOf(f) === keyOf(a)))
   ) {
     return false
   }
@@ -56,18 +61,28 @@ export function matchesFilter(task: Task, filter: FilterState, statuses: StatusC
   return true
 }
 
-export function applyTaskFilter(tasks: Task[], filter: FilterState, statuses: StatusConfig[] = []): Task[] {
+export function applyTaskFilter(
+  tasks: Task[],
+  filter: FilterState,
+  statuses: StatusConfig[] = [],
+  keyOf?: (raw: string) => string
+): Task[] {
   return tasks
-    .filter((t) => matchesFilter(t, filter, statuses))
-    .map((t) => (t.subtasks.length ? { ...t, subtasks: applyTaskFilter(t.subtasks, filter, statuses) } : t))
+    .filter((t) => matchesFilter(t, filter, statuses, keyOf))
+    .map((t) => (t.subtasks.length ? { ...t, subtasks: applyTaskFilter(t.subtasks, filter, statuses, keyOf) } : t))
 }
 
 /** Lifts a matching descendant into its dropped ancestor's slot, so it doesn't disappear. */
-export function applyTaskFilterPromote(tasks: Task[], filter: FilterState, statuses: StatusConfig[] = []): Task[] {
+export function applyTaskFilterPromote(
+  tasks: Task[],
+  filter: FilterState,
+  statuses: StatusConfig[] = [],
+  keyOf?: (raw: string) => string
+): Task[] {
   const result: Task[] = []
   for (const t of tasks) {
-    const filteredSubs = t.subtasks.length ? applyTaskFilterPromote(t.subtasks, filter, statuses) : []
-    if (matchesFilter(t, filter, statuses)) {
+    const filteredSubs = t.subtasks.length ? applyTaskFilterPromote(t.subtasks, filter, statuses, keyOf) : []
+    if (matchesFilter(t, filter, statuses, keyOf)) {
       result.push({ ...t, subtasks: filteredSubs })
     } else {
       result.push(...filteredSubs)
@@ -76,8 +91,13 @@ export function applyTaskFilterPromote(tasks: Task[], filter: FilterState, statu
   return result
 }
 
-export function applyTaskFilterFlat(flat: FlatTask[], filter: FilterState, statuses: StatusConfig[] = []): FlatTask[] {
-  return flat.filter(({ task }) => matchesFilter(task, filter, statuses))
+export function applyTaskFilterFlat(
+  flat: FlatTask[],
+  filter: FilterState,
+  statuses: StatusConfig[] = [],
+  keyOf?: (raw: string) => string
+): FlatTask[] {
+  return flat.filter(({ task }) => matchesFilter(task, filter, statuses, keyOf))
 }
 
 function matchDueDateFilter(task: Task, filter: DueDateFilter, statuses: StatusConfig[]): boolean {

@@ -1,6 +1,6 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
-import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
+import { flattenTasks, collectAllAssignees, collectAllTags, personKeyer } from '../../store'
 import { displayName, formatBadgeText } from '../../utils'
 import { today } from '../../dates'
 import { openPersonPicker, promptText } from '../../ui/ModalFactory'
@@ -77,10 +77,11 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
-    const allMembers = collectAllAssignees(ctx.scope.tasks(), [
-      ...ctx.scope.teamMembers(),
-      ...ctx.plugin.settings.globalTeamMembers
-    ])
+    const allMembers = collectAllAssignees(
+      ctx.scope.tasks(),
+      [...ctx.scope.teamMembers(), ...ctx.plugin.settings.globalTeamMembers],
+      personKeyer(ctx.plugin.app)
+    )
     for (const m of allMembers) {
       menu.addItem((item) =>
         item.setTitle(displayName(m)).onClick(() => onAction({ type: 'set-assignee', assignee: m }))

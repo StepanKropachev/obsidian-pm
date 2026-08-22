@@ -1,6 +1,6 @@
 import type { Task } from '../types'
 import { makeId } from '../types'
-import { dedupeByDisplayName } from '../utils'
+import { dedupePeople } from '../utils'
 
 export interface FlatTask {
   task: Task
@@ -127,7 +127,11 @@ export function filterArchived(tasks: Task[]): Task[] {
     .map((t) => (t.subtasks.length ? { ...t, subtasks: filterArchived(t.subtasks) } : t))
 }
 
-export function collectAllAssignees(tasks: Task[], extra?: string[]): string[] {
+export function collectAllAssignees(
+  tasks: Task[],
+  extra?: string[],
+  keyOf?: (raw: string) => string
+): string[] {
   const values: string[] = extra ? [...extra] : []
   const walk = (list: Task[]) => {
     for (const t of list) {
@@ -136,7 +140,7 @@ export function collectAllAssignees(tasks: Task[], extra?: string[]): string[] {
     }
   }
   walk(tasks)
-  return dedupeByDisplayName(values)
+  return dedupePeople(values, keyOf)
 }
 
 export function collectAllTags(tasks: Task[]): string[] {

@@ -1,11 +1,11 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
-import { createPersonLink, personCandidates } from '../store'
+import { createPersonLink, personCandidates, personKeyer } from '../store'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { Chip } from '../ui/primitives/Chip'
-import { dedupeByDisplayName, displayName, isTerminalStatus, priorityIcon, stringToColor } from '../utils'
+import { dedupePeople, displayName, isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
 import {
@@ -202,7 +202,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     () => {
       const cell = createDiv('pm-prop-value')
       const sourcePath = task.filePath ?? project.filePath
-      const allMembers = () => dedupeByDisplayName([...project.teamMembers, ...plugin.settings.globalTeamMembers])
+      const allMembers = () => dedupePeople([...project.teamMembers, ...plugin.settings.globalTeamMembers], personKeyer(plugin.app))
       renderMultiSelect({
         container: cell,
         avatarStack: true,

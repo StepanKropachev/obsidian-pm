@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dedupeByDisplayName, displayName, dueUrgency, priorityIcon } from './utils'
+import { dedupePeople, displayName, dueUrgency, priorityIcon } from './utils'
 import { makeTask, DEFAULT_PRIORITIES, type PriorityConfig, type StatusConfig } from './types'
 import { today } from './dates'
 
@@ -131,25 +131,25 @@ describe('displayName', () => {
   })
 })
 
-describe('dedupeByDisplayName', () => {
+describe('dedupePeople', () => {
   it('keeps distinct people', () => {
-    expect(dedupeByDisplayName(['Anna Reid', 'Zoe Ford'])).toEqual(['Anna Reid', 'Zoe Ford'])
+    expect(dedupePeople(['Anna Reid', 'Zoe Ford'])).toEqual(['Anna Reid', 'Zoe Ford'])
   })
 
   it('collapses a wikilink and a plain name for the same person', () => {
-    expect(dedupeByDisplayName(['[[John Doe]]', 'John Doe'])).toEqual(['[[John Doe]]'])
+    expect(dedupePeople(['[[John Doe]]', 'John Doe'])).toEqual(['[[John Doe]]'])
   })
 
   it('prefers the wikilink whichever order it arrives in', () => {
-    expect(dedupeByDisplayName(['John Doe', '[[People/John Doe]]'])).toEqual(['[[People/John Doe]]'])
+    expect(dedupePeople(['John Doe', '[[People/John Doe]]'])).toEqual(['[[People/John Doe]]'])
   })
 
   it('collapses two wikilinks that resolve to the same name', () => {
-    expect(dedupeByDisplayName(['[[People/John Doe]]', '[[John Doe]]'])).toHaveLength(1)
+    expect(dedupePeople(['[[People/John Doe]]', '[[John Doe]]'])).toHaveLength(1)
   })
 
   it('sorts by display name, not by the raw string', () => {
-    expect(dedupeByDisplayName(['Zoe Ford', '[[John Doe]]', 'Anna Reid'])).toEqual([
+    expect(dedupePeople(['Zoe Ford', '[[John Doe]]', 'Anna Reid'])).toEqual([
       'Anna Reid',
       '[[John Doe]]',
       'Zoe Ford'
@@ -157,6 +157,18 @@ describe('dedupeByDisplayName', () => {
   })
 
   it('drops empty values', () => {
-    expect(dedupeByDisplayName(['', 'Anna Reid'])).toEqual(['Anna Reid'])
+    expect(dedupePeople(['', 'Anna Reid'])).toEqual(['Anna Reid'])
+  })
+})
+
+describe('dedupePeople with a key function', () => {
+  const keyOf = (raw: string): string => (raw.includes('Contacts') ? 'contacts-jane' : 'people-jane')
+
+  it('keeps two people the key function separates', () => {
+    expect(dedupePeople(['[[People/Jane]]', '[[Contacts/Jane]]'], keyOf)).toHaveLength(2)
+  })
+
+  it('collapses two spellings the key function calls the same', () => {
+    expect(dedupePeople(['[[People/Jane]]', 'Jane'], keyOf)).toEqual(['[[People/Jane]]'])
   })
 })

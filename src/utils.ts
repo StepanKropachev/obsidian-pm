@@ -20,16 +20,20 @@ export function displayName(raw: string): string {
   return (base.endsWith('.md') ? base.slice(0, -3) : base).trim()
 }
 
-/** One entry per person, keeping the wikilink spelling so the vault link is preserved. */
-export function dedupeByDisplayName(values: string[]): string[] {
-  const byName = new Map<string, string>()
+/**
+ * One entry per person, keeping the wikilink spelling so the vault link is preserved.
+ * `keyOf` decides who counts as the same person; pass `personKeyer(app)` to tell two people
+ * with the same name apart by the notes they point at.
+ */
+export function dedupePeople(values: string[], keyOf: (raw: string) => string = displayName): string[] {
+  const byKey = new Map<string, string>()
   for (const value of values) {
     if (!value) continue
-    const name = displayName(value)
-    const kept = byName.get(name)
-    if (kept === undefined || (!kept.startsWith('[[') && value.startsWith('[['))) byName.set(name, value)
+    const key = keyOf(value)
+    const kept = byKey.get(key)
+    if (kept === undefined || (!kept.startsWith('[[') && value.startsWith('[['))) byKey.set(key, value)
   }
-  return [...byName.values()].sort((a, b) => displayName(a).localeCompare(displayName(b)))
+  return [...byKey.values()].sort((a, b) => displayName(a).localeCompare(displayName(b)))
 }
 
 export function stringToColor(s: string): string {

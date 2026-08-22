@@ -1,6 +1,6 @@
 import { normalizePath, TFile, type App } from 'obsidian'
 import { displayName } from '../utils'
-import { ensureFolder } from './vaultFs'
+import { ensureFolder, resolveVaultLink } from './vaultFs'
 
 /** How a stored assignee value relates to the vault. */
 export type PersonLinkState = 'plain' | 'linked' | 'unresolved'
@@ -89,4 +89,26 @@ export async function createPersonLink(
 ): Promise<string> {
   const file = await createPersonNote(app, peopleFolder, name)
   return personLink(app, file, sourcePath)
+}
+
+/**
+ * Identity for grouping and filtering: the note a value points at, or the name itself when
+ * it points nowhere. Unlike `resolvePerson` a bare name is resolved here too, so a person
+ * typed as text groups with the same person written as a link. Keys are read from the vault
+ * root so one person keys the same no matter which task names them.
+ */
+export function personKey(app: App, raw: string): string {
+  return resolveVaultLink(app, raw, '') ?? displayName(raw)
+}
+
+/** Caches within one pass; filtering asks for the same handful of names on every repaint. */
+export function personKeyer(app: App): (raw: string) => string {
+  const cache = new Map<string, string>()
+  return (raw: string) => {
+    const hit = cache.get(raw)
+    if (hit !== undefined) return hit
+    const key = personKey(app, raw)
+    cache.set(raw, key)
+    return key
+  }
 }
