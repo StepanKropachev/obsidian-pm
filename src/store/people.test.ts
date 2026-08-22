@@ -4,6 +4,7 @@ import { makeFakeApp } from '../../test/fakeVault'
 import {
   createPersonLink,
   createPersonNote,
+  matchPersonNotes,
   personCandidates,
   personKey,
   personKeyer,
@@ -165,5 +166,34 @@ describe('personKeyer', () => {
     const keyer = personKeyer(app)
     expect(keyer('[[Jane Doe]]')).toBe(personKey(app, '[[Jane Doe]]'))
     expect(keyer('[[Jane Doe]]')).toBe('People/Jane Doe.md')
+  })
+})
+
+describe('matchPersonNotes', () => {
+  it('matches a plain name to its note', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(matchPersonNotes(app, 'People', ['Jane Doe'])).toEqual([
+      { name: 'Jane Doe', link: '[[Jane Doe]]', ambiguous: false }
+    ])
+  })
+
+  it('matches regardless of how the name was capitalised', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(matchPersonNotes(app, 'People', ['jane doe'])[0].link).toBe('[[Jane Doe]]')
+  })
+
+  it('reports a name matching several notes instead of guessing', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md', 'People/Team/Jane Doe.md'])
+    expect(matchPersonNotes(app, 'People', ['Jane Doe'])[0]).toMatchObject({ link: null, ambiguous: true })
+  })
+
+  it('leaves a name with no note alone', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(matchPersonNotes(app, 'People', ['Nobody Here'])[0]).toMatchObject({ link: null, ambiguous: false })
+  })
+
+  it('ignores notes outside the people folder', async () => {
+    const app = await appWithPeople(['Archive/Jane Doe.md'])
+    expect(matchPersonNotes(app, 'People', ['Jane Doe'])[0].link).toBeNull()
   })
 })

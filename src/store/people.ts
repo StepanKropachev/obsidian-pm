@@ -112,3 +112,25 @@ export function personKeyer(app: App): (raw: string) => string {
     return key
   }
 }
+
+export interface PersonMatch {
+  name: string
+  /** The link to store, or null when no note matches or several do. */
+  link: string | null
+  ambiguous: boolean
+}
+
+/**
+ * Looks for the note behind each plain-text name. A name matching several notes is reported
+ * rather than guessed at, since picking one would silently attach tasks to the wrong person.
+ */
+export function matchPersonNotes(app: App, peopleFolder: string, names: string[], sourcePath = ''): PersonMatch[] {
+  const notes = personNotes(app, peopleFolder)
+  return names.map((name) => {
+    const wanted = name.trim().toLowerCase()
+    const hits = notes.filter((file) => file.basename.trim().toLowerCase() === wanted)
+    if (hits.length === 0) return { name, link: null, ambiguous: false }
+    if (hits.length > 1) return { name, link: null, ambiguous: true }
+    return { name, link: personLink(app, hits[0], sourcePath), ambiguous: false }
+  })
+}
