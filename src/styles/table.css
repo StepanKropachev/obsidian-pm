@@ -284,6 +284,20 @@ button.pm-chip-btn--active:hover {
   color: var(--text-muted);
   font-size: 10px;
 }
+.pm-avatar--link {
+  cursor: pointer;
+}
+.pm-avatar--link:hover {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+.pm-avatar--link:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+.pm-avatar--unresolved {
+  opacity: 0.5;
+  border-style: dashed;
+}
 .pm-avatar-stack {
   display: inline-flex;
   align-items: center;
@@ -429,6 +443,10 @@ button.pm-chip-rm {
 .pm-suggest-create {
   color: var(--text-accent);
   font-style: italic;
+}
+.pm-suggest-hint {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
 }
 
 /* Virtual-scroll spacers; the renderer sets their height inline. */

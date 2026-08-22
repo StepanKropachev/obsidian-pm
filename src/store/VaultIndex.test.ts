@@ -331,3 +331,47 @@ describe('VaultIndex', () => {
     })
   })
 })
+
+describe('VaultIndex people queries', () => {
+  let vault: FakeVault
+  let app: App
+  let index: VaultIndex
+
+  const assignedNote = (id: string, projectId: string, assignees: string): string =>
+    `---\npm-task: true\nid: ${id}\nprojectId: ${projectId}\ntitle: T${id}\nstatus: todo\nassignees: ${assignees}\n---\n\n`
+
+  beforeEach(async () => {
+    const fake = makeFakeApp({ liveMetadataCache: true })
+    vault = fake.vault
+    app = fake.app as unknown as App
+    index = new VaultIndex(app, () => ({ ...DEFAULT_SETTINGS }))
+    await vault.create('People/Jane Doe.md', '')
+    await vault.create('Contacts/Jane Doe.md', '')
+    await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))
+    await vault.create('Projects/Roadmap_tasks/a.md', assignedNote('a', 'p1', '["[[People/Jane Doe|Jane Doe]]"]'))
+    await vault.create('Projects/Roadmap_tasks/b.md', assignedNote('b', 'p1', '["[[Contacts/Jane Doe|Jane Doe]]"]'))
+    await vault.create('Projects/Roadmap_tasks/c.md', assignedNote('c', 'p1', '["Bob Plain"]'))
+    index.build()
+  })
+
+  it('reads assignees onto the task ref', () => {
+    expect(expectDefined(index.task('c')).assignees).toEqual(['Bob Plain'])
+  })
+
+  it('finds the tasks assigned to one person', () => {
+    const found = index.tasksForPerson('[[People/Jane Doe]]')
+    expect(found.map((ref) => ref.id)).toEqual(['a'])
+  })
+
+  it('keeps two people with the same name apart', () => {
+    expect(index.tasksForPerson('[[Contacts/Jane Doe]]').map((ref) => ref.id)).toEqual(['b'])
+  })
+
+  it('finds a person named as plain text', () => {
+    expect(index.tasksForPerson('Bob Plain').map((ref) => ref.id)).toEqual(['c'])
+  })
+
+  it('lists everyone in the vault once', () => {
+    expect(index.allAssignees()).toHaveLength(3)
+  })
+})

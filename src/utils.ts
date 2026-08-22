@@ -1,8 +1,40 @@
-import { Notice, setIcon } from 'obsidian'
+import { Notice, parseLinktext, setIcon } from 'obsidian'
 import type { Task, StatusConfig, PriorityConfig, TaskPriority, PriorityIconSet } from './types'
 import { PRIORITY_ICON_SETS } from './types'
 import type { DueUrgency } from './ui/composites/dueChip'
 import { today, parsePlainDate } from './dates'
+
+export function displayName(raw: string): string {
+  const trimmed = raw.trim()
+  const m = trimmed.match(/^\[\[([^\]]+)\]\]$/)
+  if (!m) return trimmed
+  const inner = m[1]
+  const pipe = inner.indexOf('|')
+  if (pipe >= 0) {
+    const alias = inner.slice(pipe + 1).trim()
+    if (alias) return alias
+  }
+  const target = pipe >= 0 ? inner.slice(0, pipe) : inner
+  const { path } = parseLinktext(target)
+  const base = path.split('/').pop() ?? path
+  return (base.endsWith('.md') ? base.slice(0, -3) : base).trim()
+}
+
+/**
+ * One entry per person, keeping the wikilink spelling so the vault link is preserved.
+ * `keyOf` decides who counts as the same person; pass `personKeyer(app)` to tell two people
+ * with the same name apart by the notes they point at.
+ */
+export function dedupePeople(values: string[], keyOf: (raw: string) => string = displayName): string[] {
+  const byKey = new Map<string, string>()
+  for (const value of values) {
+    if (!value) continue
+    const key = keyOf(value)
+    const kept = byKey.get(key)
+    if (kept === undefined || (!kept.startsWith('[[') && value.startsWith('[['))) byKey.set(key, value)
+  }
+  return [...byKey.values()].sort((a, b) => displayName(a).localeCompare(displayName(b)))
+}
 
 export function stringToColor(s: string): string {
   let hash = 0

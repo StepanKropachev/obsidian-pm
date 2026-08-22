@@ -229,6 +229,12 @@ button.pm-prop-add {
   display: flex;
   flex-direction: column;
 }
+.pm-pop-heading {
+  padding: 6px 9px 2px;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-faint);
+}
 button.pm-pop-item {
   display: flex;
   align-items: center;

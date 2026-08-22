@@ -1,7 +1,7 @@
 import { MarkdownView, Plugin, Notice, TFile } from 'obsidian'
-import { DEFAULT_SETTINGS, type PMSettings, type Project, type Task } from './types'
+import { DEFAULT_SETTINGS, makeDefaultFilter, type PMSettings, type Project, type Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
-import { ProjectStore, VaultIndex } from './store'
+import { matchPersonNotes, personLink, ProjectStore, scopeKey, VaultIndex } from './store'
 import type { ProjectRef, TaskSource } from './store'
 import { PMSettingTab } from './settings'
 import { ProjectView, PM_PROJECT_VIEW_TYPE } from './views/ProjectView'
@@ -11,10 +11,18 @@ import { DashboardView, PM_DASHBOARD_VIEW_TYPE } from './views/DashboardView'
 import { TaskView, PM_TASK_VIEW_TYPE } from './views/TaskView'
 import { registerStyleguide } from './views/styleguide/StyleguideView'
 import { PMViewRouter } from './views/PMViewRouter'
-import { openTaskModal, openProjectCreate, openProjectPicker, openTaskPicker, openImportModal } from './ui/ModalFactory'
+import {
+  openTaskModal,
+  openProjectCreate,
+  openPersonPicker,
+  openProjectPicker,
+  openTaskPicker,
+  openImportModal,
+  confirmDialog
+} from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
 import { migrateProjects } from './migration'
-import { safeAsync } from './utils'
+import { dedupePeople, displayName, safeAsync } from './utils'
 
 export default class PMPlugin extends Plugin {
   settings: PMSettings = { ...DEFAULT_SETTINGS }
@@ -192,6 +200,37 @@ export default class PMPlugin extends Plugin {
         if (checking) return true
         void this.router.openProjectOverview(file.path, md.leaf)
         return true
+      }
+    })
+
+    this.addCommand({
+      id: 'person-tasks',
+      name: 'Show tasks assigned to a person',
+      callback: () => {
+        openPersonPicker(this, this.index.allAssignees(), '', (value) => this.showTasksForPerson(value))
+      }
+    })
+
+    this.addCommand({
+      id: 'person-tasks-this-note',
+      name: 'Show tasks assigned to this note',
+      checkCallback: (checking: boolean) => {
+        const md = this.app.workspace.getActiveViewOfType(MarkdownView)
+        const file = md?.file
+        if (!file) return false
+        const cache = this.app.metadataCache.getFileCache(file)
+        if (cache?.frontmatter?.['pm-task'] === true || cache?.frontmatter?.['pm-project'] === true) return false
+        if (checking) return true
+        void this.showTasksForPerson(personLink(this.app, file, ''))
+        return true
+      }
+    })
+
+    this.addCommand({
+      id: 'link-people-to-notes',
+      name: 'Link assignees to their person notes',
+      callback: () => {
+        void this.linkPeopleToNotes()
       }
     })
 
@@ -427,6 +466,97 @@ export default class PMPlugin extends Plugin {
     }
     if (autoSelectSingle && refs.length === 1) choose(refs[0])
     else openProjectPicker(this, refs, choose)
+  }
+
+  /**
+   * Rewrites plain-text assignees and members as links to the notes of the same name, so
+   * existing vaults get the graph edges without retyping every task. Names matching no note,
+   * or more than one, are left alone and reported.
+   */
+  private async linkPeopleToNotes(): Promise<void> {
+    const plain: string[] = []
+    for (const ref of this.index.allTaskRefs()) plain.push(...ref.assignees)
+    for (const ref of this.index.projectRefs()) plain.push(...ref.teamMembers)
+    const names = dedupePeople(plain.filter((value) => !value.trim().startsWith('[[')))
+    if (names.length === 0) {
+      this.showNotice('Every assignee already links to a note.')
+      return
+    }
+
+    const matches = matchPersonNotes(this.app, this.settings.peopleFolder, names)
+    const linkable = matches.filter((match) => match.link !== null)
+    const ambiguous = matches.filter((match) => match.ambiguous)
+    if (linkable.length === 0) {
+      this.showNotice(`No note matches any of the ${names.length} name(s) in use.`)
+      return
+    }
+
+    const linkFor = new Map<string, string>()
+    for (const match of linkable) if (match.link) linkFor.set(match.name.trim().toLowerCase(), match.link)
+    const mapValue = (value: string): string =>
+      value.trim().startsWith('[[') ? value : (linkFor.get(value.trim().toLowerCase()) ?? value)
+
+    const preview = linkable
+      .slice(0, 5)
+      .map((match) => match.name)
+      .join(', ')
+    const extra = linkable.length > 5 ? `, and ${linkable.length - 5} more` : ''
+    const warn = ambiguous.length ? ` ${ambiguous.length} name(s) match several notes and are left alone.` : ''
+    const ok = await confirmDialog(
+      this.app,
+      `Link ${linkable.length} name(s) to their notes: ${preview}${extra}.${warn}`,
+      'Link'
+    )
+    if (!ok) return
+
+    let tasksChanged = 0
+    let projectsChanged = 0
+    const byProject = new Map<string, string[]>()
+    for (const ref of this.index.allTaskRefs()) {
+      if (!ref.projectPath) continue
+      if (!ref.assignees.some((value) => linkFor.has(value.trim().toLowerCase()))) continue
+      const bucket = byProject.get(ref.projectPath)
+      if (bucket) bucket.push(ref.id)
+      else byProject.set(ref.projectPath, [ref.id])
+    }
+
+    for (const [path, taskIds] of byProject) {
+      const project = await this.loadProjectAt(path)
+      if (!project) continue
+      await this.store.updateTasks(project, taskIds, (task) => ({ assignees: task.assignees.map(mapValue) }))
+      tasksChanged += taskIds.length
+    }
+
+    for (const ref of this.index.projectRefs()) {
+      if (!ref.teamMembers.some((value) => linkFor.has(value.trim().toLowerCase()))) continue
+      const project = await this.loadProjectAt(ref.path)
+      if (!project) continue
+      await this.store.updateProject(project, { teamMembers: project.teamMembers.map(mapValue) })
+      projectsChanged++
+    }
+
+    this.refreshViews()
+    this.showNotice(`Linked ${tasksChanged} task(s) and ${projectsChanged} project(s).`)
+  }
+
+  private async loadProjectAt(path: string): Promise<Project | null> {
+    const file = this.app.vault.getAbstractFileByPath(path)
+    return file instanceof TFile ? this.store.loadProject(file) : null
+  }
+
+  /** Opens the whole vault filtered to one person, the way the assignee filter would. */
+  private async showTasksForPerson(person: string): Promise<void> {
+    const name = displayName(person)
+    if (this.index.tasksForPerson(person).length === 0) {
+      new Notice(`No tasks assigned to ${name}`)
+      return
+    }
+    this.settings.projectFilters[scopeKey({ kind: 'vault' })] = {
+      filter: { ...makeDefaultFilter(), assignees: [person] },
+      activeSavedViewId: null
+    }
+    await this.saveSettings()
+    await this.router.openScope({ kind: 'vault' })
   }
 
   /** Picks a project, then a parent when creating a subtask, before opening the editor. */

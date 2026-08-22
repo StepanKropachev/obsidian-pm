@@ -3,8 +3,9 @@ import type PMPlugin from '../main'
 import type { Project, ResolvedProjectConfig, Task } from '../types'
 import { collectAllTags, flattenTasks, totalLoggedHours, type ProjectRef } from '../store'
 import { Temporal, parsePlainDate, today } from '../dates'
-import { dateUrgency, formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
-import { Avatar, displayName } from '../ui/primitives/Avatar'
+import { dateUrgency, displayName, formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
+import { Avatar } from '../ui/primitives/Avatar'
+import { peopleAvatars } from './peopleAvatars'
 import { Chip } from '../ui/primitives/Chip'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProgressBar } from '../ui/primitives/ProgressBar'
@@ -322,10 +323,12 @@ export class ProjectOverviewView extends ItemView {
     }
 
     prop('Members', project.teamMembers.length === 0, 'No members', (value) => {
-      for (const member of project.teamMembers) {
+      for (const person of peopleAvatars(this.app, project.teamMembers, project.filePath)) {
         const holder = value.createSpan({ cls: 'pm-overview-member' })
-        new Avatar(holder).setName(member).setSize('sm')
-        holder.createSpan({ text: displayName(member) })
+        const avatar = new Avatar(holder).setName(person.name).setSize('sm')
+        if (person.unresolved) avatar.setUnresolved(true)
+        if (person.onClick) avatar.onClick(person.onClick)
+        holder.createSpan({ text: person.name })
       }
     })
 

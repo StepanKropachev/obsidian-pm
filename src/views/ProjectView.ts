@@ -1,7 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, Menu, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ViewMode, type FilterState, type SavedView, makeDefaultFilter, makeId } from '../types'
-import { ProjectScope, resolveScopePaths, scopeKey, type ScopeSpec } from '../store'
+import { personKeyer, ProjectScope, resolveScopePaths, scopeKey, type ScopeSpec } from '../store'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -257,6 +257,7 @@ export class ProjectView extends ItemView {
       statuses: config.statuses,
       priorities: config.priorities,
       filter: this.filter,
+      personKeyOf: personKeyer(this.plugin.app),
       activeSavedViewId: this.activeSavedViewId,
       onFilterChange: () => this.handleFilterMutation(),
       onClearFilter: () => this.handleClearFilter(),

@@ -1,6 +1,6 @@
 import type { Task } from '../../types'
 import { formatDateShort } from '../../utils'
-import { AvatarStack } from '../primitives/AvatarStack'
+import { AvatarStack, type AvatarPerson } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { ProgressBar } from '../primitives/ProgressBar'
 import { renderDueChip } from './dueChip'
@@ -8,6 +8,7 @@ import { renderTagChip } from './tagChip'
 import { renderTimeChip } from './timeChip'
 
 export interface KanbanCardProps {
+  people: AvatarPerson[]
   task: Task
   priorityColor?: string
   descriptionPreview?: string
@@ -90,7 +91,7 @@ export class KanbanCard {
 
     const footer = body.createDiv('pm-kanban-card-footer')
     props.renderSource?.(footer)
-    new AvatarStack(footer).setNames(task.assignees).setMax(3).setSize('sm')
+    new AvatarStack(footer).setPeople(props.people).setMax(3).setSize('sm')
 
     if (task.due) {
       renderDueChip(footer, formatDateShort(task.due), props.overdue ? 'overdue' : 'normal', 'sm')

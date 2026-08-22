@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueUrgency, priorityIcon } from './utils'
+import { dedupePeople, displayName, dueUrgency, priorityIcon } from './utils'
 import { makeTask, DEFAULT_PRIORITIES, type PriorityConfig, type StatusConfig } from './types'
 import { today } from './dates'
 
@@ -74,5 +74,101 @@ describe('priorityIcon', () => {
   it('gives no icon for the none set or an unknown priority', () => {
     expect(priorityIcon(DEFAULT_PRIORITIES, 'high', 'none')).toBe('')
     expect(priorityIcon(DEFAULT_PRIORITIES, 'nope', 'chevrons')).toBe('')
+  })
+})
+
+describe('displayName', () => {
+  it('returns a plain name unchanged', () => {
+    expect(displayName('Jane Doe')).toBe('Jane Doe')
+  })
+
+  it('trims a plain name', () => {
+    expect(displayName('  Jane Doe  ')).toBe('Jane Doe')
+  })
+
+  it('unwraps a bare wikilink', () => {
+    expect(displayName('[[Jane Doe]]')).toBe('Jane Doe')
+  })
+
+  it('strips the folder path from a bare wikilink', () => {
+    expect(displayName('[[People/Team/Jane Doe]]')).toBe('Jane Doe')
+  })
+
+  it('prefers the alias when present', () => {
+    expect(displayName('[[People/Jane Doe|JD]]')).toBe('JD')
+  })
+
+  it('trims the alias', () => {
+    expect(displayName('[[People/Jane Doe| JD ]]')).toBe('JD')
+  })
+
+  it('falls back to the path when the alias is empty', () => {
+    expect(displayName('[[People/Jane Doe|]]')).toBe('Jane Doe')
+  })
+
+  it('drops a file extension', () => {
+    expect(displayName('[[People/Jane Doe.md]]')).toBe('Jane Doe')
+  })
+
+  it('drops a heading reference', () => {
+    expect(displayName('[[People/Jane Doe#Bio]]')).toBe('Jane Doe')
+  })
+
+  it('drops a block reference', () => {
+    expect(displayName('[[People/Jane Doe#^abc123]]')).toBe('Jane Doe')
+  })
+
+  it('keeps a dot inside a name', () => {
+    expect(displayName('[[People/Jane.Doe]]')).toBe('Jane.Doe')
+  })
+
+  it('keeps a version-style name with a dot', () => {
+    expect(displayName('[[v1.2 release]]')).toBe('v1.2 release')
+  })
+
+  it('leaves a non-wikilink string with brackets alone', () => {
+    expect(displayName('[[unterminated')).toBe('[[unterminated')
+  })
+})
+
+describe('dedupePeople', () => {
+  it('keeps distinct people', () => {
+    expect(dedupePeople(['Anna Reid', 'Zoe Ford'])).toEqual(['Anna Reid', 'Zoe Ford'])
+  })
+
+  it('collapses a wikilink and a plain name for the same person', () => {
+    expect(dedupePeople(['[[John Doe]]', 'John Doe'])).toEqual(['[[John Doe]]'])
+  })
+
+  it('prefers the wikilink whichever order it arrives in', () => {
+    expect(dedupePeople(['John Doe', '[[People/John Doe]]'])).toEqual(['[[People/John Doe]]'])
+  })
+
+  it('collapses two wikilinks that resolve to the same name', () => {
+    expect(dedupePeople(['[[People/John Doe]]', '[[John Doe]]'])).toHaveLength(1)
+  })
+
+  it('sorts by display name, not by the raw string', () => {
+    expect(dedupePeople(['Zoe Ford', '[[John Doe]]', 'Anna Reid'])).toEqual([
+      'Anna Reid',
+      '[[John Doe]]',
+      'Zoe Ford'
+    ])
+  })
+
+  it('drops empty values', () => {
+    expect(dedupePeople(['', 'Anna Reid'])).toEqual(['Anna Reid'])
+  })
+})
+
+describe('dedupePeople with a key function', () => {
+  const keyOf = (raw: string): string => (raw.includes('Contacts') ? 'contacts-jane' : 'people-jane')
+
+  it('keeps two people the key function separates', () => {
+    expect(dedupePeople(['[[People/Jane]]', '[[Contacts/Jane]]'], keyOf)).toHaveLength(2)
+  })
+
+  it('collapses two spellings the key function calls the same', () => {
+    expect(dedupePeople(['[[People/Jane]]', 'Jane'], keyOf)).toEqual(['[[People/Jane]]'])
   })
 })

@@ -1,9 +1,9 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
-import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
-import { formatBadgeText } from '../../utils'
+import { flattenTasks, collectAllAssignees, collectAllTags, personKeyer } from '../../store'
+import { displayName, formatBadgeText } from '../../utils'
 import { today } from '../../dates'
-import { promptText } from '../../ui/ModalFactory'
+import { openPersonPicker, promptText } from '../../ui/ModalFactory'
 import { TaskPickerModal } from '../../modals/PickerModals'
 import type { TableContext } from './TableRenderer'
 import { updateSelectAllCheckbox } from './TableRow'
@@ -77,18 +77,22 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
-    const allMembers = collectAllAssignees(ctx.scope.tasks(), [
-      ...ctx.scope.teamMembers(),
-      ...ctx.plugin.settings.globalTeamMembers
-    ])
+    const allMembers = collectAllAssignees(
+      ctx.scope.tasks(),
+      [...ctx.scope.teamMembers(), ...ctx.plugin.settings.globalTeamMembers],
+      personKeyer(ctx.plugin.app)
+    )
     for (const m of allMembers) {
-      menu.addItem((item) => item.setTitle(m).onClick(() => onAction({ type: 'set-assignee', assignee: m })))
+      menu.addItem((item) =>
+        item.setTitle(displayName(m)).onClick(() => onAction({ type: 'set-assignee', assignee: m }))
+      )
     }
     menu.addSeparator()
     menu.addItem((item) =>
-      item.setTitle('+ new assignee...').onClick(async () => {
-        const name = await promptText(ctx.plugin.app, 'Enter assignee name:', 'Name')
-        if (name) onAction({ type: 'set-assignee', assignee: name })
+      item.setTitle('Someone else...').onClick(() => {
+        openPersonPicker(ctx.plugin, allMembers, ctx.scope.primary?.filePath ?? '', (value) => {
+          onAction({ type: 'set-assignee', assignee: value })
+        })
       })
     )
     menu.addSeparator()

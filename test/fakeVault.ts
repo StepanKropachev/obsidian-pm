@@ -231,6 +231,11 @@ export class FakeMetadataCache {
     return this.vault.getMarkdownFiles().find((f) => f.basename === linkpath) ?? null
   }
 
+  fileToLinktext(file: TFile, _sourcePath: string): string {
+    const sameName = this.vault.getMarkdownFiles().filter((f) => f.basename === file.basename)
+    return sameName.length > 1 ? file.path.replace(/\.md$/, '') : file.basename
+  }
+
   on(name: string, handler: MetadataHandler): MetadataHandler {
     let set = this.handlers.get(name)
     if (!set) {
