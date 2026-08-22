@@ -1,4 +1,5 @@
 import { setIcon } from 'obsidian'
+import { safeAsync } from '../../../utils'
 import { Popover } from '../../primitives/Popover'
 import { Chip } from '../../primitives/Chip'
 import { Avatar } from '../../primitives/Avatar'
@@ -25,7 +26,14 @@ export interface MultiSelectOpts {
   colorFor?: (id: string) => string
   search?: boolean
   placeholder?: string
+  /** A second tier, searched only once the user types: vault notes behind the known values. */
+  moreOptions?: (query: string) => PickerItem[]
+  moreHeading?: string
   create?: (label: string) => void
+  /** Row label for the create option; defaults to `Create "<name>"`. */
+  createLabel?: (name: string) => string
+  /** A second create row, e.g. creating the note a person links to. Awaited before repaint. */
+  createAlt?: { label: (name: string) => string; icon: string; run: (name: string) => Promise<void> }
   tag?: boolean
   /** One trigger holding an overlapping avatar stack. Backs Assignees. */
   avatarStack?: boolean
@@ -156,11 +164,33 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
           }
         })
       }
+      const more = q ? (opts.moreOptions?.(query.trim()) ?? []) : []
+      const known = new Set(items.map((it) => it.id))
+      const extra = more.filter((it) => !known.has(it.id))
+      if (extra.length && opts.moreHeading) {
+        listEl.createDiv({ cls: 'pm-pop-heading', text: opts.moreHeading })
+      }
+      for (const it of extra) {
+        renderOptionRow(listEl, {
+          label: it.label,
+          icon: it.icon,
+          avatar: stackMode ? it.label : undefined,
+          selected: selectedIds.has(it.id),
+          onPick: () => {
+            if (selectedIds.has(it.id)) opts.remove(it.id)
+            else opts.add(it.id)
+            renderValues()
+            renderList()
+          }
+        })
+      }
+
       const create = opts.create
-      if (create && q && !opts.options().some((it) => it.label.toLowerCase() === q)) {
+      const matched = [...items, ...extra].some((it) => it.label.toLowerCase() === q)
+      if (create && q && !matched) {
         const label = query.trim()
         renderOptionRow(listEl, {
-          label: `Create "${label}"`,
+          label: opts.createLabel ? opts.createLabel(label) : `Create "${label}"`,
           icon: 'plus',
           accent: true,
           onPick: () => {
@@ -170,6 +200,23 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
             renderValues()
             renderList()
           }
+        })
+      }
+
+      const createAlt = opts.createAlt
+      if (createAlt && q && !matched) {
+        const label = query.trim()
+        renderOptionRow(listEl, {
+          label: createAlt.label(label),
+          icon: createAlt.icon,
+          accent: true,
+          onPick: safeAsync(async () => {
+            await createAlt.run(label)
+            query = ''
+            if (searchInput) searchInput.value = ''
+            renderValues()
+            renderList()
+          })
         })
       }
     }

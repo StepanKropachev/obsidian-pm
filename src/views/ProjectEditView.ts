@@ -12,7 +12,7 @@ import {
   PRIORITY_ICON_SET_LABELS
 } from '../types'
 import { displayName, safeAsync, truncateTitle } from '../utils'
-import { confirmDialog, promptText } from '../ui/ModalFactory'
+import { confirmDialog, openPersonPicker } from '../ui/ModalFactory'
 import { renderAddButton } from '../ui/composites/addButton'
 import { renderChipList, renderPropRow } from '../ui/FormField'
 import { renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
@@ -240,16 +240,13 @@ export class ProjectEditView extends ItemView {
           draw()
         },
         renderAdd: (container) => {
-          renderAddButton(
-            container,
-            'Add member',
-            safeAsync(async () => {
-              const name = await promptText(this.app, 'Member name', 'Name')
-              if (!name || project.teamMembers.includes(name)) return
-              this.save({ teamMembers: [...project.teamMembers, name] })
+          renderAddButton(container, 'Add member', () => {
+            openPersonPicker(this.plugin, project.teamMembers, project.filePath, (value) => {
+              if (!value || project.teamMembers.includes(value)) return
+              this.save({ teamMembers: [...project.teamMembers, value] })
               draw()
             })
-          )
+          })
         }
       })
     }

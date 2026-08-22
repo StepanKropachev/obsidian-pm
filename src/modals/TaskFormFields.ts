@@ -1,5 +1,6 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
+import { createPersonLink, personCandidates } from '../store'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
@@ -200,6 +201,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'Assignees',
     () => {
       const cell = createDiv('pm-prop-value')
+      const sourcePath = task.filePath ?? project.filePath
       const allMembers = () => dedupeByDisplayName([...project.teamMembers, ...plugin.settings.globalTeamMembers])
       renderMultiSelect({
         container: cell,
@@ -210,14 +212,29 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         selected: () => task.assignees,
         labelFor: displayName,
         options: () => allMembers().map((m) => ({ id: m, label: displayName(m) })),
+        moreOptions: (query) =>
+          personCandidates(plugin.app, plugin.settings.peopleFolder, query, sourcePath).map((c) => ({
+            id: c.link,
+            label: c.name
+          })),
+        moreHeading: 'People in your vault',
         add: (id) => {
           if (!task.assignees.includes(id)) task.assignees.push(id)
         },
         remove: (id) => {
           task.assignees = task.assignees.filter((a) => a !== id)
         },
+        createLabel: (name) => `Add "${name}"`,
         create: (label) => {
           if (!task.assignees.includes(label)) task.assignees.push(label)
+        },
+        createAlt: {
+          label: (name) => `Create person note "${name}"`,
+          icon: 'user-plus',
+          run: async (name) => {
+            const link = await createPersonLink(plugin.app, plugin.settings.peopleFolder, name, sourcePath)
+            if (!task.assignees.includes(link)) task.assignees.push(link)
+          }
         }
       })
       return cell

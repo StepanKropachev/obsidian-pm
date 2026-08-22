@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { TFile, type App } from 'obsidian'
 import { makeFakeApp } from '../../test/fakeVault'
-import { createPersonNote, personLink, personNotes, resolvePerson } from './people'
+import {
+  createPersonLink,
+  createPersonNote,
+  personCandidates,
+  personLink,
+  personNotes,
+  resolvePerson
+} from './people'
 
 async function appWithPeople(paths: string[]): Promise<App> {
   const { app, vault } = makeFakeApp({ liveMetadataCache: true })
@@ -91,5 +98,33 @@ describe('createPersonNote', () => {
     const file = await createPersonNote(app, 'People', 'Jane Doe')
     expect(file.path).toBe('People/Jane Doe.md')
     expect(personNotes(app, 'People')).toHaveLength(1)
+  })
+})
+
+describe('personCandidates', () => {
+  it('matches notes on part of the name', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md', 'People/John Roe.md'])
+    expect(personCandidates(app, 'People', 'jane', 'Projects/P.md')).toEqual([
+      { link: '[[Jane Doe]]', name: 'Jane Doe' }
+    ])
+  })
+
+  it('returns nothing for an empty query, so the picker stays quiet until asked', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md'])
+    expect(personCandidates(app, 'People', '  ', 'Projects/P.md')).toEqual([])
+  })
+
+  it('ignores notes outside the people folder', async () => {
+    const app = await appWithPeople(['People/Jane Doe.md', 'Archive/Jane Doe Old.md'])
+    expect(personCandidates(app, 'People', 'jane', 'Projects/P.md')).toHaveLength(1)
+  })
+})
+
+describe('createPersonLink', () => {
+  it('creates the note and returns the link to store', async () => {
+    const app = await appWithPeople([])
+    const link = await createPersonLink(app, 'People', 'Jane Doe', 'Projects/P.md')
+    expect(link).toBe('[[Jane Doe]]')
+    expect(resolvePerson(app, link, 'Projects/P.md').path).toBe('People/Jane Doe.md')
   })
 })

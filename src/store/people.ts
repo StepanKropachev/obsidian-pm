@@ -59,3 +59,34 @@ export async function createPersonNote(app: App, peopleFolder: string, name: str
 export function resolvePeople(app: App, values: string[], sourcePath: string): PersonRef[] {
   return values.map((value) => resolvePerson(app, value, sourcePath))
 }
+
+export interface PersonCandidate {
+  link: string
+  name: string
+}
+
+/** Person notes matching what the user typed, as link + name ready to store and show. */
+export function personCandidates(
+  app: App,
+  peopleFolder: string,
+  query: string,
+  sourcePath: string,
+  limit = 20
+): PersonCandidate[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  return personNotes(app, peopleFolder)
+    .filter((file) => file.basename.toLowerCase().includes(q))
+    .slice(0, limit)
+    .map((file) => ({ link: personLink(app, file, sourcePath), name: file.basename }))
+}
+
+export async function createPersonLink(
+  app: App,
+  peopleFolder: string,
+  name: string,
+  sourcePath: string
+): Promise<string> {
+  const file = await createPersonNote(app, peopleFolder, name)
+  return personLink(app, file, sourcePath)
+}

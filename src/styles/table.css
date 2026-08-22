@@ -444,6 +444,10 @@ button.pm-chip-rm {
   color: var(--text-accent);
   font-style: italic;
 }
+.pm-suggest-hint {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
 
 /* Virtual-scroll spacers; the renderer sets their height inline. */
 .pm-table-spacer td {

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Assignees and project members can be picked from the person notes already in your vault, so the task links to them and they appear in the graph ([#131](https://github.com/StepanKropachev/obsidian-pm/issues/131))
+- A person with no note yet gets one created from the assignee picker, in the new people folder setting
+- Clicking an assignee's avatar opens that person's note
 - Opening a project from the project list shows its overview: progress, description, milestones, sub-projects, and properties
 - A row, card, or timeline label naming its project opens that project when clicked
 - Projects are listed wherever their files live in the vault

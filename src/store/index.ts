@@ -38,8 +38,16 @@ export { ProjectScope, resolveScopePaths, scopeKey } from './ProjectScope'
 export type { ScopeSpec } from './ProjectScope'
 export { VaultIndex } from './VaultIndex'
 export type { ProjectRef, TaskRef } from './VaultIndex'
-export { createPersonNote, personLink, personNotes, resolvePeople, resolvePerson } from './people'
-export type { PersonLinkState, PersonRef } from './people'
+export {
+  createPersonLink,
+  createPersonNote,
+  personCandidates,
+  personLink,
+  personNotes,
+  resolvePeople,
+  resolvePerson
+} from './people'
+export type { PersonCandidate, PersonLinkState, PersonRef } from './people'
 export { projectPathForTaskPath } from './vaultFs'
 export { hydrateTasks } from './YamlHydrator'
 export { appendYaml, isOldFormat, parseFrontmatter } from './YamlParser'

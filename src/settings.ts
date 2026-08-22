@@ -410,6 +410,17 @@ export class PMSettingTab extends PluginSettingTab {
       displayValue: () => plural(this.plugin.settings.globalTeamMembers.length, 'person', 'people'),
       items: [
         {
+          name: 'People folder',
+          desc: 'Where person notes are looked for and created. Leave it empty to search the whole vault.',
+          aliases: ['people', 'person notes'],
+          control: {
+            type: 'folder',
+            key: 'peopleFolder',
+            defaultValue: 'People',
+            placeholder: 'Whole vault'
+          }
+        },
+        {
           type: 'list',
           heading: 'Team members',
           emptyState: 'No team members yet.',
