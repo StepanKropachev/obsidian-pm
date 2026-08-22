@@ -208,6 +208,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
         addLabel: 'Assign',
         placeholder: 'Search people…',
         selected: () => task.assignees,
+        labelFor: displayName,
         options: () => allMembers().map((m) => ({ id: m, label: displayName(m) })),
         add: (id) => {
           if (!task.assignees.includes(id)) task.assignees.push(id)
