@@ -34,7 +34,7 @@ import {
   taskFilePath,
   TASK_SLUG_MAX_LENGTH
 } from './YamlSerializer'
-import { ensureFolder, moveProjectTaskFolder, moveTaskAttachmentFolder, resolveProjectLink } from './vaultFs'
+import { ensureFolder, moveProjectTaskFolder, moveTaskAttachmentFolder, resolveVaultLink } from './vaultFs'
 import type { ImportNoteOptions, TaskSource } from './TaskSource'
 
 /** 'fm' writes via processFrontMatter; 'full' rewrites the body too, via vault.process. */
@@ -333,7 +333,7 @@ export class ProjectStore implements TaskSource {
       const hasEmbeddedTasks = Array.isArray(frontmatter.tasks) && frontmatter.tasks.length > 0
 
       const project = hydrateProjectFromFrontmatter(frontmatter, body, file.path, file.basename)
-      project.parentPath = resolveProjectLink(this.app, frontmatter.parent, file.path)
+      project.parentPath = resolveVaultLink(this.app, frontmatter.parent, file.path)
       if (bodyRead) this.hydratedBodies.add(project)
 
       if (hasEmbeddedTasks) {

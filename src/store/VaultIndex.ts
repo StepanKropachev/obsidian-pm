@@ -4,7 +4,7 @@ import type { PMSettings, StatusConfig } from '../types'
 import { today } from '../dates'
 import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
-import { projectPathForTaskPath, resolveProjectLink } from './vaultFs'
+import { projectPathForTaskPath, resolveVaultLink } from './vaultFs'
 
 export interface ProjectRef {
   path: string
@@ -345,7 +345,7 @@ export class VaultIndex {
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
       teamMembers: Array.isArray(frontmatter.teamMembers) ? (frontmatter.teamMembers as string[]) : [],
-      parentPath: resolveProjectLink(this.app, frontmatter.parent, path),
+      parentPath: resolveVaultLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
       completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
     }

@@ -54,10 +54,11 @@ export function projectPathForTaskPath(taskPath: string): string | null {
 }
 
 /**
- * Resolves a project's `parent` frontmatter link to a vault path. A wikilink so Obsidian
- * updates it on rename and shows the edge in the graph; null when it points nowhere.
+ * Resolves a frontmatter link to a vault path, accepting a bare name as a linkpath too.
+ * A wikilink so Obsidian updates it on rename and shows the edge in the graph; undefined
+ * when it points nowhere.
  */
-export function resolveProjectLink(app: App, raw: unknown, sourcePath: string): string | undefined {
+export function resolveVaultLink(app: App, raw: unknown, sourcePath: string): string | undefined {
   if (typeof raw !== 'string') return undefined
   const inner = /^\[\[(.+?)\]\]$/.exec(raw.trim())?.[1] ?? raw.trim()
   const linkpath = inner.split('|')[0].trim()
