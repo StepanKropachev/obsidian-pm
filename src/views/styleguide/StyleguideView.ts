@@ -35,7 +35,7 @@ import { renderAddProperty, renderIconControl, renderInputControl } from '../../
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
-import { AvatarStack } from '../../ui/primitives/AvatarStack'
+import { AvatarStack, type AvatarPerson } from '../../ui/primitives/AvatarStack'
 import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { EmptyState } from '../../ui/primitives/EmptyState'
@@ -59,6 +59,11 @@ const FIVE_PRIORITIES: PriorityConfig[] = [
   { id: 'trivial', label: 'Trivial', color: '#6ba8a0', icon: '' }
 ]
 const WIKILINK_PERSON = '[[People/Alan Turing|Alan]]'
+const SAMPLE_PEOPLE: AvatarPerson[] = [
+  { name: 'Ada Lovelace' },
+  { name: 'Alan', onClick: noop },
+  { name: 'Ghost', unresolved: true }
+]
 
 /**
  * Gallery of every primitive and composite variant, in a real pane so the CSS cascade is
@@ -347,7 +352,7 @@ export class StyleguideView extends ItemView {
       tasksDone: 12,
       tasksTotal: 40,
       overdue: 0,
-      members: PEOPLE,
+      members: SAMPLE_PEOPLE,
       dueLabel: 'Oct 30',
       dueUrgency: 'normal',
       onToggleCollapsed: noop,
@@ -367,7 +372,7 @@ export class StyleguideView extends ItemView {
       tasksDone: 4,
       tasksTotal: 10,
       overdue: 3,
-      members: [PEOPLE[0]],
+      members: [SAMPLE_PEOPLE[0]],
       dueLabel: 'Jun 20',
       dueUrgency: 'overdue',
       onToggleCollapsed: noop,
@@ -402,6 +407,7 @@ export class StyleguideView extends ItemView {
     const kanbanRow = this.row(sec, 'KanbanCard: plain / overdue milestone with everything')
     new KanbanCard(kanbanRow, {
       task: makeTask({ title: 'Write the launch announcement' }),
+      people: [],
       loggedHours: 0,
       overdue: false,
       showTagColors: true,
@@ -419,6 +425,7 @@ export class StyleguideView extends ItemView {
         assignees: ['Ada Lovelace', 'Grace Hopper'],
         tags: ['design', 'frontend']
       }),
+      people: SAMPLE_PEOPLE,
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
@@ -559,7 +566,7 @@ export class StyleguideView extends ItemView {
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })
       new TimeCell(tr.el, time)
       new ProgressCell(tr.el, { value: task.progress, color: 'var(--interactive-accent)', onSave: noopAsync })
-      new AssigneesCell(tr.el, task.assignees)
+      new AssigneesCell(tr.el, SAMPLE_PEOPLE)
       new ActionsCell(tr.el, { onClick: noop })
     }
   }

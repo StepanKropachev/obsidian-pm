@@ -1,4 +1,4 @@
-import { AvatarStack } from '../primitives/AvatarStack'
+import { AvatarStack, type AvatarPerson } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { CollapseToggle } from '../primitives/CollapseToggle'
 import { IconButton } from '../primitives/IconButton'
@@ -20,7 +20,7 @@ export interface ProjectRowProps {
   tasksDone: number
   tasksTotal: number
   overdue: number
-  members: string[]
+  members: AvatarPerson[]
   /** Formatted by the caller; empty when nothing in the project has a date. */
   dueLabel: string
   dueUrgency: DueUrgency
@@ -73,7 +73,7 @@ export class ProjectRow {
     }
 
     const members = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-assignees' })
-    new AvatarStack(members).setNames(props.members).setMax(3).setSize('sm')
+    new AvatarStack(members).setPeople(props.members).setMax(3).setSize('sm')
 
     const due = this.el.createEl('td', { cls: 'pm-table-cell' })
     if (props.dueLabel) renderDueChip(due, props.dueLabel, props.dueUrgency, 'sm')

@@ -26,4 +26,26 @@ export class Avatar {
     this.el.toggleClass('pm-avatar--sm', size === 'sm')
     return this
   }
+
+  setUnresolved(unresolved: boolean): this {
+    this.el.toggleClass('pm-avatar--unresolved', unresolved)
+    return this
+  }
+
+  onClick(handler: () => void): this {
+    this.el.addClass('pm-avatar--link')
+    this.el.setAttr('role', 'link')
+    this.el.setAttr('tabindex', '0')
+    this.el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      handler()
+    })
+    this.el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      e.stopPropagation()
+      handler()
+    })
+    return this
+  }
 }

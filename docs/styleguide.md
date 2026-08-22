@@ -58,9 +58,10 @@ The button sibling of `Chip`: a compact native button with an optional persisten
 
 Initials disc for a person; the stack renders several with a `+N` overflow badge.
 
-- API: `new Avatar(parent).setName(raw).setSize('md'|'sm')`; `new AvatarStack(parent).setNames(string[]).setMax(n).setSize('md'|'sm')`
+- API: `new Avatar(parent).setName(raw).setSize('md'|'sm').setUnresolved(bool).onClick(fn)`; `new AvatarStack(parent).setPeople(AvatarPerson[]).setMax(n).setSize('md'|'sm')`, or `setNames(string[])` for people with no note behind them
+- `AvatarPerson` is `{ name, unresolved?, onClick? }`. Orchestrators build it with `peopleAvatars(app, values, sourcePath)` (`src/views/peopleAvatars.ts`), which resolves each value and opens the person's note on click
 - `displayName(raw)` (exported from `utils.ts`) resolves `[[wikilink|alias]]` names; `setName` applies it automatically
-- CSS: `pm-avatar`, `--sm`, `--more`; `pm-avatar-stack`; background from `stringToColor`
+- CSS: `pm-avatar`, `--sm`, `--more`, `--link`, `--unresolved`; `pm-avatar-stack`; background from `stringToColor`
 - Use when: any assignee/member display
 - Not when: you need the raw name as text (use `displayName` yourself)
 

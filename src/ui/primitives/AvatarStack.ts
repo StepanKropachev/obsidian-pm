@@ -1,8 +1,15 @@
 import { Avatar } from './Avatar'
 
+export interface AvatarPerson {
+  name: string
+  /** A link that points at no note; rendered muted, as Obsidian renders one. */
+  unresolved?: boolean
+  onClick?: () => void
+}
+
 export class AvatarStack {
   el: HTMLElement
-  private names: string[] = []
+  private people: AvatarPerson[] = []
   private max = 3
   private size: 'md' | 'sm' = 'md'
 
@@ -11,7 +18,11 @@ export class AvatarStack {
   }
 
   setNames(names: string[]): this {
-    this.names = names
+    return this.setPeople(names.map((name) => ({ name })))
+  }
+
+  setPeople(people: AvatarPerson[]): this {
+    this.people = people
     this.render()
     return this
   }
@@ -30,11 +41,13 @@ export class AvatarStack {
 
   private render(): void {
     this.el.empty()
-    const visible = this.names.slice(0, this.max)
-    for (const name of visible) {
-      new Avatar(this.el).setName(name).setSize(this.size)
+    const visible = this.people.slice(0, this.max)
+    for (const person of visible) {
+      const avatar = new Avatar(this.el).setName(person.name).setSize(this.size)
+      if (person.unresolved) avatar.setUnresolved(true)
+      if (person.onClick) avatar.onClick(person.onClick)
     }
-    const overflow = this.names.length - visible.length
+    const overflow = this.people.length - visible.length
     if (overflow > 0) {
       const more = this.el.createSpan({ cls: 'pm-avatar pm-avatar--more' })
       more.setText(`+${overflow}`)

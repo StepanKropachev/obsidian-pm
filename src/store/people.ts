@@ -55,3 +55,7 @@ export async function createPersonNote(app: App, peopleFolder: string, name: str
   if (existing instanceof TFile) return existing
   return app.vault.create(path, '')
 }
+
+export function resolvePeople(app: App, values: string[], sourcePath: string): PersonRef[] {
+  return values.map((value) => resolvePerson(app, value, sourcePath))
+}
