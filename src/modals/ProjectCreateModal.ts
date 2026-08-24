@@ -3,9 +3,8 @@ import type PMPlugin from '../main'
 import { DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON } from '../types'
 import { projectFilePath } from '../store'
 import { safeAsync } from '../utils'
-import { promptText } from '../ui/ModalFactory'
-import { renderAddButton } from '../ui/composites/addButton'
-import { renderChipList, renderPropRow } from '../ui/FormField'
+import { renderPersonPicker } from '../ui/PersonPicker'
+import { renderPropRow } from '../ui/FormField'
 import { renderIconControl, renderSelectControl } from '../ui/composites/properties'
 
 interface Draft {
@@ -203,38 +202,29 @@ export class ProjectCreateModal extends Modal {
   }
 
   private renderMembers(parent: HTMLElement): void {
-    const row = renderPropRow(
+    renderPropRow(
       parent,
       'Members',
       () => {
-        const list = createDiv('pm-prop-value')
-        const draw = (): void => {
-          renderChipList(list, this.draft.teamMembers, {
-            variant: 'accent',
-            onRemove: (member) => {
-              this.draft.teamMembers = this.draft.teamMembers.filter((name) => name !== member)
-              draw()
-            },
-            renderAdd: (container) => {
-              renderAddButton(
-                container,
-                'Add member',
-                safeAsync(async () => {
-                  const name = await promptText(this.app, 'Member name', 'Name')
-                  if (!name || this.draft.teamMembers.includes(name)) return
-                  this.draft.teamMembers.push(name)
-                  draw()
-                })
-              )
-            }
-          })
-        }
-        draw()
-        return list
+        const cell = createDiv('pm-prop-value')
+        renderPersonPicker({
+          container: cell,
+          plugin: this.plugin,
+          // The note doesn't exist yet, so links are resolved from the vault root.
+          sourcePath: '',
+          addLabel: 'Add member',
+          selected: () => this.draft.teamMembers,
+          add: (value) => {
+            this.draft.teamMembers.push(value)
+          },
+          remove: (value) => {
+            this.draft.teamMembers = this.draft.teamMembers.filter((name) => name !== value)
+          }
+        })
+        return cell
       },
       'users'
     )
-    row.addClass('pm-prop-row--wide')
   }
 
   private renderDescription(parent: HTMLElement): void {

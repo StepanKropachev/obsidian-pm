@@ -10,6 +10,7 @@ import {
   isTaskNotesInstalled
 } from './integrations/tasknotes'
 import { renderPaletteFields, renderStatusDoneToggle } from './ui/PaletteListEditor'
+import { renderPersonPicker } from './ui/PersonPicker'
 
 export type { PMSettings }
 export { DEFAULT_SETTINGS }
@@ -432,37 +433,25 @@ export class PMSettingTab extends PluginSettingTab {
           }
         },
         {
-          type: 'list',
-          heading: 'Team members',
-          emptyState: 'No team members yet.',
-          items: members.map((member, index) => ({
-            name: member || 'Unnamed member',
-            render: (setting: Setting) => {
-              setting.setClass('pm-palette-row')
-              setting.addText((text) =>
-                text
-                  .setPlaceholder('Name')
-                  .setValue(member)
-                  .onChange((value) => {
-                    this.plugin.settings.globalTeamMembers[index] = value
-                    this.persist()
-                  })
-              )
-            }
-          })),
-          onReorder: (from, to) => this.reorder(members, from, to),
-          onDelete: (index) => {
-            members.splice(index, 1)
-            this.persist()
-            this.update()
-          },
-          addItem: {
-            name: 'Add member',
-            action: () => {
-              members.push('')
-              this.persist()
-              this.update()
-            }
+          name: 'Team members',
+          desc: 'Offered as assignees and members in every project.',
+          render: (setting: Setting) => {
+            renderPersonPicker({
+              container: setting.controlEl,
+              plugin: this.plugin,
+              sourcePath: '',
+              addLabel: 'Add member',
+              selected: () => this.plugin.settings.globalTeamMembers,
+              add: (value) => {
+                members.push(value)
+                this.persist()
+              },
+              remove: (value) => {
+                const index = members.indexOf(value)
+                if (index >= 0) members.splice(index, 1)
+                this.persist()
+              }
+            })
           }
         }
       ]

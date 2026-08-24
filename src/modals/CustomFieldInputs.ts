@@ -1,9 +1,10 @@
 import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
+import { collectAllAssignees } from '../store/TaskTreeOps'
 import { renderChipList } from '../ui/FormField'
+import { renderPersonPicker } from '../ui/PersonPicker'
 import { stringifyCustomValue } from '../utils'
-import { renderPersonPicker } from './PersonPicker'
 
 export function renderCustomFieldInput(
   cf: CustomFieldDef,
@@ -95,8 +96,8 @@ export function renderCustomFieldInput(
       renderPersonPicker({
         container: wrap,
         plugin,
-        project,
         sourcePath: task.filePath ?? project.filePath,
+        extra: () => [...project.teamMembers, ...collectAllAssignees(project.tasks)],
         addLabel: 'Set person',
         selected: () => {
           const value = task.customFields[cf.id]

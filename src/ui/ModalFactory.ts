@@ -1,10 +1,9 @@
 import { type App, ButtonComponent, Modal, TFile } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
-import { createPersonLink, flattenTasks, personCandidates, personKeyer, type ProjectRef } from '../store'
-import { dedupePeople, displayName, safeAsync } from '../utils'
+import { flattenTasks, type ProjectRef } from '../store'
 import { TaskModal } from '../modals/TaskModal'
-import { PersonPickerModal, ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
+import { PersonLookupModal, ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
 import { ProjectCreateModal } from '../modals/ProjectCreateModal'
 
@@ -283,26 +282,9 @@ export function openTaskPicker(plugin: PMPlugin, tasks: Task[], onChoose: (task:
   new TaskPickerModal(plugin.app, tasks, onChoose).open()
 }
 
-/**
- * Picks a person for an assignee or member field. `known` are the values already in use;
- * anything chosen from the vault, or created here, comes back as a wikilink.
- */
-export function openPersonPicker(
-  plugin: PMPlugin,
-  known: string[],
-  sourcePath: string,
-  onChoose: (value: string) => void | Promise<void>
-): void {
-  const folder = plugin.settings.peopleFolder
-  new PersonPickerModal(
-    plugin.app,
-    dedupePeople(known, personKeyer(plugin.app)).map((value) => ({ value, name: displayName(value) })),
-    (query) => personCandidates(plugin.app, folder, query, sourcePath).map((c) => ({ value: c.link, name: c.name })),
-    safeAsync(async (choice, create) => {
-      const value = create ? await createPersonLink(plugin.app, folder, choice.name, sourcePath) : choice.value
-      await onChoose(value)
-    })
-  ).open()
+/** Picks from the people already assigned somewhere, for looking up their tasks. */
+export function openPersonLookup(plugin: PMPlugin, people: string[], onChoose: (person: string) => void): void {
+  new PersonLookupModal(plugin.app, people, onChoose).open()
 }
 
 export function openImportModal(

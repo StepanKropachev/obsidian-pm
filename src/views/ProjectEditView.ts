@@ -11,10 +11,12 @@ import {
   makeId,
   PRIORITY_ICON_SET_LABELS
 } from '../types'
-import { displayName, safeAsync, truncateTitle } from '../utils'
-import { confirmDialog, openPersonPicker } from '../ui/ModalFactory'
+import { collectAllAssignees } from '../store'
+import { safeAsync, truncateTitle } from '../utils'
+import { confirmDialog } from '../ui/ModalFactory'
+import { renderPersonPicker } from '../ui/PersonPicker'
 import { renderAddButton } from '../ui/composites/addButton'
-import { renderChipList, renderPropRow } from '../ui/FormField'
+import { renderPropRow } from '../ui/FormField'
 import { renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
 import { EmptyState } from '../ui/primitives/EmptyState'
@@ -230,27 +232,16 @@ export class ProjectEditView extends ItemView {
 
   private renderMembers(project: Project): void {
     const section = this.section('Members', 'Who is on this project')
-    const list = section.createDiv('pm-prop-value')
-    const draw = (): void => {
-      renderChipList(list, project.teamMembers, {
-        variant: 'accent',
-        labelFn: displayName,
-        onRemove: (member) => {
-          this.save({ teamMembers: project.teamMembers.filter((name) => name !== member) })
-          draw()
-        },
-        renderAdd: (container) => {
-          renderAddButton(container, 'Add member', () => {
-            openPersonPicker(this.plugin, project.teamMembers, project.filePath, (value) => {
-              if (!value || project.teamMembers.includes(value)) return
-              this.save({ teamMembers: [...project.teamMembers, value] })
-              draw()
-            })
-          })
-        }
-      })
-    }
-    draw()
+    renderPersonPicker({
+      container: section.createDiv('pm-prop-value'),
+      plugin: this.plugin,
+      sourcePath: project.filePath,
+      extra: () => collectAllAssignees(project.tasks),
+      addLabel: 'Add member',
+      selected: () => project.teamMembers,
+      add: (value) => this.save({ teamMembers: [...project.teamMembers, value] }),
+      remove: (value) => this.save({ teamMembers: project.teamMembers.filter((name) => name !== value) })
+    })
   }
 
   private renderStatuses(project: Project): void {

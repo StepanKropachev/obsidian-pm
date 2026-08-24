@@ -1,9 +1,10 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
-import { flattenTasks, collectAllAssignees, collectAllTags, personKeyer } from '../../store'
+import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
 import { displayName, formatBadgeText } from '../../utils'
 import { today } from '../../dates'
-import { openPersonPicker, promptText } from '../../ui/ModalFactory'
+import { promptText } from '../../ui/ModalFactory'
+import { peopleSource } from '../../ui/PersonPicker'
 import { TaskPickerModal } from '../../modals/PickerModals'
 import type { TableContext } from './TableRenderer'
 import { updateSelectAllCheckbox } from './TableRow'
@@ -77,24 +78,15 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
 
   new ButtonComponent(left).setButtonText('Set assignee').onClick((e) => {
     const menu = new Menu()
-    const allMembers = collectAllAssignees(
-      ctx.scope.tasks(),
-      [...ctx.scope.teamMembers(), ...ctx.plugin.settings.globalTeamMembers],
-      personKeyer(ctx.plugin.app)
-    )
-    for (const m of allMembers) {
+    const source = peopleSource(ctx.plugin, ctx.scope.primary?.filePath ?? '', () => [
+      ...ctx.scope.teamMembers(),
+      ...collectAllAssignees(ctx.scope.tasks())
+    ])
+    for (const member of source.known()) {
       menu.addItem((item) =>
-        item.setTitle(displayName(m)).onClick(() => onAction({ type: 'set-assignee', assignee: m }))
+        item.setTitle(displayName(member)).onClick(() => onAction({ type: 'set-assignee', assignee: member }))
       )
     }
-    menu.addSeparator()
-    menu.addItem((item) =>
-      item.setTitle('Someone else...').onClick(() => {
-        openPersonPicker(ctx.plugin, allMembers, ctx.scope.primary?.filePath ?? '', (value) => {
-          onAction({ type: 'set-assignee', assignee: value })
-        })
-      })
-    )
     menu.addSeparator()
     menu.addItem((item) =>
       item.setTitle('Clear assignees').onClick(() => onAction({ type: 'set-assignee', assignee: '' }))

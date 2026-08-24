@@ -1,12 +1,12 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
-import { flattenTasks } from '../store/TaskTreeOps'
+import { collectAllAssignees, flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
-import { renderPersonPicker } from './PersonPicker'
+import { renderPersonPicker } from '../ui/PersonPicker'
 import {
   renderSelectControl,
   renderDateControl,
@@ -206,8 +206,8 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       renderPersonPicker({
         container: cell,
         plugin,
-        project,
         sourcePath: task.filePath ?? project.filePath,
+        extra: () => [...project.teamMembers, ...collectAllAssignees(project.tasks)],
         addLabel: 'Assign',
         selected: () => task.assignees,
         add: (value) => {
