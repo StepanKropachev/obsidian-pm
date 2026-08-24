@@ -1,5 +1,5 @@
 import type { Task } from '../../../types'
-import { formatDateLong } from '../../../utils'
+import { formatDateLong } from '../../../dates'
 import type { DueUrgency } from '../dueChip'
 import { renderDueChip } from '../dueChip'
 import { Chip } from '../../primitives/Chip'

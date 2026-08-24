@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Temporal } from 'temporal-polyfill'
-import { completionOutcome, relativeDue } from './dates'
+import { completionOutcome, formatDate, formatDateLong, formatDateShort, relativeDue } from './dates'
 
 const from = Temporal.PlainDate.from('2026-06-15')
 
@@ -46,5 +46,28 @@ describe('completionOutcome', () => {
   it('reads on time when the task landed on or before its due date', () => {
     expect(completionOutcome('2026-06-15', '2026-06-15')).toEqual({ text: 'On time', tone: 'outcome' })
     expect(completionOutcome('2026-06-15', '2026-06-01')).toEqual({ text: 'On time', tone: 'outcome' })
+  })
+})
+
+describe('date formatting', () => {
+  const ZONES = ['UTC', 'America/New_York', 'Pacific/Kiritimati']
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('returns an empty string for empty or invalid dates', () => {
+    expect(formatDate('')).toBe('')
+    expect(formatDateShort('not-a-date')).toBe('')
+    expect(formatDateLong('')).toBe('')
+  })
+
+  // A YYYY-MM-DD field names a calendar day, not an instant: read as an instant it lands on
+  // the day before wherever the clock is behind UTC.
+  it.each(ZONES)('names the day the field says in %s', (zone) => {
+    vi.stubEnv('TZ', zone)
+    expect(formatDate('2026-03-28')).toContain('28')
+    expect(formatDateShort('2026-03-28')).toContain('28')
+    expect(formatDateLong('2026-03-28')).toContain('28')
   })
 })
