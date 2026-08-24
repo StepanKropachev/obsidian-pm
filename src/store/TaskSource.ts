@@ -40,6 +40,11 @@ export interface TaskSource {
   loadProjectBody(project: Project): Promise<void>
 
   createProject(title: string, folder: string, patch?: ProjectPatch): Promise<Project>
+  /**
+   * Moves a project that still sits beside its `<name>_tasks` folder into a folder of its
+   * own. Returns the note's new path, or null when the project already owns a folder.
+   */
+  moveProjectIntoOwnFolder(projectPath: string): Promise<string | null>
   saveProject(project: Project): Promise<void>
   updateProject(project: Project, patch: ProjectPatch): Promise<void>
   deleteProject(project: Project): Promise<void>

@@ -1,7 +1,7 @@
 import { ButtonComponent, ExtraButtonComponent, ItemView, Menu, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import { type Project, type ViewMode, type FilterState, type SavedView, makeDefaultFilter, makeId } from '../types'
-import { personKeyer, ProjectScope, resolveScopePaths, scopeKey, type ScopeSpec } from '../store'
+import { personKeyer, ProjectScope, projectFolderOf, resolveScopePaths, scopeKey, type ScopeSpec } from '../store'
 import { truncateTitle, safeAsync } from '../utils'
 import type { SubView } from './SubView'
 import { TableView } from './table/TableView'
@@ -445,7 +445,9 @@ export class ProjectView extends ItemView {
     if (!scope || !primary) return
     const path = scope.spec.kind === 'vault' ? primary.filePath : scope.spec.path
     const projectPath = scope.spec.kind === 'project' || scope.spec.kind === 'subtree' ? path : primary.filePath
-    const folder = projectPath.slice(0, projectPath.lastIndexOf('/'))
+    // A project owns its folder, so "the containing folder" is the one holding that folder.
+    const own = projectFolderOf(this.app, projectPath)
+    const folder = (own ?? projectPath).slice(0, (own ?? projectPath).lastIndexOf('/'))
 
     const options: { label: string; spec: ScopeSpec }[] = [
       { label: 'This project', spec: { kind: 'project', path: projectPath } },

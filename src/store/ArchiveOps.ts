@@ -2,11 +2,7 @@ import type { App } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
 import type { Project, Task } from '../types'
 import { findTaskById } from './TaskIndex'
-import { ensureFolder, moveTaskAttachmentFolder } from './vaultFs'
-
-function projectTaskFolder(project: Project): string {
-  return project.filePath.replace(/\.md$/, '_tasks')
-}
+import { ensureFolder, moveTaskAttachmentFolder, projectTaskFolder } from './vaultFs'
 
 function subtree(task: Task): Task[] {
   return [task, ...task.subtasks.flatMap(subtree)]
@@ -52,7 +48,7 @@ export async function archiveTask(
   const task = findTaskById(project, taskId)
   if (!task) return
 
-  const archiveFolder = normalizePath(projectTaskFolder(project) + '/Archive')
+  const archiveFolder = normalizePath(projectTaskFolder(app, project.filePath) + '/Archive')
   await ensureFolder(app, archiveFolder)
 
   for (const t of subtree(task)) {
@@ -69,7 +65,7 @@ export async function unarchiveTask(
   const task = findTaskById(project, taskId)
   if (!task) return
 
-  const taskFolder = normalizePath(projectTaskFolder(project))
+  const taskFolder = normalizePath(projectTaskFolder(app, project.filePath))
   for (const t of subtree(task)) {
     if (await moveTaskFile(app, t, taskFolder, markSelfWrite)) t.archived = false
   }

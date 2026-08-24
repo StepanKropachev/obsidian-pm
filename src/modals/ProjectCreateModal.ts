@@ -1,7 +1,7 @@
 import { App, ButtonComponent, ExtraButtonComponent, Modal, setIcon } from 'obsidian'
 import type PMPlugin from '../main'
 import { DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON } from '../types'
-import { projectFilePath } from '../store'
+import { projectFilePath, projectFolderOf } from '../store'
 import { safeAsync } from '../utils'
 import { renderPersonPicker } from '../ui/PersonPicker'
 import { renderPropRow } from '../ui/FormField'
@@ -29,6 +29,7 @@ export class ProjectCreateModal extends Modal {
   private header!: HTMLElement
   private titleInput!: HTMLTextAreaElement
   private titleError!: HTMLElement
+  private crumbFolder!: HTMLElement
   private pathHint!: HTMLElement
   private iconHost!: HTMLElement
   private submit!: ButtonComponent
@@ -83,7 +84,7 @@ export class ProjectCreateModal extends Modal {
     const crumb = this.header.createDiv('pm-te-crumb')
     const folderIcon = crumb.createSpan({ cls: 'pm-te-crumb-icon' })
     setIcon(folderIcon, 'folder')
-    crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.plugin.settings.projectsFolder || this.app.vault.getName() })
+    this.crumbFolder = crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.targetFolder() })
     const sep = crumb.createSpan({ cls: 'pm-te-crumb-sep' })
     setIcon(sep, 'chevron-right')
     crumb.createSpan({ text: 'New project' })
@@ -190,6 +191,7 @@ export class ProjectCreateModal extends Modal {
             onChange: (path) => {
               this.draft.parentPath = path
               draw()
+              this.refreshValidity()
             }
           })
         }
@@ -263,6 +265,7 @@ export class ProjectCreateModal extends Modal {
     const path = title ? this.targetPath(title) : ''
     const taken = !!path && !!this.app.vault.getAbstractFileByPath(path)
 
+    this.crumbFolder.setText(this.targetFolder())
     this.pathHint.lastElementChild?.setText(path)
     this.pathHint.toggleClass('pm-hidden', !path)
     if (taken) {
@@ -277,14 +280,21 @@ export class ProjectCreateModal extends Modal {
     this.submit.setDisabled(!title || taken)
   }
 
+  /** A sub-project goes inside its parent's folder; a root project in the projects folder. */
+  private targetFolder(): string {
+    const parentPath = this.draft.parentPath
+    if (!parentPath) return this.plugin.settings.projectsFolder || this.app.vault.getName()
+    return projectFolderOf(this.app, parentPath) ?? parentPath.slice(0, parentPath.lastIndexOf('/'))
+  }
+
   private targetPath(title: string): string {
-    return projectFilePath(title, this.plugin.settings.projectsFolder)
+    return projectFilePath(title, this.targetFolder())
   }
 
   private readonly create = safeAsync(async () => {
     const title = this.draft.title.trim()
     if (!title || this.app.vault.getAbstractFileByPath(this.targetPath(title))) return
-    const project = await this.plugin.store.createProject(title, this.plugin.settings.projectsFolder, {
+    const project = await this.plugin.store.createProject(title, this.targetFolder(), {
       icon: this.draft.icon,
       color: this.draft.color,
       description: this.draft.description,
