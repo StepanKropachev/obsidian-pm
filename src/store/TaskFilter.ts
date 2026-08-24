@@ -50,10 +50,7 @@ export function matchesFilter(
   }
   if (filter.statuses.length && !filter.statuses.includes(task.status)) return false
   if (filter.priorities.length && !filter.priorities.includes(task.priority)) return false
-  if (
-    filter.assignees.length &&
-    !task.assignees.some((a) => filter.assignees.some((f) => keyOf(f) === keyOf(a)))
-  ) {
+  if (filter.assignees.length && !task.assignees.some((a) => filter.assignees.some((f) => keyOf(f) === keyOf(a)))) {
     return false
   }
   if (filter.tags.length && !task.tags.some((t) => filter.tags.includes(t))) return false

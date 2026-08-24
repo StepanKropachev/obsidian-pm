@@ -202,7 +202,8 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     () => {
       const cell = createDiv('pm-prop-value')
       const sourcePath = task.filePath ?? project.filePath
-      const allMembers = () => dedupePeople([...project.teamMembers, ...plugin.settings.globalTeamMembers], personKeyer(plugin.app))
+      const allMembers = () =>
+        dedupePeople([...project.teamMembers, ...plugin.settings.globalTeamMembers], personKeyer(plugin.app))
       renderMultiSelect({
         container: cell,
         avatarStack: true,

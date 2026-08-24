@@ -77,7 +77,9 @@ export class KanbanView implements SubView {
     const candidates = this.config.kanbanShowSubtasks
       ? flattenTasks(this.scope.tasks()).map((ft) => ft.task)
       : this.scope.tasks()
-    return candidates.filter((t) => t.status === status && matchesFilter(t, this.filter, this.config.statuses, this.personKey))
+    return candidates.filter(
+      (t) => t.status === status && matchesFilter(t, this.filter, this.config.statuses, this.personKey)
+    )
   }
 
   private buildCardData(task: Task): KanbanCardData {

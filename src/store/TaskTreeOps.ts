@@ -127,11 +127,7 @@ export function filterArchived(tasks: Task[]): Task[] {
     .map((t) => (t.subtasks.length ? { ...t, subtasks: filterArchived(t.subtasks) } : t))
 }
 
-export function collectAllAssignees(
-  tasks: Task[],
-  extra?: string[],
-  keyOf?: (raw: string) => string
-): string[] {
+export function collectAllAssignees(tasks: Task[], extra?: string[], keyOf?: (raw: string) => string): string[] {
   const values: string[] = extra ? [...extra] : []
   const walk = (list: Task[]) => {
     for (const t of list) {

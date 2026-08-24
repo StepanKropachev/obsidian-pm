@@ -302,7 +302,12 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    return applyTaskFilterPromote(this.scope.tasks(), this.filter, this.scope.config.statuses, personKeyer(this.plugin.app))
+    return applyTaskFilterPromote(
+      this.scope.tasks(),
+      this.filter,
+      this.scope.config.statuses,
+      personKeyer(this.plugin.app)
+    )
   }
 
   private scrollToToday(): void {

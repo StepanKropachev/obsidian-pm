@@ -149,11 +149,7 @@ describe('dedupePeople', () => {
   })
 
   it('sorts by display name, not by the raw string', () => {
-    expect(dedupePeople(['Zoe Ford', '[[John Doe]]', 'Anna Reid'])).toEqual([
-      'Anna Reid',
-      '[[John Doe]]',
-      'Zoe Ford'
-    ])
+    expect(dedupePeople(['Zoe Ford', '[[John Doe]]', 'Anna Reid'])).toEqual(['Anna Reid', '[[John Doe]]', 'Zoe Ford'])
   })
 
   it('drops empty values', () => {
