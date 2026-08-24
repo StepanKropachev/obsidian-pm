@@ -13,7 +13,7 @@ import {
   getSnapPoints,
   snapX
 } from './TimelineConfig'
-import { attachDragHandle, attachBarMove } from './GanttDragHandler'
+import { attachBarDrag } from './GanttDragHandler'
 import { handleLinkDotClick } from './GanttLinkHandler'
 import type { RendererContext } from './GanttRenderer'
 
@@ -129,21 +129,22 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
       class: 'pm-gantt-drag-handle',
       cursor: 'ew-resize'
     })
-    const cleanup = attachDragHandle(
-      handle,
-      side,
-      task,
-      rect,
-      barGroup,
-      x,
-      width,
-      ctx.cfg,
-      ctx.drag,
-      ctx.plugin,
-      project,
-      ctx.onRefresh
+    ctx.cleanupFns.push(
+      attachBarDrag({
+        trigger: handle,
+        rect,
+        barGroup,
+        task,
+        side,
+        x,
+        width,
+        cfg: ctx.cfg,
+        drag: ctx.drag,
+        plugin: ctx.plugin,
+        project,
+        onRefresh: ctx.onRefresh
+      })
     )
-    ctx.cleanupFns.push(cleanup)
     barGroup.appendChild(handle)
   }
 
@@ -170,19 +171,22 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   }
 
   if (task.start && task.due) {
-    const moveCleanup = attachBarMove(
-      rect,
-      barGroup,
-      task,
-      x,
-      width,
-      ctx.cfg,
-      ctx.drag,
-      ctx.plugin,
-      project,
-      ctx.onRefresh
+    ctx.cleanupFns.push(
+      attachBarDrag({
+        trigger: rect,
+        rect,
+        barGroup,
+        task,
+        side: 'move',
+        x,
+        width,
+        cfg: ctx.cfg,
+        drag: ctx.drag,
+        plugin: ctx.plugin,
+        project,
+        onRefresh: ctx.onRefresh
+      })
     )
-    ctx.cleanupFns.push(moveCleanup)
     rect.setAttribute('cursor', 'grab')
   } else {
     rect.setAttribute('cursor', 'pointer')

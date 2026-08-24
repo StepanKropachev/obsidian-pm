@@ -29,24 +29,36 @@ export function makeDragState(): DragState {
   }
 }
 
-export function attachDragHandle(
-  handle: SVGRectElement,
-  side: 'left' | 'right',
-  task: Task,
-  rect: SVGRectElement,
-  barGroup: SVGGElement,
-  x: number,
-  width: number,
-  cfg: TimelineCfg,
-  drag: DragState,
-  plugin: PMPlugin,
-  project: Project,
+export interface BarDragOpts {
+  /** What the user grabs: an edge handle, or the bar itself to move the whole span. */
+  trigger: SVGRectElement
+  rect: SVGRectElement
+  barGroup: SVGGElement
+  task: Task
+  side: 'left' | 'right' | 'move'
+  x: number
+  width: number
+  cfg: TimelineCfg
+  drag: DragState
+  plugin: PMPlugin
+  project: Project
   onRefresh: () => Promise<void>
-): () => void {
+}
+
+/**
+ * Dragging a bar edge moves the date that edge stands for; dragging the bar moves both and
+ * keeps its length. The bar follows the pointer on its own, and the dates are written once
+ * on release, so a drag costs one save.
+ */
+export function attachBarDrag(opts: BarDragOpts): () => void {
+  const { trigger, rect, barGroup, task, side, x, width, cfg, drag, plugin, project, onRefresh } = opts
+  const moving = side === 'move'
   let activeCleanup: (() => void) | null = null
 
-  handle.addEventListener('mousedown', (e: MouseEvent) => {
-    e.stopPropagation()
+  trigger.addEventListener('mousedown', (e: MouseEvent) => {
+    if (e.button !== 0) return
+    // A handle sits on the bar, which is itself draggable.
+    if (!moving) e.stopPropagation()
     e.preventDefault()
     drag.isDragging = true
     drag.dragMoved = false
@@ -58,59 +70,66 @@ export function attachDragHandle(
     drag.dragInitialW = width
 
     const snapPoints = getSnapPoints(cfg)
-    const snapThreshold = cfg.dayWidth * 0.4
+    const snap = (value: number) => snapX(value, snapPoints, cfg.dayWidth * 0.4)
+    let movedX = x
+    let movedW = width
+
+    const restore = () => {
+      if (moving) {
+        barGroup.removeAttribute('transform')
+        return
+      }
+      rect.setAttribute('x', String(drag.dragInitialX))
+      rect.setAttribute('width', String(drag.dragInitialW))
+      repositionBarChildren(barGroup, drag.dragInitialX, drag.dragInitialW)
+    }
 
     const onMove = (ev: MouseEvent) => {
       if (!drag.isDragging || !drag.dragBarEl) return
       const dx = ev.clientX - drag.dragStartX
       if (Math.abs(dx) > 3) drag.dragMoved = true
-      let newX = drag.dragInitialX
-      let newW: number
-      if (drag.dragSide === 'left') {
-        newX = Math.max(0, drag.dragInitialX + dx)
-        newX = snapX(newX, snapPoints, snapThreshold)
-        newW = drag.dragInitialX + drag.dragInitialW - newX
-      } else {
-        newW = drag.dragInitialW + dx
-        const rightEdge = snapX(newX + newW, snapPoints, snapThreshold)
-        newW = rightEdge - newX
+      if (moving) {
+        movedX = snap(Math.max(0, drag.dragInitialX + dx))
+        barGroup.setAttribute('transform', `translate(${movedX - drag.dragInitialX}, 0)`)
+        return
       }
-      newW = Math.max(cfg.dayWidth, newW)
-      drag.dragBarEl.setAttribute('x', String(newX))
-      drag.dragBarEl.setAttribute('width', String(newW))
-      repositionBarChildren(barGroup, newX, newW)
+      if (side === 'left') {
+        movedX = snap(Math.max(0, drag.dragInitialX + dx))
+        movedW = drag.dragInitialX + drag.dragInitialW - movedX
+      } else {
+        movedW = snap(movedX + drag.dragInitialW + dx) - movedX
+      }
+      movedW = Math.max(cfg.dayWidth, movedW)
+      drag.dragBarEl.setAttribute('x', String(movedX))
+      drag.dragBarEl.setAttribute('width', String(movedW))
+      repositionBarChildren(barGroup, movedX, movedW)
     }
 
     const onUp = safeAsync(async () => {
       activeDocument.removeEventListener('mousemove', onMove)
       activeDocument.removeEventListener('mouseup', onUp)
+      if (moving) rect.classList.remove('pm-gantt-bar-grabbing')
       activeCleanup = null
       if (!drag.isDragging || !drag.dragTask || !drag.dragBarEl) return
       drag.isDragging = false
-      if (!drag.dragMoved) return
-
-      const finalX = parseFloat(drag.dragBarEl.getAttribute('x') ?? '0')
-      const finalW = parseFloat(drag.dragBarEl.getAttribute('width') ?? '0')
-
-      const snappedX = snapX(finalX, snapPoints, snapThreshold)
-      const snappedRight = snapX(finalX + finalW, snapPoints, snapThreshold)
+      if (!drag.dragMoved) {
+        restore()
+        return
+      }
 
       const taskId = drag.dragTask.id
       const oldStart = drag.dragTask.start
       const oldDue = drag.dragTask.due
+      const start = xToDate(cfg, snap(movedX)).toString()
+      const due = xToDate(cfg, snap(movedX + movedW))
+        .subtract({ days: 1 })
+        .toString()
+      const patch: Partial<Task> = side === 'left' ? { start } : side === 'right' ? { due } : { start, due }
 
-      const patch: Partial<Task> = {}
-      if (drag.dragSide === 'left') {
-        patch.start = xToDate(cfg, snappedX).toString()
-      } else {
-        patch.due = xToDate(cfg, snappedRight).subtract({ days: 1 }).toString()
-      }
       try {
         await plugin.store.updateTask(project, taskId, patch)
       } catch (err) {
-        drag.dragBarEl.setAttribute('x', String(drag.dragInitialX))
-        drag.dragBarEl.setAttribute('width', String(drag.dragInitialW))
-        repositionBarChildren(barGroup, drag.dragInitialX, drag.dragInitialW)
+        restore()
         new Notice('Failed to save date change. Please try again.')
         console.error('GanttDragHandler: save failed', err)
         return
@@ -130,122 +149,11 @@ export function attachDragHandle(
           await onRefresh()
         }
       })
-      await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
+      await plugin.store.scheduleAfterChange(project, taskId)
       await onRefresh()
     })
 
-    activeDocument.addEventListener('mousemove', onMove)
-    activeDocument.addEventListener('mouseup', onUp)
-    activeCleanup = () => {
-      activeDocument.removeEventListener('mousemove', onMove)
-      activeDocument.removeEventListener('mouseup', onUp)
-    }
-  })
-
-  return () => {
-    if (activeCleanup) {
-      activeCleanup()
-      activeCleanup = null
-      drag.isDragging = false
-      drag.dragBarEl = null
-    }
-  }
-}
-
-export function attachBarMove(
-  rect: SVGRectElement,
-  barGroup: SVGGElement,
-  task: Task,
-  x: number,
-  width: number,
-  cfg: TimelineCfg,
-  drag: DragState,
-  plugin: PMPlugin,
-  project: Project,
-  onRefresh: () => Promise<void>
-): () => void {
-  let activeCleanup: (() => void) | null = null
-
-  rect.addEventListener('mousedown', (e: MouseEvent) => {
-    if (e.button !== 0) return
-    e.preventDefault()
-    drag.isDragging = true
-    drag.dragMoved = false
-    drag.dragSide = 'move'
-    drag.dragTask = task
-    drag.dragStartX = e.clientX
-    drag.dragBarEl = rect
-    drag.dragInitialX = x
-    drag.dragInitialW = width
-
-    const snapPoints = getSnapPoints(cfg)
-    const snapThreshold = cfg.dayWidth * 0.4
-    let lastSnappedX = x
-
-    const onMove = (ev: MouseEvent) => {
-      if (!drag.isDragging || !drag.dragBarEl) return
-      const dx = ev.clientX - drag.dragStartX
-      if (Math.abs(dx) > 3) drag.dragMoved = true
-      lastSnappedX = Math.max(0, drag.dragInitialX + dx)
-      lastSnappedX = snapX(lastSnappedX, snapPoints, snapThreshold)
-      const translateX = lastSnappedX - drag.dragInitialX
-      barGroup.setAttribute('transform', `translate(${translateX}, 0)`)
-    }
-
-    const onUp = safeAsync(async () => {
-      activeDocument.removeEventListener('mousemove', onMove)
-      activeDocument.removeEventListener('mouseup', onUp)
-      rect.classList.remove('pm-gantt-bar-grabbing')
-      activeCleanup = null
-      if (!drag.isDragging || !drag.dragTask || !drag.dragBarEl) return
-      drag.isDragging = false
-      if (!drag.dragMoved) {
-        barGroup.removeAttribute('transform')
-        return
-      }
-
-      const taskId = drag.dragTask.id
-      const oldStart = drag.dragTask.start
-      const oldDue = drag.dragTask.due
-
-      const snappedX = snapX(lastSnappedX, snapPoints, snapThreshold)
-      const snappedRight = snapX(snappedX + drag.dragInitialW, snapPoints, snapThreshold)
-
-      const newStart = xToDate(cfg, snappedX)
-      const newEnd = xToDate(cfg, snappedRight).subtract({ days: 1 })
-
-      const patch: Partial<Task> = {
-        start: newStart.toString(),
-        due: newEnd.toString()
-      }
-      try {
-        await plugin.store.updateTask(project, taskId, patch)
-      } catch (err) {
-        barGroup.removeAttribute('transform')
-        new Notice('Failed to save date change. Please try again.')
-        console.error('GanttDragHandler: move save failed', err)
-        return
-      }
-      const redoPatch: Partial<Task> = { ...patch }
-      plugin.pushUndo({
-        undo: async () => {
-          await plugin.store.updateTask(project, taskId, { start: oldStart, due: oldDue })
-          if (plugin.store.configFor(project).autoSchedule) {
-            new Notice('Dates reverted. Dependent task dates may need adjustment.')
-          }
-          await onRefresh()
-        },
-        redo: async () => {
-          await plugin.store.updateTask(project, taskId, redoPatch)
-          await plugin.store.scheduleAfterChange(project, taskId)
-          await onRefresh()
-        }
-      })
-      await plugin.store.scheduleAfterChange(project, drag.dragTask.id)
-      await onRefresh()
-    })
-
-    rect.classList.add('pm-gantt-bar-grabbing')
+    if (moving) rect.classList.add('pm-gantt-bar-grabbing')
     activeDocument.addEventListener('mousemove', onMove)
     activeDocument.addEventListener('mouseup', onUp)
     activeCleanup = () => {
