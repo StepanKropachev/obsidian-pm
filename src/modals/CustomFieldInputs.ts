@@ -2,7 +2,7 @@ import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
 import { collectAllAssignees } from '../store/TaskTreeOps'
 import { renderPersonPicker } from '../ui/PersonPicker'
-import { ChipButton } from '../ui/primitives/ChipButton'
+import { Checkbox } from '../ui/primitives/Checkbox'
 import {
   renderDateControl,
   renderInputControl,
@@ -48,11 +48,7 @@ export function renderCustomFieldInput(
       break
     }
     case 'checkbox': {
-      const checked = Boolean(value)
-      new ChipButton(wrap)
-        .setLabel(checked ? 'Yes' : 'No')
-        .setActive(checked)
-        .onClick(() => commit(!checked))
+      new Checkbox(wrap).setChecked(Boolean(value)).setAriaLabel(cf.name).onChange(commit)
       break
     }
     case 'select': {

@@ -25,6 +25,7 @@ Before writing any new UI element, find your case here:
 - Need user initials -> `Avatar` / `AvatarStack`
 - Need a progress indicator -> `ProgressBar`
 - Need an empty placeholder -> `EmptyState`
+- Need a boolean the user flips -> `Checkbox`
 - Need to pick an icon or emoji -> `renderIconControl`
 - Need a label + value form row -> `renderPropRow`
 - Need a removable-token list -> `renderMultiSelect`
@@ -49,7 +50,7 @@ The unified label primitive: status, priority, tags, due dates, time, small badg
 
 ### ChipButton - `ChipButton.ts`
 
-The button sibling of `Chip`: a compact native button with an optional persistent active state. Wraps Obsidian's `ButtonComponent`; active carries the plugin's 12% accent-tint selection signature. Used by saved views, filter dropdowns, due/archived toggles, the filter row's Clear, and checkbox custom fields.
+The button sibling of `Chip`: a compact native button with an optional persistent active state. Wraps Obsidian's `ButtonComponent`; active carries the plugin's 12% accent-tint selection signature. Used by saved views, filter dropdowns, due/archived toggles, and the filter row's Clear.
 
 - API: `new ChipButton(parent).setLabel(text).setActive(bool).setShape('rounded'|'pill').setAriaLabel(text).onClick(h).onContextMenu(h)`
 - CSS: `button.pm-chip-btn` (the `button` prefix outranks core button chrome), `--active`, `--pill`
@@ -92,6 +93,15 @@ Obsidian-native collapse triangle for tree rows.
 - API: `new CollapseToggle(parent, { collapsed, onToggle, subject? })` (constructor-only); `subject` names what collapses in the aria label, defaulting to subtasks
 - CSS: `tree-item-icon collapse-icon pm-collapse-toggle`, `is-collapsed`
 - Use when: expanding/collapsing subtask trees, or sub-projects in the project list
+
+### Checkbox - `Checkbox.ts`
+
+Obsidian's native checkbox, for anything stored as a plain boolean. Backs the subtask done boxes and `checkbox` custom fields.
+
+- API: `new Checkbox(parent).setChecked(bool).setAriaLabel(text).onChange(checked => ...)`; `.el` is the `input`
+- CSS: `pm-checkbox` (alignment only - core paints the box)
+- Use when: a boolean the user flips directly
+- Not when: the value is a choice among options (`renderSelectControl`) or a filter toggle among chips (`ChipButton`)
 
 ### EmptyState - `EmptyState.ts`
 
@@ -145,7 +155,7 @@ Take resolved data + callbacks via props. No `plugin`, no `store`, no `onRefresh
   - **CustomFieldCell** takes one `CustomFieldValue`: `{ kind: 'text' }`, `{ kind: 'checkbox' }` (a check glyph, `—` when false), `{ kind: 'url' }` (an `a.external-link`), `{ kind: 'people' }` (an AvatarStack, the same avatars AssigneesCell shows), or `{ kind: 'links' }` (note names as `pm-cf-link`, joined with commas). People and links are both `AvatarPerson[]` from `linkedRefs`, so a person field and an assignee resolve and open the same way.
   - **TitleCell** keeps the `<td>` a real table cell and puts the title, badges, and tags in a `.pm-table-title-inner` flex row, so a row made taller by another column still centers them (`ProjectRow` does the same). It indents from `--depth` on the parent `TaskRow` (CSS, not an inline style) and draws subtask tree connectors through `renderTreeGuides` (`composites/treeGuides.ts`, shared with `ProjectRow`) from `treeGuides` + `isLastChild`: one `.pm-tree-guide` span per indent column, the deepest carrying `--elbow`. Pass `treeGuides: null` to indent without lines. The caller reads `config.showSubtreeConnections` to decide.
   - The grid is off by default. `TableRenderer` stamps `config.lineBorders` onto the wrapper as `data-borders`, re-applied on every body fill so a settings change lands without rebuilding the table; cells carry no rules of their own.
-- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, people, dependencies; `moreOptions(query)` adds a second searched tier under a `moreHeading`, and `createAlt` adds a second create row whose async `run` is awaited before the list repaints - `renderPersonPicker` uses both to offer vault person notes and to create one; `keyOf(id)` is the identity a selected value is matched by, so a person written as a name and as a link is one row rather than two; in `depsList` mode `linkFor(id)` gives back the note a value stands for and how to open it), `renderDepRow` (one task in a dependency list: link icon, task id, title, and a remove button when `onRemove` is passed; with a `link` the title is a `renderNoteLink`, which the task editor points at `openTaskByPath` so a dependency leads to that task's editor rather than the markdown behind it. The deps-list mode of `renderMultiSelect` builds its rows from it, and the task editor's read-only Blocks list calls it directly, so both read the same), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderIconControl` (icon preview that opens a searchable grid of every icon Obsidian knows; a query that isn't a plain icon name is offered as a literal glyph, which is how emoji are picked, and "No icon" clears it - backs the status and priority icon fields, the new project dialog, and the project edit page), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`. A project's custom fields go through the same controls (`src/modals/CustomFieldInputs.ts`), one per field type, so a custom date behaves like Due and a custom select like Status; a `checkbox` field is a `ChipButton` toggle, the one type with no property control of its own.
+- **Property controls** - `properties/` (barrel `index.ts`): `renderSelectControl` (single-choice popover: status, priority, type, repeat, parent), `renderMultiSelect` (multi-choice: tags, people, dependencies; `moreOptions(query)` adds a second searched tier under a `moreHeading`, and `createAlt` adds a second create row whose async `run` is awaited before the list repaints - `renderPersonPicker` uses both to offer vault person notes and to create one; `keyOf(id)` is the identity a selected value is matched by, so a person written as a name and as a link is one row rather than two; in `depsList` mode `linkFor(id)` gives back the note a value stands for and how to open it), `renderDepRow` (one task in a dependency list: link icon, task id, title, and a remove button when `onRemove` is passed; with a `link` the title is a `renderNoteLink`, which the task editor points at `openTaskByPath` so a dependency leads to that task's editor rather than the markdown behind it. The deps-list mode of `renderMultiSelect` builds its rows from it, and the task editor's read-only Blocks list calls it directly, so both read the same), `renderDateControl` (date popover; renders a `.pm-due` hint span only when the caller passes `hint` - a relative due-state on Due, a muted on-time/late outcome on Completed, nothing on Start), `renderInputControl` (click-to-edit text, number, or date with an optional display `suffix`; the `number` option rounds and clamps to `min`/`max` and is read only when `inputType` is `'number'`: Progress), `renderIconControl` (icon preview that opens a searchable grid of every icon Obsidian knows; a query that isn't a plain icon name is offered as a literal glyph, which is how emoji are picked, and "No icon" clears it - backs the status and priority icon fields, the new project dialog, and the project edit page), `renderAddProperty` (progressive-disclosure "Add property" built on `renderAddButton`), `optionList.ts` helpers (`renderGlyph`, `renderOptionRow`). `src/modals/TaskFormFields.ts` shows the intended composition of these with `renderPropRow`. A project's custom fields go through the same controls (`src/modals/CustomFieldInputs.ts`), one per field type, so a custom date behaves like Due and a custom select like Status; a `checkbox` field is the `Checkbox` primitive, the one type with no property control of its own.
 
 ## Shared widgets (`src/ui/*.ts`)
 
@@ -184,7 +194,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `checkbox`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
 
 ## Maintenance
 

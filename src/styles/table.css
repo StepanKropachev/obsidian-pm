@@ -42,6 +42,12 @@
   padding-right: 4px;
 }
 
+/* Core paints the box itself; this only keeps it aligned in a flex row. */
+.pm-checkbox {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 /* `button` prefix outranks core button chrome, as in pm-prop-add. */
 button.pm-chip-btn,
 .pm-chip {

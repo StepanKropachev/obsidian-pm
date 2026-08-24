@@ -157,11 +157,6 @@ textarea.pm-modal-description:focus {
 .pm-modal-subtask-row:hover {
   background: var(--background-modifier-hover);
 }
-.pm-modal-subtask-row .pm-subtask-checkbox {
-  margin: 0;
-  flex-shrink: 0;
-}
-
 .pm-subtask-dot {
   width: 7px;
   height: 7px;

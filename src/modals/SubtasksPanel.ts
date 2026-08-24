@@ -1,6 +1,7 @@
 import type { StatusConfig, Task } from '../types'
 import { makeTask } from '../types'
 import { renderNoteLink } from '../ui/composites/noteLink'
+import { Checkbox } from '../ui/primitives/Checkbox'
 import { IconButton } from '../ui/primitives/IconButton'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
@@ -36,14 +37,15 @@ export function renderSubtasksPanel(
 
       const done = isTerminalStatus(sub.status, statuses)
 
-      const cb = row.createEl('input', { type: 'checkbox', cls: 'pm-subtask-checkbox' })
-      cb.checked = done
-      cb.addEventListener('change', () => {
-        sub.status = cb.checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
-        sub.progress = cb.checked ? 100 : 0
-        renderSubtasks()
-        renderCount()
-      })
+      new Checkbox(row)
+        .setChecked(done)
+        .setAriaLabel(`Done: ${sub.title}`)
+        .onChange((checked) => {
+          sub.status = checked ? getCompleteStatusId(statuses) : getDefaultStatusId(statuses)
+          sub.progress = checked ? 100 : 0
+          renderSubtasks()
+          renderCount()
+        })
 
       // A subtask typed into the add field below has no note yet, so there is nothing to
       // open until the editor saves.

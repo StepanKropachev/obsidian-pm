@@ -47,6 +47,7 @@ import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
 import { AvatarStack, type AvatarPerson } from '../../ui/primitives/AvatarStack'
 import { Chip } from '../../ui/primitives/Chip'
+import { Checkbox } from '../../ui/primitives/Checkbox'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { EmptyState } from '../../ui/primitives/EmptyState'
 import { IconButton } from '../../ui/primitives/IconButton'
@@ -108,6 +109,7 @@ export class StyleguideView extends ItemView {
     this.renderIconButtons()
     this.renderProgress()
     this.renderCollapse()
+    this.renderCheckbox()
     this.renderEmptyState()
     this.renderSegmented()
     this.renderViewSwitcher()
@@ -208,6 +210,13 @@ export class StyleguideView extends ItemView {
     const row = this.row(sec, 'expanded / collapsed')
     new CollapseToggle(row, { collapsed: false, onToggle: noop })
     new CollapseToggle(row, { collapsed: true, onToggle: noop })
+  }
+
+  private renderCheckbox(): void {
+    const sec = this.section('Checkbox', 'checkbox')
+    const row = this.row(sec, 'unchecked / checked')
+    new Checkbox(row).setAriaLabel('Unchecked example').onChange(noop)
+    new Checkbox(row).setChecked(true).setAriaLabel('Checked example').onChange(noop)
   }
 
   private renderEmptyState(): void {
