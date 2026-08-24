@@ -3,6 +3,7 @@ import {
   ButtonComponent,
   Component,
   ExtraButtonComponent,
+  Keymap,
   Menu,
   MarkdownRenderer,
   Notice,
@@ -14,7 +15,7 @@ import { type Project, type Task, makeTask } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
 import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig } from '../utils'
-import { confirmDialog } from '../ui/ModalFactory'
+import { confirmDialog, openTaskByPath } from '../ui/ModalFactory'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
 import { renderSubtasksPanel } from './SubtasksPanel'
@@ -168,6 +169,28 @@ export class TaskEditor {
     }
     await this.plugin.store.scheduleAfterChange(this.project, this.task.id)
     await this.onSave(this.task)
+  }
+
+  /**
+   * Follows a link out of the editor: the surface goes away first, so a modal isn't left
+   * covering the note, and the edits are kept or dropped by the save-on-close setting.
+   */
+  private openNote(link: string, event?: MouseEvent): void {
+    this.leave()
+    const sourcePath = this.task.filePath || this.project.filePath || ''
+    void this.app.workspace.openLinkText(link, sourcePath, event ? Keymap.isModEvent(event) : false)
+  }
+
+  /** A dependency leads to that task's editor, not to the markdown behind it. */
+  private openLinkedTask(filePath: string): void {
+    this.leave()
+    void openTaskByPath(this.plugin, filePath)
+  }
+
+  private leave(): void {
+    this.saved = false
+    this.cancelled = false
+    this.host.close()
   }
 
   private openOverflowMenu(anchorEl: HTMLElement): void {
@@ -344,7 +367,8 @@ export class TaskEditor {
         this.parentId = id
       },
       rerender: () => this.render(),
-      shownExtras: this.shownExtras
+      shownExtras: this.shownExtras,
+      openTask: (path) => this.openLinkedTask(path)
     })
 
     body.createEl('hr', { cls: 'pm-te-divider' })
@@ -529,11 +553,7 @@ export class TaskEditor {
         if (link.classList.contains('internal-link')) {
           e.preventDefault()
           e.stopPropagation()
-          const href = link.getAttribute('data-href') || link.getAttribute('href') || ''
-          this.saved = false
-          this.cancelled = false
-          this.host.close()
-          void this.app.workspace.openLinkText(href, sourcePath)
+          this.openNote(link.getAttribute('data-href') || link.getAttribute('href') || '', e)
           return
         }
         return

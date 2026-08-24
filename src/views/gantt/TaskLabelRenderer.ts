@@ -1,10 +1,11 @@
+import { Menu } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { StatusConfig, Task } from '../../types'
 import type { ProjectScope, TaskRef } from '../../store'
 import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { IconButton } from '../../ui/primitives/IconButton'
-import { openTaskModal } from '../../ui/ModalFactory'
+import { openTaskByPath, openTaskModal } from '../../ui/ModalFactory'
 import { renderProjectChip } from '../../ui/composites/projectChip'
 import { renderStatusDot } from '../../ui/StatusBadge'
 import { safeAsync } from '../../utils'
@@ -98,15 +99,28 @@ export function renderTaskLabel(
     .map((id) => ctx.plugin.index.task(id))
     .filter((ref): ref is TaskRef => ref !== null)
   if (elsewhere.length) {
-    const names = elsewhere.map((ref) => {
+    const nameOf = (ref: TaskRef) => {
       const owner = ref.projectPath ? ctx.plugin.index.projectRef(ref.projectPath) : null
       return owner ? `${ref.title} (${owner.title})` : ref.title
-    })
+    }
     new Chip(el)
       .setLabel(`Depends on ${elsewhere.length} elsewhere`)
       .setVariant('plain')
       .setSize('sm')
-      .setTooltip(names.join('\n'))
+      .setTooltip(elsewhere.map(nameOf).join('\n'))
+      .onClick((e) => {
+        e.stopPropagation()
+        const menu = new Menu()
+        for (const ref of elsewhere) {
+          menu.addItem((item) =>
+            item
+              .setTitle(nameOf(ref))
+              .setIcon('link-2')
+              .onClick(safeAsync(() => openTaskByPath(ctx.plugin, ref.path, () => void ctx.onRefresh())))
+          )
+        }
+        menu.showAtMouseEvent(e)
+      })
   }
 
   if (task.progress > 0) {

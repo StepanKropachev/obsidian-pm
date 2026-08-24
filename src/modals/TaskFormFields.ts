@@ -3,7 +3,6 @@ import type { Project, Task, TaskType, Recurrence } from '../types'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
-import { Chip } from '../ui/primitives/Chip'
 import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
@@ -14,6 +13,7 @@ import {
   renderInputControl,
   renderMultiSelect,
   renderAddProperty,
+  renderDepRow,
   type SelectItem,
   type HiddenProperty
 } from '../ui/composites/properties'
@@ -26,6 +26,8 @@ export interface TaskFormFieldsContext {
   setParentId: (id: string | null) => void
   rerender: () => void
   shownExtras: Set<string>
+  /** Leaves the editor for the task a dependency names. */
+  openTask: (path: string) => void
 }
 
 const TYPE_OPTIONS: SelectItem[] = [
@@ -359,6 +361,10 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
           placeholder: 'Search tasks…',
           depsList: true,
           labelFor: titleOf,
+          linkFor: (id) => {
+            const path = plugin.index.task(id)?.path
+            return path ? { path, open: () => ctx.openTask(path) } : null
+          },
           selected: () => task.dependencies.filter((id) => allTasks.some((t) => t.id === id)),
           options: () => {
             // Built once per open, not once per candidate. A predecessor chain can leave
@@ -389,13 +395,15 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
       'Blocks',
       () => {
         const cell = createDiv('pm-prop-value')
+        const list = cell.createDiv('pm-prop-deps')
         for (const ref of blocks) {
           const owner = ref.projectPath ? plugin.index.projectRef(ref.projectPath) : null
-          new Chip(cell)
-            .setLabel(ref.title)
-            .setVariant('outline')
-            .setSize('sm')
-            .setTooltip(owner ? `In ${owner.title}` : 'Task')
+          renderDepRow(list, {
+            id: ref.id,
+            title: ref.title,
+            tooltip: owner ? `In ${owner.title}` : undefined,
+            link: { path: ref.path, open: () => ctx.openTask(ref.path) }
+          })
         }
         return cell
       },
