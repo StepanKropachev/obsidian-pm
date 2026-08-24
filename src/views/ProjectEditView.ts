@@ -1,4 +1,4 @@
-import { ButtonComponent, ItemView, TFile, WorkspaceLeaf } from 'obsidian'
+import { ButtonComponent, ItemView, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import {
   type CustomFieldDef,
@@ -88,8 +88,7 @@ export class ProjectEditView extends ItemView {
 
   private async loadProject(): Promise<void> {
     const path = this.state.filePath
-    const file = path ? this.app.vault.getAbstractFileByPath(path) : null
-    this.project = file instanceof TFile ? await this.plugin.store.loadProject(file) : null
+    this.project = path ? await this.plugin.store.loadProjectByPath(path) : null
     if (!this.project) {
       this.container.empty()
       new EmptyState(this.container)

@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, Notice, TFile } from 'obsidian'
+import { MarkdownView, Plugin, Notice } from 'obsidian'
 import { DEFAULT_SETTINGS, makeDefaultFilter, type PMSettings, type Project, type Task } from './types'
 import { flattenTasks, findTask } from './store/TaskTreeOps'
 import { matchPersonNotes, personLink, ProjectStore, scopeKey, VaultIndex } from './store'
@@ -459,8 +459,7 @@ export default class PMPlugin extends Plugin {
     }
     const choose = (ref: ProjectRef): void => {
       void (async () => {
-        const file = this.app.vault.getAbstractFileByPath(ref.path)
-        const project = file instanceof TFile ? await this.store.loadProject(file) : null
+        const project = await this.store.loadProjectByPath(ref.path)
         if (!project) {
           this.showNotice(`Could not open "${ref.title}".`)
           return
@@ -525,7 +524,7 @@ export default class PMPlugin extends Plugin {
     }
 
     for (const [path, taskIds] of byProject) {
-      const project = await this.loadProjectAt(path)
+      const project = await this.store.loadProjectByPath(path)
       if (!project) continue
       await this.store.updateTasks(project, taskIds, (task) => ({ assignees: task.assignees.map(mapValue) }))
       tasksChanged += taskIds.length
@@ -533,7 +532,7 @@ export default class PMPlugin extends Plugin {
 
     for (const ref of this.index.projectRefs()) {
       if (!ref.teamMembers.some((value) => linkFor.has(value.trim().toLowerCase()))) continue
-      const project = await this.loadProjectAt(ref.path)
+      const project = await this.store.loadProjectByPath(ref.path)
       if (!project) continue
       await this.store.updateProject(project, { teamMembers: project.teamMembers.map(mapValue) })
       projectsChanged++
@@ -541,11 +540,6 @@ export default class PMPlugin extends Plugin {
 
     this.refreshViews()
     this.showNotice(`Linked ${tasksChanged} task(s) and ${projectsChanged} project(s).`)
-  }
-
-  private async loadProjectAt(path: string): Promise<Project | null> {
-    const file = this.app.vault.getAbstractFileByPath(path)
-    return file instanceof TFile ? this.store.loadProject(file) : null
   }
 
   /** Opens the whole vault filtered to one person, the way the assignee filter would. */

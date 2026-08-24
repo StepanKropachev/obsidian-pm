@@ -1,4 +1,4 @@
-import { type App, ButtonComponent, Modal, TFile } from 'obsidian'
+import { type App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
 import { flattenTasks, type ProjectRef } from '../store'
@@ -256,8 +256,7 @@ export async function openTaskByPath(plugin: PMPlugin, filePath: string, onSave?
     return
   }
   const projectPath = plugin.index.projectPathForTask(filePath)
-  const projectFile = projectPath ? plugin.app.vault.getAbstractFileByPath(projectPath) : null
-  const project = projectFile instanceof TFile ? await plugin.store.loadProject(projectFile) : null
+  const project = projectPath ? await plugin.store.loadProjectByPath(projectPath) : null
   const task = project ? (flattenTasks(project.tasks).find((f) => f.task.filePath === filePath)?.task ?? null) : null
   if (!project || !task) {
     await plugin.openAsMarkdown(filePath)

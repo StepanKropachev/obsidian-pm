@@ -34,6 +34,8 @@ export interface TaskSource {
 
   /** Every caller gets the same instance for a path, for as long as the project exists. */
   loadProject(file: TFile): Promise<Project | null>
+  /** Null when the path names no file, so callers holding a path don't resolve it themselves. */
+  loadProjectByPath(path: string): Promise<Project | null>
   loadTaskBody(task: Task): Promise<void>
   loadProjectBody(project: Project): Promise<void>
 

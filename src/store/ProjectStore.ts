@@ -287,14 +287,14 @@ export class ProjectStore implements TaskSource {
   }
 
   async loadProjects(paths: string[]): Promise<Project[]> {
-    const files: TFile[] = []
-    for (const path of paths) {
-      const file = this.app.vault.getAbstractFileByPath(normalizePath(path))
-      if (file instanceof TFile) files.push(file)
-    }
-    const loaded = await Promise.all(files.map((f) => this.loadProject(f)))
+    const loaded = await Promise.all(paths.map((path) => this.loadProjectByPath(path)))
     const projects = loaded.filter((p): p is Project => p !== null)
     return projects.sort((a, b) => a.title.localeCompare(b.title))
+  }
+
+  async loadProjectByPath(path: string): Promise<Project | null> {
+    const file = this.app.vault.getAbstractFileByPath(normalizePath(path))
+    return file instanceof TFile ? this.loadProject(file) : null
   }
 
   /** Concurrent callers share the one in-flight read, so a project never exists twice. */
