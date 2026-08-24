@@ -23,6 +23,18 @@ export function formatDate(iso: string): string {
   return d ? d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
 }
 
+/** "Mar 28", or '' when empty or invalid. */
+export function formatDateShort(iso: string): string {
+  const d = parsePlainDate(iso)
+  return d ? d.toLocaleString(undefined, { month: 'short', day: 'numeric' }) : ''
+}
+
+/** "Mar 28, 26", or '' when empty or invalid. */
+export function formatDateLong(iso: string): string {
+  const d = parsePlainDate(iso)
+  return d ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: '2-digit' }) : ''
+}
+
 export type DueTone = 'overdue' | 'today' | 'soon' | 'outcome'
 
 /** Null past a week out, where a relative hint adds nothing. `from` is injectable for tests. */

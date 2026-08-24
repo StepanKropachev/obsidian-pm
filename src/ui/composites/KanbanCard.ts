@@ -1,5 +1,5 @@
 import type { Task } from '../../types'
-import { formatDateShort } from '../../utils'
+import { formatDateShort } from '../../dates'
 import { AvatarStack, type AvatarPerson } from '../primitives/AvatarStack'
 import { Chip } from '../primitives/Chip'
 import { ProgressBar } from '../primitives/ProgressBar'

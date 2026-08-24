@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Due dates read a day early on the board, the table, the project list, and a project overview for anyone whose clock is behind UTC
 - A status or priority with an icon showed none of it in the filter dropdowns and the bulk action bar
 - Clearing a number custom field wrote an invalid value into the task's note
 - A custom field holding a link showed as raw link text in the table

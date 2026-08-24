@@ -42,20 +42,6 @@ export function stringToColor(s: string): string {
   return `hsl(${Math.abs(hash) % 360}, 55%, 45%)`
 }
 
-/** "Mar 28" */
-export function formatDateShort(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-/** "Mar 28, '26" */
-export function formatDateLong(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
-}
-
 export function isTerminalStatus(status: string, statuses: StatusConfig[]): boolean {
   const cfg = statuses.find((s) => s.id === status)
   return cfg ? cfg.complete : false
