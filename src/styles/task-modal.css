@@ -66,8 +66,7 @@
   outline: none;
 }
 
-.pm-prop-text,
-.pm-prop-select {
+.pm-prop-text {
   padding: 5px 8px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
@@ -76,8 +75,7 @@
   font-size: 13px;
   width: 100%;
 }
-.pm-prop-text:focus,
-.pm-prop-select:focus {
+.pm-prop-text:focus {
   border-color: var(--interactive-accent);
   outline: none;
 }

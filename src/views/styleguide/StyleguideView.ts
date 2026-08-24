@@ -36,11 +36,13 @@ import { renderAddButton } from '../../ui/composites/addButton'
 import {
   renderAddProperty,
   renderDepRow,
+  renderDateControl,
   renderIconControl,
   renderInputControl,
-  renderMultiSelect
+  renderMultiSelect,
+  renderSelectControl
 } from '../../ui/composites/properties'
-import { renderChipList, renderPropRow } from '../../ui/FormField'
+import { renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
 import { AvatarStack, type AvatarPerson } from '../../ui/primitives/AvatarStack'
@@ -299,8 +301,22 @@ export class StyleguideView extends ItemView {
       },
       'calendar'
     )
-    const chipListRow = this.row(sec, 'renderChipList')
-    renderChipList(chipListRow, ['design', 'frontend'], { onRemove: noop, onAdd: noop })
+    const selectRow = this.row(sec, 'renderSelectControl: set / empty')
+    renderSelectControl({
+      container: selectRow,
+      value: DEFAULT_STATUSES[1].id,
+      options: DEFAULT_STATUSES.map((s) => ({ id: s.id, label: s.label, color: s.color })),
+      onChange: noop
+    })
+    renderSelectControl({ container: selectRow, value: null, options: [], placeholder: 'Select', onChange: noop })
+    const dateRow = this.row(sec, 'renderDateControl: set with hint / empty')
+    renderDateControl({
+      container: dateRow,
+      value: '2026-07-20',
+      hint: { text: 'in 3 days', tone: 'soon' },
+      onChange: noop
+    })
+    renderDateControl({ container: dateRow, value: '', onChange: noop })
     const inputRow = this.row(sec, 'renderInputControl: number / text / empty')
     renderInputControl({
       container: inputRow,
