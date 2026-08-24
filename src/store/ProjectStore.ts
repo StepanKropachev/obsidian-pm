@@ -113,6 +113,9 @@ export class ProjectStore implements TaskSource {
   private selfWrites = new Map<string, number>()
   private static readonly SELF_WRITE_WINDOW_MS = 5000
 
+  /** How far a reschedule follows a dependency chain out of one project and into others. */
+  private static readonly MAX_SCHEDULE_ROUNDS = 10
+
   constructor(
     private app: App,
     private getSettings: () => PMSettings = () => DEFAULT_SETTINGS,
@@ -934,7 +937,16 @@ export class ProjectStore implements TaskSource {
 
   private async scheduleAfterEarlyFinish(project: Project, taskIds: string[]): Promise<void> {
     if (taskIds.length === 0) return
-    if (!this.configFor(project).pullForwardOnEarlyFinish) return
+    // A project that doesn't pull its own tasks forward still lets the projects waiting
+    // on it pull theirs, so the pass runs whenever the chain leaves this project.
+    if (!this.configFor(project).pullForwardOnEarlyFinish) {
+      const elsewhere = this.dependentsElsewhere(
+        this.index?.dependentsMap() ?? new Map<string, string[]>(),
+        project,
+        taskIds
+      )
+      if (elsewhere.size === 0) return
+    }
     for (const id of taskIds) await this.scheduleAfterChange(project, id)
   }
 
@@ -1147,22 +1159,24 @@ export class ProjectStore implements TaskSource {
   }
 
   /**
-   * Apply dependency-based scheduling and save, returning the number of tasks
-   * adjusted. A no-op when auto-scheduling is off, so callers needn't check.
+   * Predecessors this project's tasks depend on that live in other projects. A project
+   * already loaded in this pass contributes the live task, so a date this pass just
+   * moved is the one the next project schedules against; anything else is a read-only
+   * stand-in built from the index.
    */
-  /**
-   * Predecessors this project's tasks depend on that live in other projects, as read-only
-   * stand-ins the scheduler can date against.
-   */
-  private externalPredecessors(project: Project): Task[] {
-    if (!this.index) return []
+  private externalPredecessors(project: Project, loaded: Map<string, Project>): Task[] {
     const externals: Task[] = []
     const seen = new Set<string>()
     for (const { task } of flattenTasks(project.tasks)) {
       for (const depId of task.dependencies) {
         if (project.taskIndex.has(depId) || seen.has(depId)) continue
         seen.add(depId)
-        const ref = this.index.task(depId)
+        const live = this.liveTask(depId, loaded)
+        if (live) {
+          externals.push(live)
+          continue
+        }
+        const ref = this.index?.task(depId)
         if (!ref) continue
         externals.push(
           makeTask({
@@ -1180,23 +1194,99 @@ export class ProjectStore implements TaskSource {
     return externals
   }
 
+  private liveTask(taskId: string, loaded: Map<string, Project>): Task | null {
+    for (const candidate of loaded.values()) {
+      const found = candidate.taskIndex.get(taskId)?.task
+      if (found) return found
+    }
+    return null
+  }
+
+  /**
+   * Apply dependency-based scheduling and save, returning the number of tasks adjusted.
+   *
+   * A dependency chain can leave the project it starts in, so this keeps following it:
+   * every task the pass moves is looked up in the index, and any project holding a task
+   * that waits on it gets its own pass, against its own config. A project with
+   * auto-scheduling off keeps its dates and still passes the change along.
+   */
   async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
+    const loaded = new Map<string, Project>([[project.filePath, project]])
+    const dependentsOf = this.index?.dependentsMap() ?? new Map<string, string[]>()
+    let frontier: { project: Project; seeds: string[] | undefined }[] = [
+      { project, seeds: changedTaskId === undefined ? undefined : [changedTaskId] }
+    ]
+    let total = 0
+
+    for (let round = 0; round < ProjectStore.MAX_SCHEDULE_ROUNDS && frontier.length > 0; round++) {
+      const nextSeeds = new Map<string, Set<string>>()
+      for (const job of frontier) {
+        const moved = await this.schedulePass(job.project, job.seeds, loaded)
+        total += moved.length
+        for (const [path, ids] of this.dependentsElsewhere(
+          dependentsOf,
+          job.project,
+          job.seeds ? [...job.seeds, ...moved] : moved
+        )) {
+          const bucket = nextSeeds.get(path) ?? new Set<string>()
+          for (const id of ids) bucket.add(id)
+          nextSeeds.set(path, bucket)
+        }
+      }
+
+      frontier = []
+      for (const [path, ids] of nextSeeds) {
+        const target = loaded.get(path) ?? (await this.loadProjectByPath(path))
+        if (!target) continue
+        loaded.set(path, target)
+        frontier.push({ project: target, seeds: [...ids] })
+      }
+    }
+    return total
+  }
+
+  /** Schedules one project and saves it, returning the ids whose dates moved. */
+  private async schedulePass(
+    project: Project,
+    seeds: string[] | undefined,
+    loaded: Map<string, Project>
+  ): Promise<string[]> {
     const config = this.configFor(project)
-    if (!config.autoSchedule) return 0
+    if (!config.autoSchedule) return []
     const { patches } = computeSchedule(
       project.tasks,
-      changedTaskId,
+      seeds,
       config.statuses,
       config.pullForwardOnEarlyFinish,
-      this.externalPredecessors(project)
+      this.externalPredecessors(project, loaded)
     )
-    if (patches.length === 0) return 0
+    if (patches.length === 0) return []
 
     for (const p of patches) {
       updateTaskInTree(project.tasks, p.taskId, { start: p.start, due: p.due })
       this.markDirty(project, [p.taskId], 'fm')
     }
     await this.saveProject(project)
-    return patches.length
+    return patches.map((p) => p.taskId)
+  }
+
+  /** Tasks outside `project` waiting on any of `movedIds`, grouped by their project. */
+  private dependentsElsewhere(
+    dependentsOf: Map<string, string[]>,
+    project: Project,
+    movedIds: string[]
+  ): Map<string, string[]> {
+    const byProject = new Map<string, string[]>()
+    for (const movedId of movedIds) {
+      for (const dependentId of dependentsOf.get(movedId) ?? []) {
+        if (project.taskIndex.has(dependentId)) continue
+        const ref = this.index?.task(dependentId)
+        if (!ref?.projectPath || ref.archived) continue
+        const list = byProject.get(ref.projectPath) ?? []
+        if (!list.includes(dependentId)) list.push(dependentId)
+        byProject.set(ref.projectPath, list)
+      }
+    }
+    return byProject
   }
 }

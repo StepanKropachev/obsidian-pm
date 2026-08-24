@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian'
 import type PMPlugin from '../../main'
-import type { Project, Task } from '../../types'
+import type { ProjectScope } from '../../store'
 import { safeAsync } from '../../utils'
 
 export interface LinkState {
@@ -30,7 +30,7 @@ export function handleLinkDotClick(
   side: 'left' | 'right',
   link: LinkState,
   plugin: PMPlugin,
-  project: Project,
+  scope: ProjectScope,
   onRefresh: () => Promise<void>
 ): void {
   if (!link.active) {
@@ -65,21 +65,27 @@ export function handleLinkDotClick(
 
   cancelLink(link)
 
-  const allTasks = flattenAll(project.tasks)
-  const successor = allTasks.find((t) => t.id === successorId)
-  if (successor?.dependencies?.includes(predecessorId)) {
+  // The two bars can belong to different projects, so the dependency is written to the
+  // successor's own project rather than to whichever bar was clicked last.
+  const successor = scope.taskById(successorId)
+  const project = scope.projectOf(successorId)
+  if (!successor || !project) {
+    new Notice('That task is no longer in this view.')
+    return
+  }
+
+  if (successor.dependencies.includes(predecessorId)) {
     new Notice('This dependency already exists.')
     return
   }
 
-  // The reverse edge would close a cycle.
-  const predecessor = allTasks.find((t) => t.id === predecessorId)
-  if (predecessor?.dependencies?.includes(successorId)) {
-    new Notice('Reverse dependency exists — would create a cycle.')
+  // A predecessor chain can leave this project and come back, so the check spans the vault.
+  if (plugin.index.wouldCreateCycle(successorId, predecessorId)) {
+    new Notice('That link would create a dependency cycle.')
     return
   }
 
-  const deps = [...(successor?.dependencies ?? []), predecessorId]
+  const deps = [...successor.dependencies, predecessorId]
   void safeAsync(async () => {
     try {
       await plugin.store.updateTask(project, successorId, { dependencies: deps })
@@ -91,17 +97,4 @@ export function handleLinkDotClick(
     await plugin.store.scheduleAfterChange(project, successorId)
     await onRefresh()
   })()
-}
-
-// Local copy: importing TaskTreeOps here would be circular.
-function flattenAll(tasks: Task[]): Task[] {
-  const result: Task[] = []
-  const walk = (list: Task[]) => {
-    for (const t of list) {
-      result.push(t)
-      if (t.subtasks.length) walk(t.subtasks)
-    }
-  }
-  walk(tasks)
-  return result
 }

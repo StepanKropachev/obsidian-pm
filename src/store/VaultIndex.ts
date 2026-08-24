@@ -79,6 +79,8 @@ export class VaultIndex {
     children: new Map()
   }
   private treeDirty = true
+  private cachedDependents = new Map<string, string[]>()
+  private dependentsDirty = true
   /** False until the first build, so a view can tell "none yet" from "none at all". */
   ready = false
 
@@ -95,6 +97,7 @@ export class VaultIndex {
     this.taskById.clear()
     this.tasksByProject.clear()
     this.treeDirty = true
+    this.dependentsDirty = true
     for (const file of this.app.vault.getMarkdownFiles()) this.read(file)
     this.resolveUnowned()
     this.ready = true
@@ -324,8 +327,12 @@ export class VaultIndex {
     return [...this.tasks.values()].filter((ref) => ref.dependencies.includes(taskId))
   }
 
-  /** Predecessor id -> ids of everything waiting on it, across every project. */
+  /**
+   * Predecessor id -> ids of everything waiting on it, across every project. Cached, so a
+   * reschedule that walks a chain through several projects builds it once.
+   */
   dependentsMap(): Map<string, string[]> {
+    if (!this.dependentsDirty) return this.cachedDependents
     const map = new Map<string, string[]>()
     for (const ref of this.tasks.values()) {
       for (const depId of ref.dependencies) {
@@ -334,6 +341,8 @@ export class VaultIndex {
         else map.set(depId, [ref.id])
       }
     }
+    this.cachedDependents = map
+    this.dependentsDirty = false
     return map
   }
 
@@ -393,6 +402,7 @@ export class VaultIndex {
     }
     this.tasks.set(path, ref)
     this.taskById.set(ref.id, ref)
+    this.dependentsDirty = true
     this.own(ref)
   }
 
@@ -506,6 +516,7 @@ export class VaultIndex {
       this.tasks.delete(normalized)
       if (this.taskById.get(task.id) === task) this.taskById.delete(task.id)
       if (task.projectPath) this.tasksByProject.get(task.projectPath)?.delete(normalized)
+      this.dependentsDirty = true
       return true
     }
     const project = this.projects.get(normalized)

@@ -165,7 +165,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
     })
     dot.addEventListener('click', (e: MouseEvent) => {
       e.stopPropagation()
-      handleLinkDotClick(dot, task.id, side, ctx.link, ctx.plugin, project, ctx.onRefresh)
+      handleLinkDotClick(dot, task.id, side, ctx.link, ctx.plugin, ctx.scope, ctx.onRefresh)
     })
     barGroup.appendChild(dot)
   }

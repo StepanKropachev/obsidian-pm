@@ -16,6 +16,7 @@ import { ProjectStore } from './ProjectStore'
 import { addDays } from './Scheduler'
 import { buildTaskIndex } from './TaskIndex'
 import { findTask, flattenTasks } from './TaskTreeOps'
+import { VaultIndex } from './VaultIndex'
 
 const expectDefined = <T>(value: T | null | undefined, message = 'expected value to be defined'): T => {
   if (value == null) throw new Error(message)
@@ -34,6 +35,15 @@ function newStore(): { store: ProjectStore; vault: FakeVault; app: App } {
   const { app, vault } = makeFakeApp()
   const store = new ProjectStore(app as unknown as App, () => SETTINGS)
   return { store, vault, app: app as unknown as App }
+}
+
+/** A store backed by a real VaultIndex, for anything that reads across project files. */
+function newIndexedStore(): { store: ProjectStore; index: VaultIndex; app: App } {
+  const { app } = makeFakeApp({ liveMetadataCache: true })
+  const typed = app as unknown as App
+  const index = new VaultIndex(typed, () => SETTINGS)
+  const store = new ProjectStore(typed, () => SETTINGS, index)
+  return { store, index, app: typed }
 }
 
 function fileAt(app: App, path: string): TFile {
@@ -1190,5 +1200,93 @@ describe('per-project config', () => {
 
     project.config = undefined
     expect(await store.scheduleAfterChange(project, a.id)).toBeGreaterThan(0)
+  })
+})
+
+describe('ProjectStore cross-project scheduling', () => {
+  it('pushes dependents in other projects when a predecessor moves', async () => {
+    const { store, index } = newIndexedStore()
+    const upstream = await store.createProject('Upstream', 'Projects')
+    const middle = await store.createProject('Middle', 'Projects')
+    const downstream = await store.createProject('Downstream', 'Projects')
+
+    const a = await addNamed(store, upstream, 'Build')
+    const b = await addNamed(store, middle, 'Review')
+    const c = await addNamed(store, downstream, 'Launch')
+    await store.updateTask(upstream, a.id, { start: '2026-07-01', due: '2026-07-03' })
+    await store.updateTask(middle, b.id, { start: '2026-07-04', due: '2026-07-05', dependencies: [a.id] })
+    await store.updateTask(downstream, c.id, { start: '2026-07-06', due: '2026-07-06', dependencies: [b.id] })
+    index.build()
+
+    await store.updateTask(upstream, a.id, { start: '2026-07-08', due: '2026-07-10' })
+    expect(await store.scheduleAfterChange(upstream, a.id)).toBe(2)
+
+    expect(expectDefined(findTask(middle.tasks, b.id)).start).toBe('2026-07-11')
+    expect(expectDefined(findTask(middle.tasks, b.id)).due).toBe('2026-07-12')
+    expect(expectDefined(findTask(downstream.tasks, c.id)).start).toBe('2026-07-13')
+  })
+
+  it('leaves a project that turns auto-scheduling off alone but keeps following the chain', async () => {
+    const { store, index } = newIndexedStore()
+    const upstream = await store.createProject('Source', 'Projects')
+    const frozen = await store.createProject('Frozen', 'Projects')
+    const downstream = await store.createProject('Tail', 'Projects')
+
+    const a = await addNamed(store, upstream, 'Build')
+    const b = await addNamed(store, frozen, 'Fixed date')
+    const c = await addNamed(store, downstream, 'Launch')
+    await store.updateTask(upstream, a.id, { start: '2026-07-01', due: '2026-07-03' })
+    await store.updateTask(frozen, b.id, { start: '2026-07-04', due: '2026-07-05', dependencies: [a.id] })
+    await store.updateTask(downstream, c.id, { start: '2026-07-06', due: '2026-07-06', dependencies: [a.id] })
+    index.build()
+
+    frozen.config = { autoSchedule: false }
+    await store.updateTask(upstream, a.id, { start: '2026-07-08', due: '2026-07-10' })
+    await store.scheduleAfterChange(upstream, a.id)
+
+    expect(expectDefined(findTask(frozen.tasks, b.id)).start).toBe('2026-07-04')
+    expect(expectDefined(findTask(downstream.tasks, c.id)).start).toBe('2026-07-11')
+  })
+
+  it('pulls a dependent forward when the blocker finished early under another palette', async () => {
+    const { store, index } = newIndexedStore()
+    const upstream = await store.createProject('Ships', 'Projects')
+    const downstream = await store.createProject('Waits', 'Projects')
+    upstream.config = {
+      statuses: [
+        { id: 'todo', label: 'Todo', color: '#888', icon: 'circle', complete: false },
+        { id: 'shipped', label: 'Shipped', color: '#0a0', icon: 'check', complete: true }
+      ]
+    }
+    downstream.config = { pullForwardOnEarlyFinish: true }
+
+    const blocker = await addNamed(store, upstream, 'Blocker')
+    const blocked = await addNamed(store, downstream, 'Blocked')
+    await store.updateTask(upstream, blocker.id, { start: '2099-06-01', due: '2099-06-10' })
+    await store.updateTask(downstream, blocked.id, {
+      start: '2099-06-11',
+      due: '2099-06-12',
+      dependencies: [blocker.id]
+    })
+    index.build()
+
+    await store.updateTask(upstream, blocker.id, { status: 'shipped', completed: '2099-06-07' })
+
+    expect(expectDefined(findTask(downstream.tasks, blocked.id)).start).toBe('2099-06-08')
+    expect(expectDefined(findTask(downstream.tasks, blocked.id)).due).toBe('2099-06-09')
+  })
+
+  it('stops rather than looping when the chain closes a cycle across projects', async () => {
+    const { store, index } = newIndexedStore()
+    const one = await store.createProject('Ping', 'Projects')
+    const two = await store.createProject('Pong', 'Projects')
+
+    const a = await addNamed(store, one, 'A')
+    const b = await addNamed(store, two, 'B')
+    await store.updateTask(one, a.id, { start: '2026-07-01', due: '2026-07-02', dependencies: [b.id] })
+    await store.updateTask(two, b.id, { start: '2026-07-03', due: '2026-07-04', dependencies: [a.id] })
+    index.build()
+
+    await expect(store.scheduleAfterChange(one, a.id)).resolves.toBeGreaterThan(0)
   })
 })

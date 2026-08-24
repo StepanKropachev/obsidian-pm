@@ -1,4 +1,5 @@
 import type { App, Plugin } from 'obsidian'
+import { TFile } from 'obsidian'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
 import { DEFAULT_SETTINGS, type PMSettings } from '../types'
@@ -254,6 +255,18 @@ describe('VaultIndex', () => {
       // t2 already depends on t1, so making t1 depend on t2 closes the loop.
       expect(index.wouldCreateCycle('t1', 't2')).toBe(true)
       expect(index.wouldCreateCycle('t2', 't1')).toBe(false)
+    })
+
+    it('picks up a dependency added after the first read', async () => {
+      index.register(fakePlugin())
+      expect(index.dependentsMap().get('t2')).toBeUndefined()
+
+      await vault.modify(
+        expectDefined(vault.getAbstractFileByPath('A_tasks/one.md') as TFile | null),
+        `---\npm-task: true\nid: t1\nprojectId: p1\ntitle: One\nstatus: todo\ndependencies:\n  - t2\n---\n`
+      )
+
+      expect(index.dependentsMap().get('t2')).toEqual(['t1'])
     })
   })
 

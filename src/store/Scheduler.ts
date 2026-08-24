@@ -61,9 +61,9 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
 }
 
 /**
- * Date patches derived from the dependency graph. `changedTaskId` scopes the pass to
- * that task's downstream dependents. Terminal-status tasks never move; their dates are
- * a record of what happened.
+ * Date patches derived from the dependency graph. `changed` scopes the pass to the
+ * downstream dependents of the task ids it names. Terminal-status tasks never move;
+ * their dates are a record of what happened.
  *
  * With `pullForward`, a predecessor that finished early counts as ending on its
  * completion date and its dependents move up by the days saved, keeping their existing
@@ -71,7 +71,8 @@ export function wouldCreateCycle(tasks: Task[], fromId: string, toId: string): b
  */
 export function computeSchedule(
   tasks: Task[],
-  changedTaskId?: string,
+  /** The tasks whose dates just moved. Absent reschedules the whole tree. */
+  changed?: string | string[],
   statuses: StatusConfig[] = [],
   pullForward = false,
   /** Predecessors in other projects. They constrain dates here but are never moved. */
@@ -99,10 +100,11 @@ export function computeSchedule(
     predecessorsOf.set(t.id, validDeps)
   }
 
+  const seeds = changed === undefined ? [] : typeof changed === 'string' ? [changed] : changed
   let scopeIds: Set<string> | null = null
-  if (changedTaskId) {
+  if (seeds.length > 0) {
     scopeIds = new Set<string>()
-    const queue = [changedTaskId]
+    const queue = [...seeds]
     while (queue.length > 0) {
       const id = queue.shift()
       if (id === undefined) break
@@ -157,7 +159,9 @@ export function computeSchedule(
     startOf.set(t.id, t.start)
     dueOf.set(t.id, t.due)
     if (!pullForward || !t.completed || !t.due || t.completed >= t.due) continue
-    if (!isTerminalStatus(t.status, statuses)) continue
+    // An external's completion date was stamped against its own project's palette, which
+    // is not the one passed here, so its own status can't be re-checked from this side.
+    if (!externalIds.has(t.id) && !isTerminalStatus(t.status, statuses)) continue
     dueOf.set(t.id, t.completed)
     daysSavedBy.set(t.id, daysBetween(t.completed, t.due))
   }
