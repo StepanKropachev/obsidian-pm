@@ -435,7 +435,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     cfSection.createEl('h4', { text: 'Custom fields', cls: 'pm-modal-section-title' })
     const cfGrid = cfSection.createDiv('pm-prop-grid')
     for (const cf of project.customFields) {
-      renderPropRow(cfGrid, cf.name, () => renderCustomFieldInput(cf, task, project, plugin))
+      renderPropRow(cfGrid, cf.name, () => renderCustomFieldInput(cf, task, project, plugin, rerender))
     }
   }
 }

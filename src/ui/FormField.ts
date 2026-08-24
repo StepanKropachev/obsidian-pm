@@ -1,5 +1,4 @@
-import { ButtonComponent, setIcon } from 'obsidian'
-import { Chip } from './primitives/Chip'
+import { setIcon } from 'obsidian'
 
 export function renderPropRow(
   container: HTMLElement,
@@ -20,34 +19,4 @@ export function renderPropRow(
   const valueEl = valueBuilder()
   row.appendChild(valueEl)
   return row
-}
-
-export interface ChipListOpts {
-  variant?: 'default' | 'accent'
-  shape?: 'rounded' | 'pill'
-  onRemove: (item: string) => void
-  labelFn?: (item: string) => string
-  onAdd?: (e: MouseEvent) => void
-  addLabel?: string
-  renderAdd?: (container: HTMLElement) => void
-}
-
-export function renderChipList(container: HTMLElement, items: string[], opts: ChipListOpts): void {
-  container.empty()
-  const variant = opts.variant ?? 'default'
-  const shape = opts.shape ?? 'pill'
-  for (const item of items) {
-    const chip = new Chip(container)
-      .setLabel(opts.labelFn ? opts.labelFn(item) : item)
-      .setShape(shape)
-      .setRemovable(() => opts.onRemove(item))
-    if (variant === 'accent') chip.setVariant('solid').setColor('var(--interactive-accent)')
-    else chip.setVariant('outline')
-  }
-  if (opts.renderAdd) {
-    opts.renderAdd(container)
-  } else if (opts.onAdd) {
-    const onAdd = opts.onAdd
-    new ButtonComponent(container).setButtonText(opts.addLabel ?? '+ Add').onClick((e) => onAdd(e))
-  }
 }

@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Custom fields in the task editor use the same controls as the task's own properties, so a custom date opens the date picker and a custom select the same popover as status
 - Project members, the global team members, and task assignees are picked from the same control, which searches the people in your vault and offers to create the note for a new name
 - The people a picker offers include the global team members, the project's own members, and everyone already assigned in that project
 - A person already picked as a plain name shows as picked when the same person is found as a note
@@ -91,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Clearing a number custom field wrote an invalid value into the task's note
 - A custom field holding a link showed as raw link text in the table
 - A person custom field showed the stored text in the table instead of that person's avatar
 - A person custom field lost the link to the person's note when set in the task editor

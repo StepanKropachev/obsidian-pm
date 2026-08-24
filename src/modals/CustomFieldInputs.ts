@@ -1,95 +1,83 @@
-import { Menu } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
 import { collectAllAssignees } from '../store/TaskTreeOps'
-import { renderChipList } from '../ui/FormField'
 import { renderPersonPicker } from '../ui/PersonPicker'
+import { Checkbox } from '../ui/primitives/Checkbox'
+import {
+  renderDateControl,
+  renderInputControl,
+  renderMultiSelect,
+  renderSelectControl
+} from '../ui/composites/properties'
 import { stringifyCustomValue } from '../utils'
 
 export function renderCustomFieldInput(
   cf: CustomFieldDef,
   task: Task,
   project: Project,
-  plugin: PMPlugin
+  plugin: PMPlugin,
+  rerender: () => void
 ): HTMLElement {
-  const currentVal = task.customFields[cf.id]
+  const value = task.customFields[cf.id]
   const wrap = createDiv('pm-prop-value')
+  const commit = (next: unknown): void => {
+    task.customFields[cf.id] = next
+    rerender()
+  }
+
   switch (cf.type) {
     case 'text':
     case 'url': {
-      const input = wrap.createEl('input', { type: cf.type === 'url' ? 'url' : 'text', cls: 'pm-prop-text' })
-      input.value = stringifyCustomValue(currentVal)
-      input.placeholder = cf.name
-      input.addEventListener('change', () => {
-        task.customFields[cf.id] = input.value
-      })
+      renderInputControl({ container: wrap, value: stringifyCustomValue(value), onChange: commit })
       break
     }
     case 'number': {
-      const input = wrap.createEl('input', { type: 'number', cls: 'pm-prop-text' })
-      input.value = stringifyCustomValue(currentVal)
-      input.addEventListener('change', () => {
-        task.customFields[cf.id] = parseFloat(input.value)
+      renderInputControl({
+        container: wrap,
+        value: stringifyCustomValue(value),
+        inputType: 'number',
+        onChange: (raw) => {
+          const parsed = parseFloat(raw)
+          commit(Number.isNaN(parsed) ? '' : parsed)
+        }
       })
       break
     }
     case 'date': {
-      const input = wrap.createEl('input', { type: 'date', cls: 'pm-prop-date' })
-      input.value = stringifyCustomValue(currentVal)
-      input.addEventListener('change', () => {
-        task.customFields[cf.id] = input.value
-      })
+      renderDateControl({ container: wrap, value: stringifyCustomValue(value), onChange: commit })
       break
     }
     case 'checkbox': {
-      const input = wrap.createEl('input', { type: 'checkbox', cls: 'pm-prop-checkbox' })
-      input.checked = Boolean(currentVal)
-      input.addEventListener('change', () => {
-        task.customFields[cf.id] = input.checked
-      })
+      new Checkbox(wrap).setChecked(Boolean(value)).setAriaLabel(cf.name).onChange(commit)
       break
     }
     case 'select': {
-      const sel = wrap.createEl('select', { cls: 'pm-prop-select' })
-      sel.createEl('option', { value: '', text: '\u2014' })
-      for (const opt of cf.options ?? []) {
-        const o = sel.createEl('option', { value: opt, text: opt })
-        if (opt === currentVal) o.selected = true
-      }
-      sel.addEventListener('change', () => {
-        task.customFields[cf.id] = sel.value
+      renderSelectControl({
+        container: wrap,
+        value: stringifyCustomValue(value) || null,
+        options: [{ id: '', label: 'None' }, ...(cf.options ?? []).map((option) => ({ id: option, label: option }))],
+        onChange: commit
       })
       break
     }
     case 'multiselect': {
-      const vals = Array.isArray(currentVal) ? (currentVal as string[]) : []
-      const renderMulti = () => {
-        renderChipList(wrap, vals, {
-          shape: 'pill',
-          onRemove: (v) => {
-            const idx = vals.indexOf(v)
-            if (idx > -1) vals.splice(idx, 1)
-            task.customFields[cf.id] = [...vals]
-            renderMulti()
-          },
-          onAdd: (e) => {
-            const menu = new Menu()
-            for (const opt of cf.options ?? []) {
-              if (!vals.includes(opt)) {
-                menu.addItem((item) =>
-                  item.setTitle(opt).onClick(() => {
-                    vals.push(opt)
-                    task.customFields[cf.id] = [...vals]
-                    renderMulti()
-                  })
-                )
-              }
-            }
-            menu.showAtMouseEvent(e)
-          }
-        })
+      const picked = (): string[] => {
+        const current = task.customFields[cf.id]
+        return Array.isArray(current) ? (current as string[]) : []
       }
-      renderMulti()
+      renderMultiSelect({
+        container: wrap,
+        addLabel: 'Add value',
+        addLabelMore: 'Add another',
+        selected: picked,
+        options: () => (cf.options ?? []).map((option) => ({ id: option, label: option })),
+        add: (option) => {
+          task.customFields[cf.id] = [...picked(), option]
+        },
+        remove: (option) => {
+          task.customFields[cf.id] = picked().filter((v) => v !== option)
+        }
+      })
       break
     }
     case 'person': {
@@ -100,11 +88,11 @@ export function renderCustomFieldInput(
         extra: () => [...project.teamMembers, ...collectAllAssignees(project.tasks)],
         addLabel: 'Set person',
         selected: () => {
-          const value = task.customFields[cf.id]
-          return typeof value === 'string' && value ? [value] : []
+          const current = task.customFields[cf.id]
+          return typeof current === 'string' && current ? [current] : []
         },
-        add: (value) => {
-          task.customFields[cf.id] = value
+        add: (person) => {
+          task.customFields[cf.id] = person
         },
         remove: () => {
           task.customFields[cf.id] = ''

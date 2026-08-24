@@ -605,6 +605,11 @@ button.pm-icon-trigger {
   padding-top: 6px;
   color: var(--text-muted);
 }
+/* Rows are top-aligned, so a control shorter than an inline trigger needs the cell to hold
+   the same height for it to center on the label. */
+.pm-prop-grid .pm-prop-value {
+  min-height: 28px;
+}
 .pm-prop-row--wide {
   grid-column: 1 / -1;
 }
