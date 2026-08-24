@@ -1,6 +1,7 @@
 import { SuggestModal, App } from 'obsidian'
 import type { Task } from '../types'
 import type { ProjectRef } from '../store'
+import { displayName } from '../utils'
 
 const NEW_TAG_PREFIX = '__new__:'
 
@@ -54,6 +55,31 @@ export class TaskPickerModal extends SuggestModal<Task> {
   }
 }
 
+/** Lists the people already assigned somewhere, for the command that shows their tasks. */
+export class PersonLookupModal extends SuggestModal<string> {
+  constructor(
+    app: App,
+    private people: string[],
+    private onChoose: (person: string) => void
+  ) {
+    super(app)
+    this.setPlaceholder('Pick a person…')
+  }
+
+  getSuggestions(query: string): string[] {
+    const q = query.toLowerCase()
+    return this.people.filter((person) => displayName(person).toLowerCase().includes(q))
+  }
+
+  renderSuggestion(person: string, el: HTMLElement): void {
+    el.createSpan({ text: displayName(person) })
+  }
+
+  onChooseSuggestion(person: string): void {
+    this.onChoose(person)
+  }
+}
+
 export class TagPickerModal extends SuggestModal<string> {
   constructor(
     app: App,
@@ -85,60 +111,5 @@ export class TagPickerModal extends SuggestModal<string> {
   onChooseSuggestion(item: string): void {
     const tag = item.startsWith(NEW_TAG_PREFIX) ? item.slice(NEW_TAG_PREFIX.length) : item
     this.onChoose(tag.toLowerCase().replace(/\s+/g, '-'))
-  }
-}
-
-export interface PersonChoice {
-  /** What to store: a wikilink for a person with a note, the plain name otherwise. */
-  value: string
-  name: string
-}
-
-const NEW_PERSON_PREFIX = '__person__:'
-
-/**
- * Picks a person, preferring the notes already in the vault so the stored value is a link
- * Obsidian can follow. Typing a name with no note behind it still stores it as plain text.
- */
-export class PersonPickerModal extends SuggestModal<PersonChoice> {
-  constructor(
-    app: App,
-    private known: PersonChoice[],
-    private search: (query: string) => PersonChoice[],
-    private onChoose: (choice: PersonChoice, create: boolean) => void
-  ) {
-    super(app)
-    this.setPlaceholder('Search people…')
-  }
-
-  getSuggestions(query: string): PersonChoice[] {
-    const q = query.toLowerCase().trim()
-    const known = this.known.filter((p) => !q || p.name.toLowerCase().includes(q))
-    const seen = new Set(known.map((p) => p.value))
-    const found = this.search(q).filter((p) => !seen.has(p.value))
-    const exact = [...known, ...found].some((p) => p.name.toLowerCase() === q)
-    const trailing: PersonChoice[] = []
-    if (q && !exact) {
-      trailing.push({ value: query.trim(), name: query.trim() })
-      trailing.push({ value: `${NEW_PERSON_PREFIX}${query.trim()}`, name: query.trim() })
-    }
-    return [...known, ...found, ...trailing]
-  }
-
-  renderSuggestion(item: PersonChoice, el: HTMLElement): void {
-    if (item.value.startsWith(NEW_PERSON_PREFIX)) {
-      el.createSpan({ text: `Create person note "${item.name}"`, cls: 'pm-suggest-create' })
-      return
-    }
-    el.createSpan({ text: item.name })
-    if (item.value !== item.name) el.createSpan({ text: ' · linked', cls: 'pm-suggest-hint' })
-  }
-
-  onChooseSuggestion(item: PersonChoice): void {
-    if (item.value.startsWith(NEW_PERSON_PREFIX)) {
-      this.onChoose({ value: item.name, name: item.name }, true)
-      return
-    }
-    this.onChoose(item, false)
   }
 }

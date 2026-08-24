@@ -24,6 +24,8 @@ export interface MultiSelectOpts {
   addLabelMore?: string
   labelFor?: (id: string) => string
   colorFor?: (id: string) => string
+  /** Identity a selected value is matched by, so the same person written two ways is one row. */
+  keyOf?: (id: string) => string
   search?: boolean
   placeholder?: string
   /** A second tier, searched only once the user types: vault notes behind the known values. */
@@ -49,6 +51,7 @@ export interface MultiSelectOpts {
  */
 export function renderMultiSelect(opts: MultiSelectOpts): void {
   const labelOf = (id: string) => (opts.labelFor ? opts.labelFor(id) : id)
+  const keyOf = (id: string) => (opts.keyOf ? opts.keyOf(id) : id)
   const stackMode = !!opts.avatarStack
   const listMode = !!opts.depsList
 
@@ -146,26 +149,28 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     const renderList = () => {
       listEl.empty()
       const q = query.trim().toLowerCase()
-      const selectedIds = new Set(opts.selected())
+      const picked = new Map(opts.selected().map((value) => [keyOf(value), value]))
       const items = opts.options().filter((it) => !q || it.label.toLowerCase().includes(q))
+      const toggle = (id: string) => {
+        const current = picked.get(keyOf(id))
+        if (current !== undefined) opts.remove(current)
+        else opts.add(id)
+        renderValues()
+        renderList()
+      }
       for (const it of items) {
         renderOptionRow(listEl, {
           label: it.label,
           color: it.color ?? opts.colorFor?.(it.id),
           icon: it.icon,
           avatar: stackMode ? it.label : undefined,
-          selected: selectedIds.has(it.id),
-          onPick: () => {
-            if (selectedIds.has(it.id)) opts.remove(it.id)
-            else opts.add(it.id)
-            renderValues()
-            renderList()
-          }
+          selected: picked.has(keyOf(it.id)),
+          onPick: () => toggle(it.id)
         })
       }
       const more = q ? (opts.moreOptions?.(query.trim()) ?? []) : []
-      const known = new Set(items.map((it) => it.id))
-      const extra = more.filter((it) => !known.has(it.id))
+      const known = new Set(items.map((it) => keyOf(it.id)))
+      const extra = more.filter((it) => !known.has(keyOf(it.id)))
       if (extra.length && opts.moreHeading) {
         listEl.createDiv({ cls: 'pm-pop-heading', text: opts.moreHeading })
       }
@@ -174,13 +179,8 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
           label: it.label,
           icon: it.icon,
           avatar: stackMode ? it.label : undefined,
-          selected: selectedIds.has(it.id),
-          onPick: () => {
-            if (selectedIds.has(it.id)) opts.remove(it.id)
-            else opts.add(it.id)
-            renderValues()
-            renderList()
-          }
+          selected: picked.has(keyOf(it.id)),
+          onPick: () => toggle(it.id)
         })
       }
 

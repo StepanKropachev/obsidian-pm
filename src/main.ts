@@ -14,7 +14,7 @@ import { PMViewRouter } from './views/PMViewRouter'
 import {
   openTaskModal,
   openProjectCreate,
-  openPersonPicker,
+  openPersonLookup,
   openProjectPicker,
   openTaskPicker,
   openImportModal,
@@ -207,7 +207,11 @@ export default class PMPlugin extends Plugin {
       id: 'person-tasks',
       name: 'Show tasks assigned to a person',
       callback: () => {
-        openPersonPicker(this, this.index.allAssignees(), '', (value) => this.showTasksForPerson(value))
+        openPersonLookup(
+          this,
+          this.index.allAssignees(),
+          safeAsync((value) => this.showTasksForPerson(value))
+        )
       }
     })
 

@@ -54,7 +54,7 @@ import { ProgressBar } from '../../ui/primitives/ProgressBar'
 import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { ViewSwitcher } from '../../ui/primitives/ViewSwitcher'
 import { renderPriorityBadge, renderStatusBadge, renderStatusDot } from '../../ui/StatusBadge'
-import { safeAsync } from '../../utils'
+import { displayName, safeAsync } from '../../utils'
 
 export const PM_STYLEGUIDE_VIEW_TYPE = 'pm-styleguide'
 
@@ -316,6 +316,36 @@ export class StyleguideView extends ItemView {
     renderIconControl({ container: iconRow, value: 'circle-play', color: DEFAULT_STATUSES[1].color, onChange: noop })
     renderIconControl({ container: iconRow, value: '🚀', onChange: noop })
     renderIconControl({ container: iconRow, value: '', onChange: noop })
+    const peopleRow = this.row(sec, 'renderMultiSelect: avatarStack, as the people picker uses it')
+    const assigned = [PEOPLE[0], WIKILINK_PERSON]
+    renderMultiSelect({
+      container: peopleRow,
+      avatarStack: true,
+      search: true,
+      addLabel: 'Assign',
+      placeholder: 'Search people…',
+      labelFor: displayName,
+      keyOf: displayName,
+      selected: () => assigned,
+      options: () => PEOPLE.map((person) => ({ id: person, label: person })),
+      moreOptions: (query) =>
+        PEOPLE.filter((person) => person.toLowerCase().includes(query.toLowerCase())).map((person) => ({
+          id: `[[People/${person}]]`,
+          label: person
+        })),
+      moreHeading: 'People in your vault',
+      add: (id) => {
+        assigned.push(id)
+      },
+      remove: (id) => {
+        assigned.splice(assigned.indexOf(id), 1)
+      },
+      createLabel: (name) => `Add "${name}"`,
+      create: (name) => {
+        assigned.push(name)
+      },
+      createAlt: { label: (name) => `Create person note "${name}"`, icon: 'user-plus', run: noopAsync }
+    })
     const depsRow = this.row(sec, 'renderMultiSelect: depsList with linked titles')
     const depTitles: Record<string, string> = { 'task-1a2b': 'Draft the launch plan', 'task-9f8e': 'Sign off on copy' }
     renderMultiSelect({

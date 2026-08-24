@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Project members, the global team members, and task assignees are picked from the same control, which searches the people in your vault and offers to create the note for a new name
+- The people a picker offers include the global team members, the project's own members, and everyone already assigned in that project
+- A person already picked as a plain name shows as picked when the same person is found as a note
 - The project name above the table, timeline, and board opens that project's overview when clicked. Previously it was an editable field for renaming the project
 - Assignee lists sort by the name shown rather than by the link behind it
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
