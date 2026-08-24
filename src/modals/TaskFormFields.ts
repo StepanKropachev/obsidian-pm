@@ -1,13 +1,13 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
-import { createPersonLink, personCandidates, personKeyer } from '../store'
 import { flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { Chip } from '../ui/primitives/Chip'
-import { dedupePeople, displayName, isTerminalStatus, priorityIcon, stringToColor } from '../utils'
+import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
+import { renderPersonPicker } from './PersonPicker'
 import {
   renderSelectControl,
   renderDateControl,
@@ -201,41 +201,18 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'Assignees',
     () => {
       const cell = createDiv('pm-prop-value')
-      const sourcePath = task.filePath ?? project.filePath
-      const allMembers = () =>
-        dedupePeople([...project.teamMembers, ...plugin.settings.globalTeamMembers], personKeyer(plugin.app))
-      renderMultiSelect({
+      renderPersonPicker({
         container: cell,
-        avatarStack: true,
-        search: true,
+        plugin,
+        project,
+        sourcePath: task.filePath ?? project.filePath,
         addLabel: 'Assign',
-        placeholder: 'Search people…',
         selected: () => task.assignees,
-        labelFor: displayName,
-        options: () => allMembers().map((m) => ({ id: m, label: displayName(m) })),
-        moreOptions: (query) =>
-          personCandidates(plugin.app, plugin.settings.peopleFolder, query, sourcePath).map((c) => ({
-            id: c.link,
-            label: c.name
-          })),
-        moreHeading: 'People in your vault',
-        add: (id) => {
-          if (!task.assignees.includes(id)) task.assignees.push(id)
+        add: (value) => {
+          if (!task.assignees.includes(value)) task.assignees.push(value)
         },
-        remove: (id) => {
-          task.assignees = task.assignees.filter((a) => a !== id)
-        },
-        createLabel: (name) => `Add "${name}"`,
-        create: (label) => {
-          if (!task.assignees.includes(label)) task.assignees.push(label)
-        },
-        createAlt: {
-          label: (name) => `Create person note "${name}"`,
-          icon: 'user-plus',
-          run: async (name) => {
-            const link = await createPersonLink(plugin.app, plugin.settings.peopleFolder, name, sourcePath)
-            if (!task.assignees.includes(link)) task.assignees.push(link)
-          }
+        remove: (value) => {
+          task.assignees = task.assignees.filter((a) => a !== value)
         }
       })
       return cell

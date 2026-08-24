@@ -2,8 +2,11 @@ import type { App } from 'obsidian'
 import { resolvePeople } from '../store'
 import type { AvatarPerson } from '../ui/primitives/AvatarStack'
 
-/** Turns stored assignee values into avatars that open the note behind a linked person. */
-export function peopleAvatars(app: App, values: string[], sourcePath: string): AvatarPerson[] {
+/**
+ * Turns stored values into references that open the note behind them: assignees and members
+ * shown as avatars, any other value naming a note shown as a link.
+ */
+export function linkedRefs(app: App, values: string[], sourcePath: string): AvatarPerson[] {
   return resolvePeople(app, values, sourcePath).map((person) => {
     const path = person.path
     return {

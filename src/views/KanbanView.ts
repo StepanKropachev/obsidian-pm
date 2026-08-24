@@ -9,7 +9,7 @@ import { openTaskModal } from '../ui/ModalFactory'
 import { buildTaskContextMenu } from '../ui/TaskContextMenu'
 import { KanbanColumn, type KanbanCardData } from '../ui/composites/KanbanColumn'
 import { renderProjectChip } from '../ui/composites/projectChip'
-import { peopleAvatars } from './peopleAvatars'
+import { linkedRefs } from './linkedRefs'
 import type { SubView } from './SubView'
 
 export class KanbanView implements SubView {
@@ -110,7 +110,7 @@ export class KanbanView implements SubView {
 
     return {
       task,
-      people: peopleAvatars(this.plugin.app, task.assignees, task.filePath ?? ''),
+      people: linkedRefs(this.plugin.app, task.assignees, task.filePath ?? ''),
       priorityColor,
       descriptionPreview,
       parentTitle,

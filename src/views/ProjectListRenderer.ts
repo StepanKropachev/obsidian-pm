@@ -6,7 +6,7 @@ import { dateUrgency, formatDateShort, safeAsync } from '../utils'
 import { openProjectCreate } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectRow } from '../ui/composites/ProjectRow'
-import { peopleAvatars } from './peopleAvatars'
+import { linkedRefs } from './linkedRefs'
 
 const COLUMNS: { label: string; cls?: string }[] = [
   { label: '' },
@@ -98,7 +98,7 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
       tasksDone: done,
       tasksTotal: total,
       overdue,
-      members: peopleAvatars(ctx.plugin.app, ref.teamMembers, ref.path),
+      members: linkedRefs(ctx.plugin.app, ref.teamMembers, ref.path),
       dueLabel: formatDateShort(latestDue),
       dueUrgency: dateUrgency(latestDue, overdue > 0),
       onToggleCollapsed: safeAsync(async () => {

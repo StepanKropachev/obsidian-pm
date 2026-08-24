@@ -261,6 +261,23 @@ button.pm-chip-btn--active:hover {
   margin-top: 2px;
 }
 
+.pm-cf-link {
+  color: var(--text-accent);
+  cursor: pointer;
+}
+.pm-cf-link:hover {
+  text-decoration: underline;
+}
+.pm-cf-link:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+.pm-cf-link--unresolved {
+  color: var(--text-muted);
+  cursor: default;
+}
+
 .pm-avatar {
   display: inline-flex;
   align-items: center;

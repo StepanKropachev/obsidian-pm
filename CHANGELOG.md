@@ -81,6 +81,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A custom field holding a link showed as raw link text in the table
+- A person custom field showed the stored text in the table instead of that person's avatar
+- A person custom field lost the link to the person's note when set in the task editor
+- A checkbox custom field showed true or false in the table
+- A url custom field was plain text in the table
+- The assignees on a project's overview did not open their notes when clicked
 - An assignee whose name is a link showed as raw link text in the assignee filter, the bulk assign menu, the timeline tooltip, and the task editor
 - The assignee filter skipped tasks that wrote the same person's name a different way
 - Two people with the same name were treated as one by the assignee filter, when each had their own note
