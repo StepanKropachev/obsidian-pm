@@ -1,6 +1,6 @@
-import type PMPlugin from '../main'
 import type { StatusConfig, Task } from '../types'
 import { makeTask } from '../types'
+import { renderNoteLink } from '../ui/composites/noteLink'
 import { IconButton } from '../ui/primitives/IconButton'
 import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../utils'
 
@@ -8,8 +8,8 @@ import { isTerminalStatus, getCompleteStatusId, getDefaultStatusId } from '../ut
 export function renderSubtasksPanel(
   container: HTMLElement,
   task: Task,
-  plugin: PMPlugin,
-  statuses: StatusConfig[]
+  statuses: StatusConfig[],
+  openSubtask: (filePath: string) => void
 ): void {
   const subSection = container.createDiv('pm-modal-section')
 
@@ -45,14 +45,15 @@ export function renderSubtasksPanel(
         renderCount()
       })
 
-      const titleEl = row.createSpan({
-        text: sub.title,
-        cls: done ? 'pm-subtask-title pm-subtask-title--done' : 'pm-subtask-title'
-      })
-      titleEl.contentEditable = 'true'
-      titleEl.addEventListener('blur', () => {
-        sub.title = titleEl.textContent?.trim() ?? sub.title
-      })
+      // A subtask typed into the add field below has no note yet, so there is nothing to
+      // open until the editor saves.
+      const cls = done ? 'pm-subtask-title pm-subtask-title--done' : 'pm-subtask-title'
+      const filePath = sub.filePath
+      if (filePath) {
+        renderNoteLink(row, { label: sub.title, path: filePath, open: () => openSubtask(filePath), cls })
+      } else {
+        row.createSpan({ text: sub.title, cls })
+      }
 
       new IconButton(row)
         .setIcon('x')

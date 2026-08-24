@@ -1,5 +1,6 @@
 import { setIcon, setTooltip } from 'obsidian'
 import { IconButton } from '../../primitives/IconButton'
+import { renderNoteLink } from '../noteLink'
 
 /** The note a row's task lives in, and what activating the row leads to. */
 export interface DepLink {
@@ -27,24 +28,7 @@ export function renderDepRow(parent: HTMLElement, props: DepRowProps): HTMLEleme
   if (!link) {
     row.createSpan({ cls: 'pm-dep-title', text: props.title })
   } else {
-    // No href: every way of activating the link goes through the handler, which opens the
-    // task rather than the markdown behind it.
-    const titleEl = row.createEl('a', {
-      cls: 'pm-dep-title internal-link',
-      text: props.title,
-      attr: { 'data-href': link.path, role: 'link', tabindex: '0' }
-    })
-    titleEl.addEventListener('click', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      link.open()
-    })
-    titleEl.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return
-      e.preventDefault()
-      e.stopPropagation()
-      link.open()
-    })
+    renderNoteLink(row, { label: props.title, path: link.path, open: link.open, cls: 'pm-dep-title' })
   }
   if (props.tooltip) setTooltip(row, props.tooltip)
   if (props.onRemove) {
