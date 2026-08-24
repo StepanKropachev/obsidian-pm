@@ -1,9 +1,10 @@
 import { ButtonComponent, ExtraButtonComponent, Menu } from 'obsidian'
 import type { Task, TaskStatus, TaskPriority } from '../../types'
 import { flattenTasks, collectAllAssignees, collectAllTags } from '../../store'
-import { displayName, formatBadgeText } from '../../utils'
+import { displayName, priorityIcon } from '../../utils'
 import { today } from '../../dates'
 import { promptText } from '../../ui/ModalFactory'
+import { addPaletteMenuItem } from '../../ui/StatusBadge'
 import { peopleSource } from '../../ui/PersonPicker'
 import { TaskPickerModal } from '../../modals/PickerModals'
 import type { TableContext } from './TableRenderer'
@@ -57,9 +58,7 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   new ButtonComponent(left).setButtonText('Set status').onClick((e) => {
     const menu = new Menu()
     for (const s of ctx.statuses) {
-      menu.addItem((item) =>
-        item.setTitle(formatBadgeText(s.icon, s.label)).onClick(() => onAction({ type: 'set-status', status: s.id }))
-      )
+      addPaletteMenuItem(menu, s, { onClick: () => onAction({ type: 'set-status', status: s.id }) })
     }
     menu.showAtMouseEvent(e)
   })
@@ -67,10 +66,10 @@ function updateBarContent(bar: HTMLElement, ctx: TableContext, onAction: (a: Bul
   new ButtonComponent(left).setButtonText('Set priority').onClick((e) => {
     const menu = new Menu()
     for (const p of ctx.priorities) {
-      menu.addItem((item) =>
-        item
-          .setTitle(formatBadgeText(p.icon, p.label))
-          .onClick(() => onAction({ type: 'set-priority', priority: p.id }))
+      addPaletteMenuItem(
+        menu,
+        { ...p, namedIcon: priorityIcon(ctx.priorities, p.id, ctx.priorityIcons) },
+        { onClick: () => onAction({ type: 'set-priority', priority: p.id }) }
       )
     }
     menu.showAtMouseEvent(e)

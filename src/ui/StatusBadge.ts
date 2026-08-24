@@ -8,6 +8,27 @@ function namedIcon(config: { icon: string } | undefined): string | null {
   return config?.icon && isIconName(config.icon) ? config.icon : null
 }
 
+export interface PaletteMenuEntry {
+  label: string
+  icon: string
+  /** The named icon to show when it isn't the entry's own: a priority's rank icon. */
+  namedIcon?: string
+}
+
+/** One status or priority in a menu, so every menu that lists them places their icons alike. */
+export function addPaletteMenuItem(
+  menu: Menu,
+  entry: PaletteMenuEntry,
+  opts: { checked?: boolean; onClick: () => void }
+): void {
+  menu.addItem((item) => {
+    item.setTitle(formatBadgeText(entry.icon, entry.label)).onClick(opts.onClick)
+    if (opts.checked !== undefined) item.setChecked(opts.checked)
+    const icon = entry.namedIcon ?? entry.icon
+    if (isIconName(icon)) item.setIcon(icon)
+  })
+}
+
 export function renderStatusBadge(
   container: HTMLElement,
   task: Task,
@@ -23,14 +44,7 @@ export function renderStatusBadge(
     .onClick((e) => {
       const menu = new Menu()
       for (const s of statuses) {
-        menu.addItem((item) => {
-          item
-            .setTitle(formatBadgeText(s.icon, s.label))
-            .setChecked(s.id === task.status)
-            .onClick(() => onChange(s.id))
-          const icon = namedIcon(s)
-          if (icon) item.setIcon(icon)
-        })
+        addPaletteMenuItem(menu, s, { checked: s.id === task.status, onClick: () => onChange(s.id) })
       }
       menu.showAtMouseEvent(e)
     })
@@ -56,14 +70,11 @@ export function renderPriorityBadge(
   badge.onClick((e) => {
     const menu = new Menu()
     for (const p of priorities) {
-      menu.addItem((item) => {
-        item
-          .setTitle(formatBadgeText(p.icon, p.label))
-          .setChecked(p.id === task.priority)
-          .onClick(() => onChange(p.id))
-        const itemIcon = priorityIcon(priorities, p.id, iconSet)
-        if (isIconName(itemIcon)) item.setIcon(itemIcon)
-      })
+      addPaletteMenuItem(
+        menu,
+        { ...p, namedIcon: priorityIcon(priorities, p.id, iconSet) },
+        { checked: p.id === task.priority, onClick: () => onChange(p.id) }
+      )
     }
     menu.showAtMouseEvent(e)
   })

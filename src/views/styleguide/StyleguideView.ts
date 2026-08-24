@@ -57,7 +57,7 @@ import { ProgressBar } from '../../ui/primitives/ProgressBar'
 import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { ViewSwitcher } from '../../ui/primitives/ViewSwitcher'
 import { renderPriorityBadge, renderStatusBadge, renderStatusDot } from '../../ui/StatusBadge'
-import { displayName, safeAsync } from '../../utils'
+import { displayName, priorityIcon, safeAsync } from '../../utils'
 
 export const PM_STYLEGUIDE_VIEW_TYPE = 'pm-styleguide'
 
@@ -166,12 +166,24 @@ export class StyleguideView extends ItemView {
     new ChipButton(row).setLabel('Saved view')
     new ChipButton(row).setLabel('Active view').setActive(true)
     new ChipButton(row).setLabel('Due: 3').setShape('pill').setActive(true)
-    const filterRow = this.row(sec, 'renderFilterDropdown')
+    const filterRow = this.row(sec, 'renderFilterDropdown (options carry their palette icon)')
     renderFilterDropdown(
       filterRow,
       'Status',
       ['todo'],
-      DEFAULT_STATUSES.map((s) => ({ id: s.id, label: s.label })),
+      DEFAULT_STATUSES.map((s) => ({ id: s.id, label: s.label, icon: s.icon })),
+      noop
+    )
+    renderFilterDropdown(
+      filterRow,
+      'Priority',
+      [],
+      FIVE_PRIORITIES.map((p) => ({
+        id: p.id,
+        label: p.label,
+        icon: p.icon,
+        namedIcon: priorityIcon(FIVE_PRIORITIES, p.id, 'chevrons')
+      })),
       noop
     )
   }

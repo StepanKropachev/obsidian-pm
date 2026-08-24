@@ -1,4 +1,4 @@
-import type { Task, FilterState, SavedView, StatusConfig, PriorityConfig } from '../../../types'
+import type { Task, FilterState, SavedView, StatusConfig, PriorityConfig, PriorityIconSet } from '../../../types'
 import { isFilterActive } from '../../../store/TaskFilter'
 import { PrimaryRow } from './PrimaryRow'
 import { FilterRow } from './FilterRow'
@@ -9,6 +9,7 @@ export interface ProjectHeaderProps {
   savedViews: SavedView[]
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  priorityIcons: PriorityIconSet
   filter: FilterState
   activeSavedViewId: string | null
   /** Decides who counts as the same person in the assignee filter. */
@@ -91,6 +92,7 @@ export class ProjectHeader {
       tasks: this.props.tasks,
       statuses: this.props.statuses,
       priorities: this.props.priorities,
+      priorityIcons: this.props.priorityIcons,
       filter: this.props.filter,
       personKeyOf: this.props.personKeyOf,
       onFilterChange: this.props.onFilterChange,

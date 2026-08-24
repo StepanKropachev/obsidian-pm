@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A status or priority with an icon showed none of it in the filter dropdowns and the bulk action bar
 - Clearing a number custom field wrote an invalid value into the task's note
 - A custom field holding a link showed as raw link text in the table
 - A person custom field showed the stored text in the table instead of that person's avatar
