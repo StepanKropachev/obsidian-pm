@@ -16,6 +16,7 @@ import { flattenTasks } from '../store/TaskTreeOps'
 import { TaskFileNameConflictError } from '../store'
 import { safeAsync, getDefaultStatusId, getDefaultPriorityId, getPriorityConfig } from '../utils'
 import { confirmDialog, openTaskByPath } from '../ui/ModalFactory'
+import { renderGlyph } from '../ui/composites/properties'
 import { renderTaskFormFields } from './TaskFormFields'
 import { renderTimeTrackingPanel } from './TimeTrackingPanel'
 import { renderSubtasksPanel } from './SubtasksPanel'
@@ -287,10 +288,7 @@ export class TaskEditor {
     if (prio?.color) header.setCssProps({ '--pm-accent-strip': prio.color })
     const crumb = header.createDiv('pm-te-crumb')
     if (this.project.icon) {
-      const iconEl = crumb.createSpan({ cls: 'pm-te-crumb-icon' })
-      // project.icon is either an emoji or a Lucide icon name.
-      if (/^[a-z0-9-]+$/.test(this.project.icon)) setIcon(iconEl, this.project.icon)
-      else iconEl.setText(this.project.icon)
+      renderGlyph(crumb.createSpan({ cls: 'pm-te-crumb-icon' }), { icon: this.project.icon })
     }
     crumb.createSpan({ cls: 'pm-te-crumb-name', text: this.project.title })
     const crumbSep = crumb.createSpan({ cls: 'pm-te-crumb-sep' })

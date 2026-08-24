@@ -4,6 +4,7 @@ import { CollapseToggle } from '../primitives/CollapseToggle'
 import { IconButton } from '../primitives/IconButton'
 import { ProgressBar } from '../primitives/ProgressBar'
 import { renderDueChip, type DueUrgency } from './dueChip'
+import { renderGlyph } from './properties'
 import { renderTreeGuides } from './treeGuides'
 
 export interface ProjectRowProps {
@@ -51,7 +52,7 @@ export class ProjectRow {
     const title = this.el.createEl('td', { cls: 'pm-table-cell-title' })
     renderTreeGuides(title, props.treeGuides, props.isLastChild)
     const inner = title.createDiv('pm-table-title-inner')
-    inner.createSpan({ text: props.icon, cls: 'pm-project-row-icon' })
+    renderGlyph(inner.createSpan({ cls: 'pm-project-row-icon' }), { icon: props.icon, color: props.color })
     inner.createSpan({ text: props.title, cls: 'pm-task-title-text' })
 
     const progress = this.el.createEl('td', { cls: 'pm-table-cell pm-table-cell-progress' })

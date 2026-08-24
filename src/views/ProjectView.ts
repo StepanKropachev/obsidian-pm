@@ -12,6 +12,7 @@ import { openTaskModal } from '../ui/ModalFactory'
 import { ChipButton } from '../ui/primitives/ChipButton'
 import { ViewSwitcher } from '../ui/primitives/ViewSwitcher'
 import { ProjectHeader } from '../ui/composites/ProjectHeader'
+import { renderGlyph } from '../ui/composites/properties'
 
 export const PM_PROJECT_VIEW_TYPE = 'pm-project'
 
@@ -364,10 +365,10 @@ export class ProjectView extends ItemView {
     const openOverview = safeAsync(() => this.plugin.router.openProjectOverview(primary.filePath))
     if (!scope.isMulti) {
       const iconEl = left.createSpan({
-        text: primary.icon,
         cls: 'pm-toolbar-icon',
         attr: { 'aria-label': 'Open project page', role: 'button', tabindex: '0' }
       })
+      renderGlyph(iconEl, { icon: primary.icon, color: primary.color })
       iconEl.addEventListener('click', openOverview)
     }
 

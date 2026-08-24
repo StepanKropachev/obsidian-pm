@@ -37,6 +37,7 @@ import {
   renderAddProperty,
   renderDepRow,
   renderDateControl,
+  renderGlyph,
   renderIconControl,
   renderInputControl,
   renderMultiSelect,
@@ -353,6 +354,10 @@ export class StyleguideView extends ItemView {
     renderIconControl({ container: iconRow, value: 'circle-play', color: DEFAULT_STATUSES[1].color, onChange: noop })
     renderIconControl({ container: iconRow, value: '🚀', onChange: noop })
     renderIconControl({ container: iconRow, value: '', onChange: noop })
+    const glyphRow = this.row(sec, 'renderGlyph: named icon / emoji / color dot, sized by --pm-glyph-size')
+    renderGlyph(glyphRow, { icon: 'circle-play', color: DEFAULT_STATUSES[1].color })
+    renderGlyph(glyphRow, { icon: '🚀' })
+    renderGlyph(glyphRow, { color: DEFAULT_STATUSES[2].color })
     const peopleRow = this.row(sec, 'renderMultiSelect: avatarStack, as the people picker uses it')
     const assigned = [PEOPLE[0], WIKILINK_PERSON]
     renderMultiSelect({

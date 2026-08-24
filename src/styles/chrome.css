@@ -90,7 +90,10 @@
 }
 
 .pm-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
   font-size: 24px;
+  --pm-glyph-size: 24px;
   cursor: pointer;
   line-height: 1;
   padding: 2px;
@@ -186,7 +189,10 @@
 }
 
 .pm-project-row-icon {
+  display: inline-flex;
+  align-items: center;
   font-size: 15px;
+  --pm-glyph-size: 15px;
   line-height: 1;
 }
 .pm-project-row:hover .pm-task-title-text {
