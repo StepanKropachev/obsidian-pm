@@ -57,7 +57,6 @@ export class ProjectCreateModal extends Modal {
     this.renderParent(grid)
     this.renderMembers(grid)
 
-    body.createEl('hr', { cls: 'pm-te-divider' })
     this.renderDescription(body)
 
     this.renderFooter(contentEl)

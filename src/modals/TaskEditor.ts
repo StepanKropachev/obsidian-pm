@@ -369,8 +369,6 @@ export class TaskEditor {
       openTask: (path) => this.openLinkedTask(path)
     })
 
-    body.createEl('hr', { cls: 'pm-te-divider' })
-
     const descSection = body.createDiv('pm-modal-section pm-modal-desc-section')
     descSection.createEl('h4', { text: 'Description', cls: 'pm-modal-section-title' })
 

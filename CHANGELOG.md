@@ -122,6 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Searching for a task by its id found nothing ([#167](https://github.com/StepanKropachev/obsidian-pm/issues/167))
 - The import dialog offered the built-in statuses and priorities instead of the configured ones
 - The task editor showed two close buttons in its top right corner
+- The add property button in the task editor touched the custom fields section below it
+- The task editor left more space around the line under the properties than around its other section lines
 
 ## [1.8.0] - 2026-07-03
 
