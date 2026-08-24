@@ -32,7 +32,13 @@ import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectRow } from '../../ui/composites/ProjectRow'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
-import { renderAddProperty, renderIconControl, renderInputControl } from '../../ui/composites/properties'
+import {
+  renderAddProperty,
+  renderDepRow,
+  renderIconControl,
+  renderInputControl,
+  renderMultiSelect
+} from '../../ui/composites/properties'
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
@@ -309,6 +315,27 @@ export class StyleguideView extends ItemView {
     renderIconControl({ container: iconRow, value: 'circle-play', color: DEFAULT_STATUSES[1].color, onChange: noop })
     renderIconControl({ container: iconRow, value: '🚀', onChange: noop })
     renderIconControl({ container: iconRow, value: '', onChange: noop })
+    const depsRow = this.row(sec, 'renderMultiSelect: depsList with linked titles')
+    const depTitles: Record<string, string> = { 'task-1a2b': 'Draft the launch plan', 'task-9f8e': 'Sign off on copy' }
+    renderMultiSelect({
+      container: depsRow,
+      addLabel: 'Add dependency',
+      addLabelMore: 'Add another',
+      depsList: true,
+      labelFor: (id) => depTitles[id] ?? id,
+      linkFor: (id) => ({ path: `Projects/Launch_tasks/${id}.md`, open: noop }),
+      selected: () => Object.keys(depTitles),
+      options: () => [],
+      add: noop,
+      remove: noop
+    })
+    const depRow = this.row(sec, 'renderDepRow: read-only, as Blocks shows it')
+    renderDepRow(depRow.createDiv('pm-prop-deps'), {
+      id: 'task-4c7d',
+      title: 'Announce the release',
+      tooltip: 'In Launch',
+      link: { path: 'Projects/Launch_tasks/task-4c7d.md', open: noop }
+    })
     const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
     renderAddButton(addRow, 'Add member', noop)
     renderAddProperty(addRow, [{ id: 'due', label: 'Due date', icon: 'calendar' }], noop)

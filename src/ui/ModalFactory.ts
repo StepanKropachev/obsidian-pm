@@ -1,7 +1,7 @@
-import { type App, ButtonComponent, Modal } from 'obsidian'
+import { type App, ButtonComponent, Modal, TFile } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
-import { createPersonLink, personCandidates, personKeyer, type ProjectRef } from '../store'
+import { createPersonLink, flattenTasks, personCandidates, personKeyer, type ProjectRef } from '../store'
 import { dedupePeople, displayName, safeAsync } from '../utils'
 import { TaskModal } from '../modals/TaskModal'
 import { PersonPickerModal, ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
@@ -245,6 +245,26 @@ export function openTaskModal(plugin: PMPlugin, project: Project, opts: OpenTask
   } else {
     open()
   }
+}
+
+/**
+ * Opens the editor for a task addressed by its note, loading the project it belongs to.
+ * What a link to a task leads to: the task, not the markdown behind it.
+ */
+export async function openTaskByPath(plugin: PMPlugin, filePath: string, onSave?: () => void): Promise<void> {
+  if (plugin.settings.taskEditorSurface === 'tab') {
+    await plugin.router.openTask({ filePath })
+    return
+  }
+  const projectPath = plugin.index.projectPathForTask(filePath)
+  const projectFile = projectPath ? plugin.app.vault.getAbstractFileByPath(projectPath) : null
+  const project = projectFile instanceof TFile ? await plugin.store.loadProject(projectFile) : null
+  const task = project ? (flattenTasks(project.tasks).find((f) => f.task.filePath === filePath)?.task ?? null) : null
+  if (!project || !task) {
+    await plugin.openAsMarkdown(filePath)
+    return
+  }
+  openTaskModal(plugin, project, { task, onSave: () => onSave?.() })
 }
 
 export function openProjectCreate(plugin: PMPlugin): void {

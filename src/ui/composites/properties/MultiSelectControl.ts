@@ -3,7 +3,7 @@ import { safeAsync } from '../../../utils'
 import { Popover } from '../../primitives/Popover'
 import { Chip } from '../../primitives/Chip'
 import { Avatar } from '../../primitives/Avatar'
-import { IconButton } from '../../primitives/IconButton'
+import { renderDepRow, type DepLink } from './depRow'
 import { renderOptionRow } from './optionList'
 
 export interface PickerItem {
@@ -39,6 +39,8 @@ export interface MultiSelectOpts {
   avatarStack?: boolean
   /** A vertical list of id + title-link rows. Backs Depends on. */
   depsList?: boolean
+  /** The note a deps-list value stands for, turning its title into a link that opens it. */
+  linkFor?: (id: string) => DepLink | null
 }
 
 /**
@@ -98,22 +100,19 @@ export function renderMultiSelect(opts: MultiSelectOpts): void {
     }
   }
 
-  // Depends on: link icon, mono id, title link, remove.
   const renderDepsList = () => {
     if (!depsEl) return
     depsEl.empty()
     for (const id of opts.selected()) {
-      const row = depsEl.createDiv('pm-dep-row')
-      setIcon(row.createSpan({ cls: 'pm-dep-icon' }), 'link-2')
-      row.createSpan({ cls: 'pm-dep-id', text: id })
-      row.createSpan({ cls: 'pm-dep-title', text: labelOf(id) })
-      new IconButton(row)
-        .setIcon('x')
-        .setTooltip('Remove dependency')
-        .onClick(() => {
+      renderDepRow(depsEl, {
+        id,
+        title: labelOf(id),
+        link: opts.linkFor?.(id),
+        onRemove: () => {
           opts.remove(id)
           renderValues()
-        })
+        }
+      })
     }
   }
 

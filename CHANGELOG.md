@@ -78,6 +78,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Section labels in the task editor are smaller and lighter
 - A completed subtask is crossed out in the task editor
 - The field for adding a subtask lines up with the subtasks above it
+- Tasks listed under Depends on and Blocks open in the task editor when clicked
+- The Blocks list in the task editor is a list of tasks like Depends on, replacing the chips
+- A timeline row saying a task depends on something outside the view opens those tasks when clicked
 
 ### Fixed
 
