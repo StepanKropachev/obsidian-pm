@@ -1,5 +1,6 @@
 import { setIcon } from 'obsidian'
 import { AvatarStack, type AvatarPerson } from '../../primitives/AvatarStack'
+import { makeActivatable } from '../../../utils'
 
 export type CustomFieldValue =
   | { kind: 'text'; text: string }
@@ -56,18 +57,7 @@ export class CustomFieldCell {
       if (link.unresolved) el.addClass('pm-cf-link--unresolved')
       const open = link.onClick
       if (!open) return
-      el.setAttr('role', 'link')
-      el.setAttr('tabindex', '0')
-      el.addEventListener('click', (e) => {
-        e.stopPropagation()
-        open()
-      })
-      el.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return
-        e.preventDefault()
-        e.stopPropagation()
-        open()
-      })
+      makeActivatable(el, open)
     })
   }
 }

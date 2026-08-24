@@ -179,3 +179,23 @@ export function svgEl<K extends keyof SVGElementTagNameMap>(
   }
   return el
 }
+
+/**
+ * Makes an element that isn't a button open something: click and Enter or Space both reach
+ * `open`, and neither reaches the row or card behind it.
+ */
+export function makeActivatable(el: HTMLElement, open: () => void): void {
+  el.setAttr('role', 'link')
+  el.setAttr('tabindex', '0')
+  el.addEventListener('click', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    open()
+  })
+  el.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    e.preventDefault()
+    e.stopPropagation()
+    open()
+  })
+}

@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The tags offered in the task editor are listed alphabetically
 - Custom fields in the task editor use the same controls as the task's own properties, so a custom date opens the date picker and a custom select the same popover as status
 - Project members, the global team members, and task assignees are picked from the same control, which searches the people in your vault and offers to create the note for a new name
 - The people a picker offers include the global team members, the project's own members, and everyone already assigned in that project

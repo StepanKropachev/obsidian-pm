@@ -1,6 +1,6 @@
 import type PMPlugin from '../main'
 import type { Project, Task, TaskType, Recurrence } from '../types'
-import { collectAllAssignees, flattenTasks } from '../store/TaskTreeOps'
+import { collectAllAssignees, collectAllTags, flattenTasks } from '../store/TaskTreeOps'
 import { reaches } from '../store/Scheduler'
 import { renderPropRow } from '../ui/FormField'
 import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
@@ -301,7 +301,7 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'Tags',
     () => {
       const cell = createDiv('pm-prop-value')
-      const projectTags = [...new Set(flattenTasks(project.tasks).flatMap((f) => f.task.tags))]
+      const projectTags = collectAllTags(project.tasks)
       renderMultiSelect({
         container: cell,
         search: true,
