@@ -173,16 +173,16 @@ textarea.pm-modal-description:focus {
 .pm-subtask-title {
   flex: 1;
   font-size: 13px;
-  outline: none;
   border-radius: 3px;
   padding: 1px 3px;
 }
-.pm-subtask-title:focus {
-  background: var(--background-modifier-hover);
-}
-.pm-subtask-title--done {
+.pm-subtask-title--done,
+a.pm-subtask-title--done {
   color: var(--text-muted);
   text-decoration: line-through;
+}
+a.pm-subtask-title--done:hover {
+  text-decoration-line: line-through underline;
 }
 
 .pm-modal-footer {

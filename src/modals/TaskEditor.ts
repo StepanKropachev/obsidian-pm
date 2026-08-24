@@ -575,7 +575,9 @@ export class TaskEditor {
       window.setTimeout(autoResize, 0)
     }
 
-    renderSubtasksPanel(body, this.task, this.plugin, this.plugin.store.configFor(this.project).statuses)
+    renderSubtasksPanel(body, this.task, this.plugin.store.configFor(this.project).statuses, (path) =>
+      this.openLinkedTask(path)
+    )
 
     renderTimeTrackingPanel(body, this.task)
 

@@ -83,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tasks listed under Depends on and Blocks open in the task editor when clicked
 - The Blocks list in the task editor is a list of tasks like Depends on, replacing the chips
 - A timeline row saying a task depends on something outside the view opens those tasks when clicked
+- A subtask in the task editor opens in its own editor when clicked
+- A subtask is renamed in its own editor rather than by typing in the subtasks list
 
 ### Fixed
 

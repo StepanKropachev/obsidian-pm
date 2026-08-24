@@ -15,6 +15,7 @@ import { renderTagChip } from '../../ui/composites/tagChip'
 import { renderTimeChip } from '../../ui/composites/timeChip'
 import { renderMetricStrip } from '../../ui/composites/metricStrip'
 import { renderMilestoneTimeline } from '../../ui/composites/milestoneTimeline'
+import { renderNoteLink } from '../../ui/composites/noteLink'
 import { renderProjectChip } from '../../ui/composites/projectChip'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
@@ -335,6 +336,14 @@ export class StyleguideView extends ItemView {
       title: 'Announce the release',
       tooltip: 'In Launch',
       link: { path: 'Projects/Launch_tasks/task-4c7d.md', open: noop }
+    })
+    const linkRow = this.row(sec, 'renderNoteLink: plain and as a done subtask')
+    renderNoteLink(linkRow, { label: 'Draft the launch plan', path: 'Projects/Launch_tasks/task-1a2b.md', open: noop })
+    renderNoteLink(linkRow, {
+      label: 'Sign off on copy',
+      path: 'Projects/Launch_tasks/task-9f8e.md',
+      open: noop,
+      cls: 'pm-subtask-title pm-subtask-title--done'
     })
     const addRow = this.row(sec, 'renderAddButton / renderAddProperty')
     renderAddButton(addRow, 'Add member', noop)
