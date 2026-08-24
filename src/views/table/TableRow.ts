@@ -108,7 +108,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     new ProjectCell(row, {
       title: project.title,
       color: project.color,
-      onClick: safeAsync(() => ctx.plugin.router.openProjectOverview(project.filePath))
+      onClick: safeAsync(() => ctx.plugin.router.openProjectLink(project.filePath))
     })
   }
 

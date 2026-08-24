@@ -49,8 +49,19 @@ export class PMSettingTab extends PluginSettingTab {
           },
           this.excludedFoldersPage(),
           {
-            name: 'Default view',
-            desc: 'View that opens when a project is opened.',
+            name: 'Open projects in',
+            desc: 'Tasks skips the overview page and goes straight to the table, timeline, or board.',
+            aliases: ['click', 'project list', 'overview'],
+            control: {
+              type: 'dropdown',
+              key: 'projectSurface',
+              options: { overview: 'Overview', tasks: 'Tasks' }
+            }
+          },
+          {
+            name: 'Default tasks view',
+            desc: "View a project's tasks open in.",
+            aliases: ['default view'],
             control: {
               type: 'dropdown',
               key: 'defaultView',

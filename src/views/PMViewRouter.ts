@@ -34,6 +34,12 @@ export class PMViewRouter {
     await this.open(PM_PROJECT_OVERVIEW_VIEW_TYPE, { filePath: path }, leaf)
   }
 
+  /** Where a project link lands, per the open projects in setting. */
+  async openProjectLink(path: string, leaf?: WorkspaceLeaf): Promise<void> {
+    if (this.plugin.settings.projectSurface === 'tasks') await this.openScope({ kind: 'project', path }, leaf)
+    else await this.openProjectOverview(path, leaf)
+  }
+
   async openProjectEdit(path: string, leaf?: WorkspaceLeaf): Promise<void> {
     await this.open(PM_PROJECT_EDIT_VIEW_TYPE, { filePath: path }, leaf)
   }

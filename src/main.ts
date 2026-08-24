@@ -198,7 +198,7 @@ export default class PMPlugin extends Plugin {
         const cache = this.app.metadataCache.getFileCache(file)
         if (cache?.frontmatter?.['pm-project'] !== true) return false
         if (checking) return true
-        void this.router.openProjectOverview(file.path, md.leaf)
+        void this.router.openProjectLink(file.path, md.leaf)
         return true
       }
     })
