@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .pm-time-label {
   font-size: 12px;
@@ -47,8 +47,11 @@
 .pm-time-log-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.pm-time-log-list:empty {
+  display: none;
 }
 .pm-time-log-row {
   display: flex;
@@ -166,7 +169,6 @@
 }
 
 .pm-modal-desc-section {
-  border-top: none;
   position: relative;
 }
 .pm-modal-desc-preview {

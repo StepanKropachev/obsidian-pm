@@ -373,7 +373,7 @@ button.pm-icon-trigger {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 /* Outside .pm-modal-section-header the title keeps its default bottom margin; zero it
    so the header's own margin sets the spacing. */
@@ -551,14 +551,10 @@ button.pm-icon-trigger {
   color: var(--text-faint);
   font-weight: 600;
 }
-.pm-te-props {
+/* Matches a section's own bottom padding, so the rule below the properties sits where the
+   rule below every other section does. A custom fields section brings its own padding. */
+.pm-te-props > .pm-prop-grid:last-child {
   margin-bottom: 14px;
-}
-.pm-te-divider {
-  height: 1px;
-  margin: 14px 0;
-  border: none;
-  background: var(--background-modifier-border);
 }
 
 .pm-te-footer {
@@ -615,7 +611,11 @@ button.pm-icon-trigger {
 }
 .pm-prop-add-cell {
   grid-column: 1 / -1;
-  padding-top: 4px;
+  padding-top: 2px;
+}
+/* The add-property button ends the grid, so the custom fields rule would sit against it. */
+.pm-te-props .pm-prop-grid + .pm-modal-section {
+  margin-top: 14px;
 }
 
 @media (max-width: 520px) {
