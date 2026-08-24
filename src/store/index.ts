@@ -51,7 +51,7 @@ export {
   resolvePerson
 } from './people'
 export type { PersonCandidate, PersonLinkState, PersonMatch, PersonRef } from './people'
-export { projectPathForTaskPath } from './vaultFs'
+export { projectFolderOf, projectPathForTaskPath, projectTaskFolder, TASK_FOLDER_NAME } from './vaultFs'
 export { hydrateTasks } from './YamlHydrator'
 export { appendYaml, isOldFormat, parseFrontmatter } from './YamlParser'
 export { projectFilePath, serializeProject, serializeTask } from './YamlSerializer'

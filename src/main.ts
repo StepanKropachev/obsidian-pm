@@ -21,7 +21,7 @@ import {
   confirmDialog
 } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
-import { migrateProjects } from './migration'
+import { migrateProjects, migrateProjectLayout } from './migration'
 import { dedupePeople, displayName, safeAsync } from './utils'
 
 export default class PMPlugin extends Plugin {
@@ -334,6 +334,7 @@ export default class PMPlugin extends Plugin {
   /** The startup work that reads the index: migration, pruning, and the first due sweep. */
   private async startupSweep(): Promise<void> {
     await migrateProjects(this)
+    await migrateProjectLayout(this)
     await this.cleanupStaleProjectFilters()
     this.notifier.check()
   }

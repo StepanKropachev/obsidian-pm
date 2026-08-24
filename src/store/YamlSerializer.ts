@@ -153,6 +153,8 @@ export function taskFilePath(taskTitle: string, folder: string): string {
   return `${folder}/${taskSlug(taskTitle)}.md`
 }
 
+/** A project owns a folder named after it, holding its note and its `_tasks/`. */
 export function projectFilePath(projectTitle: string, folder: string): string {
-  return normalizePath(`${folder}/${sanitizeFileName(projectTitle)}.md`)
+  const name = sanitizeFileName(projectTitle)
+  return normalizePath(`${folder}/${name}/${name}.md`)
 }

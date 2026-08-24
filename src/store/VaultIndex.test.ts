@@ -55,6 +55,20 @@ describe('VaultIndex', () => {
     expect(index.projectPaths()).toEqual(['Projects/Roadmap.md'])
   })
 
+  it('attributes tasks in a project folder to that project, and nests sub-projects', async () => {
+    await vault.create('Projects/Roadmap/Roadmap.md', projectNote('p1', 'Roadmap'))
+    await vault.create('Projects/Roadmap/_tasks/one.md', taskNote('t1', 'One', 'p1'))
+    await vault.create('Projects/Roadmap/_tasks/Archive/two.md', taskNote('t2', 'Two', 'p1'))
+    await vault.create('Projects/Roadmap/_tasks/loose.md', projectNote('p3', 'Loose'))
+    await vault.create('Projects/Roadmap/Q3/Q3.md', projectNote('p2', 'Q3', 'parent: "[[Roadmap]]"\n'))
+    index.build()
+
+    expect(index.projectPaths()).toEqual(['Projects/Roadmap/Q3/Q3.md', 'Projects/Roadmap/Roadmap.md'])
+    expect(index.projectPathForTask('Projects/Roadmap/_tasks/one.md')).toBe('Projects/Roadmap/Roadmap.md')
+    expect(index.projectPathForTask('Projects/Roadmap/_tasks/Archive/two.md')).toBe('Projects/Roadmap/Roadmap.md')
+    expect(index.childRefs('Projects/Roadmap/Roadmap.md').map((ref) => ref.path)).toEqual(['Projects/Roadmap/Q3/Q3.md'])
+  })
+
   it('skips excluded folders', async () => {
     await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))
     await vault.create('Templates/Project template.md', projectNote('tpl', 'Template'))

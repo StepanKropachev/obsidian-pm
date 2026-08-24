@@ -50,6 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A project keeps its note and its task notes together in a folder of its own
+- An existing project moves into its own folder when the vault is opened, keeping its filters, saved views, and open tabs
+- A new sub-project is created inside its parent's folder
+- Renaming a project note renames its folder, and renaming its folder renames the note
+- Deleting a project deletes its folder, unless a sub-project sits inside it
 - The tags offered in the task editor are listed alphabetically
 - Custom fields in the task editor use the same controls as the task's own properties, so a custom date opens the date picker and a custom select the same popover as status
 - Project members, the global team members, and task assignees are picked from the same control, which searches the people in your vault and offers to create the note for a new name
