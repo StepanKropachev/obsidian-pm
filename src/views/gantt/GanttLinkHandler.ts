@@ -65,8 +65,8 @@ export function handleLinkDotClick(
 
   cancelLink(link)
 
-  // The two bars can belong to different projects, so the dependency is written to the
-  // successor's own project rather than to whichever bar was clicked last.
+  // The two bars can belong to different projects, and the dependency belongs to the
+  // successor's.
   const successor = scope.taskById(successorId)
   const project = scope.projectOf(successorId)
   if (!successor || !project) {
@@ -79,7 +79,6 @@ export function handleLinkDotClick(
     return
   }
 
-  // A predecessor chain can leave this project and come back, so the check spans the vault.
   if (plugin.index.wouldCreateCycle(successorId, predecessorId)) {
     new Notice('That link would create a dependency cycle.')
     return

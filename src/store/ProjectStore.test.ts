@@ -37,7 +37,6 @@ function newStore(): { store: ProjectStore; vault: FakeVault; app: App } {
   return { store, vault, app: app as unknown as App }
 }
 
-/** A store backed by a real VaultIndex, for anything that reads across project files. */
 function newIndexedStore(): { store: ProjectStore; index: VaultIndex; app: App } {
   const { app } = makeFakeApp({ liveMetadataCache: true })
   const typed = app as unknown as App
