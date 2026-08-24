@@ -1,6 +1,5 @@
-import { TFile, Menu, ButtonComponent } from 'obsidian'
+import { Menu, ButtonComponent } from 'obsidian'
 import type PMPlugin from '../main'
-import type { Project } from '../types'
 import type { ProjectRef } from '../store'
 import { dateUrgency, formatDateShort, safeAsync } from '../utils'
 import { openProjectCreate } from '../ui/ModalFactory'
@@ -148,7 +147,7 @@ function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: Mou
       .setIcon('trash')
       .onClick(
         safeAsync(async () => {
-          const project = await loadRef(ctx, ref)
+          const project = await ctx.plugin.store.loadProjectByPath(ref.path)
           if (!project) return
           await ctx.plugin.store.deleteProject(project)
           renderProjectListContent(ctx)
@@ -156,9 +155,4 @@ function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: Mou
       )
   )
   menu.showAtMouseEvent(e)
-}
-
-async function loadRef(ctx: ProjectListContext, ref: ProjectRef): Promise<Project | null> {
-  const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
-  return file instanceof TFile ? ctx.plugin.store.loadProject(file) : null
 }

@@ -1,4 +1,4 @@
-import { ButtonComponent, Component, ItemView, MarkdownRenderer, TFile, WorkspaceLeaf } from 'obsidian'
+import { ButtonComponent, Component, ItemView, MarkdownRenderer, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, ResolvedProjectConfig, Task } from '../types'
 import { collectAllTags, flattenTasks, personKeyer, totalLoggedHours, type ProjectRef } from '../store'
@@ -95,13 +95,7 @@ export class ProjectOverviewView extends ItemView {
 
   private async loadProject(): Promise<void> {
     const path = this.state.filePath
-    const file = path ? this.app.vault.getAbstractFileByPath(path) : null
-    if (!(file instanceof TFile)) {
-      this.project = null
-      this.renderMissing()
-      return
-    }
-    this.project = await this.plugin.store.loadProject(file)
+    this.project = path ? await this.plugin.store.loadProjectByPath(path) : null
     ;(this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.()
     if (!this.project) {
       this.renderMissing()

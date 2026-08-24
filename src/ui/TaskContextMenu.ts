@@ -1,4 +1,4 @@
-import { Menu, Notice, TFile } from 'obsidian'
+import { Menu, Notice } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Task, Project } from '../types'
 import { safeAsync } from '../utils'
@@ -69,8 +69,7 @@ export function buildTaskContextMenu(menu: Menu, task: Task, ctx: TaskMenuContex
           ctx.plugin,
           targets,
           safeAsync(async (ref) => {
-            const file = ctx.plugin.app.vault.getAbstractFileByPath(ref.path)
-            const target = file instanceof TFile ? await ctx.plugin.store.loadProject(file) : null
+            const target = await ctx.plugin.store.loadProjectByPath(ref.path)
             if (!target) return
             await ctx.plugin.store.moveTaskToProject(ctx.project, target, task.id)
             new Notice(`Moved "${task.title}" to ${target.title}`)
