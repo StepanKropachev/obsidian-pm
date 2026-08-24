@@ -1,15 +1,16 @@
 import { Menu } from 'obsidian'
-import type { Task, FilterState, StatusConfig, PriorityConfig, DueDateFilter } from '../../../types'
+import type { Task, FilterState, StatusConfig, PriorityConfig, PriorityIconSet, DueDateFilter } from '../../../types'
 import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
 import { ChipButton } from '../../primitives/ChipButton'
-import { displayName, formatBadgeText } from '../../../utils'
+import { displayName, priorityIcon } from '../../../utils'
 
 export interface FilterRowProps {
   tasks: Task[]
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
+  priorityIcons: PriorityIconSet
   filter: FilterState
   personKeyOf: (raw: string) => string
   onFilterChange: () => void
@@ -49,7 +50,7 @@ export class FilterRow {
       this.el,
       'Status',
       filter.statuses,
-      statuses.map((s) => ({ id: s.id, label: formatBadgeText(s.icon, s.label) })),
+      statuses.map((s) => ({ id: s.id, label: s.label, icon: s.icon })),
       (selected) => {
         filter.statuses = selected
         notify()
@@ -60,7 +61,12 @@ export class FilterRow {
       this.el,
       'Priority',
       filter.priorities,
-      priorities.map((p) => ({ id: p.id, label: formatBadgeText(p.icon, p.label) })),
+      priorities.map((p) => ({
+        id: p.id,
+        label: p.label,
+        icon: p.icon,
+        namedIcon: priorityIcon(priorities, p.id, this.props.priorityIcons)
+      })),
       (selected) => {
         filter.priorities = selected
         notify()

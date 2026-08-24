@@ -1,11 +1,20 @@
 import { Menu } from 'obsidian'
 import { ChipButton } from './primitives/ChipButton'
+import { addPaletteMenuItem } from './StatusBadge'
+
+export interface FilterOption {
+  id: string
+  label: string
+  /** A status or priority icon: emoji render in the label, named icons beside it. */
+  icon?: string
+  namedIcon?: string
+}
 
 export function renderFilterDropdown(
   parent: HTMLElement,
   label: string,
   selected: string[],
-  options: { id: string; label: string }[],
+  options: FilterOption[],
   onChange: (selected: string[]) => void
 ): HTMLElement {
   const btn = new ChipButton(parent).setAriaLabel(`Filter by ${label}`)
@@ -19,17 +28,19 @@ export function renderFilterDropdown(
   btn.onClick((e) => {
     const menu = new Menu()
     for (const opt of options) {
-      menu.addItem((item) =>
-        item
-          .setTitle(opt.label)
-          .setChecked(selected.includes(opt.id))
-          .onClick(() => {
+      addPaletteMenuItem(
+        menu,
+        { label: opt.label, icon: opt.icon ?? '', namedIcon: opt.namedIcon },
+        {
+          checked: selected.includes(opt.id),
+          onClick: () => {
             const idx = selected.indexOf(opt.id)
             if (idx >= 0) selected.splice(idx, 1)
             else selected.push(opt.id)
             onChange(selected)
             updateLabel()
-          })
+          }
+        }
       )
     }
     if (selected.length) {

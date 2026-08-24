@@ -255,6 +255,7 @@ export class ProjectView extends ItemView {
       savedViews: this.savedViews(),
       statuses: config.statuses,
       priorities: config.priorities,
+      priorityIcons: config.priorityIcons,
       filter: this.filter,
       personKeyOf: personKeyer(this.plugin.app),
       activeSavedViewId: this.activeSavedViewId,
