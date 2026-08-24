@@ -159,8 +159,8 @@ export function computeSchedule(
     startOf.set(t.id, t.start)
     dueOf.set(t.id, t.due)
     if (!pullForward || !t.completed || !t.due || t.completed >= t.due) continue
-    // An external's completion date was stamped against its own project's palette, which
-    // is not the one passed here, so its own status can't be re-checked from this side.
+    // An external's completion date was stamped against its own project's palette, not
+    // the one passed here, so its status can't be re-checked from this side.
     if (!externalIds.has(t.id) && !isTerminalStatus(t.status, statuses)) continue
     dueOf.set(t.id, t.completed)
     daysSavedBy.set(t.id, daysBetween(t.completed, t.due))

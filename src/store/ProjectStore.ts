@@ -113,7 +113,6 @@ export class ProjectStore implements TaskSource {
   private selfWrites = new Map<string, number>()
   private static readonly SELF_WRITE_WINDOW_MS = 5000
 
-  /** How far a reschedule follows a dependency chain out of one project and into others. */
   private static readonly MAX_SCHEDULE_ROUNDS = 10
 
   constructor(
@@ -938,7 +937,7 @@ export class ProjectStore implements TaskSource {
   private async scheduleAfterEarlyFinish(project: Project, taskIds: string[]): Promise<void> {
     if (taskIds.length === 0) return
     // A project that doesn't pull its own tasks forward still lets the projects waiting
-    // on it pull theirs, so the pass runs whenever the chain leaves this project.
+    // on it pull theirs.
     if (!this.configFor(project).pullForwardOnEarlyFinish) {
       const elsewhere = this.dependentsElsewhere(
         this.index?.dependentsMap() ?? new Map<string, string[]>(),
@@ -1160,9 +1159,8 @@ export class ProjectStore implements TaskSource {
 
   /**
    * Predecessors this project's tasks depend on that live in other projects. A project
-   * already loaded in this pass contributes the live task, so a date this pass just
-   * moved is the one the next project schedules against; anything else is a read-only
-   * stand-in built from the index.
+   * already loaded in this pass contributes the live task, because the index still holds
+   * the dates from before this pass moved them.
    */
   private externalPredecessors(project: Project, loaded: Map<string, Project>): Task[] {
     const externals: Task[] = []
@@ -1204,11 +1202,9 @@ export class ProjectStore implements TaskSource {
 
   /**
    * Apply dependency-based scheduling and save, returning the number of tasks adjusted.
-   *
-   * A dependency chain can leave the project it starts in, so this keeps following it:
-   * every task the pass moves is looked up in the index, and any project holding a task
-   * that waits on it gets its own pass, against its own config. A project with
-   * auto-scheduling off keeps its dates and still passes the change along.
+   * A dependency chain can leave the project it starts in, so every project holding a
+   * task that waits on one this pass moved gets its own pass, against its own config. A
+   * project with auto-scheduling off keeps its dates and still passes the change along.
    */
   async scheduleAfterChange(project: Project, changedTaskId?: string): Promise<number> {
     const loaded = new Map<string, Project>([[project.filePath, project]])
@@ -1245,7 +1241,6 @@ export class ProjectStore implements TaskSource {
     return total
   }
 
-  /** Schedules one project and saves it, returning the ids whose dates moved. */
   private async schedulePass(
     project: Project,
     seeds: string[] | undefined,

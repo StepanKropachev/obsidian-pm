@@ -327,10 +327,7 @@ export class VaultIndex {
     return [...this.tasks.values()].filter((ref) => ref.dependencies.includes(taskId))
   }
 
-  /**
-   * Predecessor id -> ids of everything waiting on it, across every project. Cached, so a
-   * reschedule that walks a chain through several projects builds it once.
-   */
+  /** Predecessor id -> ids of everything waiting on it, across every project. */
   dependentsMap(): Map<string, string[]> {
     if (!this.dependentsDirty) return this.cachedDependents
     const map = new Map<string, string[]>()
