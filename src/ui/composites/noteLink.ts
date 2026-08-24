@@ -1,3 +1,5 @@
+import { makeActivatable } from '../../utils'
+
 export interface NoteLinkProps {
   label: string
   /** The note the link stands for, kept in `data-href` for Obsidian's link handling. */
@@ -12,18 +14,8 @@ export function renderNoteLink(parent: HTMLElement, props: NoteLinkProps): HTMLA
   const el = parent.createEl('a', {
     cls: props.cls ? `pm-note-link internal-link ${props.cls}` : 'pm-note-link internal-link',
     text: props.label,
-    attr: { 'data-href': props.path, role: 'link', tabindex: '0' }
+    attr: { 'data-href': props.path }
   })
-  el.addEventListener('click', (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    props.open()
-  })
-  el.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return
-    e.preventDefault()
-    e.stopPropagation()
-    props.open()
-  })
+  makeActivatable(el, props.open)
   return el
 }

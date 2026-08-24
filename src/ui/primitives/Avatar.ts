@@ -1,5 +1,5 @@
 import { setTooltip } from 'obsidian'
-import { displayName, stringToColor } from '../../utils'
+import { displayName, makeActivatable, stringToColor } from '../../utils'
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -34,18 +34,7 @@ export class Avatar {
 
   onClick(handler: () => void): this {
     this.el.addClass('pm-avatar--link')
-    this.el.setAttr('role', 'link')
-    this.el.setAttr('tabindex', '0')
-    this.el.addEventListener('click', (e) => {
-      e.stopPropagation()
-      handler()
-    })
-    this.el.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return
-      e.preventDefault()
-      e.stopPropagation()
-      handler()
-    })
+    makeActivatable(this.el, handler)
     return this
   }
 }
