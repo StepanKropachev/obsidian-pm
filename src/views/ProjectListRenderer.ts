@@ -118,6 +118,12 @@ function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: Mou
   const menu = new Menu()
   menu.addItem((item) =>
     item
+      .setTitle('Open overview')
+      .setIcon('file-text')
+      .onClick(safeAsync(() => ctx.plugin.router.openProjectOverview(ref.path)))
+  )
+  menu.addItem((item) =>
+    item
       .setTitle('Open tasks')
       .setIcon('table')
       .onClick(safeAsync(() => ctx.plugin.router.openScope({ kind: 'project', path: ref.path })))

@@ -360,7 +360,7 @@ export class ProjectEditView extends ItemView {
       })
     }
 
-    row('Default view', 'defaultView', [
+    row('Default tasks view', 'defaultView', [
       { value: 'table', label: 'Table' },
       { value: 'gantt', label: 'Gantt' },
       { value: 'kanban', label: 'Board' }

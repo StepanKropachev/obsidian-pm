@@ -304,7 +304,7 @@ export class ProjectOverviewView extends ItemView {
       row.createSpan({ cls: 'pm-overview-child-count', text: `${done}/${total}` })
       row.addEventListener(
         'click',
-        safeAsync(() => this.plugin.router.openProjectOverview(child.path))
+        safeAsync(() => this.plugin.router.openProjectLink(child.path))
       )
     }
   }
