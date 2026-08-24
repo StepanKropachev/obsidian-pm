@@ -203,8 +203,12 @@
 }
 
 .pm-overview-props .pm-prop-row {
-  grid-template-columns: 90px 1fr;
+  grid-template-columns: 104px 1fr;
   min-height: 30px;
+}
+.pm-overview-props .pm-prop-label {
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .pm-overview-member {
