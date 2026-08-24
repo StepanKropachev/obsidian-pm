@@ -11,6 +11,8 @@ export interface ProjectHeaderProps {
   priorities: PriorityConfig[]
   filter: FilterState
   activeSavedViewId: string | null
+  /** Decides who counts as the same person in the assignee filter. */
+  personKeyOf: (raw: string) => string
   onFilterChange: () => void
   onClearFilter: () => void
   onSavedViewSelect: (id: string | null) => void
@@ -90,6 +92,7 @@ export class ProjectHeader {
       statuses: this.props.statuses,
       priorities: this.props.priorities,
       filter: this.props.filter,
+      personKeyOf: this.props.personKeyOf,
       onFilterChange: this.props.onFilterChange,
       onClear: this.props.onClearFilter
     })

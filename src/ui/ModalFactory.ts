@@ -1,9 +1,10 @@
 import { type App, ButtonComponent, Modal } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, Task } from '../types'
-import type { ProjectRef } from '../store'
+import { createPersonLink, personCandidates, personKeyer, type ProjectRef } from '../store'
+import { dedupePeople, displayName, safeAsync } from '../utils'
 import { TaskModal } from '../modals/TaskModal'
-import { ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
+import { PersonPickerModal, ProjectPickerModal, TaskPickerModal } from '../modals/PickerModals'
 import { ImportModal } from '../modals/ImportModal'
 import { ProjectCreateModal } from '../modals/ProjectCreateModal'
 
@@ -260,6 +261,28 @@ export function openProjectPicker(
 
 export function openTaskPicker(plugin: PMPlugin, tasks: Task[], onChoose: (task: Task) => void): void {
   new TaskPickerModal(plugin.app, tasks, onChoose).open()
+}
+
+/**
+ * Picks a person for an assignee or member field. `known` are the values already in use;
+ * anything chosen from the vault, or created here, comes back as a wikilink.
+ */
+export function openPersonPicker(
+  plugin: PMPlugin,
+  known: string[],
+  sourcePath: string,
+  onChoose: (value: string) => void | Promise<void>
+): void {
+  const folder = plugin.settings.peopleFolder
+  new PersonPickerModal(
+    plugin.app,
+    dedupePeople(known, personKeyer(plugin.app)).map((value) => ({ value, name: displayName(value) })),
+    (query) => personCandidates(plugin.app, folder, query, sourcePath).map((c) => ({ value: c.link, name: c.name })),
+    safeAsync(async (choice, create) => {
+      const value = create ? await createPersonLink(plugin.app, folder, choice.name, sourcePath) : choice.value
+      await onChoose(value)
+    })
+  ).open()
 }
 
 export function openImportModal(

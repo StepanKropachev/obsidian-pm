@@ -1,11 +1,11 @@
 import { ButtonComponent, Component, ItemView, MarkdownRenderer, TFile, WorkspaceLeaf } from 'obsidian'
 import type PMPlugin from '../main'
 import type { Project, ResolvedProjectConfig, Task } from '../types'
-import { collectAllTags, flattenTasks, totalLoggedHours, type ProjectRef } from '../store'
+import { collectAllTags, flattenTasks, personKeyer, totalLoggedHours, type ProjectRef } from '../store'
 import { Temporal, parsePlainDate, today } from '../dates'
-import { dateUrgency, formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
-import { Avatar, displayName } from '../ui/primitives/Avatar'
-import { Chip } from '../ui/primitives/Chip'
+import { dateUrgency, dedupePeople, formatDateLong, isTerminalStatus, safeAsync, truncateTitle } from '../utils'
+import { Avatar } from '../ui/primitives/Avatar'
+import { linkedRefs } from './linkedRefs'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProgressBar } from '../ui/primitives/ProgressBar'
 import { renderPropRow } from '../ui/FormField'
@@ -321,12 +321,18 @@ export class ProjectOverviewView extends ItemView {
       })
     }
 
-    prop('Members', project.teamMembers.length === 0, 'No members', (value) => {
-      for (const member of project.teamMembers) {
+    const people = (value: HTMLElement, values: string[]): void => {
+      for (const person of linkedRefs(this.app, values, project.filePath)) {
         const holder = value.createSpan({ cls: 'pm-overview-member' })
-        new Avatar(holder).setName(member).setSize('sm')
-        holder.createSpan({ text: displayName(member) })
+        const avatar = new Avatar(holder).setName(person.name).setSize('sm')
+        if (person.unresolved) avatar.setUnresolved(true)
+        if (person.onClick) avatar.onClick(person.onClick)
+        holder.createSpan({ text: person.name })
       }
+    }
+
+    prop('Members', project.teamMembers.length === 0, 'No members', (value) => {
+      people(value, project.teamMembers)
     })
 
     const tags = collectAllTags(project.tasks)
@@ -355,11 +361,9 @@ export class ProjectOverviewView extends ItemView {
       )
     })
 
-    const assignees = new Set(tasks.flatMap((task) => task.assignees).filter(Boolean))
-    prop('Assignees', assignees.size === 0, 'Nobody assigned', (value) => {
-      for (const name of assignees) {
-        new Chip(value).setLabel(displayName(name)).setVariant('outline').setShape('pill').setSize('sm')
-      }
+    const assignees = dedupePeople(tasks.flatMap((task) => task.assignees).filter(Boolean), personKeyer(this.app))
+    prop('Assignees', assignees.length === 0, 'Nobody assigned', (value) => {
+      people(value, assignees)
     })
 
     if (project.customFields.length === 0) return

@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian'
 import type { Task } from '../../types'
 import { openTaskModal } from '../../ui/ModalFactory'
-import { svgEl, getStatusConfig, safeAsync } from '../../utils'
+import { svgEl, displayName, getStatusConfig, safeAsync } from '../../utils'
 import { parsePlainDate } from '../../dates'
 import {
   ROW_HEIGHT,
@@ -112,7 +112,7 @@ export function renderTaskBar(g: SVGGElement, task: Task, row: number, _depth: n
   }
 
   const ttEl = svgEl('title', {})
-  const assigneesStr = task.assignees.length ? `\nAssignees: ${task.assignees.join(', ')}` : ''
+  const assigneesStr = task.assignees.length ? `\nAssignees: ${task.assignees.map(displayName).join(', ')}` : ''
   ttEl.textContent = `${task.title}\n${statusConfig?.label ?? task.status} \u00b7 ${task.priority}\nStart: ${task.start || '\u2014'}  Due: ${task.due || '\u2014'}\nProgress: ${task.progress}%${assigneesStr}`
   rect.appendChild(ttEl)
 

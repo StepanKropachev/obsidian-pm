@@ -1,7 +1,7 @@
 import { ButtonComponent } from 'obsidian'
 import type PMPlugin from '../../main'
 import type { Task, GanttGranularity, FilterState } from '../../types'
-import type { ProjectScope } from '../../store'
+import { personKeyer, type ProjectScope } from '../../store'
 import { type FlatTask, flattenTasks } from '../../store/TaskTreeOps'
 import { applyTaskFilterPromote } from '../../store/TaskFilter'
 import { openAddTask } from '../addTask'
@@ -302,7 +302,12 @@ export class GanttView implements SubView {
   }
 
   private getVisibleTasks(): Task[] {
-    return applyTaskFilterPromote(this.scope.tasks(), this.filter, this.scope.config.statuses)
+    return applyTaskFilterPromote(
+      this.scope.tasks(),
+      this.filter,
+      this.scope.config.statuses,
+      personKeyer(this.plugin.app)
+    )
   }
 
   private scrollToToday(): void {

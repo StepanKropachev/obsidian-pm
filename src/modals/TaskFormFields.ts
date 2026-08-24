@@ -7,6 +7,7 @@ import { Chip } from '../ui/primitives/Chip'
 import { isTerminalStatus, priorityIcon, stringToColor } from '../utils'
 import { completionOutcome, relativeDue } from '../dates'
 import { renderCustomFieldInput } from './CustomFieldInputs'
+import { renderPersonPicker } from './PersonPicker'
 import {
   renderSelectControl,
   renderDateControl,
@@ -200,23 +201,18 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     'Assignees',
     () => {
       const cell = createDiv('pm-prop-value')
-      const allMembers = () => [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
-      renderMultiSelect({
+      renderPersonPicker({
         container: cell,
-        avatarStack: true,
-        search: true,
+        plugin,
+        project,
+        sourcePath: task.filePath ?? project.filePath,
         addLabel: 'Assign',
-        placeholder: 'Search people…',
         selected: () => task.assignees,
-        options: () => allMembers().map((m) => ({ id: m, label: m })),
-        add: (id) => {
-          if (!task.assignees.includes(id)) task.assignees.push(id)
+        add: (value) => {
+          if (!task.assignees.includes(value)) task.assignees.push(value)
         },
-        remove: (id) => {
-          task.assignees = task.assignees.filter((a) => a !== id)
-        },
-        create: (label) => {
-          if (!task.assignees.includes(label)) task.assignees.push(label)
+        remove: (value) => {
+          task.assignees = task.assignees.filter((a) => a !== value)
         }
       })
       return cell

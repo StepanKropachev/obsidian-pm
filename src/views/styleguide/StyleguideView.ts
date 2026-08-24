@@ -18,6 +18,7 @@ import { renderMilestoneTimeline } from '../../ui/composites/milestoneTimeline'
 import { renderProjectChip } from '../../ui/composites/projectChip'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
+import { CustomFieldCell, type CustomFieldValue } from '../../ui/composites/cells/CustomFieldCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
 import { ExpandCell } from '../../ui/composites/cells/ExpandCell'
 import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
@@ -35,7 +36,7 @@ import { renderAddProperty, renderIconControl, renderInputControl } from '../../
 import { renderChipList, renderPropRow } from '../../ui/FormField'
 import { renderFilterDropdown } from '../../ui/FilterDropdown'
 import { Avatar } from '../../ui/primitives/Avatar'
-import { AvatarStack } from '../../ui/primitives/AvatarStack'
+import { AvatarStack, type AvatarPerson } from '../../ui/primitives/AvatarStack'
 import { Chip } from '../../ui/primitives/Chip'
 import { CollapseToggle } from '../../ui/primitives/CollapseToggle'
 import { EmptyState } from '../../ui/primitives/EmptyState'
@@ -59,6 +60,11 @@ const FIVE_PRIORITIES: PriorityConfig[] = [
   { id: 'trivial', label: 'Trivial', color: '#6ba8a0', icon: '' }
 ]
 const WIKILINK_PERSON = '[[People/Alan Turing|Alan]]'
+const SAMPLE_PEOPLE: AvatarPerson[] = [
+  { name: 'Ada Lovelace' },
+  { name: 'Alan', onClick: noop },
+  { name: 'Ghost', unresolved: true }
+]
 
 /**
  * Gallery of every primitive and composite variant, in a real pane so the CSS cascade is
@@ -347,7 +353,7 @@ export class StyleguideView extends ItemView {
       tasksDone: 12,
       tasksTotal: 40,
       overdue: 0,
-      members: PEOPLE,
+      members: SAMPLE_PEOPLE,
       dueLabel: 'Oct 30',
       dueUrgency: 'normal',
       onToggleCollapsed: noop,
@@ -367,7 +373,7 @@ export class StyleguideView extends ItemView {
       tasksDone: 4,
       tasksTotal: 10,
       overdue: 3,
-      members: [PEOPLE[0]],
+      members: [SAMPLE_PEOPLE[0]],
       dueLabel: 'Jun 20',
       dueUrgency: 'overdue',
       onToggleCollapsed: noop,
@@ -402,6 +408,7 @@ export class StyleguideView extends ItemView {
     const kanbanRow = this.row(sec, 'KanbanCard: plain / overdue milestone with everything')
     new KanbanCard(kanbanRow, {
       task: makeTask({ title: 'Write the launch announcement' }),
+      people: [],
       loggedHours: 0,
       overdue: false,
       showTagColors: true,
@@ -419,6 +426,7 @@ export class StyleguideView extends ItemView {
         assignees: ['Ada Lovelace', 'Grace Hopper'],
         tags: ['design', 'frontend']
       }),
+      people: SAMPLE_PEOPLE,
       priorityColor: '#c47070',
       descriptionPreview: 'Everything that must land before the announcement goes out.',
       parentTitle: 'Website relaunch',
@@ -478,7 +486,7 @@ export class StyleguideView extends ItemView {
     const sec = this.section('Table row and cells', 'table')
     sec.createDiv({
       cls: 'pm-sg-caption',
-      text: 'TaskRow + one of each cell composite, with TitleCell tree connectors. ProjectCell only appears when a view covers several projects.'
+      text: 'TaskRow + one of each cell composite, with TitleCell tree connectors. ProjectCell only appears when a view covers several projects. CustomFieldCell takes plain text, or the links a value names.'
     })
     const table = sec.createEl('table', { cls: 'pm-table' })
     const tbody = table.createEl('tbody')
@@ -488,6 +496,7 @@ export class StyleguideView extends ItemView {
       tree: { guides: boolean[]; isLastChild: boolean }
       urgency: 'normal' | 'near' | 'overdue'
       time: { logged: number; estimate: number }
+      custom: CustomFieldValue
     }[] = [
       {
         task: makeTask({
@@ -502,7 +511,8 @@ export class StyleguideView extends ItemView {
         props: { depth: 0, isDone: false, isSelected: false },
         tree: { guides: [], isLastChild: false },
         urgency: 'normal',
-        time: { logged: 5, estimate: 10 }
+        time: { logged: 5, estimate: 10 },
+        custom: { kind: 'people', people: [{ name: 'Ada Lovelace', onClick: noop }] }
       },
       {
         task: makeTask({
@@ -516,24 +526,27 @@ export class StyleguideView extends ItemView {
         props: { depth: 1, isDone: false, isSelected: true },
         tree: { guides: [false], isLastChild: false },
         urgency: 'overdue',
-        time: { logged: 6, estimate: 4 }
+        time: { logged: 6, estimate: 4 },
+        custom: { kind: 'links', links: [{ name: 'Missing Person', unresolved: true }] }
       },
       {
         task: makeTask({ title: 'Sweep the leftover copy', status: 'review', priority: 'low' }),
         props: { depth: 2, isDone: false, isSelected: false },
         tree: { guides: [true, false], isLastChild: true },
         urgency: 'normal',
-        time: { logged: 1, estimate: 2 }
+        time: { logged: 1, estimate: 2 },
+        custom: { kind: 'text', text: 'Rim road' }
       },
       {
         task: makeTask({ title: 'Archive old sprints', status: 'done', progress: 100 }),
         props: { depth: 1, isDone: true, isSelected: false },
         tree: { guides: [false], isLastChild: true },
         urgency: 'normal',
-        time: { logged: 0, estimate: 0 }
+        time: { logged: 0, estimate: 0 },
+        custom: { kind: 'checkbox', checked: true }
       }
     ]
-    for (const { task, props, tree, urgency, time } of rows) {
+    for (const { task, props, tree, urgency, time, custom } of rows) {
       const tr = new TaskRow(tbody, {
         taskId: task.id,
         depth: props.depth,
@@ -559,7 +572,8 @@ export class StyleguideView extends ItemView {
       new DueDateCell(tr.el, { task, urgency, onSave: noopAsync })
       new TimeCell(tr.el, time)
       new ProgressCell(tr.el, { value: task.progress, color: 'var(--interactive-accent)', onSave: noopAsync })
-      new AssigneesCell(tr.el, task.assignees)
+      new AssigneesCell(tr.el, SAMPLE_PEOPLE)
+      new CustomFieldCell(tr.el, custom)
       new ActionsCell(tr.el, { onClick: noop })
     }
   }

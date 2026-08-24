@@ -3,6 +3,7 @@ import type PMPlugin from '../main'
 import type { Project, Task, CustomFieldDef } from '../types'
 import { renderChipList } from '../ui/FormField'
 import { stringifyCustomValue } from '../utils'
+import { renderPersonPicker } from './PersonPicker'
 
 export function renderCustomFieldInput(
   cf: CustomFieldDef,
@@ -91,15 +92,22 @@ export function renderCustomFieldInput(
       break
     }
     case 'person': {
-      const input = wrap.createEl('input', { type: 'text', cls: 'pm-prop-text' })
-      input.value = stringifyCustomValue(currentVal)
-      input.placeholder = 'Person name'
-      const all = [...new Set([...project.teamMembers, ...plugin.settings.globalTeamMembers])]
-      input.setAttribute('list', `pm-persons-${cf.id}`)
-      const dl = wrap.createEl('datalist', { attr: { id: `pm-persons-${cf.id}` } })
-      for (const m of all) dl.createEl('option', { value: m })
-      input.addEventListener('change', () => {
-        task.customFields[cf.id] = input.value
+      renderPersonPicker({
+        container: wrap,
+        plugin,
+        project,
+        sourcePath: task.filePath ?? project.filePath,
+        addLabel: 'Set person',
+        selected: () => {
+          const value = task.customFields[cf.id]
+          return typeof value === 'string' && value ? [value] : []
+        },
+        add: (value) => {
+          task.customFields[cf.id] = value
+        },
+        remove: () => {
+          task.customFields[cf.id] = ''
+        }
       })
       break
     }

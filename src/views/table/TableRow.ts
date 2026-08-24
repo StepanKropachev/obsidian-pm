@@ -1,5 +1,6 @@
-import { Menu } from 'obsidian'
+import { Menu, type App } from 'obsidian'
 import { getStatusConfig, dueUrgency, isTerminalStatus, safeAsync, stringifyCustomValue } from '../../utils'
+import type { CustomFieldDef } from '../../types'
 import { totalLoggedHours } from '../../store/TaskTreeOps'
 import { updateSelectCheckboxes, getVisibleTaskIds } from './TableRenderer'
 import type { TableContext, TableState, TableTreeRow } from './TableRenderer'
@@ -8,7 +9,8 @@ import { buildTaskContextMenu } from '../../ui/TaskContextMenu'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { ActionsCell } from '../../ui/composites/cells/ActionsCell'
 import { AssigneesCell } from '../../ui/composites/cells/AssigneesCell'
-import { CustomFieldCell } from '../../ui/composites/cells/CustomFieldCell'
+import { linkedRefs } from '../linkedRefs'
+import { CustomFieldCell, type CustomFieldValue } from '../../ui/composites/cells/CustomFieldCell'
 import { DueDateCell } from '../../ui/composites/cells/DueDateCell'
 import { ExpandCell } from '../../ui/composites/cells/ExpandCell'
 import { PriorityCell } from '../../ui/composites/cells/PriorityCell'
@@ -129,7 +131,7 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
     })
   })
 
-  new AssigneesCell(row, task.assignees)
+  new AssigneesCell(row, linkedRefs(ctx.plugin.app, task.assignees, task.filePath ?? project.filePath))
 
   new DueDateCell(row, {
     task,
@@ -152,8 +154,8 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
   new TimeCell(row, { logged: totalLoggedHours(task), estimate: task.timeEstimate ?? 0 })
 
   for (const cf of ctx.scope.customFields()) {
-    const val = task.customFields[cf.id]
-    new CustomFieldCell(row, val !== undefined ? stringifyCustomValue(val) : '')
+    const value = customFieldValue(ctx.plugin.app, cf, task.customFields[cf.id], task.filePath ?? project.filePath)
+    new CustomFieldCell(row, value)
   }
 
   new ActionsCell(row, {
@@ -163,6 +165,20 @@ export function renderTaskRow(tbody: HTMLElement, flat: TableTreeRow, ctx: Table
       menu.showAtMouseEvent(e)
     }
   })
+}
+
+const WIKILINK = /^\[\[.+\]\]$/
+
+/** A person is shown as the avatars assignees get; any other value naming a note, as that note. */
+function customFieldValue(app: App, cf: CustomFieldDef, val: unknown, sourcePath: string): CustomFieldValue {
+  const values = (Array.isArray(val) ? val : [val]).map(stringifyCustomValue).filter(Boolean)
+  if (cf.type === 'person') return { kind: 'people', people: linkedRefs(app, values, sourcePath) }
+  if (cf.type === 'checkbox') return { kind: 'checkbox', checked: Boolean(val) }
+  if (cf.type === 'url') return { kind: 'url', url: values.join(', ') }
+  if (values.some((v) => WIKILINK.test(v.trim()))) {
+    return { kind: 'links', links: linkedRefs(app, values, sourcePath) }
+  }
+  return { kind: 'text', text: val !== undefined ? stringifyCustomValue(val) : '' }
 }
 
 export function updateSelectAllCheckbox(state: TableState): void {

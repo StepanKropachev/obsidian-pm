@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Assignees and project members can be picked from the person notes already in your vault, so the task links to them and they appear in the graph ([#131](https://github.com/StepanKropachev/obsidian-pm/issues/131))
+- A person with no note yet gets one created from the assignee picker, in the new people folder setting
+- Clicking an assignee's avatar opens that person's note
+- The show tasks assigned to a person command lists everything one person is working on, across every project
+- A person note opened in the editor shows that person's tasks with the show tasks assigned to this note command
+- The link assignees to their person notes command turns typed names into links to the notes of the same name
 - Opening a project from the project list shows its overview: progress, description, milestones, sub-projects, and properties
 - A row, card, or timeline label naming its project opens that project when clicked
 - Projects are listed wherever their files live in the vault
@@ -43,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Assignee lists sort by the name shown rather than by the link behind it
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
 - The project list counts how many projects have tasks past due
 - Sub-projects in the project list are joined to their parent by tree lines, which can be turned off with the show subtree connections setting
@@ -74,6 +81,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A custom field holding a link showed as raw link text in the table
+- A person custom field showed the stored text in the table instead of that person's avatar
+- A person custom field lost the link to the person's note when set in the task editor
+- A checkbox custom field showed true or false in the table
+- A url custom field was plain text in the table
+- The assignees on a project's overview did not open their notes when clicked
+- An assignee whose name is a link showed as raw link text in the assignee filter, the bulk assign menu, the timeline tooltip, and the task editor
+- The assignee filter skipped tasks that wrote the same person's name a different way
+- Two people with the same name were treated as one by the assignee filter, when each had their own note
 - A task title sat above the middle of its row when another column made the row taller
 - A change made in one view of a project was undone by the next click in another view of the same project ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))
 - A project open in two views showed the older state in one of them ([#173](https://github.com/StepanKropachev/obsidian-pm/issues/173))

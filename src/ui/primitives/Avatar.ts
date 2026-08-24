@@ -1,21 +1,5 @@
-import { parseLinktext, setTooltip } from 'obsidian'
-import { stringToColor } from '../../utils'
-
-export function displayName(raw: string): string {
-  const trimmed = raw.trim()
-  const m = trimmed.match(/^\[\[([^\]]+)\]\]$/)
-  if (!m) return trimmed
-  const inner = m[1]
-  const pipe = inner.indexOf('|')
-  if (pipe >= 0) {
-    const alias = inner.slice(pipe + 1).trim()
-    if (alias) return alias
-  }
-  const target = pipe >= 0 ? inner.slice(0, pipe) : inner
-  const { path } = parseLinktext(target)
-  const base = path.split('/').pop() ?? path
-  return (base.endsWith('.md') ? base.slice(0, -3) : base).trim()
-}
+import { setTooltip } from 'obsidian'
+import { displayName, stringToColor } from '../../utils'
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -40,6 +24,28 @@ export class Avatar {
 
   setSize(size: 'md' | 'sm'): this {
     this.el.toggleClass('pm-avatar--sm', size === 'sm')
+    return this
+  }
+
+  setUnresolved(unresolved: boolean): this {
+    this.el.toggleClass('pm-avatar--unresolved', unresolved)
+    return this
+  }
+
+  onClick(handler: () => void): this {
+    this.el.addClass('pm-avatar--link')
+    this.el.setAttr('role', 'link')
+    this.el.setAttr('tabindex', '0')
+    this.el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      handler()
+    })
+    this.el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      e.stopPropagation()
+      handler()
+    })
     return this
   }
 }

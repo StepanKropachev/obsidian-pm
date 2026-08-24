@@ -4,13 +4,14 @@ import { collectAllAssignees, collectAllTags } from '../../../store'
 import { countActiveFilters } from '../../../store/TaskFilter'
 import { renderFilterDropdown } from '../../FilterDropdown'
 import { ChipButton } from '../../primitives/ChipButton'
-import { formatBadgeText } from '../../../utils'
+import { displayName, formatBadgeText } from '../../../utils'
 
 export interface FilterRowProps {
   tasks: Task[]
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   filter: FilterState
+  personKeyOf: (raw: string) => string
   onFilterChange: () => void
   onClear: () => void
 }
@@ -66,13 +67,13 @@ export class FilterRow {
       }
     )
 
-    const allAssignees = collectAllAssignees(tasks)
+    const allAssignees = collectAllAssignees(tasks, undefined, this.props.personKeyOf)
     if (allAssignees.length) {
       renderFilterDropdown(
         this.el,
         'Assignee',
         filter.assignees,
-        allAssignees.map((a) => ({ id: a, label: a })),
+        allAssignees.map((a) => ({ id: a, label: displayName(a) })),
         (selected) => {
           filter.assignees = selected
           notify()

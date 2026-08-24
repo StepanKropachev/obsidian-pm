@@ -2,6 +2,7 @@ import { setIcon } from 'obsidian'
 import type { Task } from '../../types'
 import { formatBadgeText, isIconName, safeAsync } from '../../utils'
 import { KanbanCard } from './KanbanCard'
+import type { AvatarPerson } from '../primitives/AvatarStack'
 
 export interface KanbanColumnStatus {
   id: string
@@ -11,6 +12,7 @@ export interface KanbanColumnStatus {
 }
 
 export interface KanbanCardData {
+  people: AvatarPerson[]
   task: Task
   priorityColor?: string
   descriptionPreview?: string
@@ -67,6 +69,7 @@ export class KanbanColumn {
     for (const card of props.cards) {
       new KanbanCard(cardsEl, {
         task: card.task,
+        people: card.people,
         priorityColor: card.priorityColor,
         descriptionPreview: card.descriptionPreview,
         parentTitle: card.parentTitle,

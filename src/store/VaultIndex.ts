@@ -4,7 +4,9 @@ import type { PMSettings, StatusConfig } from '../types'
 import { today } from '../dates'
 import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
-import { projectPathForTaskPath, resolveProjectLink } from './vaultFs'
+import { projectPathForTaskPath, resolveVaultLink } from './vaultFs'
+import { personKeyer } from './people'
+import { dedupePeople } from '../utils'
 
 export interface ProjectRef {
   path: string
@@ -33,6 +35,7 @@ export interface TaskRef {
   due: string
   completed: string
   dependencies: string[]
+  assignees: string[]
   archived: boolean
 }
 
@@ -292,6 +295,23 @@ export class VaultIndex {
   }
 
   /**
+   * Tasks anywhere in the vault assigned to one person, keyed the way the assignee filter
+   * keys them, so a person written as a link, an alias, or plain text all count once.
+   */
+  tasksForPerson(person: string): TaskRef[] {
+    const keyOf = personKeyer(this.app)
+    const wanted = keyOf(person)
+    return [...this.tasks.values()].filter((ref) => ref.assignees.some((a) => keyOf(a) === wanted))
+  }
+
+  /** Everyone named by a task anywhere in the vault, one entry per person. */
+  allAssignees(): string[] {
+    const values: string[] = []
+    for (const ref of this.tasks.values()) values.push(...ref.assignees)
+    return dedupePeople(values, personKeyer(this.app))
+  }
+
+  /**
    * Would making `fromId` depend on `toId` close a cycle, following dependencies wherever
    * they lead? The graph spans projects, so a cycle can too.
    */
@@ -345,7 +365,7 @@ export class VaultIndex {
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
       teamMembers: Array.isArray(frontmatter.teamMembers) ? (frontmatter.teamMembers as string[]) : [],
-      parentPath: resolveProjectLink(this.app, frontmatter.parent, path),
+      parentPath: resolveVaultLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
       completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
     }
@@ -368,6 +388,7 @@ export class VaultIndex {
       due: str(frontmatter.due),
       completed: str(frontmatter.completed),
       dependencies: Array.isArray(frontmatter.dependencies) ? (frontmatter.dependencies as string[]) : [],
+      assignees: Array.isArray(frontmatter.assignees) ? (frontmatter.assignees as string[]).filter(Boolean) : [],
       archived: path.split('/').at(-2) === 'Archive'
     }
     this.tasks.set(path, ref)

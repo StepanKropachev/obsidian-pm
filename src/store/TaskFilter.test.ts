@@ -216,3 +216,65 @@ describe('applyTaskFilterFlat', () => {
     ])
   })
 })
+
+describe('assignee matching across spellings', () => {
+  it('matches a wikilink assignee against a plain-name filter', () => {
+    const t = task({ id: 'a', assignees: ['[[People/John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['John Doe'] }))).toBe(true)
+  })
+
+  it('matches a plain-name assignee against a wikilink filter', () => {
+    const t = task({ id: 'a', assignees: ['John Doe'] })
+    expect(matchesFilter(t, filter({ assignees: ['[[John Doe]]'] }))).toBe(true)
+  })
+
+  it('matches through an alias', () => {
+    const t = task({ id: 'a', assignees: ['[[People/jdoe|John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['John Doe'] }))).toBe(true)
+  })
+
+  it('still rejects a different person', () => {
+    const t = task({ id: 'a', assignees: ['[[People/John Doe]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['Anna Reid'] }))).toBe(false)
+  })
+})
+
+describe('assignee matching by person key', () => {
+  // Stands in for personKeyer: two Janes in different folders, one Bob with no note.
+  const keyOf = (raw: string): string => {
+    const inner = /^\[\[(.+?)\]\]$/.exec(raw.trim())?.[1] ?? raw.trim()
+    const path = inner.split('|')[0].trim()
+    if (path === 'People/Jane' || path === 'Jane') return 'People/Jane.md'
+    if (path === 'Contacts/Jane') return 'Contacts/Jane.md'
+    return path
+  }
+
+  it('separates two people who share a name but not a note', () => {
+    const t = task({ id: 'a', assignees: ['[[People/Jane]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['[[Contacts/Jane]]'] }), [], keyOf)).toBe(false)
+  })
+
+  it('still matches the same person written two ways', () => {
+    const t = task({ id: 'a', assignees: ['[[People/Jane]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['Jane'] }), [], keyOf)).toBe(true)
+  })
+
+  it('matches through an alias to the same note', () => {
+    const t = task({ id: 'a', assignees: ['[[People/Jane|JD]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['[[People/Jane]]'] }), [], keyOf)).toBe(true)
+  })
+
+  it('falls back to the display name when no key function is given', () => {
+    const t = task({ id: 'a', assignees: ['[[People/Jane]]'] })
+    expect(matchesFilter(t, filter({ assignees: ['Jane'] }))).toBe(true)
+  })
+
+  it('filters a whole tree by key', () => {
+    const tasks = [
+      task({ id: 'a', assignees: ['[[People/Jane]]'] }),
+      task({ id: 'b', assignees: ['[[Contacts/Jane]]'] })
+    ]
+    const kept = applyTaskFilter(tasks, filter({ assignees: ['[[People/Jane]]'] }), [], keyOf)
+    expect(kept.map((t) => t.id)).toEqual(['a'])
+  })
+})

@@ -178,6 +178,7 @@ export const PRIORITY_ICON_SET_LABELS: Record<PriorityIconSet, string> = {
 export interface PMSettings {
   /** Where new projects are created. Projects are discovered vault-wide, wherever they live. */
   projectsFolder: string
+  peopleFolder: string
   /** Folders discovery skips, for templates and archives holding pm-project notes. */
   excludedFolders: string[]
   defaultView: ViewMode
@@ -227,6 +228,7 @@ export const DEFAULT_PRIORITIES: PriorityConfig[] = [
 
 export const DEFAULT_SETTINGS: PMSettings = {
   projectsFolder: 'Projects',
+  peopleFolder: 'People',
   excludedFolders: [],
   defaultView: 'table',
   ganttGranularity: 'week',
