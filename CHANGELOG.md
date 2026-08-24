@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A person note opened in the editor shows that person's tasks with the show tasks assigned to this note command
 - The link assignees to their person notes command turns typed names into links to the notes of the same name
 - Opening a project from the project list shows its overview: progress, description, milestones, sub-projects, and properties
+- Clicking a project opens its tasks instead of its overview when the open projects in setting is set to tasks
 - A row, card, or timeline label naming its project opens that project when clicked
 - Projects are listed wherever their files live in the vault
 - A project can sit under another one, chosen in the project settings

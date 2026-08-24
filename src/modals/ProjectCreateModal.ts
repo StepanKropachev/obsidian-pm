@@ -303,6 +303,6 @@ export class ProjectCreateModal extends Modal {
       parentPath: this.draft.parentPath || undefined
     })
     this.close()
-    await this.plugin.router.openProjectOverview(project.filePath)
+    await this.plugin.router.openProjectLink(project.filePath)
   })
 }

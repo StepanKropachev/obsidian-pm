@@ -119,7 +119,7 @@ export class KanbanView implements SubView {
             renderProjectChip(el, {
               title: owner.title,
               color: owner.color,
-              onClick: safeAsync(() => this.plugin.router.openProjectOverview(owner.filePath))
+              onClick: safeAsync(() => this.plugin.router.openProjectLink(owner.filePath))
             })
         : undefined,
       loggedHours: totalLoggedHours(task),

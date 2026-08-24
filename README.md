@@ -135,7 +135,8 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 | Setting | Description |
 |---|---|
 | Projects folder | Vault folder where project and task files are stored |
-| Default view | Table, Gantt, or Kanban |
+| Open projects in | Overview page, or straight to the project's tasks |
+| Default tasks view | Table, Gantt, or Kanban |
 | Open tasks in | Modal or tab. On tab, task notes open in the task editor instead of Obsidian's. |
 | Gantt granularity | Default timeline scale (day / week / month / quarter) |
 | Gantt week labels | Week number, date range, or both |
@@ -240,7 +241,7 @@ Task description in Markdown goes here.
 | Setting | Description |
 |---|---|
 | Projects folder | Vault folder where project and task files are stored |
-| Default view | Table, Gantt, or Kanban |
+| Default tasks view | Table, Gantt, or Kanban |
 | Gantt granularity | Default timeline scale (day / week / month / quarter) |
 | Gantt week labels | Week number, date range, or both |
 | Due date notifications | Reminders N days before due dates |
