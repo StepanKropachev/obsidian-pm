@@ -68,6 +68,7 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
+  --pm-glyph-size: 22px;
   border-radius: var(--radius-m);
   background: color-mix(in srgb, var(--pm-overview-tint, var(--interactive-accent)) 14%, transparent);
 }
@@ -176,7 +177,10 @@
   cursor: pointer;
 }
 .pm-overview-child-icon {
+  display: inline-flex;
+  align-items: center;
   font-size: 15px;
+  --pm-glyph-size: 15px;
   line-height: 1;
 }
 .pm-overview-child-title {

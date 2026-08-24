@@ -71,10 +71,10 @@ textarea.pm-te-title:focus {
   display: inline-flex;
   flex-shrink: 0;
   color: var(--pm-glyph-color, var(--text-muted));
-  --icon-size: 14px;
+  --icon-size: var(--pm-glyph-size, 14px);
 }
 .pm-glyph-text {
-  font-size: 12px;
+  font-size: var(--pm-glyph-size, 12px);
   line-height: 1;
 }
 .pm-glyph-dot {
@@ -353,8 +353,8 @@ button.pm-icon-trigger {
 .pm-settings-status-icon .pm-icon-trigger {
   width: 100%;
 }
-.pm-icon-trigger .pm-glyph-icon {
-  --icon-size: 16px;
+.pm-icon-trigger {
+  --pm-glyph-size: 16px;
 }
 
 .pm-prop-label--with-icon {
@@ -478,7 +478,7 @@ button.pm-icon-trigger {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  --icon-size: 14px;
+  --pm-glyph-size: 14px;
 }
 .pm-te-crumb-name {
   overflow: hidden;

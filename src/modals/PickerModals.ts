@@ -2,6 +2,7 @@ import { SuggestModal, App } from 'obsidian'
 import type { Task } from '../types'
 import type { ProjectRef } from '../store'
 import { displayName } from '../utils'
+import { renderGlyph } from '../ui/composites/properties'
 
 /** Lists projects from the index, so picking one doesn't load every project in the vault. */
 export class ProjectPickerModal extends SuggestModal<ProjectRef> {
@@ -20,7 +21,9 @@ export class ProjectPickerModal extends SuggestModal<ProjectRef> {
   }
 
   renderSuggestion(project: ProjectRef, el: HTMLElement): void {
-    el.createSpan({ text: `${project.icon} ${project.title}` })
+    const row = el.createSpan({ cls: 'pm-picker-suggestion' })
+    renderGlyph(row, { icon: project.icon, color: project.color })
+    row.createSpan({ text: project.title })
   }
 
   onChooseSuggestion(project: ProjectRef): void {

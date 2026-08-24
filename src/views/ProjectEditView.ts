@@ -17,7 +17,7 @@ import { confirmDialog } from '../ui/ModalFactory'
 import { renderPersonPicker } from '../ui/PersonPicker'
 import { renderAddButton } from '../ui/composites/addButton'
 import { renderPropRow } from '../ui/FormField'
-import { renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
+import { renderGlyph, renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { IconButton } from '../ui/primitives/IconButton'
@@ -136,8 +136,9 @@ export class ProjectEditView extends ItemView {
 
   private renderHeader(project: Project): void {
     const header = this.container.createDiv('pm-edit-header')
-    const tile = header.createDiv({ cls: 'pm-overview-icon', text: project.icon })
+    const tile = header.createDiv({ cls: 'pm-overview-icon' })
     tile.style.setProperty('--pm-overview-tint', project.color)
+    renderGlyph(tile, { icon: project.icon, color: project.color })
     const identity = header.createDiv('pm-overview-identity')
     identity.createDiv({ cls: 'pm-overview-title', text: project.title })
     identity.createDiv({ cls: 'pm-overview-subline', text: 'Project settings' })

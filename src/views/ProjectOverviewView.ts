@@ -14,6 +14,7 @@ import { renderMetricStrip, type MetricStat } from '../ui/composites/metricStrip
 import { renderMilestoneTimeline, type MilestonePoint } from '../ui/composites/milestoneTimeline'
 import { renderTagChip } from '../ui/composites/tagChip'
 import { renderTimeChip } from '../ui/composites/timeChip'
+import { renderGlyph } from '../ui/composites/properties'
 
 export const PM_PROJECT_OVERVIEW_VIEW_TYPE = 'pm-project-overview'
 
@@ -147,8 +148,9 @@ export class ProjectOverviewView extends ItemView {
 
   private renderHeader(project: Project, rollup: Rollup): void {
     const header = this.container.createDiv('pm-overview-header')
-    const tile = header.createDiv({ cls: 'pm-overview-icon', text: project.icon })
+    const tile = header.createDiv({ cls: 'pm-overview-icon' })
     tile.style.setProperty('--pm-overview-tint', project.color)
+    renderGlyph(tile, { icon: project.icon, color: project.color })
 
     const identity = header.createDiv('pm-overview-identity')
     identity.createDiv({ cls: 'pm-overview-title', text: project.title })
@@ -288,7 +290,7 @@ export class ProjectOverviewView extends ItemView {
     for (const child of children) {
       const { total, done } = this.plugin.index.rollupCounts(child)
       const row = section.createDiv('pm-overview-child')
-      row.createSpan({ cls: 'pm-overview-child-icon', text: child.icon })
+      renderGlyph(row.createSpan({ cls: 'pm-overview-child-icon' }), { icon: child.icon, color: child.color })
       row.createSpan({ cls: 'pm-overview-child-title', text: child.title })
       new ProgressBar(row)
         .setSize('sm')

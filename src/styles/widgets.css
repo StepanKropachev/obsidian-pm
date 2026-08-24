@@ -293,3 +293,10 @@
   outline-offset: 2px;
   border-radius: var(--radius-s);
 }
+
+.pm-picker-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  --pm-glyph-size: 15px;
+}
