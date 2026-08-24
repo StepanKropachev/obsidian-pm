@@ -41,7 +41,6 @@ export class ProjectView extends ItemView {
   private headerEl!: HTMLElement
   private bodyEl!: HTMLElement
   private header: ProjectHeader | null = null
-  private titleEl2!: HTMLElement
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null
   private pendingRefresh: Promise<void> | null = null
   private initialized = false
@@ -361,29 +360,21 @@ export class ProjectView extends ItemView {
     this.toolbarEl.empty()
 
     const left = this.toolbarEl.createDiv('pm-toolbar-left')
+    const openOverview = safeAsync(() => this.plugin.router.openProjectOverview(primary.filePath))
     if (!scope.isMulti) {
       const iconEl = left.createSpan({
         text: primary.icon,
         cls: 'pm-toolbar-icon',
         attr: { 'aria-label': 'Open project page', role: 'button', tabindex: '0' }
       })
-      iconEl.addEventListener(
-        'click',
-        safeAsync(() => this.plugin.router.openProjectOverview(primary.filePath))
-      )
+      iconEl.addEventListener('click', openOverview)
     }
 
-    this.titleEl2 = left.createEl('h2', { text: scope.label(), cls: 'pm-toolbar-title' })
+    const titleEl = left.createEl('h2', { text: scope.label(), cls: 'pm-toolbar-title' })
     if (!scope.isMulti) {
-      this.titleEl2.contentEditable = 'true'
-      this.titleEl2.addEventListener(
-        'blur',
-        safeAsync(async () => {
-          const title = this.titleEl2.textContent?.trim()
-          if (!title || title === primary.title) return
-          await this.plugin.store.updateProject(primary, { title })
-        })
-      )
+      titleEl.addClass('pm-toolbar-title--link')
+      titleEl.setAttrs({ 'aria-label': 'Open project page', role: 'button', tabindex: '0' })
+      titleEl.addEventListener('click', openOverview)
     }
     this.renderScopeSwitcher(left)
 

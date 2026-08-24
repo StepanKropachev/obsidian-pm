@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The project name above the table, timeline, and board opens that project's overview when clicked. Previously it was an editable field for renaming the project
 - Assignee lists sort by the name shown rather than by the link behind it
 - The project list is a table of rows with progress, task counts, members, and the last due date, replacing the cards
 - The project list counts how many projects have tasks past due

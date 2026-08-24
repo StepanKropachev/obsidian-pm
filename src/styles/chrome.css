@@ -105,18 +105,17 @@
   font-size: 20px;
   font-weight: 700;
   margin: 0;
-  padding: 2px 6px;
-  border-radius: var(--radius-s);
-  outline: none;
-  min-width: 40px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 340px;
 }
-.pm-toolbar-title:focus {
-  background: var(--background-modifier-hover);
-  box-shadow: 0 0 0 2px var(--interactive-accent);
+.pm-toolbar-title--link {
+  cursor: pointer;
+}
+.pm-toolbar-title--link:hover,
+.pm-toolbar-title--link:focus-visible {
+  color: var(--text-accent);
 }
 
 .pm-view-switcher {
