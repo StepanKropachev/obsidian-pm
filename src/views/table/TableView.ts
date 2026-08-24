@@ -170,10 +170,8 @@ export class TableView implements SubView {
         break
       case 'set-due-date':
         await this.plugin.store.updateTasks(project, ids, { due: action.due })
-        if (this.plugin.store.configFor(project).autoSchedule) {
-          for (const id of ids) {
-            await this.plugin.store.scheduleAfterChange(project, id)
-          }
+        for (const id of ids) {
+          await this.plugin.store.scheduleAfterChange(project, id)
         }
         break
       case 'set-progress':
