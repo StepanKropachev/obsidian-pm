@@ -7,6 +7,11 @@ import type PMPlugin from './main'
 import { ProjectStore, VaultIndex } from './store'
 import { DEFAULT_SETTINGS, makeDefaultFilter, type PMSettings } from './types'
 
+const expectDefined = <T>(value: T | null | undefined): T => {
+  if (value == null) throw new Error('expected value to be defined')
+  return value
+}
+
 const projectNote = (id: string, title: string): string =>
   ['---', 'pm-project: true', `id: ${id}`, `title: ${title}`, 'taskIds:', '  - t1', '---', ''].join('\n')
 
@@ -104,6 +109,29 @@ describe('migrateProjectLayout', () => {
     expect(task.state.filePath).toBe('Projects/Roadmap/_tasks/design.md')
     expect(task.state.projectPath).toBe('Projects/Roadmap/Roadmap.md')
     expect(unrelated.state.filePath).toBe('Notes/idea.md')
+  })
+
+  it('repoints a sub-project at its parent new path', async () => {
+    const { plugin, app } = await legacyVault([])
+    await app.vault.create(
+      'Projects/Q3.md',
+      [
+        '---',
+        'pm-project: true',
+        'id: p2',
+        'title: Q3',
+        'parent: "[[Projects/Roadmap]]"',
+        'taskIds: []',
+        '---',
+        ''
+      ].join('\n')
+    )
+    plugin.index.build()
+
+    await migrateProjectLayout(plugin)
+
+    const child = expectDefined(await plugin.store.loadProjectByPath('Projects/Q3/Q3.md'))
+    expect(child.parentPath).toBe('Projects/Roadmap/Roadmap.md')
   })
 
   it('does nothing on a second run', async () => {

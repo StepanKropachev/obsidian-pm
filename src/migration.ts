@@ -49,6 +49,13 @@ interface ProjectMove {
  */
 export async function migrateProjectLayout(plugin: PMPlugin): Promise<void> {
   const moves: ProjectMove[] = []
+  // Read before the first move: a sub-project's parent link stops resolving once the
+  // parent note moves, so the index can no longer answer who belongs to whom.
+  const childrenOf = new Map<string, string[]>()
+  for (const path of plugin.index.projectPaths()) {
+    const children = plugin.index.childRefs(path).map((ref) => ref.path)
+    if (children.length) childrenOf.set(path, children)
+  }
 
   for (const path of plugin.index.projectPaths()) {
     try {
@@ -67,6 +74,12 @@ export async function migrateProjectLayout(plugin: PMPlugin): Promise<void> {
   }
 
   if (moves.length === 0) return
+
+  for (const { from, to } of moves) {
+    for (const child of childrenOf.get(from) ?? []) {
+      await plugin.store.repointProjectParent(movedPath(child, moves) ?? child, to)
+    }
+  }
 
   remapProjectSettings(plugin, moves)
   retargetOpenViews(plugin, moves)

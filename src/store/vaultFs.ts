@@ -4,7 +4,8 @@ import { TFile, TFolder, normalizePath } from 'obsidian'
 /** The task storage folder inside a project's own folder. */
 export const TASK_FOLDER_NAME = '_tasks'
 
-function folderOf(path: string): string {
+/** The folder holding a path, empty for anything at the vault root. */
+export function folderOf(path: string): string {
   const at = path.lastIndexOf('/')
   return at === -1 ? '' : path.slice(0, at)
 }
@@ -66,14 +67,19 @@ export async function keepProjectStorageWithNote(
   markSelfWrite: (path: string) => void
 ): Promise<string> {
   const oldDir = folderOf(oldProjectPath)
-  if (oldDir && nameOf(oldDir) === nameOf(oldProjectPath) && folderOf(newProjectPath) === oldDir) {
-    const target = normalizePath(`${folderOf(oldDir)}/${nameOf(newProjectPath)}`)
-    const folder = app.vault.getAbstractFileByPath(oldDir)
-    if (!(folder instanceof TFolder) || app.vault.getAbstractFileByPath(target)) return newProjectPath
-    markSelfWrite(oldDir)
-    markSelfWrite(target)
-    await app.vault.rename(folder, target)
-    return normalizePath(`${target}/${nameOf(newProjectPath)}.md`)
+  const stayed = folderOf(newProjectPath) === oldDir
+  if (oldDir && stayed) {
+    if (nameOf(oldDir) === nameOf(oldProjectPath)) {
+      const target = normalizePath(`${folderOf(oldDir)}/${nameOf(newProjectPath)}`)
+      const folder = app.vault.getAbstractFileByPath(oldDir)
+      if (!(folder instanceof TFolder) || app.vault.getAbstractFileByPath(target)) return newProjectPath
+      markSelfWrite(oldDir)
+      markSelfWrite(target)
+      await app.vault.rename(folder, target)
+      return normalizePath(`${target}/${nameOf(newProjectPath)}.md`)
+    }
+    // Storage already sits in the folder the note stayed in; the new name changes nothing.
+    if (app.vault.getAbstractFileByPath(`${oldDir}/${TASK_FOLDER_NAME}`) instanceof TFolder) return newProjectPath
   }
 
   const from = normalizePath(projectTaskFolder(app, oldProjectPath))
@@ -85,24 +91,6 @@ export async function keepProjectStorageWithNote(
     await app.vault.rename(folder, to)
   }
   return newProjectPath
-}
-
-/**
- * Renames a project folder's note along with the folder, so the pair keeps matching.
- * Returns the note's new path, or null when the folder holds no note of its old name.
- */
-export async function renameProjectFolderNote(
-  app: App,
-  oldFolderPath: string,
-  newFolderPath: string,
-  isProjectNote: (file: TFile) => boolean
-): Promise<string | null> {
-  const note = app.vault.getAbstractFileByPath(`${newFolderPath}/${nameOf(oldFolderPath)}.md`)
-  if (!(note instanceof TFile) || !isProjectNote(note)) return null
-  const target = normalizePath(`${newFolderPath}/${nameOf(newFolderPath)}.md`)
-  if (app.vault.getAbstractFileByPath(target)) return null
-  await app.fileManager.renameFile(note, target)
-  return target
 }
 
 /**

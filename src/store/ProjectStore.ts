@@ -36,11 +36,11 @@ import {
 } from './YamlSerializer'
 import {
   ensureFolder,
+  folderOf,
   keepProjectStorageWithNote,
   moveTaskAttachmentFolder,
   projectFolderOf,
   projectTaskFolder,
-  renameProjectFolderNote,
   resolveVaultLink,
   TASK_FOLDER_NAME
 } from './vaultFs'
@@ -206,8 +206,11 @@ export class ProjectStore implements TaskSource {
     plugin.registerEvent(this.app.vault.on('delete', onChange))
     plugin.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
-        if (file instanceof TFile) void this.followProjectRename(oldPath, file.path)
-        else if (file instanceof TFolder) void this.followProjectFolderRename(oldPath, file.path)
+        // Obsidian is still finishing this rename, and moving files while it does blocks
+        // it, so the follow-up waits for the current one to settle.
+        if (file instanceof TFile) {
+          window.setTimeout(() => void this.followProjectRename(oldPath, file.path), 0)
+        }
         this.syncPath(file.path)
         this.syncPath(oldPath)
       })
@@ -226,17 +229,6 @@ export class ProjectStore implements TaskSource {
       await this.rekeyProject(oldPath, notePath)
     } catch (e) {
       console.error(`[PM] Failed to move the task folder for "${newPath}":`, e)
-    }
-  }
-
-  /** A renamed project folder takes its note's name with it, so the pair keeps matching. */
-  private async followProjectFolderRename(oldPath: string, newPath: string): Promise<void> {
-    try {
-      const oldName = oldPath.slice(oldPath.lastIndexOf('/') + 1)
-      const moved = await renameProjectFolderNote(this.app, oldPath, newPath, (file) => this.isProjectNote(file.path))
-      if (moved) await this.rekeyProject(`${oldPath}/${oldName}.md`, moved)
-    } catch (e) {
-      console.error(`[PM] Failed to rename the project note in "${newPath}":`, e)
     }
   }
 
@@ -746,13 +738,17 @@ export class ProjectStore implements TaskSource {
 
   /**
    * The task folder moves first: once it is gone from beside the note, the rename below
-   * reads as a plain move and the vault listener has nothing left to follow.
+   * reads as a plain move and the vault listener has nothing left to follow. The note goes
+   * through `vault.rename`, not `fileManager.renameFile`: its name does not change, so the
+   * wikilinks that name it keep resolving, and Obsidian's link pass stalls for a long time
+   * on a note taking its folder's name. The one link that does name a path, a sub-project's
+   * `parent`, is rewritten here.
    */
   async moveProjectIntoOwnFolder(projectPath: string): Promise<string | null> {
     const file = this.app.vault.getAbstractFileByPath(projectPath)
     if (!(file instanceof TFile) || projectFolderOf(this.app, projectPath)) return null
 
-    const dir = projectPath.slice(0, projectPath.lastIndexOf('/'))
+    const dir = folderOf(projectPath)
     const target = normalizePath(dir ? `${dir}/${file.basename}` : file.basename)
     if (this.app.vault.getAbstractFileByPath(target) instanceof TFile) return null
 
@@ -770,9 +766,21 @@ export class ProjectStore implements TaskSource {
     const notePath = normalizePath(`${target}/${file.name}`)
     this.markSelfWrite(projectPath)
     this.markSelfWrite(notePath)
-    await this.app.fileManager.renameFile(file, notePath)
+    await this.app.vault.rename(file, notePath)
     await this.rekeyProject(projectPath, notePath)
     return notePath
+  }
+
+  /** The `parent` link names a path, so a parent that moved has to be written again. */
+  async repointProjectParent(childPath: string, parentPath: string): Promise<void> {
+    const child = this.app.vault.getAbstractFileByPath(childPath)
+    if (!(child instanceof TFile)) return
+    this.markSelfWrite(childPath)
+    await this.app.fileManager.processFrontMatter(child, (fm: Record<string, unknown>) => {
+      fm.parent = `[[${parentPath.replace(/\.md$/, '')}]]`
+    })
+    const live = await this.projectCache.get(childPath)
+    if (live) live.parentPath = parentPath
   }
 
   async insertTask(project: Project, task: Task, parentId: string | null = null): Promise<void> {

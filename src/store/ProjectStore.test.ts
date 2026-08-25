@@ -1,5 +1,5 @@
 import type { App, Plugin } from 'obsidian'
-import { TFile } from 'obsidian'
+import { TFile, TFolder } from 'obsidian'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeFakeApp, type FakeVault } from '../../test/fakeVault'
 import { today } from '../dates'
@@ -13,6 +13,7 @@ import {
   type Task
 } from '../types'
 import { ProjectStore } from './ProjectStore'
+import { projectTaskFolder } from './vaultFs'
 import { addDays } from './Scheduler'
 import { buildTaskIndex } from './TaskIndex'
 import { findTask, flattenTasks } from './TaskTreeOps'
@@ -1291,7 +1292,10 @@ describe('ProjectStore cross-project scheduling', () => {
 })
 
 describe('ProjectStore project folders', () => {
-  const flush = (): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, 0))
+  /** The store follows a rename a tick later, so the move needs two turns to land. */
+  const flush = async (): Promise<void> => {
+    for (let i = 0; i < 3; i++) await new Promise((resolve) => window.setTimeout(resolve, 0))
+  }
 
   const syncedStore = (): ReturnType<typeof newIndexedStore> => {
     const made = newIndexedStore()
@@ -1330,6 +1334,19 @@ describe('ProjectStore project folders', () => {
 
     const reloaded = await store.loadProjectByPath('Projects/Legacy/Legacy.md')
     expect(flattenTasks(expectDefined(reloaded).tasks).map((f) => f.task.title)).toEqual(['First'])
+  })
+
+  it('moves a project sitting at the vault root into a folder beside it', async () => {
+    const { store, app } = newIndexedStore()
+    await app.vault.create(
+      'Stress test.md',
+      ['---', 'pm-project: true', 'id: p1', 'title: Stress test', 'taskIds: []', '---', ''].join('\n')
+    )
+
+    const moved = await store.moveProjectIntoOwnFolder('Stress test.md')
+
+    expect(moved).toBe('Stress test/Stress test.md')
+    expect(app.vault.getAbstractFileByPath('Stress test/Stress test.md')).toBeInstanceOf(TFile)
   })
 
   it('leaves a project that already owns its folder alone', async () => {
@@ -1376,16 +1393,35 @@ describe('ProjectStore project folders', () => {
     ).toBeInstanceOf(TFile)
   })
 
-  it('renames the project note when its folder is renamed', async () => {
+  it('keeps a project attached to its tasks when its folder is renamed', async () => {
     const { store, app } = syncedStore()
     const project = await store.createProject('Alpha', 'Projects')
+    await addNamed(store, project, 'Card')
 
     const folder = expectDefined(app.vault.getAbstractFileByPath('Projects/Alpha'))
     await app.vault.rename(folder, 'Projects/Gamma')
     await flush()
 
-    expect(app.vault.getAbstractFileByPath('Projects/Gamma/Gamma.md')).toBeInstanceOf(TFile)
-    expect(project.filePath).toBe('Projects/Gamma/Gamma.md')
+    // The note keeps its own name; the folder it sits in is what moved.
+    expect(app.vault.getAbstractFileByPath('Projects/Gamma/Alpha.md')).toBeInstanceOf(TFile)
+    expect(projectTaskFolder(app, 'Projects/Gamma/Alpha.md')).toBe('Projects/Gamma/_tasks')
+    expect(app.vault.getAbstractFileByPath('Projects/Gamma/_tasks/card.md')).toBeInstanceOf(TFile)
+  })
+
+  it('leaves the task folder alone when a note renamed inside its project folder never owned its name', async () => {
+    const { store, app } = syncedStore()
+    await app.vault.create(
+      'Projects/Alpha/Loose.md',
+      ['---', 'pm-project: true', 'id: p1', 'title: Loose', 'taskIds: []', '---', ''].join('\n')
+    )
+    await app.vault.createFolder('Projects/Alpha/_tasks')
+    await store.loadProjectByPath('Projects/Alpha/Loose.md')
+
+    await app.fileManager.renameFile(fileAt(app, 'Projects/Alpha/Loose.md'), 'Projects/Alpha/Renamed.md')
+    await flush()
+
+    expect(app.vault.getAbstractFileByPath('Projects/Alpha/_tasks')).toBeInstanceOf(TFolder)
+    expect(app.vault.getAbstractFileByPath('Projects/Alpha/Renamed_tasks')).toBeNull()
   })
 
   it('takes the task folder along when a project note leaves its folder', async () => {

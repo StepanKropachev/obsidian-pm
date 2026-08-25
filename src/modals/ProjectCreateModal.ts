@@ -1,7 +1,7 @@
 import { App, ButtonComponent, ExtraButtonComponent, Modal, setIcon } from 'obsidian'
 import type PMPlugin from '../main'
 import { DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON } from '../types'
-import { projectFilePath, projectFolderOf } from '../store'
+import { folderOf, projectFilePath, projectFolderOf } from '../store'
 import { safeAsync } from '../utils'
 import { renderPersonPicker } from '../ui/PersonPicker'
 import { renderPropRow } from '../ui/FormField'
@@ -284,7 +284,7 @@ export class ProjectCreateModal extends Modal {
   private targetFolder(): string {
     const parentPath = this.draft.parentPath
     if (!parentPath) return this.plugin.settings.projectsFolder || this.app.vault.getName()
-    return projectFolderOf(this.app, parentPath) ?? parentPath.slice(0, parentPath.lastIndexOf('/'))
+    return projectFolderOf(this.app, parentPath) ?? folderOf(parentPath)
   }
 
   private targetPath(title: string): string {
