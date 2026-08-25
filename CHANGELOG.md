@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-25
+
+### Highlights
+
+- **Breaking change:** the plugin now requires Obsidian 1.13 or later, so update Obsidian before installing this release.
+- **Project overviews:** Opening a project now shows its own page, with progress, description, a milestone timeline, sub-projects, and properties. Plus a new setting that can switch this back to opening straight into the task list. It's up to you.
+- **Sub-projects and multi-project views:** Projects can nest under a parent, and the table, board, and timeline can show a project's subtree, its folder, or the whole vault at once, with their own saved views and filters.
+- **A folder per project:** Each project now keeps everything together in one folder, and old existing projects migrate to the new structure automatically.
+- **Cross-project dependencies:** A task can depend on or block work in another project, with its schedule following the dates of the project it depends on.
+- **Custom priorities and per-project config:** Priorities can be added, renamed, recolored, and reordered, and a project can define its own statuses, priorities, default view, and scheduling behavior in its settings
+- **Progress and completion timing:** A task's progress can be set directly from 0 to 100, and a completed task shows whether it finished on time or how many days late it was
+- **People notes:** Assignees and project members can be linked to the person notes in your vault, with avatars, a note created automatically for a new name, and commands that list everything one person is working on
+- **A searchable icon picker:** Status, priority, and project icons are chosen from a grid of every icon Obsidian knows, or set to any emoji
+- **Settings rework:** Settings are grouped by area, with statuses, priorities, team members, and TaskNotes each on their own page, and can be found through Obsidian's own settings search.
+- **Tasks in tabs:** Tasks can open in a tab instead of a modal, with the task editor hosted as a page of its own
+- **TaskNotes import:** Tasks, statuses, and priorities can be imported from TaskNotes, including dates, dependencies, subtasks, tags, and archive state
+- **A lighter index behind the scenes:** The project list, pickers, and due-date reminders read from a lightweight index instead of re-parsing every project file, so they stay quick even in very large vaults
+- **Updated sync engine:** A task or project open in several tabs or views stays in sync: an edit in one place shows up in all the others right away
+
 ### Added
 
 - Assignees and project members can be picked from the person notes already in your vault, so the task links to them and they appear in the graph ([#131](https://github.com/StepanKropachev/obsidian-pm/issues/131))
