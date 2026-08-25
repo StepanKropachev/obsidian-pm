@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Custom priorities and per-project config:** Priorities can be added, renamed, recolored, and reordered, and a project can define its own statuses, priorities, default view, and scheduling behavior in its settings
 - **Progress and completion timing:** A task's progress can be set directly from 0 to 100, and a completed task shows whether it finished on time or how many days late it was
 - **People notes:** Assignees and project members can be linked to the person notes in your vault, with avatars, a note created automatically for a new name, and commands that list everything one person is working on
+- **Better wikilinks:** Names, custom fields, and project links written as wikilinks resolve to the note they point to wherever they show up. We all love those nice obsidian graphs!
+- **Improved custom fields style:** A custom field now uses the same controls as a task's built-in properties, so a custom date opens the date picker and a custom select shares status's popover, and in the table a link or person field shows as a link or an avatar instead of raw text, and a checkbox renders as a proper checkbox
 - **A searchable icon picker:** Status, priority, and project icons are chosen from a grid of every icon Obsidian knows, or set to any emoji
 - **Settings rework:** Settings are grouped by area, with statuses, priorities, team members, and TaskNotes each on their own page, and can be found through Obsidian's own settings search.
 - **Tasks in tabs:** Tasks can open in a tab instead of a modal, with the task editor hosted as a page of its own
