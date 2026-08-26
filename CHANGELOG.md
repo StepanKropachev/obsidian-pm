@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Completed tasks move to the project's archive after the number of days set in the new auto-archive setting ([#204](https://github.com/StepanKropachev/obsidian-pm/issues/204))
+- A project can override the auto-archive window in the project settings
+- The archive completed tasks command moves finished tasks into the archive right away
+
 ### Fixed
 
 - Renaming a project from its settings page left its note and folder named after the old title

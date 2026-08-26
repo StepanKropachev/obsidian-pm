@@ -74,6 +74,8 @@ export interface TaskSource {
   deleteTask(project: Project, taskId: string): Promise<void>
   deleteTasks(project: Project, taskIds: string[]): Promise<void>
   archiveTask(project: Project, taskId: string): Promise<void>
+  /** Archives several tasks, and their subtrees, in one save. */
+  archiveTasks(project: Project, taskIds: string[]): Promise<void>
   unarchiveTask(project: Project, taskId: string): Promise<void>
 
   /** Runs dependency-based auto-scheduling; a no-op when the project's config disables it. */

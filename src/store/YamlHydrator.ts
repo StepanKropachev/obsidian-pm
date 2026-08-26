@@ -159,6 +159,9 @@ function hydrateProjectConfig(raw: unknown): ProjectConfig | undefined {
   }
   if (typeof r.autoSchedule === 'boolean') config.autoSchedule = r.autoSchedule
   if (typeof r.pullForwardOnEarlyFinish === 'boolean') config.pullForwardOnEarlyFinish = r.pullForwardOnEarlyFinish
+  if (typeof r.autoArchiveDays === 'number' && Number.isFinite(r.autoArchiveDays) && r.autoArchiveDays >= 0) {
+    config.autoArchiveDays = Math.floor(r.autoArchiveDays)
+  }
   if (typeof r.showSubtreeConnections === 'boolean') config.showSubtreeConnections = r.showSubtreeConnections
   if (
     r.lineBorders === 'none' ||

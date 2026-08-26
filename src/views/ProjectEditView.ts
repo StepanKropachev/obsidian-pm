@@ -110,6 +110,8 @@ export class ProjectEditView extends ItemView {
   private patchConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K] | undefined): void {
     const entries = Object.entries({ ...this.project?.config, [key]: value }).filter(([, v]) => v !== undefined)
     this.save({ config: entries.length ? Object.fromEntries(entries) : undefined })
+    // Today's archive pass ran against the old window; the next one picks up this project.
+    if (key === 'autoArchiveDays') this.plugin.settings.lastAutoArchiveDate = ''
   }
 
   private section(title: string, hint = ''): HTMLElement {
@@ -368,6 +370,13 @@ export class ProjectEditView extends ItemView {
     row('Pull forward on early finish', 'pullForwardOnEarlyFinish', [
       { value: true, label: 'On' },
       { value: false, label: 'Off' }
+    ])
+    row('Auto-archive completed tasks', 'autoArchiveDays', [
+      { value: 0, label: 'Never' },
+      { value: 7, label: 'After 7 days' },
+      { value: 14, label: 'After 14 days' },
+      { value: 30, label: 'After 30 days' },
+      { value: 90, label: 'After 90 days' }
     ])
     row('Subtree connections in table', 'showSubtreeConnections', [
       { value: true, label: 'Show' },

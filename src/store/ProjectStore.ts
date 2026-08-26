@@ -1182,6 +1182,14 @@ export class ProjectStore implements TaskSource {
     await this.saveProject(project)
   }
 
+  /** Archives several tasks, and their subtrees, in one save. */
+  async archiveTasks(project: Project, taskIds: string[]): Promise<void> {
+    for (const taskId of taskIds) {
+      await doArchiveTask(this.app, project, taskId, (path) => this.markSelfWrite(path))
+    }
+    await this.saveProject(project)
+  }
+
   async unarchiveTask(project: Project, taskId: string): Promise<void> {
     await doUnarchiveTask(this.app, project, taskId, (path) => this.markSelfWrite(path))
     await this.saveProject(project)

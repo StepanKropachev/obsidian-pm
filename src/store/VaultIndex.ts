@@ -22,6 +22,8 @@ export interface ProjectRef {
   ownStatusIds: string[] | null
   /** Which of those its own palette marks complete. Null inherits the global palette. */
   completeStatusIds: string[] | null
+  /** Days before a completed task is archived. Null inherits the global setting. */
+  autoArchiveDays: number | null
 }
 
 export interface TaskRef {
@@ -51,12 +53,20 @@ function insideTaskFolder(path: string): boolean {
   return parts.some((segment) => segment.endsWith('_tasks'))
 }
 
-function ownStatusesOf(frontmatter: Record<string, unknown>): Partial<StatusConfig>[] | null {
+function projectConfigOf(frontmatter: Record<string, unknown>): Record<string, unknown> | null {
   const config = frontmatter.config
-  if (!config || typeof config !== 'object') return null
-  const statuses = (config as Record<string, unknown>).statuses
+  return config && typeof config === 'object' ? (config as Record<string, unknown>) : null
+}
+
+function ownStatusesOf(frontmatter: Record<string, unknown>): Partial<StatusConfig>[] | null {
+  const statuses = projectConfigOf(frontmatter)?.statuses
   if (!Array.isArray(statuses) || statuses.length === 0) return null
   return (statuses as Partial<StatusConfig>[]).filter((entry) => typeof entry?.id === 'string')
+}
+
+function ownAutoArchiveDays(frontmatter: Record<string, unknown>): number | null {
+  const days = projectConfigOf(frontmatter)?.autoArchiveDays
+  return typeof days === 'number' && Number.isFinite(days) && days >= 0 ? Math.floor(days) : null
 }
 
 /**
@@ -374,7 +384,8 @@ export class VaultIndex {
       teamMembers: stringList(frontmatter.teamMembers),
       parentPath: resolveVaultLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
-      completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
+      completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null,
+      autoArchiveDays: ownAutoArchiveDays(frontmatter)
     }
     this.projects.set(path, ref)
     this.projectPathById.set(ref.id, path)

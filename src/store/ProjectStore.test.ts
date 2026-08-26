@@ -604,6 +604,23 @@ describe('ProjectStore archiving', () => {
     }
   })
 
+  it('archives several tasks in one save', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Tree', 'Projects')
+    const first = await addNamed(store, project, 'First')
+    const second = await addNamed(store, project, 'Second')
+    const child = await addNamed(store, project, 'Child', second.id)
+    const projectWrites = vault.modifyCount.get(project.filePath) ?? 0
+
+    await store.archiveTasks(project, [first.id, second.id])
+
+    for (const task of [first, second, child]) {
+      expect(task.archived).toBe(true)
+      expect(vault.getAbstractFileByPath(expectDefined(task.filePath))).not.toBeNull()
+    }
+    expect((vault.modifyCount.get(project.filePath) ?? 0) - projectWrites).toBe(1)
+  })
+
   it('leaves an already archived subtask in place when its parent is archived', async () => {
     const { store } = newStore()
     const project = await store.createProject('Tree', 'Projects')
