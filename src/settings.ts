@@ -205,7 +205,7 @@ export class PMSettingTab extends PluginSettingTab {
         items: [
           {
             name: 'Auto-archive completed tasks',
-            desc: "Days a completed task waits before moving to the project's archive. 0 turns it off.",
+            desc: "Move completed tasks to the project's archive after this many days. Set it to 0 to keep them in place.",
             aliases: ['archive', 'cleanup', 'done'],
             control: {
               type: 'slider',
