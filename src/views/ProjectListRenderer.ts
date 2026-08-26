@@ -73,11 +73,6 @@ export function renderProjectListContent(ctx: ProjectListContext): void {
   renderRows(ctx, table.createEl('tbody'), roots, [])
 }
 
-/**
- * Sub-projects follow their parent, indented, unless the parent is collapsed. `trail` says,
- * per ancestor column, whether that ancestor still has rows below it, so the connectors
- * carry down through the rows in between.
- */
 function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRef[], trail: boolean[]): void {
   const index = ctx.plugin.index
   refs.forEach((ref, i) => {
