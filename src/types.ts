@@ -126,6 +126,7 @@ export interface ProjectConfig {
   defaultView?: ViewMode
   autoSchedule?: boolean
   pullForwardOnEarlyFinish?: boolean
+  autoArchiveDays?: number
   showSubtreeConnections?: boolean
   lineBorders?: LineBorders
   kanbanShowSubtasks?: boolean
@@ -143,6 +144,7 @@ export interface ResolvedProjectConfig {
   defaultView: ViewMode
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
+  autoArchiveDays: number
   showSubtreeConnections: boolean
   lineBorders: LineBorders
   kanbanShowSubtasks: boolean
@@ -191,6 +193,10 @@ export interface PMSettings {
   globalTeamMembers: string[]
   notificationsEnabled: boolean
   notificationLeadDays: number
+  /** Days after completion before a task moves to its project's archive. 0 turns it off. */
+  autoArchiveDays: number
+  /** The day the archive sweep last ran, so it runs at most once a day. */
+  lastAutoArchiveDate: string
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
   showSubtreeConnections: boolean
@@ -246,6 +252,8 @@ export const DEFAULT_SETTINGS: PMSettings = {
   showTagColors: true,
   notificationsEnabled: true,
   notificationLeadDays: 2,
+  autoArchiveDays: 0,
+  lastAutoArchiveDate: '',
   autoSchedule: true,
   pullForwardOnEarlyFinish: false,
   saveTaskOnClose: true,

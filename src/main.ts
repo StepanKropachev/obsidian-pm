@@ -21,6 +21,7 @@ import {
   confirmDialog
 } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
+import { AutoArchiver } from './components/AutoArchiver'
 import { migrateProjects, migrateProjectLayout } from './migration'
 import { dedupePeople, displayName, safeAsync } from './utils'
 
@@ -29,6 +30,7 @@ export default class PMPlugin extends Plugin {
   store!: TaskSource
   index!: VaultIndex
   notifier!: Notifier
+  autoArchiver!: AutoArchiver
   router!: PMViewRouter
   /** Paths deliberately sent to the markdown editor, which the swap then leaves alone. */
   private markdownEscapes = new Set<string>()
@@ -69,6 +71,7 @@ export default class PMPlugin extends Plugin {
     this.store = new ProjectStore(this.app, () => this.settings, this.index)
     this.store.registerVaultSync(this)
     this.notifier = new Notifier(this)
+    this.autoArchiver = new AutoArchiver(this)
     this.router = new PMViewRouter(this)
 
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
@@ -152,6 +155,14 @@ export default class PMPlugin extends Plugin {
       callback: () => {
         this.index.build()
         this.showNotice(`Found ${this.index.projectRefs().length} project(s).`)
+      }
+    })
+
+    this.addCommand({
+      id: 'archive-completed-tasks',
+      name: 'Archive completed tasks',
+      callback: () => {
+        void this.archiveCompletedTasks()
       }
     })
 
@@ -240,6 +251,7 @@ export default class PMPlugin extends Plugin {
 
     this.addSettingTab(new PMSettingTab(this.app, this))
     this.notifier.start()
+    this.autoArchiver.start()
   }
 
   onunload(): void {
@@ -331,12 +343,35 @@ export default class PMPlugin extends Plugin {
     return path === '' || this.app.vault.getAbstractFileByPath(path) !== null
   }
 
-  /** The startup work that reads the index: migration, pruning, and the first due sweep. */
+  /**
+   * Archives what the open project view covers, or the whole vault when none is open.
+   * A project with no window of its own archives everything it has finished.
+   */
+  private async archiveCompletedTasks(): Promise<void> {
+    const scoped = this.app.workspace.getActiveViewOfType(ProjectView)?.projectScope?.projects.map((p) => p.filePath)
+    const plans = await this.autoArchiver.plan(scoped?.length ? scoped : this.index.projectPaths(), true)
+    const tasks = plans.reduce((sum, plan) => sum + plan.tasks, 0)
+    if (!tasks) {
+      this.showNotice('No completed tasks are ready to archive.')
+      return
+    }
+    const ok = await confirmDialog(
+      this.app,
+      `Archive ${tasks} completed task(s) in ${plans.length} project(s)?`,
+      'Archive'
+    )
+    if (!ok) return
+    await this.autoArchiver.apply(plans)
+    this.showNotice(`Archived ${tasks} task(s).`)
+  }
+
+  /** The startup work that reads the index: migration, pruning, and the first due and archive sweeps. */
   private async startupSweep(): Promise<void> {
     await migrateProjects(this)
     await migrateProjectLayout(this)
     await this.cleanupStaleProjectFilters()
     this.notifier.check()
+    await this.autoArchiver.check()
   }
 
   async cleanupStaleProjectFilters(): Promise<void> {

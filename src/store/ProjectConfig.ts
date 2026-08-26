@@ -30,6 +30,7 @@ export function resolveProjectConfig(project: Project, settings: PMSettings): Re
     defaultView: config?.defaultView ?? settings.defaultView,
     autoSchedule: config?.autoSchedule ?? settings.autoSchedule,
     pullForwardOnEarlyFinish: config?.pullForwardOnEarlyFinish ?? settings.pullForwardOnEarlyFinish,
+    autoArchiveDays: config?.autoArchiveDays ?? settings.autoArchiveDays,
     showSubtreeConnections: config?.showSubtreeConnections ?? settings.showSubtreeConnections,
     lineBorders: config?.lineBorders ?? settings.lineBorders,
     kanbanShowSubtasks: config?.kanbanShowSubtasks ?? settings.kanbanShowSubtasks,
