@@ -14,9 +14,9 @@ export interface ArchivePlan {
 }
 
 /**
- * Moves tasks that have been complete for longer than their project's window into its
- * archive folder. The pass is keyed on the date rather than on elapsed time, so a vault
- * that stayed closed for a week catches up the next time it opens.
+ * Moves tasks complete for longer than their project's window into its archive folder.
+ * The pass is keyed on the date rather than on elapsed time, so a vault that stayed closed
+ * for a week catches up the next time it opens.
  */
 export class AutoArchiver {
   private running = false
@@ -33,7 +33,6 @@ export class AutoArchiver {
     )
   }
 
-  /** The daily pass over every project that has a window set. */
   async check(): Promise<void> {
     const settings = this.plugin.settings
     const configured = this.plugin.index
@@ -56,12 +55,10 @@ export class AutoArchiver {
   }
 
   /**
-   * Which tasks would move, one entry per project. The index says whether a project holds
-   * anything old enough, so only the projects that do are loaded. `includeDisabled` covers
-   * the command, where a project with no window archives everything it has finished.
-   *
-   * Dependencies are settled across the whole plan rather than project by project, because
-   * a task can wait on one in another project.
+   * The index says which projects hold anything old enough, so only those are loaded, and
+   * `includeDisabled` takes in the ones whose window is off. Dependencies are resolved
+   * across the whole plan rather than project by project, because a task can wait on one
+   * in another project.
    */
   async plan(projectPaths: string[], includeDisabled: boolean): Promise<ArchivePlan[]> {
     const entries: { project: Project; candidate: ArchiveCandidate }[] = []
@@ -104,7 +101,6 @@ export class AutoArchiver {
     return [...plans.values()]
   }
 
-  /** Returns how many tasks moved. */
   async apply(plans: ArchivePlan[]): Promise<number> {
     let tasks = 0
     for (const plan of plans) {
