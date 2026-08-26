@@ -144,7 +144,7 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 | Notifications on/off | Master switch for due date reminders, separate from lead time |
 | Auto-schedule | When a blocking task moves, its dependents shift to match. Cycles are refused. |
 | Pull dependents forward on early finish | Off by default. When a task is completed before its due date, its dependents move earlier by the days it saved, keeping any slack they already had. |
-| Auto-archive completed tasks | Days a completed task waits before moving to the project's archive. 0 turns it off. |
+| Auto-archive completed tasks | Move completed tasks to the project's archive after this many days. Set it to 0 to keep them in place. |
 | Hide done in Gantt | Skip completed and cancelled tasks on the timeline |
 | Show subtasks in Kanban | Render subtasks as their own cards, not just inside the parent |
 | Custom statuses | Edit labels, colors, and icons for each status |
