@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Renaming a project from its settings page left its note and folder named after the old title
 - A view failed to load when a note's properties held an invalid value for team members, assignees, tags, or dependencies ([#252](https://github.com/StepanKropachev/obsidian-pm/issues/252))
+- A sub-project or subtask nested two levels deep drew a leftover connector line beside it when its parent was the last of its siblings
 
 ## [2.0.0] - 2026-08-25
 

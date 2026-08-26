@@ -6,6 +6,7 @@ import { dateUrgency, safeAsync } from '../utils'
 import { openProjectCreate } from '../ui/ModalFactory'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { ProjectRow } from '../ui/composites/ProjectRow'
+import { childTreeGuides } from '../ui/composites/treeGuides'
 import { linkedRefs } from './linkedRefs'
 
 const COLUMNS: { label: string; cls?: string }[] = [
@@ -110,7 +111,7 @@ function renderRows(ctx: ProjectListContext, tbody: HTMLElement, refs: ProjectRe
       onActions: (e) => openProjectContextMenu(ctx, ref, e)
     })
 
-    if (children.length && !collapsed) renderRows(ctx, tbody, children, [...trail, !isLastChild])
+    if (children.length && !collapsed) renderRows(ctx, tbody, children, childTreeGuides(trail, isLastChild))
   })
 }
 
