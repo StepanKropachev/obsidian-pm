@@ -5,7 +5,8 @@ import type { DueUrgency } from './ui/composites/dueChip'
 import { today, parsePlainDate } from './dates'
 
 export function displayName(raw: string): string {
-  const trimmed = raw.trim()
+  // Values come from frontmatter, where anything YAML allows can turn up in a list of names.
+  const trimmed = typeof raw === 'string' ? raw.trim() : ''
   const m = trimmed.match(/^\[\[([^\]]+)\]\]$/)
   if (!m) return trimmed
   const inner = m[1]

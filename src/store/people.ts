@@ -14,7 +14,7 @@ export interface PersonRef {
 }
 
 function isWikilink(raw: string): boolean {
-  return /^\[\[.+\]\]$/.test(raw.trim())
+  return typeof raw === 'string' && /^\[\[.+\]\]$/.test(raw.trim())
 }
 
 /**

@@ -129,6 +129,10 @@ describe('displayName', () => {
   it('leaves a non-wikilink string with brackets alone', () => {
     expect(displayName('[[unterminated')).toBe('[[unterminated')
   })
+
+  it('shows nothing for a value that is not a string', () => {
+    expect(displayName({ id: 'm1', name: 'John Doe' } as unknown as string)).toBe('')
+  })
 })
 
 describe('dedupePeople', () => {

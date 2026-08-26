@@ -150,6 +150,14 @@ describe('VaultIndex', () => {
     expect(index.dueSummary(ref)).toEqual({ overdue: 1, latestDue: '2020-01-01' })
   })
 
+  it('reads only the usable names from a hand-edited team member list', async () => {
+    const members = 'teamMembers:\n  - id: m1\n    name: John Doe\n  - Alice\n'
+    await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap', members))
+    index.build()
+
+    expect(expectDefined(index.projectRef('Projects/Roadmap.md')).teamMembers).toEqual(['Alice'])
+  })
+
   it('counts a task once when a sync conflict leaves two notes with its id', async () => {
     await vault.create('Projects/Roadmap.md', projectNote('p1', 'Roadmap'))
     await vault.create('Projects/Roadmap_tasks/a.md', taskNote('t1', 'A', 'p1', 'todo', '2020-01-01'))
