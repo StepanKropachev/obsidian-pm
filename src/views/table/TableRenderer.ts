@@ -6,6 +6,7 @@ import { findTaskById } from '../../store/TaskIndex'
 import { applyTaskFilterFlat, isFilterActive } from '../../store/TaskFilter'
 import { openTaskModal } from '../../ui/ModalFactory'
 import { renderAddButton } from '../../ui/composites/addButton'
+import { childTreeGuides } from '../../ui/composites/treeGuides'
 import { openAddTask } from '../addTask'
 import { compareTask } from './TableFilters'
 import { renderTaskRow, updateSelectedRow, updateSelectAllCheckbox } from './TableRow'
@@ -217,7 +218,7 @@ function fillTableBody(ctx: TableContext): void {
     items.forEach((item, i) => {
       const isLastChild = i === items.length - 1
       sorted.push({ ...item, guides: padGuides(trail, item.depth), isLastChild })
-      addWithChildren(item.task.id, [...trail, !isLastChild])
+      addWithChildren(item.task.id, childTreeGuides(trail, isLastChild))
     })
   }
   addWithChildren(null, [])

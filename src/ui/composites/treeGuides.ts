@@ -1,6 +1,7 @@
 /**
- * One span per indent column; the deepest is the elbow into this row's title. A `true`
- * entry means an ancestor at that column still has rows below it, so its line continues.
+ * One span per indent column; the deepest is the elbow into this row's title, and its
+ * entry is unused. A `true` entry means the row's ancestor in that column still has
+ * siblings below it, so its line carries down past this row.
  */
 export function renderTreeGuides(cell: HTMLElement, guides: boolean[] | null, isLastChild: boolean): void {
   if (!guides?.length) return
@@ -12,4 +13,14 @@ export function renderTreeGuides(cell: HTMLElement, guides: boolean[] | null, is
     if (level === elbow && isLastChild) guide.addClass('pm-tree-guide--last')
     guide.style.setProperty('--level', String(level))
   }
+}
+
+/**
+ * The guides a row's children get. A child's elbow claims a column of its own, and the
+ * column this row sits in carries a line down only while more siblings follow it. A row
+ * with no guides is a root and has no column, so its children start at their own elbow.
+ */
+export function childTreeGuides(guides: boolean[], isLastChild: boolean): boolean[] {
+  if (!guides.length) return [false]
+  return [...guides.slice(0, -1), !isLastChild, false]
 }
