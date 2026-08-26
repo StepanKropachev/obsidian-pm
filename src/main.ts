@@ -343,10 +343,7 @@ export default class PMPlugin extends Plugin {
     return path === '' || this.app.vault.getAbstractFileByPath(path) !== null
   }
 
-  /**
-   * Archives what the open project view covers, or the whole vault when none is open.
-   * A project with no window of its own archives everything it has finished.
-   */
+  /** A project with no window of its own archives everything it has finished. */
   private async archiveCompletedTasks(): Promise<void> {
     const scoped = this.app.workspace.getActiveViewOfType(ProjectView)?.projectScope?.projects.map((p) => p.filePath)
     const plans = await this.autoArchiver.plan(scoped?.length ? scoped : this.index.projectPaths(), true)

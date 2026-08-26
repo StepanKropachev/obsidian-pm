@@ -110,7 +110,7 @@ export class ProjectEditView extends ItemView {
   private patchConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K] | undefined): void {
     const entries = Object.entries({ ...this.project?.config, [key]: value }).filter(([, v]) => v !== undefined)
     this.save({ config: entries.length ? Object.fromEntries(entries) : undefined })
-    // Today's archive pass ran against the old window; the next one picks up this project.
+    // Today's pass ran against the old window, so it has to run again.
     if (key === 'autoArchiveDays') this.plugin.settings.lastAutoArchiveDate = ''
   }
 

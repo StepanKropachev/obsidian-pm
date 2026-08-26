@@ -72,7 +72,7 @@ export async function unarchiveTask(
   }
 }
 
-/** A task that is due to be archived, with every descendant that moves along with it. */
+/** A task to archive, and every descendant moving with it. */
 export interface ArchiveCandidate {
   rootId: string
   ids: string[]
