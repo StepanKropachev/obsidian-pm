@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Renaming a project from its settings page left its note and folder named after the old title
+
 ## [2.0.0] - 2026-08-25
 
 ### Highlights

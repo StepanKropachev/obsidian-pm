@@ -1393,6 +1393,37 @@ describe('ProjectStore project folders', () => {
     ).toBeInstanceOf(TFile)
   })
 
+  it('renames the note and its folder when the title is edited', async () => {
+    const { store, app } = syncedStore()
+    const project = await store.createProject('Alpha', 'Projects')
+    const task = await addNamed(store, project, 'Card')
+
+    await store.updateProject(project, { title: 'Beta' })
+    await flush()
+
+    expect(project.filePath).toBe('Projects/Beta/Beta.md')
+    expect(app.vault.getAbstractFileByPath('Projects/Alpha')).toBeNull()
+    const content = await app.vault.cachedRead(fileAt(app, 'Projects/Beta/Beta.md'))
+    expect(content).toContain('title: "Beta"')
+    expect(
+      app.vault.getAbstractFileByPath(`Projects/Beta/_tasks/${expectDefined(task.filePath).split('/').pop()}`)
+    ).toBeInstanceOf(TFile)
+  })
+
+  it('leaves the note where it is when the new title collides with an existing note', async () => {
+    const { store, app } = syncedStore()
+    await store.createProject('Beta', 'Projects')
+    const project = await store.createProject('Alpha', 'Projects')
+
+    await store.updateProject(project, { title: 'Beta' })
+    await flush()
+
+    expect(project.filePath).toBe('Projects/Alpha/Alpha.md')
+    expect(project.title).toBe('Beta')
+    const content = await app.vault.cachedRead(fileAt(app, 'Projects/Alpha/Alpha.md'))
+    expect(content).toContain('title: "Beta"')
+  })
+
   it('keeps a project attached to its tasks when its folder is renamed', async () => {
     const { store, app } = syncedStore()
     const project = await store.createProject('Alpha', 'Projects')

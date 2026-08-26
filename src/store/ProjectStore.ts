@@ -3,7 +3,7 @@ import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { PMSettings, Project, ProjectPatch, ResolvedProjectConfig, StatusConfig, Task } from '../types'
 import { DEFAULT_SETTINGS, makeProject, makeTask } from '../types'
 import { today } from '../dates'
-import { isTerminalStatus } from '../utils'
+import { isTerminalStatus, sanitizeFileName } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
 import { resolveProjectConfig } from './ProjectConfig'
 import { computeSchedule } from './Scheduler'
@@ -549,9 +549,36 @@ export class ProjectStore implements TaskSource {
 
   /** Patch-only, so the editor's stale draft can't overwrite fields it didn't change. */
   async updateProject(project: Project, patch: ProjectPatch): Promise<void> {
+    const previousPath = project.filePath
     Object.assign(project, patch)
     if (patch.description !== undefined) this.hydratedBodies.add(project)
+    if (patch.title !== undefined) await this.renameProjectFile(project, previousPath)
     await this.saveProject(project)
+  }
+
+  /** A title edited in the settings view takes the note, and the folder it owns, with it. */
+  private async renameProjectFile(project: Project, currentPath: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(currentPath)
+    if (!(file instanceof TFile)) return
+    const desiredBasename = sanitizeFileName(project.title)
+    if (!desiredBasename) return
+    const dir = folderOf(currentPath)
+    const target = normalizePath(dir ? `${dir}/${desiredBasename}.md` : `${desiredBasename}.md`)
+    if (target === currentPath || this.app.vault.getAbstractFileByPath(target)) return
+
+    // The note takes its folder with it; skip the whole rename if that folder's new
+    // name is already taken, rather than leaving the note and its folder mismatched.
+    const own = projectFolderOf(this.app, currentPath)
+    if (own) {
+      const folderTarget = normalizePath(`${folderOf(own)}/${desiredBasename}`)
+      if (folderTarget !== own && this.app.vault.getAbstractFileByPath(folderTarget)) return
+    }
+
+    this.markSelfWrite(currentPath)
+    this.markSelfWrite(target)
+    await this.app.fileManager.renameFile(file, target)
+    const notePath = await keepProjectStorageWithNote(this.app, currentPath, target, (p) => this.markSelfWrite(p))
+    await this.rekeyProject(currentPath, notePath)
   }
 
   private async doSaveProject(project: Project): Promise<void> {
