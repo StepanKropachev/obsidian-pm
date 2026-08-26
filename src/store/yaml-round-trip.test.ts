@@ -132,6 +132,19 @@ describe('task round-trip', () => {
     expect(task.dependencies).toEqual([])
     expect(task.customFields).toEqual({})
   })
+
+  it('keeps only the usable names in assignees, tags, and dependencies', () => {
+    const frontmatter: Record<string, unknown> = {
+      id: 't-x',
+      assignees: [{ id: 'm1', name: 'John Doe' }, '[[Jane Doe]]', ''],
+      tags: ['api', 2026, { name: 'design' }],
+      dependencies: ['dep-1', null]
+    }
+    const { task } = hydrateTaskFromFile(frontmatter, '', 'path.md')
+    expect(task.assignees).toEqual(['[[Jane Doe]]'])
+    expect(task.tags).toEqual(['api', '2026'])
+    expect(task.dependencies).toEqual(['dep-1'])
+  })
 })
 
 describe('project round-trip', () => {
@@ -243,6 +256,18 @@ describe('hydration does not alias the source frontmatter', () => {
     expect(fm.dependencies).toEqual(['dep-1'])
     expect(fm.customFields).toEqual({ sprint: 'S1' })
     expect(srcLogs[0].hours).toBe(2)
+  })
+
+  it('drops team members written as mappings instead of names', () => {
+    const fm: Record<string, unknown> = {
+      id: 'p1',
+      title: 'Project',
+      teamMembers: [{ id: 'm1', name: 'John Doe' }, 'Alice', null]
+    }
+
+    const project = hydrateProjectFromFrontmatter(fm, '', 'Projects/P.md', 'P')
+
+    expect(project.teamMembers).toEqual(['Alice'])
   })
 
   it('copies project array containers', () => {

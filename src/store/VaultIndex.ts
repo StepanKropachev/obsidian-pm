@@ -4,6 +4,7 @@ import type { PMSettings, StatusConfig } from '../types'
 import { today } from '../dates'
 import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
+import { stringList } from './YamlHydrator'
 import { projectPathForTaskPath, resolveVaultLink } from './vaultFs'
 import { personKeyer } from './people'
 import { dedupePeople } from '../utils'
@@ -370,7 +371,7 @@ export class VaultIndex {
       title: str(frontmatter.title, file.basename),
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
-      teamMembers: Array.isArray(frontmatter.teamMembers) ? (frontmatter.teamMembers as string[]) : [],
+      teamMembers: stringList(frontmatter.teamMembers),
       parentPath: resolveVaultLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
       completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null
@@ -393,8 +394,8 @@ export class VaultIndex {
       start: str(frontmatter.start),
       due: str(frontmatter.due),
       completed: str(frontmatter.completed),
-      dependencies: Array.isArray(frontmatter.dependencies) ? (frontmatter.dependencies as string[]) : [],
-      assignees: Array.isArray(frontmatter.assignees) ? (frontmatter.assignees as string[]).filter(Boolean) : [],
+      dependencies: stringList(frontmatter.dependencies),
+      assignees: stringList(frontmatter.assignees),
       archived: path.split('/').at(-2) === 'Archive'
     }
     this.tasks.set(path, ref)

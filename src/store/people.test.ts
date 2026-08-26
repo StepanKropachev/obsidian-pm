@@ -61,6 +61,12 @@ describe('resolvePerson', () => {
       state: 'unresolved'
     })
   })
+
+  it('has no name for a value that is not a string', async () => {
+    const app = await appWithPeople([])
+    const raw = { id: 'm1', name: 'John Doe' } as unknown as string
+    expect(resolvePerson(app, raw, 'Projects/P.md')).toMatchObject({ name: '', path: null, state: 'plain' })
+  })
 })
 
 describe('personLink', () => {
