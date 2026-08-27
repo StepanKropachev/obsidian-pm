@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completed tasks move to the project's archive after the number of days set in the new auto-archive setting ([#204](https://github.com/StepanKropachev/obsidian-pm/issues/204))
 - A project can override the auto-archive window in the project settings
 - The archive completed tasks command moves finished tasks into the archive right away
+- A sub-project has the custom fields its parent project defines ([#255](https://github.com/StepanKropachev/obsidian-pm/issues/255))
+- Custom fields can be defined for the whole vault, so every project starts with them
+- A project can rename, retype, or hide a custom field it inherits, in the project settings
+- A custom field that duplicates an inherited one can be merged into it, values and all
 
 ### Fixed
 

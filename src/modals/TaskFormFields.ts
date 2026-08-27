@@ -51,7 +51,7 @@ const REPEAT_OPTIONS: SelectItem[] = [
  */
 export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFieldsContext): void {
   const { task, project, plugin, rerender, shownExtras } = ctx
-  const { statuses, priorities, priorityIcons } = plugin.store.configFor(project)
+  const { statuses, priorities, priorityIcons, customFields } = plugin.store.configFor(project)
   const grid = container.createDiv('pm-prop-grid')
 
   renderPropRow(
@@ -430,11 +430,11 @@ export function renderTaskFormFields(container: HTMLElement, ctx: TaskFormFields
     })
   }
 
-  if (project.customFields.length > 0) {
+  if (customFields.length > 0) {
     const cfSection = container.createDiv('pm-modal-section')
     cfSection.createEl('h4', { text: 'Custom fields', cls: 'pm-modal-section-title' })
     const cfGrid = cfSection.createDiv('pm-prop-grid')
-    for (const cf of project.customFields) {
+    for (const cf of customFields) {
       renderPropRow(cfGrid, cf.name, () => renderCustomFieldInput(cf, task, project, plugin, rerender))
     }
   }

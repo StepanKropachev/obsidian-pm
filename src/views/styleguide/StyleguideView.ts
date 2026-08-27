@@ -33,6 +33,7 @@ import { KanbanCard } from '../../ui/composites/KanbanCard'
 import { ProjectRow } from '../../ui/composites/ProjectRow'
 import { TaskRow } from '../../ui/composites/TaskRow'
 import { renderAddButton } from '../../ui/composites/addButton'
+import { CUSTOM_FIELD_TYPE_LABELS, renderCustomFieldListEditor } from '../../ui/CustomFieldListEditor'
 import {
   renderAddProperty,
   renderDepRow,
@@ -118,6 +119,7 @@ export class StyleguideView extends ItemView {
     this.group('Shared widgets')
     this.renderBadges()
     this.renderForm()
+    this.renderCustomFieldEditor()
     this.group('Composites')
     this.renderDerivedChips()
     this.renderProjectRows()
@@ -308,6 +310,26 @@ export class StyleguideView extends ItemView {
     renderTagChip(tagRow, 'design', false)
     renderTagChip(tagRow, 'design', true)
     renderTagChip(tagRow, 'backend', true)
+  }
+
+  private renderCustomFieldEditor(): void {
+    const sec = this.section('CustomFieldListEditor', 'custom-fields')
+    const inherited = this.row(sec, 'an inherited row, as the project edit page draws it')
+    const inheritedRow = inherited.createDiv('pm-cf-row pm-cf-row--inherited')
+    inheritedRow.createSpan({ cls: 'pm-cf-name', text: 'Client' })
+    inheritedRow.createSpan({ cls: 'pm-cf-type', text: CUSTOM_FIELD_TYPE_LABELS.text })
+    inheritedRow.createSpan({ cls: 'pm-cf-source', text: 'from Platform' })
+    new IconButton(inheritedRow).setIcon('eye').setTooltip('Hide on this project').onClick(noop)
+    new IconButton(inheritedRow).setIcon('pencil').setTooltip('Override on this project').onClick(noop)
+
+    const editable = this.row(sec, 'renderCustomFieldListEditor: text and select')
+    renderCustomFieldListEditor(editable.createDiv('pm-cf-list'), {
+      fields: [
+        { id: 'cf-sprint', name: 'Sprint', type: 'text' },
+        { id: 'cf-stage', name: 'Stage', type: 'select', options: ['Draft', 'Review'] }
+      ],
+      onChanged: noop
+    })
   }
 
   private renderForm(): void {

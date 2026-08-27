@@ -11,7 +11,7 @@ import {
   makeId,
   PRIORITY_ICON_SET_LABELS
 } from '../types'
-import { collectAllAssignees } from '../store'
+import { collectAllAssignees, flattenTasks, mergeById } from '../store'
 import { safeAsync, truncateTitle } from '../utils'
 import { confirmDialog } from '../ui/ModalFactory'
 import { renderPersonPicker } from '../ui/PersonPicker'
@@ -19,6 +19,7 @@ import { renderAddButton } from '../ui/composites/addButton'
 import { renderPropRow } from '../ui/FormField'
 import { renderGlyph, renderIconControl, renderInputControl, renderSelectControl } from '../ui/composites/properties'
 import { renderPriorityListEditor, renderStatusListEditor } from '../ui/PaletteListEditor'
+import { CUSTOM_FIELD_TYPE_LABELS, renderCustomFieldListEditor } from '../ui/CustomFieldListEditor'
 import { EmptyState } from '../ui/primitives/EmptyState'
 import { IconButton } from '../ui/primitives/IconButton'
 
@@ -28,17 +29,6 @@ export interface ProjectEditState {
   filePath?: string
   [key: string]: unknown
 }
-
-const FIELD_TYPES: { id: CustomFieldDef['type']; label: string }[] = [
-  { id: 'text', label: 'Text' },
-  { id: 'number', label: 'Number' },
-  { id: 'date', label: 'Date' },
-  { id: 'select', label: 'Select' },
-  { id: 'multiselect', label: 'Multi-select' },
-  { id: 'person', label: 'Person' },
-  { id: 'checkbox', label: 'Checkbox' },
-  { id: 'url', label: 'URL' }
-]
 
 export class ProjectEditView extends ItemView {
   plugin: PMPlugin
@@ -398,82 +388,110 @@ export class ProjectEditView extends ItemView {
     ])
   }
 
-  private renderCustomFields(project: Project): void {
-    const section = this.section('Custom fields', 'Extra properties for tasks')
-    const list = section.createDiv('pm-cf-list')
-    const draw = (): void => {
-      list.empty()
-      project.customFields.forEach((field, index) => this.renderCustomField(list, field, index, draw))
-      renderAddButton(list, 'Add custom field', () => {
-        project.customFields.push({ id: makeId(), name: 'New field', type: 'text', options: [] })
-        this.save({ customFields: project.customFields })
-        draw()
-      })
-    }
-    draw()
+  /**
+   * The whole chain the project inherits from, nearest ancestor winning, before its own
+   * fields apply. Hidden and overridden ids are in here too: one still needs a row to
+   * unhide, and the other needs its source named on the row that overrides it.
+   */
+  private inheritedFields(project: Project): { field: CustomFieldDef; source: string }[] {
+    const ancestors = this.plugin.index.ancestorRefs(project.filePath)
+    return mergeById([
+      this.plugin.settings.customFields.map((field) => ({ id: field.id, field, source: 'vault settings' })),
+      ...ancestors.map((ref) => ref.customFields.map((field) => ({ id: field.id, field, source: ref.title })))
+    ])
   }
 
-  private renderCustomField(container: HTMLElement, field: CustomFieldDef, index: number, redraw: () => void): void {
-    const project = this.project
-    if (!project) return
-    const row = container.createDiv('pm-cf-row')
+  private renderCustomFields(project: Project): void {
+    const section = this.section('Custom fields', 'Extra properties for tasks')
 
-    const name = row.createEl('input', { type: 'text', value: field.name, cls: 'pm-input pm-cf-name' })
-    name.placeholder = 'Field name'
-    name.addEventListener('change', () => {
-      field.name = name.value
-      this.save({ customFields: project.customFields })
-    })
-
-    const type = row.createEl('select', { cls: 'pm-input pm-select pm-cf-type' })
-    for (const option of FIELD_TYPES) {
-      const el = type.createEl('option', { value: option.id, text: option.label })
-      if (option.id === field.type) el.selected = true
+    const inherited = this.inheritedFields(project)
+    const own = new Set(project.customFields.map((field) => field.id))
+    const notOverridden = inherited.filter((entry) => !own.has(entry.field.id))
+    if (notOverridden.length > 0) {
+      section.createDiv({ cls: 'pm-section-sublabel', text: 'Inherited' })
+      const inheritedList = section.createDiv('pm-cf-list')
+      for (const entry of notOverridden) this.renderInheritedField(inheritedList, project, entry.field, entry.source)
+      section.createDiv({ cls: 'pm-section-sublabel', text: 'This project' })
     }
-    type.addEventListener('change', () => {
-      field.type = type.value as CustomFieldDef['type']
-      this.save({ customFields: project.customFields })
-      redraw()
+
+    const sourceById = new Map(inherited.map((entry) => [entry.field.id, entry.source]))
+    renderCustomFieldListEditor(section.createDiv('pm-cf-list'), {
+      fields: project.customFields,
+      onChanged: () => this.save({ customFields: project.customFields }),
+      // Dropping an override hands the field back to the ancestor, so the inherited group
+      // above this list has to be rebuilt with it.
+      redraw: () => this.render(),
+      renderExtra: (row, field) => {
+        const source = sourceById.get(field.id)
+        if (source) {
+          row.createSpan({ cls: 'pm-cf-source', text: `overrides ${source}` })
+          return
+        }
+        const twin = notOverridden.find((entry) => entry.field.name === field.name && entry.field.type === field.type)
+        if (!twin) return
+        new IconButton(row)
+          .setIcon('git-merge')
+          .setTooltip(`Merge into the ${twin.field.name} from ${twin.source}`)
+          .onClick(() => this.mergeIntoInherited(project, field, twin.field, twin.source))
+      }
     })
+  }
+
+  /**
+   * Folds a field that duplicates an inherited one into it, values and all, for the vaults
+   * that redefined a parent's field per sub-project before they could inherit it.
+   */
+  private readonly mergeIntoInherited = safeAsync(
+    async (project: Project, own: CustomFieldDef, target: CustomFieldDef, source: string) => {
+      const ok = await confirmDialog(
+        this.app,
+        `Move this project's ${own.name} values onto the ${target.name} from ${source}, and stop defining it here?`,
+        'Merge'
+      )
+      if (!ok) return
+      const taskIds = flattenTasks(project.tasks).map((flat) => flat.task.id)
+      await this.plugin.store.updateTasks(project, taskIds, (task) => {
+        if (!(own.id in task.customFields)) return null
+        const { [own.id]: value, ...rest } = task.customFields
+        return { customFields: target.id in rest ? rest : { ...rest, [target.id]: value } }
+      })
+      const index = project.customFields.findIndex((field) => field.id === own.id)
+      if (index >= 0) project.customFields.splice(index, 1)
+      await this.plugin.store.updateProject(project, { customFields: project.customFields })
+      this.render()
+    }
+  )
+
+  private renderInheritedField(container: HTMLElement, project: Project, field: CustomFieldDef, source: string): void {
+    const hidden = project.config?.hiddenCustomFields ?? []
+    const isHidden = hidden.includes(field.id)
+    const row = container.createDiv('pm-cf-row pm-cf-row--inherited')
+    row.toggleClass('pm-cf-row--hidden', isHidden)
+
+    row.createSpan({ cls: 'pm-cf-name', text: field.name })
+    row.createSpan({ cls: 'pm-cf-type', text: CUSTOM_FIELD_TYPE_LABELS[field.type] })
+    row.createSpan({ cls: 'pm-cf-source', text: `from ${source}` })
 
     new IconButton(row)
-      .setIcon('x')
-      .setTooltip('Remove field')
+      .setIcon(isHidden ? 'eye-off' : 'eye')
+      .setTooltip(isHidden ? 'Show on this project' : 'Hide on this project')
       .onClick(() => {
-        project.customFields.splice(index, 1)
-        this.save({ customFields: project.customFields })
-        redraw()
+        const next = isHidden ? hidden.filter((id) => id !== field.id) : [...hidden, field.id]
+        this.patchConfig('hiddenCustomFields', next.length ? next : undefined)
+        this.render()
       })
 
-    if (field.type !== 'select' && field.type !== 'multiselect') return
-    const options = field.options ?? []
-    field.options = options
-    const optionsWrap = row.createDiv('pm-cf-options')
-    const drawOptions = (): void => {
-      optionsWrap.empty()
-      options.forEach((option, i) => {
-        const optionRow = optionsWrap.createDiv('pm-cf-opt-row')
-        const input = optionRow.createEl('input', { type: 'text', value: option, cls: 'pm-input pm-cf-opt-input' })
-        input.placeholder = `Option ${i + 1}`
-        input.addEventListener('change', () => {
-          options[i] = input.value
-          this.save({ customFields: project.customFields })
-        })
-        new IconButton(optionRow)
-          .setIcon('x')
-          .setTooltip('Remove option')
-          .onClick(() => {
-            options.splice(i, 1)
-            this.save({ customFields: project.customFields })
-            drawOptions()
-          })
+    new IconButton(row)
+      .setIcon('pencil')
+      .setTooltip('Override on this project')
+      .onClick(() => {
+        // Copied, not aliased: the definition belongs to the ancestor's indexed frontmatter.
+        const copy: CustomFieldDef = { ...field }
+        if (field.options) copy.options = [...field.options]
+        project.customFields.push(copy)
+        this.save({ customFields: project.customFields })
+        this.render()
       })
-      renderAddButton(optionsWrap, 'Add option', () => {
-        options.push('')
-        drawOptions()
-      })
-    }
-    drawOptions()
   }
 
   private renderDangerZone(project: Project): void {

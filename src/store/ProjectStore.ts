@@ -134,7 +134,12 @@ export class ProjectStore implements TaskSource {
   ) {}
 
   configFor(project: Project): ResolvedProjectConfig {
-    return resolveProjectConfig(project, this.getSettings())
+    const ancestors = this.index?.ancestorRefs(project.filePath) ?? []
+    return resolveProjectConfig(
+      project,
+      this.getSettings(),
+      ancestors.map((ref) => ref.customFields)
+    )
   }
 
   private statusesFor(project: Project): StatusConfig[] {

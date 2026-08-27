@@ -29,6 +29,7 @@ Before writing any new UI element, find your case here:
 - Need to pick an icon or emoji -> `renderIconControl`
 - Need a label + value form row -> `renderPropRow`
 - Need a removable-token list -> `renderMultiSelect`
+- Need to define or edit custom field definitions -> `renderCustomFieldListEditor` (or its row internals)
 - Need to pick one or more people -> `renderPersonPicker`
 - Need a row of headline numbers -> `renderMetricStrip`
 - Need dated points on one track -> `renderMilestoneTimeline`
@@ -169,6 +170,7 @@ Richer than primitives, used across views. Avoid expanding this bucket; prefer c
 - **ModalFactory** - all modal opening: `openTaskModal`, `openTaskByPath` (the same editor for a task addressed by its note path, loading the project it belongs to; what a link to a task opens), `openProjectCreate`, `openProjectPicker`, `openTaskPicker`, `openPersonLookup` (the people already assigned somewhere, for the command that shows one person's tasks - a lookup, not a way to set a value), `openImportModal`, `confirmDialog`, `confirmDuplicateSubtasks`, `promptText`. Never instantiate a modal directly from a view. A new project is asked for in a dialog (`openProjectCreate`); an existing one is edited on a page of its own (`plugin.router.openProjectEdit`).
 - **PersonPicker** - `renderPersonPicker({ container, plugin, sourcePath, extra?, addLabel, selected, add, remove })`: the only control for picking people, behind task assignees, person custom fields, project members, the new project dialog, and the global team members in settings. A `renderMultiSelect` in `avatarStack` mode whose two tiers come from `peopleSource(plugin, sourcePath, extra?)` - `known()` (the global members plus whatever the caller passes, deduped by `personKey`) and `search(query)` (person notes) - plus rows to add a typed name as plain text or create the note for it. `sourcePath` is the note the value is written into, so the link resolves from there; pass `''` when there is no note yet. `peopleSource` is exported on its own for the bulk bar's assignee menu, so every surface offers the same people.
 - **PaletteListEditor** - `renderPaletteFields(parent, item, onChanged)` (icon picker + label + color inputs) and `renderStatusDoneToggle` are the row internals, used by the plugin settings pages. `renderStatusListEditor` / `renderPriorityListEditor` wrap them with their own drag handle and delete button for the project edit page's per-project overrides; plugin settings get those affordances from Obsidian's list settings instead. Plus `wireRowDragReorder`.
+- **CustomFieldListEditor** - the same split for custom fields. `renderCustomFieldFields(parent, field, onChanged, redraw)` (name input + type select) and `renderCustomFieldOptions(parent, field, onChanged)` (the choices a select offers, nothing for the other types) are the row internals the vault-wide list in plugin settings composes; `renderCustomFieldListEditor(container, { fields, onChanged, renderExtra? })` wraps them with a delete button and an "Add custom field" row for the project edit page. `renderExtra` puts per-row content between the type picker and delete, which is how the project page marks a field that overrides an inherited one. `CUSTOM_FIELD_TYPE_LABELS` names the types for anything drawing a field it can't edit. A field inherited from an ancestor project is not this editor's business: the project edit page draws those as static `.pm-cf-row--inherited` rows above the list.
 
 ## Native Obsidian components to use directly
 
@@ -195,7 +197,7 @@ uv run scripts/cdp.py eval 'document.querySelector("[data-sg=chip]").scrollIntoV
 uv run scripts/cdp.py shot styleguide-chip.png
 ```
 
-Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `checkbox`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
+Each section has a `data-sg` attribute (`chip`, `chip-button`, `avatar`, `icon-button`, `progress`, `collapse`, `checkbox`, `empty-state`, `segmented`, `view-switcher`, `popover`, `badges`, `form`, `custom-fields`, `time-due`, `project-row`, `cards`, `metric-strip`, `milestone-timeline`, `table`).
 
 ## Maintenance
 

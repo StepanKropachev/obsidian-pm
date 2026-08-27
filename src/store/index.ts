@@ -3,6 +3,7 @@ export type { ArchiveCandidate } from './ArchiveOps'
 export { ProjectStore, TaskFileNameConflictError } from './ProjectStore'
 export type { ImportNoteOptions, TaskSource } from './TaskSource'
 export { computeSchedule, wouldCreateCycle } from './Scheduler'
+export { mergeById } from './ProjectConfig'
 export {
   applyTaskFilter,
   applyTaskFilterFlat,

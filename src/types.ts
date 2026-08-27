@@ -22,10 +22,21 @@ export interface TimeLog {
   note: string
 }
 
+export const CUSTOM_FIELD_TYPES = [
+  'text',
+  'number',
+  'date',
+  'select',
+  'multiselect',
+  'person',
+  'checkbox',
+  'url'
+] as const
+
 export interface CustomFieldDef {
   id: string
   name: string
-  type: 'text' | 'number' | 'date' | 'select' | 'multiselect' | 'person' | 'checkbox' | 'url'
+  type: (typeof CUSTOM_FIELD_TYPES)[number]
   options?: string[] // for select / multiselect
   icon?: string // emoji or lucide icon name
 }
@@ -123,6 +134,8 @@ export interface ProjectConfig {
   statuses?: StatusConfig[]
   priorities?: PriorityConfig[]
   priorityIcons?: PriorityIconSet
+  /** Ids of inherited custom fields this project leaves out. Its own fields are never listed. */
+  hiddenCustomFields?: string[]
   defaultView?: ViewMode
   autoSchedule?: boolean
   pullForwardOnEarlyFinish?: boolean
@@ -141,6 +154,7 @@ export interface ResolvedProjectConfig {
   statuses: StatusConfig[]
   priorities: PriorityConfig[]
   priorityIcons: PriorityIconSet
+  customFields: CustomFieldDef[]
   defaultView: ViewMode
   autoSchedule: boolean
   pullForwardOnEarlyFinish: boolean
@@ -190,6 +204,8 @@ export interface PMSettings {
   priorities: PriorityConfig[]
   /** Icons for priorities that don't carry their own. */
   priorityIcons: PriorityIconSet
+  /** Task properties every project starts with. A project adds to these, or overrides one by id. */
+  customFields: CustomFieldDef[]
   globalTeamMembers: string[]
   notificationsEnabled: boolean
   notificationLeadDays: number
@@ -244,6 +260,7 @@ export const DEFAULT_SETTINGS: PMSettings = {
   statuses: DEFAULT_STATUSES,
   priorities: DEFAULT_PRIORITIES,
   priorityIcons: 'chevrons',
+  customFields: [],
   globalTeamMembers: [],
   showSubtreeConnections: true,
   lineBorders: 'none',
