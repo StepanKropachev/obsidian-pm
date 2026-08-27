@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-08-27
+
 ### Added
 
 - Completed tasks move to the project's archive after the number of days set in the new auto-archive setting ([#204](https://github.com/StepanKropachev/obsidian-pm/issues/204))
