@@ -39,7 +39,8 @@ export function renderTimelineHeader(ctx: RendererContext): void {
   if (granularity === 'day') renderDayHeader(g, ctx)
   else if (granularity === 'week') renderWeekHeader(g, ctx)
   else if (granularity === 'month') renderMonthHeader(g, ctx)
-  else renderQuarterHeader(g, ctx)
+  else if (granularity === 'quarter') renderQuarterHeader(g, ctx)
+  else renderYearHeader(g, ctx)
 
   ctx.headerSvgEl.appendChild(g)
 }
@@ -170,6 +171,39 @@ function renderQuarterHeader(g: SVGGElement, ctx: RendererContext): void {
     })
     text.textContent = `Q${q} ${date.year}`
     g.appendChild(text)
+    date = nextQStart
+  }
+}
+
+function renderYearHeader(g: SVGGElement, ctx: RendererContext): void {
+  renderYearBands(g, 0, 24, ctx)
+  const { startDate } = ctx.cfg
+  let date = Temporal.PlainDate.from({
+    year: startDate.year,
+    month: Math.floor((startDate.month - 1) / 3) * 3 + 1,
+    day: 1
+  })
+  while (Temporal.PlainDate.compare(date, ctx.cfg.endDate) < 0) {
+    const q = Math.floor((date.month - 1) / 3) + 1
+    const nextQStart = date.add({ months: 3 })
+    const x1 = Math.max(0, dateToX(ctx.cfg, date))
+    const x2 = Math.min(ctx.cfg.totalWidth, dateToX(ctx.cfg, nextQStart))
+    const text = svgEl('text', {
+      x: x1 + (x2 - x1) / 2,
+      y: 44,
+      class: 'pm-gantt-header-quarter'
+    })
+    text.textContent = `Q${q}`
+    g.appendChild(text)
+    g.appendChild(
+      svgEl('line', {
+        x1,
+        y1: 24,
+        x2: x1,
+        y2: HEADER_HEIGHT,
+        class: 'pm-gantt-header-tick'
+      })
+    )
     date = nextQStart
   }
 }

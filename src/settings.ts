@@ -141,7 +141,7 @@ export class PMSettingTab extends PluginSettingTab {
             control: {
               type: 'dropdown',
               key: 'ganttGranularity',
-              options: { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter' }
+              options: { day: 'Day', week: 'Week', month: 'Month', quarter: 'Quarter', year: 'Year' }
             }
           },
           {
