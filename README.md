@@ -34,7 +34,7 @@ Sortable, filterable task grid with inline editing. Save custom filter/sort comb
 
 ### Gantt
 
-Interactive timeline with draggable bars, resizable edges, and dependency arrows. Zoom from day to quarter. Drag to reschedule, resize to adjust duration. Milestones render as diamonds. A "today" line keeps you oriented.
+Interactive timeline with draggable bars, resizable edges, and dependency arrows. Zoom from day to year. Drag to reschedule, resize to adjust duration. Milestones render as diamonds. A "today" line keeps you oriented.
 
 <video src="https://github.com/user-attachments/assets/916f7100-44ef-401c-abb3-e003a0f7720a" autoplay loop muted playsinline width="400"></video>
 
@@ -138,7 +138,7 @@ Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses pro
 | Open projects in | Overview page, or straight to the project's tasks |
 | Default tasks view | Table, Gantt, or Kanban |
 | Open tasks in | Modal or tab. On tab, task notes open in the task editor instead of Obsidian's. |
-| Gantt granularity | Default timeline scale (day / week / month / quarter) |
+| Gantt granularity | Default timeline scale (day / week / month / quarter / year) |
 | Gantt week labels | Week number, date range, or both |
 | Due date notifications | Reminders N days before due dates |
 | Notifications on/off | Master switch for due date reminders, separate from lead time |
@@ -243,7 +243,7 @@ Task description in Markdown goes here.
 |---|---|
 | Projects folder | Vault folder where project and task files are stored |
 | Default tasks view | Table, Gantt, or Kanban |
-| Gantt granularity | Default timeline scale (day / week / month / quarter) |
+| Gantt granularity | Default timeline scale (day / week / month / quarter / year) |
 | Gantt week labels | Week number, date range, or both |
 | Due date notifications | Reminders N days before due dates |
 | Custom statuses | Edit labels, colors, and icons for each status |

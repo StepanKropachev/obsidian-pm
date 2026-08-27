@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The timeline has a year zoom level, showing quarters under each year ([#50](https://github.com/StepanKropachev/obsidian-pm/issues/50), [#77](https://github.com/StepanKropachev/obsidian-pm/issues/77), [#147](https://github.com/StepanKropachev/obsidian-pm/issues/147))
+
 ## [2.1.0] - 2026-08-27
+
+### Highlights
+
+- **Auto-archive:** Completed tasks move into the project's archive on their own after a number of days you choose, set once for every project or overridden by a project in its own settings, and the archive completed tasks command does the same sweep right away.
+- **Inherited custom fields:** Custom fields can be defined once for the whole vault or on a parent project, and every project underneath starts with them. Each project can still rename, retype, or hide a field it inherits, and a field it already had of its own can be merged into the inherited one, values and all.
 
 ### Added
 
