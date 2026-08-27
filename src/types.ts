@@ -134,7 +134,7 @@ export interface ProjectConfig {
   statuses?: StatusConfig[]
   priorities?: PriorityConfig[]
   priorityIcons?: PriorityIconSet
-  /** Ids of inherited custom fields this project leaves out. Its own fields are never listed. */
+  /** Inherited field ids this project leaves out. Its own fields are never listed. */
   hiddenCustomFields?: string[]
   defaultView?: ViewMode
   autoSchedule?: boolean

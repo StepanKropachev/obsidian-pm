@@ -154,10 +154,8 @@ export class ProjectScope {
   }
 
   /**
-   * Columns only, so every project in scope lines up on one header row. A field a project
-   * inherits carries the id its ancestor gave it, so a parent and its children contribute
-   * one column rather than one each. Editing a value asks `configOf` instead, because an
-   * overridden field carries its own type and options.
+   * Columns only, so every project in scope lines up on one header row. Editing a value
+   * asks `configOf` instead, because an overridden field carries its own type and options.
    */
   customFields(): CustomFieldDef[] {
     if (!this.isMulti) return this.primary ? this.configOfProject(this.primary).customFields : []

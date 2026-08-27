@@ -389,9 +389,8 @@ export class ProjectEditView extends ItemView {
   }
 
   /**
-   * The whole chain the project inherits from, nearest ancestor winning, before its own
-   * fields apply. Hidden and overridden ids are in here too: one still needs a row to
-   * unhide, and the other needs its source named on the row that overrides it.
+   * The whole chain the project inherits from, nearest ancestor winning. Unfiltered: a
+   * hidden field still needs a row to unhide, and an overridden one names its source.
    */
   private inheritedFields(project: Project): { field: CustomFieldDef; source: string }[] {
     const ancestors = this.plugin.index.ancestorRefs(project.filePath)
@@ -418,8 +417,6 @@ export class ProjectEditView extends ItemView {
     renderCustomFieldListEditor(section.createDiv('pm-cf-list'), {
       fields: project.customFields,
       onChanged: () => this.save({ customFields: project.customFields }),
-      // Dropping an override hands the field back to the ancestor, so the inherited group
-      // above this list has to be rebuilt with it.
       redraw: () => this.render(),
       renderExtra: (row, field) => {
         const source = sourceById.get(field.id)
@@ -437,10 +434,7 @@ export class ProjectEditView extends ItemView {
     })
   }
 
-  /**
-   * Folds a field that duplicates an inherited one into it, values and all, for the vaults
-   * that redefined a parent's field per sub-project before they could inherit it.
-   */
+  /** Folds a field that duplicates an inherited one into it, values and all. */
   private readonly mergeIntoInherited = safeAsync(
     async (project: Project, own: CustomFieldDef, target: CustomFieldDef, source: string) => {
       const ok = await confirmDialog(

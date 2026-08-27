@@ -18,10 +18,7 @@ export interface CustomFieldListEditorOpts {
   /** Mutated in place; `onChanged` is the owner's cue to persist. */
   fields: CustomFieldDef[]
   onChanged: () => void
-  /**
-   * Redraws in place of this list's own repaint, for an owner drawing something derived
-   * from `fields` that a removed or added field changes too.
-   */
+  /** Replaces this list's own repaint, for an owner that draws something derived from `fields`. */
   redraw?: () => void
   /** Extra per-row content between the type picker and the delete button. */
   renderExtra?: (row: HTMLElement, field: CustomFieldDef) => void
@@ -60,10 +57,7 @@ function renderRow(
   renderCustomFieldOptions(row, field, opts.onChanged)
 }
 
-/**
- * Appends the name and type inputs to `parent`. `redraw` runs when the type changes,
- * because that decides whether the option list belongs on the row at all.
- */
+/** Appends the name and type inputs to `parent`. Changing the type runs `redraw`. */
 export function renderCustomFieldFields(
   parent: HTMLElement,
   field: CustomFieldDef,
