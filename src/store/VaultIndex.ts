@@ -192,7 +192,7 @@ export class VaultIndex {
     return parent ? (this.projects.get(parent) ?? null) : null
   }
 
-  /** Every ancestor, root-most first, which is the order inherited settings resolve in. */
+  /** Every ancestor, root-most first. */
   ancestorRefs(path: string): ProjectRef[] {
     const out: ProjectRef[] = []
     for (let parent = this.parentOf(path); parent; parent = this.parentOf(parent.path)) out.unshift(parent)

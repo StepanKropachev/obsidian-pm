@@ -9,9 +9,8 @@ const FALLBACK_COLOR = '#8a94a0'
  * or picker. Read every palette through this, terminal-status checks included: an
  * overridden status carries its own `complete` flag.
  *
- * Custom fields resolve down a chain instead of one override: the vault list, then each
- * ancestor project root-most first, then the project's own. `ancestorFields` carries the
- * ancestors in that order.
+ * `ancestorFields` runs root-most first: custom fields resolve down that chain rather
+ * than by a single override.
  */
 export function resolveProjectConfig(
   project: Project,
@@ -47,10 +46,7 @@ export function resolveProjectConfig(
   }
 }
 
-/**
- * Later lists win on a repeated id, keeping the position the first one gave it, so a child
- * renaming an inherited field doesn't move its column. The lists run outermost first.
- */
+/** Later lists win on a repeated id, keeping the position the first one gave it. */
 export function mergeById<T extends { id: string }>(lists: T[][]): T[] {
   const merged: T[] = []
   const positions = new Map<string, number>()
@@ -68,7 +64,6 @@ export function mergeById<T extends { id: string }>(lists: T[][]): T[] {
   return merged
 }
 
-/** Ids the project lists as hidden drop out, unless it declares them itself. */
 function resolveCustomFields(
   project: Project,
   settings: PMSettings,

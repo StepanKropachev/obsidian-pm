@@ -155,7 +155,6 @@ export class ProjectView extends ItemView {
     )
   }
 
-  /** A project in scope, or an ancestor of one, whose custom fields the scope inherits. */
   private scopeDependsOn(path: string): boolean {
     const projects = this.projectScope?.projects
     if (!projects) return false
