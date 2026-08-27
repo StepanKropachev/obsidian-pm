@@ -1,10 +1,10 @@
 import type { App, Plugin, TAbstractFile } from 'obsidian'
 import { TFile, normalizePath } from 'obsidian'
-import type { PMSettings, StatusConfig } from '../types'
+import type { CustomFieldDef, PMSettings, StatusConfig } from '../types'
 import { today } from '../dates'
 import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
-import { stringList } from './YamlHydrator'
+import { customFieldList, stringList } from './YamlHydrator'
 import { projectPathForTaskPath, resolveVaultLink } from './vaultFs'
 import { personKeyer } from './people'
 import { dedupePeople } from '../utils'
@@ -16,6 +16,8 @@ export interface ProjectRef {
   icon: string
   color: string
   teamMembers: string[]
+  /** The fields this project declares itself, before anything is inherited. */
+  customFields: CustomFieldDef[]
   /** Where its `parent` link points, before cycles are taken out. Use `parentOf`. */
   parentPath: string | undefined
   /** Status ids the project's own palette defines. Null inherits the global palette. */
@@ -188,6 +190,13 @@ export class VaultIndex {
   parentOf(path: string): ProjectRef | null {
     const parent = this.tree().parents.get(normalizePath(path))
     return parent ? (this.projects.get(parent) ?? null) : null
+  }
+
+  /** Every ancestor, root-most first, which is the order inherited settings resolve in. */
+  ancestorRefs(path: string): ProjectRef[] {
+    const out: ProjectRef[] = []
+    for (let parent = this.parentOf(path); parent; parent = this.parentOf(parent.path)) out.unshift(parent)
+    return out
   }
 
   /** Every descendant, depth first. */
@@ -382,6 +391,7 @@ export class VaultIndex {
       icon: str(frontmatter.icon, '\u{1F4CB}'),
       color: str(frontmatter.color, '#8b72be'),
       teamMembers: stringList(frontmatter.teamMembers),
+      customFields: customFieldList(frontmatter.customFields),
       parentPath: resolveVaultLink(this.app, frontmatter.parent, path),
       ownStatusIds: own ? own.map((entry) => entry.id as string) : null,
       completeStatusIds: own ? own.filter((entry) => entry.complete === true).map((entry) => entry.id as string) : null,

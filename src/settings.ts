@@ -10,6 +10,7 @@ import {
   isTaskNotesInstalled
 } from './integrations/tasknotes'
 import { renderPaletteFields, renderStatusDoneToggle } from './ui/PaletteListEditor'
+import { renderCustomFieldFields, renderCustomFieldOptions } from './ui/CustomFieldListEditor'
 import { renderPersonPicker } from './ui/PersonPicker'
 
 export type { PMSettings }
@@ -245,7 +246,7 @@ export class PMSettingTab extends PluginSettingTab {
       {
         type: 'group',
         heading: 'Task fields',
-        items: [this.statusesPage(), this.prioritiesPage(), this.teamMembersPage()]
+        items: [this.statusesPage(), this.prioritiesPage(), this.customFieldsPage(), this.teamMembersPage()]
       },
       {
         type: 'group',
@@ -299,6 +300,51 @@ export class PMSettingTab extends PluginSettingTab {
                 icon: '',
                 complete: false
               })
+              this.persist()
+              this.update()
+            }
+          }
+        }
+      ]
+    }
+  }
+
+  private customFieldsPage(): SettingDefinitionPage {
+    const fields = this.plugin.settings.customFields
+    return {
+      type: 'page',
+      name: 'Custom fields',
+      desc: 'Extra task properties every project starts with. A project can add its own or override one of these.',
+      displayValue: () => plural(this.plugin.settings.customFields.length, 'field', 'fields'),
+      items: [
+        {
+          type: 'list',
+          heading: 'Custom fields',
+          emptyState: 'No custom fields.',
+          items: fields.map((field) => ({
+            name: field.name,
+            render: (setting: Setting) => {
+              setting.setClass('pm-palette-row')
+              setting.setClass('pm-cf-settings-row')
+              renderCustomFieldFields(
+                setting.controlEl,
+                field,
+                () => this.persist(),
+                () => this.update()
+              )
+              renderCustomFieldOptions(setting.controlEl, field, () => this.persist())
+            }
+          })),
+          onReorder: (from, to) => this.reorder(fields, from, to),
+          onDelete: (index) => {
+            fields.splice(index, 1)
+            this.persist()
+            this.update()
+          },
+          addItem: {
+            name: 'Add custom field',
+            action: () => {
+              fields.push({ id: makeId(), name: 'New field', type: 'text' })
               this.persist()
               this.update()
             }

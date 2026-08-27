@@ -138,7 +138,7 @@ export class ProjectView extends ItemView {
 
     this.register(
       this.plugin.store.onProjectChanged((path) => {
-        if (this.projectScope?.projects.some((project) => project.filePath === path)) this.redraw()
+        if (this.scopeDependsOn(path)) this.redraw()
       })
     )
     // A scope changes when a project joins or leaves it, which for a single-project scope
@@ -152,6 +152,16 @@ export class ProjectView extends ItemView {
           void this.loadScope()
         }
       })
+    )
+  }
+
+  /** A project in scope, or an ancestor of one, whose custom fields the scope inherits. */
+  private scopeDependsOn(path: string): boolean {
+    const projects = this.projectScope?.projects
+    if (!projects) return false
+    return projects.some(
+      (project) =>
+        project.filePath === path || this.plugin.index.ancestorRefs(project.filePath).some((ref) => ref.path === path)
     )
   }
 

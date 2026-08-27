@@ -133,3 +133,35 @@ describe('ProjectScope', () => {
     expect(scope.teamMembers()).toEqual(['Ana', 'Bo'])
   })
 })
+
+describe('ProjectScope custom fields down a subtree', () => {
+  let store: ProjectStore
+  let parent: Project
+  let child: Project
+
+  beforeEach(async () => {
+    const fake = makeFakeApp({ liveMetadataCache: true })
+    const app = fake.app as unknown as App
+    const index = new VaultIndex(app, () => SETTINGS)
+    store = new ProjectStore(app, () => SETTINGS, index)
+    parent = await store.createProject('Platform', 'Work')
+    child = await store.createProject('Billing', 'Work')
+    await store.updateProject(child, { parentPath: parent.filePath })
+    await store.updateProject(parent, { customFields: [{ id: 'cf-client', name: 'Client', type: 'text' }] })
+    index.build()
+  })
+
+  it('gives a sub-project the fields its parent declares', () => {
+    expect(store.configFor(child).customFields.map((f) => f.name)).toEqual(['Client'])
+  })
+
+  it('shows one column for a field a parent and its child share', () => {
+    const scope = new ProjectScope({ kind: 'subtree', path: parent.filePath }, [parent, child], store)
+    expect(scope.customFields().map((f) => f.id)).toEqual(['cf-client'])
+  })
+
+  it('leaves the field out of a sub-project that hides it', async () => {
+    await store.updateProject(child, { config: { hiddenCustomFields: ['cf-client'] } })
+    expect(store.configFor(child).customFields).toEqual([])
+  })
+})

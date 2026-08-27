@@ -362,10 +362,11 @@ export class ProjectOverviewView extends ItemView {
       people(value, assignees)
     })
 
-    if (project.customFields.length === 0) return
+    const customFields = this.plugin.store.configFor(project).customFields
+    if (customFields.length === 0) return
     const fields = this.section(parent, 'Custom fields')
     const fieldList = fields.createDiv('pm-overview-props')
-    for (const field of project.customFields) {
+    for (const field of customFields) {
       renderPropRow(fieldList, field.name, () => {
         const value = createDiv('pm-prop-value')
         value.createSpan({ cls: 'pm-overview-muted', text: field.type })

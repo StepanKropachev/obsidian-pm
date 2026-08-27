@@ -5,6 +5,8 @@ import {
   DEFAULT_STATUSES,
   makeProject,
   makeTask,
+  type CustomFieldDef,
+  type PMSettings,
   type PriorityConfig,
   type ProjectConfig,
   type StatusConfig
@@ -117,5 +119,64 @@ describe('resolveProjectConfig', () => {
       color: '#8a94a0',
       icon: ''
     })
+  })
+})
+
+const VAULT_FIELD: CustomFieldDef = { id: 'cf-budget', name: 'Budget', type: 'number' }
+const PARENT_FIELD: CustomFieldDef = { id: 'cf-owner', name: 'Owner', type: 'person' }
+const CHILD_FIELD: CustomFieldDef = { id: 'cf-sprint', name: 'Sprint', type: 'text' }
+
+function withVaultFields(...customFields: CustomFieldDef[]): PMSettings {
+  return { ...DEFAULT_SETTINGS, customFields }
+}
+
+describe('resolveProjectConfig custom fields', () => {
+  it('is only the project own fields when nothing above it defines any', () => {
+    const project = makeOverrideProject()
+    project.customFields.push(CHILD_FIELD)
+    expect(resolveProjectConfig(project, DEFAULT_SETTINGS).customFields).toEqual([CHILD_FIELD])
+  })
+
+  it('takes the vault fields and the ancestors, outermost first', () => {
+    const project = makeOverrideProject()
+    project.customFields.push(CHILD_FIELD)
+    const resolved = resolveProjectConfig(project, withVaultFields(VAULT_FIELD), [[PARENT_FIELD]])
+    expect(resolved.customFields).toEqual([VAULT_FIELD, PARENT_FIELD, CHILD_FIELD])
+  })
+
+  it('keeps one entry per id, so a parent and its child contribute one field', () => {
+    const project = makeOverrideProject()
+    const resolved = resolveProjectConfig(project, DEFAULT_SETTINGS, [[PARENT_FIELD], [PARENT_FIELD]])
+    expect(resolved.customFields).toEqual([PARENT_FIELD])
+  })
+
+  it('lets the project override an inherited field without moving it', () => {
+    const project = makeOverrideProject()
+    const renamed: CustomFieldDef = { ...PARENT_FIELD, name: 'Accountable' }
+    project.customFields.push(CHILD_FIELD, renamed)
+    const resolved = resolveProjectConfig(project, DEFAULT_SETTINGS, [[PARENT_FIELD]])
+    expect(resolved.customFields).toEqual([renamed, CHILD_FIELD])
+  })
+
+  it('takes the nearest declaration when the vault and several ancestors define one field', () => {
+    const grandparent: CustomFieldDef = { ...VAULT_FIELD, name: 'Cost' }
+    const parent: CustomFieldDef = { ...VAULT_FIELD, name: 'Spend' }
+    const resolved = resolveProjectConfig(makeOverrideProject(), withVaultFields(VAULT_FIELD), [
+      [grandparent],
+      [parent]
+    ])
+    expect(resolved.customFields).toEqual([parent])
+  })
+
+  it('leaves out an inherited field the project hides', () => {
+    const project = makeOverrideProject({ hiddenCustomFields: [PARENT_FIELD.id] })
+    const resolved = resolveProjectConfig(project, DEFAULT_SETTINGS, [[PARENT_FIELD, CHILD_FIELD]])
+    expect(resolved.customFields).toEqual([CHILD_FIELD])
+  })
+
+  it('keeps a hidden field the project also declares itself', () => {
+    const project = makeOverrideProject({ hiddenCustomFields: [PARENT_FIELD.id] })
+    project.customFields.push(PARENT_FIELD)
+    expect(resolveProjectConfig(project, DEFAULT_SETTINGS, [[PARENT_FIELD]]).customFields).toEqual([PARENT_FIELD])
   })
 })

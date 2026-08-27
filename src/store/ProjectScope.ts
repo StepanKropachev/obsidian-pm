@@ -153,9 +153,15 @@ export class ProjectScope {
     return owner ? this.configOfProject(owner) : this.config
   }
 
+  /**
+   * Columns only, so every project in scope lines up on one header row. A field a project
+   * inherits carries the id its ancestor gave it, so a parent and its children contribute
+   * one column rather than one each. Editing a value asks `configOf` instead, because an
+   * overridden field carries its own type and options.
+   */
   customFields(): CustomFieldDef[] {
-    if (!this.isMulti) return this.primary?.customFields ?? []
-    return unionById(this.projects.map((project) => project.customFields))
+    if (!this.isMulti) return this.primary ? this.configOfProject(this.primary).customFields : []
+    return unionById(this.projects.map((project) => this.configOfProject(project).customFields))
   }
 
   teamMembers(): string[] {
