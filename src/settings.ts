@@ -314,7 +314,7 @@ export class PMSettingTab extends PluginSettingTab {
     return {
       type: 'page',
       name: 'Custom fields',
-      desc: 'Extra task properties every project starts with. A project can add its own or override one of these.',
+      desc: 'Extra task properties available across all projects.',
       displayValue: () => plural(this.plugin.settings.customFields.length, 'field', 'fields'),
       items: [
         {
