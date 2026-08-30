@@ -226,6 +226,7 @@ button.pm-chip-btn--active:hover {
 }
 
 .pm-collapse-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -233,6 +234,12 @@ button.pm-chip-btn--active:hover {
   color: var(--text-muted);
   flex-shrink: 0;
   --icon-size: 14px;
+}
+/* Widen the hit zone past the small icon without changing how the row lays out. */
+.pm-collapse-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -6px -8px;
 }
 .pm-collapse-toggle:hover {
   color: var(--text-normal);
