@@ -79,11 +79,17 @@
 }
 
 .pm-overview-title {
+  display: inline-block;
+  max-width: 100%;
   font-size: 20px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+}
+.pm-overview-title:hover {
+  color: var(--text-accent);
 }
 
 .pm-overview-subline {
