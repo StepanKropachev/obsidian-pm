@@ -4,11 +4,11 @@
 *Full-featured project management, natively in your vault.*
 
 [![Obsidian community plugin](https://img.shields.io/badge/Obsidian-Community%20Plugin-7c3aed?style=for-the-badge&logo=obsidian&logoColor=white)](https://community.obsidian.md/plugins/project-manager)
-[![Downloads](https://img.shields.io/github/downloads/StepanKropachev/obsidian-pm/total?style=for-the-badge&color=2ea44f)](https://github.com/StepanKropachev/obsidian-pm/releases)
-[![Stars](https://img.shields.io/github/stars/StepanKropachev/obsidian-pm?style=for-the-badge&color=007acc)](https://github.com/StepanKropachev/obsidian-pm/stargazers)
+[![Downloads](https://img.shields.io/github/downloads/dotpm/obsidian-pm/total?style=for-the-badge&color=2ea44f)](https://github.com/dotpm/obsidian-pm/releases)
+[![Stars](https://img.shields.io/github/stars/dotpm/obsidian-pm?style=for-the-badge&color=007acc)](https://github.com/dotpm/obsidian-pm/stargazers)
 [![Support](https://img.shields.io/badge/Donate-Buy%20Me%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/kropachev)
 
-**[Install from Obsidian](https://community.obsidian.md/plugins/project-manager)** · **[Website](https://stepankropachev.github.io/obsidian-pm-site/)** · **[Changelog](CHANGELOG.md)**
+**[Install from Obsidian](https://community.obsidian.md/plugins/project-manager)** · **[Website](https://dotpm.pm)** · **[Changelog](CHANGELOG.md)**
 
 </div>
 
@@ -187,7 +187,7 @@ Or open the listing directly: [community.obsidian.md/plugins/project-manager](ht
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from the community store.
 2. Open BRAT settings > **Add Beta Plugin**.
-3. Enter: `https://github.com/StepanKropachev/obsidian-pm`
+3. Enter: `https://github.com/dotpm/obsidian-pm`
 4. Enable the plugin in **Settings > Community plugins**.
 
 ### Manual
