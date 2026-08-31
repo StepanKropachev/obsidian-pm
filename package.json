@@ -2,6 +2,7 @@
   "name": "project-manager",
   "version": "2.1.0",
   "description": "Obsidian Project Manager Plugin",
+  "repository": "github:dotpm/obsidian-pm",
   "main": "main.js",
   "type": "module",
   "scripts": {
