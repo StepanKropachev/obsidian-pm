@@ -25,12 +25,12 @@ export async function migrateProjects(plugin: PMPlugin): Promise<void> {
       migrated++
     } catch (e) {
       console.error(`[PM] Migration failed for ${file.path}:`, e)
-      new Notice(`Project Manager: Migration failed for "${file.basename}". Check console for details.`)
+      new Notice(`dotpm: Migration failed for "${file.basename}". Check console for details.`)
     }
   }
 
   if (migrated > 0) {
-    new Notice(`Project Manager: Migrated ${migrated} project(s) to new format.`)
+    new Notice(`dotpm: Migrated ${migrated} project(s) to new format.`)
   }
 }
 
@@ -69,7 +69,7 @@ export async function migrateProjectLayout(plugin: PMPlugin): Promise<void> {
       })
     } catch (e) {
       console.error(`[PM] Failed to move "${path}" into its own folder:`, e)
-      new Notice(`Project Manager: Could not move "${path}" into its own folder. Check console for details.`)
+      new Notice(`dotpm: Could not move "${path}" into its own folder. Check console for details.`)
     }
   }
 
@@ -84,7 +84,7 @@ export async function migrateProjectLayout(plugin: PMPlugin): Promise<void> {
   remapProjectSettings(plugin, moves)
   retargetOpenViews(plugin, moves)
   await plugin.saveSettings()
-  new Notice(`Project Manager: Moved ${moves.length} project(s) into their own folders.`)
+  new Notice(`dotpm: Moved ${moves.length} project(s) into their own folders.`)
 }
 
 function movedPath(path: string, moves: ProjectMove[]): string | null {
