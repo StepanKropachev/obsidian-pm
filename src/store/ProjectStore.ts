@@ -1,7 +1,7 @@
 import type { Plugin, TAbstractFile } from 'obsidian'
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { PMSettings, Project, ProjectPatch, ResolvedProjectConfig, StatusConfig, Task } from '../types'
-import { DEFAULT_SETTINGS, makeProject, makeTask } from '../types'
+import { DEFAULT_SETTINGS, makeId, makeProject, makeTask } from '../types'
 import { today } from '../dates'
 import { isTerminalStatus, sanitizeFileName } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
@@ -18,6 +18,7 @@ import {
 } from './TaskIndex'
 import {
   addTaskToTree,
+  cloneTaskForest,
   cloneTaskSubtree,
   deleteTaskFromTree,
   flattenTasks,
@@ -935,6 +936,60 @@ export class ProjectStore implements TaskSource {
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
     return copy
+  }
+
+  /**
+   * A full copy of a project under a new title, created beside the source: every task
+   * cloned with a fresh id, dependencies inside the project remapped to the clones, and
+   * the description, palette, saved views, and settings carried over. A dependency on
+   * another project's task still targets that task.
+   */
+  async duplicateProject(source: Project, title: string): Promise<Project> {
+    const dir = folderOf(projectFolderOf(this.app, source.filePath) ?? source.filePath)
+    const filePath = projectFilePath(title, dir)
+    if (this.app.vault.getAbstractFileByPath(filePath) || this.app.vault.getAbstractFileByPath(folderOf(filePath))) {
+      throw new Error(`A project named "${title}" already exists here.`)
+    }
+
+    await this.loadProjectBody(source)
+    for (const { task } of flattenTasks(source.tasks)) await this.loadTaskBody(task)
+
+    const project = makeProject(title, filePath)
+    project.description = source.description
+    project.color = source.color
+    project.icon = source.icon
+    project.customFields = structuredClone(source.customFields)
+    project.teamMembers = [...source.teamMembers]
+    project.savedViews = structuredClone(source.savedViews)
+    project.parentPath = source.parentPath
+    if (source.config) project.config = structuredClone(source.config)
+    project.tasks = cloneTaskForest(source.tasks)
+    rebuildTaskIndex(project)
+    this.hydratedBodies.add(project)
+    for (const { task } of flattenTasks(project.tasks)) this.hydratedBodies.add(task)
+    await this.saveProject(project)
+    return project
+  }
+
+  async reassignIds(project: Project, taskIds: string[], newProjectId: boolean): Promise<void> {
+    const mapping = new Map<string, string>()
+    for (const id of taskIds) {
+      // Only ids the project owns: an id it doesn't could be an external dependency,
+      // and remapping that would point it at a task that doesn't exist.
+      if (project.taskIndex.has(id)) mapping.set(id, makeId())
+    }
+    if (mapping.size === 0 && !newProjectId) return
+    for (const { task } of flattenTasks(project.tasks)) {
+      const fresh = mapping.get(task.id)
+      if (fresh) task.id = fresh
+      if (task.dependencies.some((dep) => mapping.has(dep))) {
+        task.dependencies = task.dependencies.map((dep) => mapping.get(dep) ?? dep)
+      }
+    }
+    if (newProjectId) project.id = makeId()
+    rebuildTaskIndex(project)
+    this.markAllDirty(project, 'fm')
+    await this.saveProject(project)
   }
 
   private assignCopyName(task: Task, folder: string, usedTitles: Set<string>, claimed: Set<string>): void {

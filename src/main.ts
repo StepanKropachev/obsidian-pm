@@ -18,10 +18,12 @@ import {
   openProjectPicker,
   openTaskPicker,
   openImportModal,
-  confirmDialog
+  confirmDialog,
+  promptText
 } from './ui/ModalFactory'
 import { Notifier } from './components/Notifier'
 import { AutoArchiver } from './components/AutoArchiver'
+import { IdRepair } from './components/IdRepair'
 import { migrateProjects, migrateProjectLayout } from './migration'
 import { dedupePeople, displayName, safeAsync } from './utils'
 
@@ -31,6 +33,7 @@ export default class PMPlugin extends Plugin {
   index!: VaultIndex
   notifier!: Notifier
   autoArchiver!: AutoArchiver
+  idRepair!: IdRepair
   router!: PMViewRouter
   /** Paths deliberately sent to the markdown editor, which the swap then leaves alone. */
   private markdownEscapes = new Set<string>()
@@ -72,6 +75,7 @@ export default class PMPlugin extends Plugin {
     this.store.registerVaultSync(this)
     this.notifier = new Notifier(this)
     this.autoArchiver = new AutoArchiver(this)
+    this.idRepair = new IdRepair(this)
     this.router = new PMViewRouter(this)
 
     this.registerView(PM_PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf, this))
@@ -122,6 +126,17 @@ export default class PMPlugin extends Plugin {
       name: 'Create new subtask',
       callback: () => {
         this.pickProjectThenCreateTask('pick-parent')
+      }
+    })
+
+    this.addCommand({
+      id: 'duplicate-project',
+      name: 'Duplicate project',
+      callback: () => {
+        this.pickProject(
+          safeAsync((project) => this.duplicateProjectFlow(project)),
+          false
+        )
       }
     })
 
@@ -252,6 +267,7 @@ export default class PMPlugin extends Plugin {
     this.addSettingTab(new PMSettingTab(this.app, this))
     this.notifier.start()
     this.autoArchiver.start()
+    this.idRepair.start()
   }
 
   onunload(): void {
@@ -343,6 +359,20 @@ export default class PMPlugin extends Plugin {
     return path === '' || this.app.vault.getAbstractFileByPath(path) !== null
   }
 
+  /** Prompts for a title, copies the project with fresh task ids, and opens the copy. */
+  async duplicateProjectFlow(source: Project): Promise<void> {
+    const title = await promptText(this.app, `Duplicate "${source.title}" as`, 'Project name', `${source.title} copy`)
+    if (!title) return
+    let copy: Project
+    try {
+      copy = await this.store.duplicateProject(source, title)
+    } catch (e) {
+      this.showNotice(e instanceof Error ? e.message : String(e))
+      return
+    }
+    await this.router.openProjectOverview(copy.filePath)
+  }
+
   /** A project with no window of its own archives everything it has finished. */
   private async archiveCompletedTasks(): Promise<void> {
     const scoped = this.app.workspace.getActiveViewOfType(ProjectView)?.projectScope?.projects.map((p) => p.filePath)
@@ -366,6 +396,7 @@ export default class PMPlugin extends Plugin {
   private async startupSweep(): Promise<void> {
     await migrateProjects(this)
     await migrateProjectLayout(this)
+    await this.idRepair.check()
     await this.cleanupStaleProjectFilters()
     this.notifier.check()
     await this.autoArchiver.check()

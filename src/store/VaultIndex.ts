@@ -363,6 +363,42 @@ export class VaultIndex {
     return map
   }
 
+  /**
+   * Task ids that notes in more than one project claim, id to every ref holding it.
+   * This is what a project folder copied on disk looks like: the copy keeps every id
+   * of the original. A repeated id inside one project doesn't count; an archived task
+   * and its replacement can share one legitimately.
+   */
+  findTaskIdCollisions(): Map<string, TaskRef[]> {
+    const byId = new Map<string, TaskRef[]>()
+    for (const ref of this.tasks.values()) {
+      if (!ref.projectPath) continue
+      const list = byId.get(ref.id)
+      if (list) list.push(ref)
+      else byId.set(ref.id, [ref])
+    }
+    const collisions = new Map<string, TaskRef[]>()
+    for (const [id, refs] of byId) {
+      if (new Set(refs.map((ref) => ref.projectPath)).size > 1) collisions.set(id, refs)
+    }
+    return collisions
+  }
+
+  /** Project ids more than one project note claims. */
+  findProjectIdCollisions(): Map<string, ProjectRef[]> {
+    const byId = new Map<string, ProjectRef[]>()
+    for (const ref of this.projects.values()) {
+      const list = byId.get(ref.id)
+      if (list) list.push(ref)
+      else byId.set(ref.id, [ref])
+    }
+    const collisions = new Map<string, ProjectRef[]>()
+    for (const [id, refs] of byId) {
+      if (refs.length > 1) collisions.set(id, refs)
+    }
+    return collisions
+  }
+
   /** The project owning a task note, by location first and by its `projectId` when it moved. */
   projectPathForTask(taskPath: string): string | null {
     return this.tasks.get(normalizePath(taskPath))?.projectPath ?? this.resolveOwner(normalizePath(taskPath), '')

@@ -53,6 +53,14 @@ export interface TaskSource {
 
   insertTask(project: Project, task: Task, parentId?: string | null): Promise<void>
   duplicateTask(project: Project, sourceId: string, includeSubtasks: boolean): Promise<Task | null>
+  /**
+   * Gives the listed tasks fresh ids, remapping every reference the project holds to
+   * them, and optionally the project's own id. Repairs a project whose folder was
+   * copied on disk, which duplicates every id in it.
+   */
+  reassignIds(project: Project, taskIds: string[], newProjectId: boolean): Promise<void>
+  /** A full copy of a project under a new title, every task cloned with a fresh id. */
+  duplicateProject(source: Project, title: string): Promise<Project>
   importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'>
   importTaskForest(
     project: Project,

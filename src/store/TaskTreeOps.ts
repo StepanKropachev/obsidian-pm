@@ -79,6 +79,18 @@ export function cloneTaskSubtree(source: Task, includeSubtasks: boolean): Task {
   return clone
 }
 
+/**
+ * Deep-clone a whole task forest with fresh ids, sharing one id map so a dependency
+ * between any two tasks in it is remapped, whichever roots they sit under. Dependencies
+ * pointing outside the forest still target the originals.
+ */
+export function cloneTaskForest(roots: Task[]): Task[] {
+  const idMap = new Map<string, string>()
+  const clones = roots.map((root) => cloneNode(root, true, idMap))
+  for (const clone of clones) remapDeps(clone, idMap)
+  return clones
+}
+
 function cloneNode(source: Task, includeSubtasks: boolean, idMap: Map<string, string>): Task {
   const now = new Date().toISOString()
   const newId = makeId()
