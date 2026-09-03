@@ -410,3 +410,51 @@ describe('VaultIndex people queries', () => {
     expect(index.allAssignees()).toHaveLength(3)
   })
 })
+
+describe('VaultIndex id collisions', () => {
+  let vault: FakeVault
+  let index: VaultIndex
+
+  beforeEach(() => {
+    const fake = makeFakeApp({ liveMetadataCache: true })
+    vault = fake.vault
+    index = new VaultIndex(fake.app as unknown as App, () => ({ ...DEFAULT_SETTINGS }))
+  })
+
+  it('reports task and project ids that two projects claim', async () => {
+    await vault.create('Projects/Template/Template.md', projectNote('p1', 'Template'))
+    await vault.create('Projects/Template/_tasks/one.md', taskNote('t1', 'One', 'p1'))
+    await vault.create('Projects/Copy/Copy.md', projectNote('p1', 'Template'))
+    await vault.create('Projects/Copy/_tasks/one.md', taskNote('t1', 'One', 'p1'))
+    index.build()
+
+    const tasks = index.findTaskIdCollisions()
+    expect([...tasks.keys()]).toEqual(['t1'])
+    expect(
+      expectDefined(tasks.get('t1'))
+        .map((ref) => ref.path)
+        .sort()
+    ).toEqual(['Projects/Copy/_tasks/one.md', 'Projects/Template/_tasks/one.md'])
+    expect([...index.findProjectIdCollisions().keys()]).toEqual(['p1'])
+  })
+
+  it('does not report an id repeated inside one project', async () => {
+    await vault.create('Projects/Roadmap/Roadmap.md', projectNote('p1', 'Roadmap'))
+    await vault.create('Projects/Roadmap/_tasks/one.md', taskNote('t1', 'One', 'p1'))
+    await vault.create('Projects/Roadmap/_tasks/Archive/one.md', taskNote('t1', 'One', 'p1'))
+    index.build()
+
+    expect(index.findTaskIdCollisions().size).toBe(0)
+  })
+
+  it('reports nothing when every id is unique', async () => {
+    await vault.create('Projects/A/A.md', projectNote('p1', 'A'))
+    await vault.create('Projects/A/_tasks/one.md', taskNote('t1', 'One', 'p1'))
+    await vault.create('Projects/B/B.md', projectNote('p2', 'B'))
+    await vault.create('Projects/B/_tasks/two.md', taskNote('t2', 'Two', 'p2'))
+    index.build()
+
+    expect(index.findTaskIdCollisions().size).toBe(0)
+    expect(index.findProjectIdCollisions().size).toBe(0)
+  })
+})

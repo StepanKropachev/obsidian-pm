@@ -1483,3 +1483,60 @@ describe('ProjectStore project folders', () => {
     expect(app.vault.getAbstractFileByPath('Work/Alpha_tasks/card.md')).toBeInstanceOf(TFile)
   })
 })
+
+describe('ProjectStore.reassignIds', () => {
+  it('gives listed tasks fresh ids and remaps internal dependencies, in memory and on disk', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Roadmap', 'Projects')
+    const alpha = await addNamed(store, project, 'Alpha')
+    const beta = await addNamed(store, project, 'Beta')
+    await store.updateTask(project, beta.id, { dependencies: [alpha.id] })
+    const oldAlphaId = alpha.id
+    const oldBetaId = beta.id
+
+    await store.reassignIds(project, [oldAlphaId, oldBetaId], false)
+
+    expect(findTask(project.tasks, oldAlphaId)).toBeNull()
+    expect(findTask(project.tasks, oldBetaId)).toBeNull()
+    const freshAlpha = expectDefined(project.tasks.find((t) => t.title === 'Alpha'))
+    const freshBeta = expectDefined(project.tasks.find((t) => t.title === 'Beta'))
+    expect(freshBeta.dependencies).toEqual([freshAlpha.id])
+    expect(expectDefined(project.taskIndex.get(freshAlpha.id)).task).toBe(freshAlpha)
+
+    const alphaContent = await app.vault.cachedRead(fileAt(app, expectDefined(freshAlpha.filePath)))
+    expect(alphaContent).toContain(freshAlpha.id)
+    expect(alphaContent).not.toContain(oldAlphaId)
+    const projectContent = await app.vault.cachedRead(fileAt(app, project.filePath))
+    expect(projectContent).toContain(freshAlpha.id)
+    expect(projectContent).not.toContain(oldAlphaId)
+  })
+
+  it('keeps a dependency on an id the project does not own', async () => {
+    const { store, vault } = newStore()
+    const project = await store.createProject('Roadmap', 'Projects')
+    const alpha = await addNamed(store, project, 'Alpha')
+    await store.updateTask(project, alpha.id, { dependencies: ['elsewhere1'] })
+
+    vault.resetCounts()
+    await store.reassignIds(project, ['elsewhere1'], false)
+
+    expect(expectDefined(findTask(project.tasks, alpha.id)).dependencies).toEqual(['elsewhere1'])
+    expect(vault.modifyCount.size).toBe(0)
+  })
+
+  it('writes a fresh project id into the project note and every task note', async () => {
+    const { store, app } = newStore()
+    const project = await store.createProject('Roadmap', 'Projects')
+    const alpha = await addNamed(store, project, 'Alpha')
+    const oldProjectId = project.id
+
+    await store.reassignIds(project, [], true)
+
+    expect(project.id).not.toBe(oldProjectId)
+    const projectContent = await app.vault.cachedRead(fileAt(app, project.filePath))
+    expect(projectContent).toContain(project.id)
+    const alphaContent = await app.vault.cachedRead(fileAt(app, expectDefined(alpha.filePath)))
+    expect(alphaContent).toContain(project.id)
+    expect(alphaContent).not.toContain(oldProjectId)
+  })
+})

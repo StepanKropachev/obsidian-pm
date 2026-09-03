@@ -1,7 +1,7 @@
 import type { Plugin, TAbstractFile } from 'obsidian'
 import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian'
 import type { PMSettings, Project, ProjectPatch, ResolvedProjectConfig, StatusConfig, Task } from '../types'
-import { DEFAULT_SETTINGS, makeProject, makeTask } from '../types'
+import { DEFAULT_SETTINGS, makeId, makeProject, makeTask } from '../types'
 import { today } from '../dates'
 import { isTerminalStatus, sanitizeFileName } from '../utils'
 import { archiveTask as doArchiveTask, unarchiveTask as doUnarchiveTask } from './ArchiveOps'
@@ -935,6 +935,27 @@ export class ProjectStore implements TaskSource {
     if (parentId) this.markDirty(project, [parentId], 'full')
     await this.saveProject(project)
     return copy
+  }
+
+  async reassignIds(project: Project, taskIds: string[], newProjectId: boolean): Promise<void> {
+    const mapping = new Map<string, string>()
+    for (const id of taskIds) {
+      // Only ids the project owns: an id it doesn't could be an external dependency,
+      // and remapping that would point it at a task that doesn't exist.
+      if (project.taskIndex.has(id)) mapping.set(id, makeId())
+    }
+    if (mapping.size === 0 && !newProjectId) return
+    for (const { task } of flattenTasks(project.tasks)) {
+      const fresh = mapping.get(task.id)
+      if (fresh) task.id = fresh
+      if (task.dependencies.some((dep) => mapping.has(dep))) {
+        task.dependencies = task.dependencies.map((dep) => mapping.get(dep) ?? dep)
+      }
+    }
+    if (newProjectId) project.id = makeId()
+    rebuildTaskIndex(project)
+    this.markAllDirty(project, 'fm')
+    await this.saveProject(project)
   }
 
   private assignCopyName(task: Task, folder: string, usedTitles: Set<string>, claimed: Set<string>): void {

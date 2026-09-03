@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The timeline has a year zoom level, showing quarters under each year ([#50](https://github.com/StepanKropachev/obsidian-pm/issues/50), [#77](https://github.com/StepanKropachev/obsidian-pm/issues/77), [#147](https://github.com/StepanKropachev/obsidian-pm/issues/147))
 
+### Fixed
+
+- Edits, dependency checks, and archiving could act on the wrong project when one project was created by copying another's folder
+
 ## [2.1.0] - 2026-08-27
 
 ### Highlights
