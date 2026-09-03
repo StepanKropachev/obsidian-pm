@@ -1540,3 +1540,51 @@ describe('ProjectStore.reassignIds', () => {
     expect(alphaContent).not.toContain(oldProjectId)
   })
 })
+
+describe('ProjectStore.duplicateProject', () => {
+  it('clones every task with fresh ids and remaps dependencies between roots', async () => {
+    const { store, app } = newStore()
+    const source = await store.createProject('Roadmap', 'Projects')
+    const alpha = await addNamed(store, source, 'Alpha')
+    const beta = await addNamed(store, source, 'Beta')
+    await store.updateTask(source, beta.id, { dependencies: [alpha.id, 'elsewhere1'] })
+
+    const copy = await store.duplicateProject(source, 'Roadmap copy')
+
+    expect(copy.filePath).toBe('Projects/Roadmap copy/Roadmap copy.md')
+    expect(copy.id).not.toBe(source.id)
+    const copyAlpha = expectDefined(copy.tasks.find((t) => t.title === 'Alpha'))
+    const copyBeta = expectDefined(copy.tasks.find((t) => t.title === 'Beta'))
+    expect(copyAlpha.id).not.toBe(alpha.id)
+    expect(copyBeta.dependencies).toEqual([copyAlpha.id, 'elsewhere1'])
+    expect(fileAt(app, 'Projects/Roadmap copy/_tasks/alpha.md')).toBeInstanceOf(TFile)
+
+    expect(source.tasks.map((t) => t.id)).toEqual([alpha.id, beta.id])
+    expect(expectDefined(findTask(source.tasks, beta.id)).dependencies).toEqual([alpha.id, 'elsewhere1'])
+  })
+
+  it('carries the project settings, people, and descriptions over', async () => {
+    const { store, app } = newStore()
+    const source = await store.createProject('Roadmap', 'Projects')
+    source.teamMembers = ['Jane']
+    source.config = { defaultView: 'kanban' }
+    await store.updateProject(source, { description: 'The plan.' })
+    const alpha = await addNamed(store, source, 'Alpha')
+    await store.updateTask(source, alpha.id, { description: 'Alpha body.' })
+
+    const copy = await store.duplicateProject(source, 'Roadmap copy')
+
+    expect(copy.teamMembers).toEqual(['Jane'])
+    expect(copy.config).toEqual({ defaultView: 'kanban' })
+    expect(copy.description).toBe('The plan.')
+    const copyAlphaContent = await app.vault.cachedRead(fileAt(app, 'Projects/Roadmap copy/_tasks/alpha.md'))
+    expect(copyAlphaContent).toContain('Alpha body.')
+  })
+
+  it('refuses a title already taken beside the source', async () => {
+    const { store } = newStore()
+    const source = await store.createProject('Roadmap', 'Projects')
+
+    await expect(store.duplicateProject(source, 'Roadmap')).rejects.toThrow('already exists')
+  })
+})

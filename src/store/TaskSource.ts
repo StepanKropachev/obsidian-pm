@@ -59,6 +59,8 @@ export interface TaskSource {
    * copied on disk, which duplicates every id in it.
    */
   reassignIds(project: Project, taskIds: string[], newProjectId: boolean): Promise<void>
+  /** A full copy of a project under a new title, every task cloned with a fresh id. */
+  duplicateProject(source: Project, title: string): Promise<Project>
   importNoteAsTask(project: Project, file: TFile, opts: ImportNoteOptions): Promise<'imported' | 'skipped'>
   importTaskForest(
     project: Project,

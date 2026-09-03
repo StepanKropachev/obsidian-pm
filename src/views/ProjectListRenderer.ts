@@ -134,6 +134,18 @@ function openProjectContextMenu(ctx: ProjectListContext, ref: ProjectRef, e: Mou
   }
   menu.addItem((item) =>
     item
+      .setTitle('Duplicate project')
+      .setIcon('copy')
+      .onClick(
+        safeAsync(async () => {
+          const project = await ctx.plugin.store.loadProjectByPath(ref.path)
+          if (!project) return
+          await ctx.plugin.duplicateProjectFlow(project)
+        })
+      )
+  )
+  menu.addItem((item) =>
+    item
       .setTitle('Edit project')
       .setIcon('settings')
       .onClick(safeAsync(() => ctx.plugin.router.openProjectEdit(ref.path)))

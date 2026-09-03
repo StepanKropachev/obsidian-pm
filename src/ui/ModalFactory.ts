@@ -24,9 +24,9 @@ export function confirmDuplicateSubtasks(app: App, taskTitle: string): Promise<'
 }
 
 /** Returns the trimmed string, or null if cancelled or empty. */
-export function promptText(app: App, label: string, placeholder = ''): Promise<string | null> {
+export function promptText(app: App, label: string, placeholder = '', initial = ''): Promise<string | null> {
   return new Promise((resolve) => {
-    const modal = new TextPromptModal(app, label, placeholder, resolve)
+    const modal = new TextPromptModal(app, label, placeholder, initial, resolve)
     modal.open()
   })
 }
@@ -38,6 +38,7 @@ class TextPromptModal extends Modal {
     app: App,
     private label: string,
     private placeholder: string,
+    private initial: string,
     private resolve: (value: string | null) => void
   ) {
     super(app)
@@ -63,6 +64,7 @@ class TextPromptModal extends Modal {
       placeholder: this.placeholder,
       cls: 'pm-prompt-input'
     })
+    input.value = this.initial
 
     const btnRow = contentEl.createDiv('pm-modal-btn-row')
 
@@ -91,7 +93,10 @@ class TextPromptModal extends Modal {
       }
     })
 
-    window.setTimeout(() => input.focus(), 10)
+    window.setTimeout(() => {
+      input.focus()
+      if (this.initial) input.select()
+    }, 10)
   }
 
   onClose(): void {
