@@ -153,7 +153,11 @@ export class ProjectOverviewView extends ItemView {
     renderGlyph(tile, { icon: project.icon, color: project.color })
 
     const identity = header.createDiv('pm-overview-identity')
-    identity.createDiv({ cls: 'pm-overview-title', text: project.title })
+    const title = identity.createDiv({ cls: 'pm-overview-title', text: project.title })
+    title.addEventListener(
+      'click',
+      safeAsync(() => this.plugin.router.openScope({ kind: 'project', path: project.filePath }, this.leaf))
+    )
     const children = this.plugin.index.childRefs(project.filePath).length
     const bits = [`${rollup.done} of ${rollup.total} tasks done`]
     if (children) bits.push(children === 1 ? '1 sub-project' : `${children} sub-projects`)
@@ -162,11 +166,8 @@ export class ProjectOverviewView extends ItemView {
 
     new ButtonComponent(header)
       .setButtonText('Edit project')
-      .onClick(safeAsync(() => this.plugin.router.openProjectEdit(project.filePath, this.leaf)))
-    new ButtonComponent(header)
-      .setButtonText('Open tasks')
       .setCta()
-      .onClick(safeAsync(() => this.plugin.router.openScope({ kind: 'project', path: project.filePath }, this.leaf)))
+      .onClick(safeAsync(() => this.plugin.router.openProjectEdit(project.filePath, this.leaf)))
   }
 
   private section(parent: HTMLElement, title: string, note = ''): HTMLElement {
