@@ -92,7 +92,7 @@ Horizontal progress track with optional percent label.
 Obsidian-native collapse triangle for tree rows.
 
 - API: `new CollapseToggle(parent, { collapsed, onToggle, subject? })` (constructor-only); `subject` names what collapses in the aria label, defaulting to subtasks
-- CSS: `tree-item-icon collapse-icon pm-collapse-toggle`, `is-collapsed`
+- CSS: `tree-item-icon collapse-icon pm-collapse-toggle`, `is-collapsed`. A 28px square click target around a 14px icon; hover only recolors, like Obsidian's own collapse icon
 - Use when: expanding/collapsing subtask trees, or sub-projects in the project list
 
 ### Checkbox - `Checkbox.ts`
