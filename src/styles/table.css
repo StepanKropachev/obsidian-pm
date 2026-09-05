@@ -229,6 +229,8 @@ button.pm-chip-btn--active:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   color: var(--text-muted);
   flex-shrink: 0;
