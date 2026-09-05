@@ -278,6 +278,7 @@ export function makeFakeApp(opts: { liveMetadataCache?: boolean } = {}): { app: 
       : {
           getFileCache: () => null,
           getFirstLinkpathDest: () => null,
+          fileToLinktext: (file: TFile) => file.basename,
           on: () => undefined
         }
   }
@@ -307,6 +308,7 @@ export interface FakeAppLike {
   metadataCache: {
     getFileCache: (file: TFile) => { frontmatter?: Record<string, unknown> } | null
     getFirstLinkpathDest: (linkpath: string, sourcePath: string) => TFile | null
+    fileToLinktext: (file: TFile, sourcePath: string) => string
     on: (name: string, handler: MetadataHandler) => unknown
   }
 }

@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The timeline has a year zoom level, showing quarters under each year ([#50](https://github.com/StepanKropachev/obsidian-pm/issues/50), [#77](https://github.com/StepanKropachev/obsidian-pm/issues/77), [#147](https://github.com/StepanKropachev/obsidian-pm/issues/147))
 - A project can be duplicated with all its tasks, from the project list's context menu or the duplicate project command
 
+### Changed
+
+- Subtasks, parents and dependencies appear in the graph view and in a note's properties as links
+
 ### Fixed
 
 - Edits, dependency checks, and archiving could act on the wrong project when one project was created by copying another's folder

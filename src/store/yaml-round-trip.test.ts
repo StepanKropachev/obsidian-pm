@@ -2,21 +2,27 @@ import { describe, expect, it } from 'vitest'
 import { makeProject, makeTask, type Project, type SavedView, type Task } from '../types'
 import { hydrateProjectFromFrontmatter, hydrateTaskFromFile } from './YamlHydrator'
 import { parseFrontmatter } from './YamlParser'
-import { serializeProject, serializeTask, taskFilePath } from './YamlSerializer'
+import { serializeProject, serializeTask, taskFilePath, type RefWriter } from './YamlSerializer'
+
+/** Stands in for Obsidian: every fixture file name here is unique, so none needs its path. */
+const refs: RefWriter = {
+  link: (targetPath, title) => `[[${targetPath.replace(/^.*\//, '').replace(/\.md$/, '')}|${title}]]`,
+  dependency: () => null
+}
 
 function roundTripTask(
   t: Task,
   project: Project = makeProject('Test', 'Projects/Test.md'),
   parent: Task | null = null
 ) {
-  const md = serializeTask(t, project, parent)
+  const md = serializeTask(t, project, parent, [], refs)
   const { frontmatter, body } = parseFrontmatter(md)
   if (!frontmatter) throw new Error('frontmatter missing')
   return hydrateTaskFromFile(frontmatter, body, 'Projects/Test_tasks/task.md')
 }
 
 function roundTripProject(p: Project) {
-  const md = serializeProject(p)
+  const md = serializeProject(p, [], refs)
   const { frontmatter, body } = parseFrontmatter(md)
   if (!frontmatter) throw new Error('frontmatter missing')
   return {
@@ -109,7 +115,7 @@ describe('task round-trip', () => {
     const legacySub = makeTask({ id: 'sub-legacy', title: 'Legacy', filePath: 'Projects/P_tasks/legacy-12345678.md' })
     const newSub = makeTask({ id: 'sub-new', title: 'Fresh One' }) // no filePath yet
     const parent = makeTask({ id: 'parent', subtasks: [legacySub, newSub] })
-    const md = serializeTask(parent, project, null)
+    const md = serializeTask(parent, project, null, [], refs)
     expect(md).toContain('[[legacy-12345678|Legacy]]')
     expect(md).toContain('[[fresh-one|Fresh One]]')
   })
@@ -197,10 +203,10 @@ describe('project round-trip', () => {
     const p = makeProject('P', 'Projects/P.md')
     const task = makeTask({ id: 't-dup', title: 'Dup', filePath: 'Projects/P_tasks/dup-tdup.md' })
     p.tasks = [task, task]
-    const md = serializeProject(p)
+    const md = serializeProject(p, [], refs)
     const { frontmatter } = parseFrontmatter(md)
     if (!frontmatter) throw new Error('frontmatter missing')
-    expect(frontmatter.taskIds).toEqual(['t-dup'])
+    expect(frontmatter.taskIds).toEqual(['[[dup-tdup|Dup]]'])
     const bulletCount = md.split('\n').filter((l) => l.startsWith('- [ ] [[dup-tdup|')).length
     expect(bulletCount).toBe(1)
   })

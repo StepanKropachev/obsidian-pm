@@ -968,7 +968,7 @@ describe('ProjectStore bulk mutators', () => {
     const file = vault.getAbstractFileByPath(expectDefined(parent.filePath))
     if (!(file instanceof TFile)) throw new Error('parent file missing')
     const content = await vault.cachedRead(file)
-    expect(content.indexOf(two.id)).toBeLessThan(content.indexOf(one.id))
+    expect(content.indexOf('[[two|two]]')).toBeLessThan(content.indexOf('[[one|one]]'))
   })
 
   it('writes tasks that have no file yet even when nothing marked them dirty', async () => {
@@ -1016,7 +1016,7 @@ describe('ProjectStore.moveTaskToProject', () => {
     await store.moveTaskToProject(from, to, task.id)
 
     const content = await app.vault.cachedRead(fileAt(app, 'Work/To/_tasks/solo.md'))
-    expect(content).toContain(`projectId: "${to.id}"`)
+    expect(content).toContain('projectId: "[[To|To]]"')
   })
 
   it('does nothing when the source and target are the same project', async () => {
@@ -1484,6 +1484,58 @@ describe('ProjectStore project folders', () => {
   })
 })
 
+describe('reference round-trip', () => {
+  it('rebuilds the tree and dependencies from the links in the notes', async () => {
+    const { store, app } = newIndexedStore()
+    const project = await store.createProject('Roadmap', 'Projects')
+    const parent = await addNamed(store, project, 'Parent')
+    const child = await addNamed(store, project, 'Child', parent.id)
+    const other = await addNamed(store, project, 'Other')
+    await store.updateTask(project, other.id, { dependencies: [child.id] })
+
+    const reloaded = expectDefined(await new ProjectStore(app, () => SETTINGS).loadProjectByPath(project.filePath))
+
+    expect(reloaded.tasks.map((t) => t.title)).toEqual(['Parent', 'Other'])
+    const reloadedParent = expectDefined(reloaded.tasks.find((t) => t.title === 'Parent'))
+    expect(reloadedParent.subtasks.map((t) => t.title)).toEqual(['Child'])
+    const reloadedOther = expectDefined(reloaded.tasks.find((t) => t.title === 'Other'))
+    expect(reloadedOther.dependencies).toEqual([child.id])
+  })
+
+  it('writes the full path when another project holds a task of the same name', async () => {
+    const { store, index, app } = newIndexedStore()
+    const alpha = await store.createProject('Alpha', 'Projects')
+    const beta = await store.createProject('Beta', 'Projects')
+    const alphaReview = await addNamed(store, alpha, 'Design review')
+    const betaReview = await addNamed(store, beta, 'Design review')
+    index.build()
+    await store.updateTask(beta, betaReview.id, { dependencies: [alphaReview.id] })
+
+    const content = await app.vault.cachedRead(fileAt(app, expectDefined(betaReview.filePath)))
+    expect(content).toContain(`dependencies: ["[[${expectDefined(alphaReview.filePath).replace(/\.md$/, '')}|`)
+  })
+
+  it('reads a vault whose notes still hold bare ids', async () => {
+    const { app, vault } = makeFakeApp({ liveMetadataCache: true })
+    const typed = app as unknown as App
+    await vault.create('Projects/Legacy.md', '---\npm-project: true\nid: "p1"\ntitle: "Legacy"\ntaskIds: ["t1"]\n---\n')
+    await vault.create(
+      'Projects/Legacy_tasks/parent.md',
+      '---\npm-task: true\nprojectId: "p1"\nid: "t1"\ntitle: "Parent"\nsubtaskIds: ["t2"]\n---\n'
+    )
+    await vault.create(
+      'Projects/Legacy_tasks/child.md',
+      '---\npm-task: true\nprojectId: "p1"\nparentId: "t1"\nid: "t2"\ntitle: "Child"\ndependencies: ["t1"]\n---\n'
+    )
+
+    const project = expectDefined(await new ProjectStore(typed, () => SETTINGS).loadProjectByPath('Projects/Legacy.md'))
+
+    expect(project.tasks.map((t) => t.id)).toEqual(['t1'])
+    expect(project.tasks[0].subtasks.map((t) => t.id)).toEqual(['t2'])
+    expect(project.tasks[0].subtasks[0].dependencies).toEqual(['t1'])
+  })
+})
+
 describe('ProjectStore.reassignIds', () => {
   it('gives listed tasks fresh ids and remaps internal dependencies, in memory and on disk', async () => {
     const { store, app } = newStore()
@@ -1507,7 +1559,7 @@ describe('ProjectStore.reassignIds', () => {
     expect(alphaContent).toContain(freshAlpha.id)
     expect(alphaContent).not.toContain(oldAlphaId)
     const projectContent = await app.vault.cachedRead(fileAt(app, project.filePath))
-    expect(projectContent).toContain(freshAlpha.id)
+    expect(projectContent).toContain('[[alpha|Alpha]]')
     expect(projectContent).not.toContain(oldAlphaId)
   })
 
@@ -1536,7 +1588,7 @@ describe('ProjectStore.reassignIds', () => {
     const projectContent = await app.vault.cachedRead(fileAt(app, project.filePath))
     expect(projectContent).toContain(project.id)
     const alphaContent = await app.vault.cachedRead(fileAt(app, expectDefined(alpha.filePath)))
-    expect(alphaContent).toContain(project.id)
+    expect(alphaContent).toContain('projectId: "[[Roadmap|Roadmap]]"')
     expect(alphaContent).not.toContain(oldProjectId)
   })
 })
