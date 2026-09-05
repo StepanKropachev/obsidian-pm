@@ -1,6 +1,6 @@
 <div align="center">
 
-# Project Manager for Obsidian
+# dotpm for Obsidian
 *Full-featured project management, natively in your vault.*
 
 [![Obsidian community plugin](https://img.shields.io/badge/Obsidian-Community%20Plugin-7c3aed?style=for-the-badge&logo=obsidian&logoColor=white)](https://community.obsidian.md/plugins/project-manager)
@@ -14,7 +14,7 @@
 
 Table views, Gantt charts, Kanban boards, custom fields, time tracking, smart scheduling — all stored as plain Markdown with YAML frontmatter. No external services. No sync subscriptions. Your data stays yours.
 
-<img width="1422" height="791" alt="Project Manager dashboard" src="https://github.com/user-attachments/assets/ca6bc67f-e656-45be-b93a-17410555ec1a" />
+<img width="1422" height="791" alt="dotpm dashboard" src="https://github.com/user-attachments/assets/ca6bc67f-e656-45be-b93a-17410555ec1a" />
 
 ## What's inside
 
@@ -50,7 +50,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
 - **Subtasks** — Nest tasks to any depth. Collapse/expand hierarchies across all views.
 - **Dependencies** — Link blocking/dependent tasks. Visualized as arrows on the Gantt chart.
 - **Milestones** — Zero-duration tasks for key dates and deliverables.
-- **Archive** — Archive completed tasks without deleting. Toggle visibility at any time. Completed tasks can also be archived automatically once they have been done for a set number of days, or on demand with **Project Manager: Archive completed tasks**.
+- **Archive** — Archive completed tasks without deleting. Toggle visibility at any time. Completed tasks can also be archived automatically once they have been done for a set number of days, or on demand with **dotpm: Archive completed tasks**.
 
 ### Scheduling & time
 - **Drag-and-drop scheduling** — Reschedule tasks by dragging bars on the Gantt chart.
@@ -75,7 +75,7 @@ Card-based board grouped by status. Drag cards between columns to update status 
   - Delete
 
 ### Import
-You can add any existing note from your vault to project as a task. Run **Project Manager: Import notes as tasks** in the Command Palette, pick a project, select files, then choose default status, default priority, and whether to **move** files into the task folder or **copy** them. Already-imported notes are skipped.
+You can add any existing note from your vault to project as a task. Run **dotpm: Import notes as tasks** in the Command Palette, pick a project, select files, then choose default status, default priority, and whether to **move** files into the task folder or **copy** them. Already-imported notes are skipped.
 
 https://github.com/user-attachments/assets/64e386c5-09b5-42a6-9599-089cc54c98eb
 
@@ -102,7 +102,7 @@ There is no real-time multi-user editing. Two people editing the same task at on
 
 ## Using with TaskNotes
 
-Project Manager works alongside the [TaskNotes](https://github.com/callumalpass/tasknotes) plugin (4.10 or newer).
+dotpm works alongside the [TaskNotes](https://github.com/callumalpass/tasknotes) plugin (4.10 or newer).
 
 ### Import TaskNotes tasks
 
@@ -118,17 +118,17 @@ Choose **move** to turn the TaskNotes notes into task files inside the project's
 
 ### Align statuses and priorities
 
-**Settings > Import from TaskNotes** copies TaskNotes' status and priority palettes into Project Manager, so both plugins use the same values, names, and colors. Entries TaskNotes doesn't know are kept.
+**Settings > Import from TaskNotes** copies TaskNotes' status and priority palettes into dotpm, so both plugins use the same values, names, and colors. Entries TaskNotes doesn't know are kept.
 
-### Let TaskNotes see Project Manager tasks
+### Let TaskNotes see dotpm tasks
 
-TaskNotes can be configured to list and edit Project Manager tasks in place, without conversion:
+TaskNotes can be configured to list and edit dotpm tasks in place, without conversion:
 
 1. In TaskNotes settings, set task identification to **property** with name `pm-task` and value `true`.
 2. In its field mapping, map **scheduled** to `start`.
-3. Add your Project Manager status and priority values to TaskNotes' palettes.
+3. Add your dotpm status and priority values to TaskNotes' palettes.
 
-Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses project links and `blockedBy`, Project Manager uses id references), but both plugins edit frontmatter non-destructively, so each one's extra fields survive the other's writes.
+Task hierarchy and dependencies don't resolve on the TaskNotes side (it uses project links and `blockedBy`, dotpm uses id references), but both plugins edit frontmatter non-destructively, so each one's extra fields survive the other's writes.
 
 ## Settings
 
@@ -178,7 +178,7 @@ Each task is a `.md` file in your vault supporting:
 ### From Obsidian (recommended)
 
 1. Open **Settings > Community plugins** and make sure Restricted mode is off.
-2. Click **Browse**, search for **Project Manager**, and click **Install**.
+2. Click **Browse**, search for **dotpm**, and click **Install**.
 3. Click **Enable**.
 
 Or open the listing directly: [community.obsidian.md/plugins/project-manager](https://community.obsidian.md/plugins/project-manager).

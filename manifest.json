@@ -1,6 +1,6 @@
 {
   "id": "project-manager",
-  "name": "Project Manager",
+  "name": "dotpm",
   "version": "2.1.0",
   "minAppVersion": "1.13.0",
   "description": "Full-featured project management: stunning Gantt charts, Kanban boards, Table views, customizable fields, due date notifications.",

@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Edits, dependency checks, and archiving could act on the wrong project when one project was created by copying another's folder
 
+### Changed
+
+- The plugin is now called dotpm, matching the [dotpm](https://dotpm.pm) organization the repository moved to ([#269](https://github.com/dotpm/obsidian-pm/issues/269)). Commands are listed under **dotpm** in the Command Palette instead of **Project Manager**. Existing hotkeys, settings, and task files are unaffected, and updates continue as before.
+
 ## [2.1.0] - 2026-08-27
 
 ### Highlights
