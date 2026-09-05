@@ -6,6 +6,7 @@ import { reaches } from './Scheduler'
 import { FRONTMATTER_KEY, TASK_FRONTMATTER_KEY } from './YamlParser'
 import { customFieldList, stringList } from './YamlHydrator'
 import { projectPathForTaskPath, resolveVaultLink } from './vaultFs'
+import { isRefLink, refToId, refToPath } from './refs'
 import { personKeyer } from './people'
 import { dedupePeople } from '../utils'
 
@@ -451,7 +452,7 @@ export class VaultIndex {
       start: str(frontmatter.start),
       due: str(frontmatter.due),
       completed: str(frontmatter.completed),
-      dependencies: stringList(frontmatter.dependencies),
+      dependencies: stringList(frontmatter.dependencies).map((raw) => refToId(this.app, raw, path)),
       assignees: stringList(frontmatter.assignees),
       archived: path.split('/').at(-2) === 'Archive'
     }
@@ -465,8 +466,13 @@ export class VaultIndex {
    * Location wins: a task note lives in its project's `_tasks/` folder, which resolves
    * whatever order the files are indexed in. `projectId` covers a note moved out of it.
    */
-  private resolveOwner(taskPath: string, projectId: string): string | null {
-    return projectPathForTaskPath(taskPath) ?? (projectId ? (this.projectPathById.get(projectId) ?? null) : null)
+  private resolveOwner(taskPath: string, projectRef: string): string | null {
+    const byLocation = projectPathForTaskPath(taskPath)
+    if (byLocation) return byLocation
+    if (!projectRef) return null
+    return isRefLink(projectRef)
+      ? refToPath(this.app, projectRef, taskPath)
+      : (this.projectPathById.get(projectRef) ?? null)
   }
 
   /** A task indexed before its project can only be placed once that project shows up. */
